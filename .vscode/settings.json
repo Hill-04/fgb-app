@@ -1,0 +1,16 @@
+{
+  // Caminho explícito do Git (corrige "Failed to execute git")
+  "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
+
+  // Auto-push após commit
+  "git.postCommitCommand": "push",
+
+  // Permite commit mesmo sem staging (stage automático)
+  "git.enableSmartCommit": true,
+
+  // Não pede confirmação antes do push
+  "git.confirmSync": false,
+
+  // Mostra decorações do git inline
+  "git.decorations.enabled": true
+}
