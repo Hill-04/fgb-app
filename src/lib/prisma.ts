@@ -2,29 +2,25 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import path from 'path'
 
-function resolveDbUrl(): string {
+function createPrismaClient(): PrismaClient {
   const rawUrl = process.env.DATABASE_URL
-  if (!rawUrl) {
-    throw new Error('DATABASE_URL environment variable is not set')
-  }
+  if (!rawUrl) throw new Error('DATABASE_URL não definida')
 
-  // If the URL is already absolute (e.g. file:/absolute/path), use it as-is
-  // If it's relative (e.g. file:./dev.db), resolve against the project root
+  let url: string
+
+  // Resolve relative file: paths to absolute (required on Windows with spaces in path)
   if (rawUrl.startsWith('file:./') || rawUrl.startsWith('file:../')) {
     const relativePath = rawUrl.slice('file:'.length)
-    const projectRoot = process.cwd()
-    const absolutePath = path.resolve(projectRoot, relativePath)
-    // libsql requires forward slashes on Windows
-    return 'file:' + absolutePath.replace(/\\/g, '/')
+    const absolutePath = path.resolve(process.cwd(), relativePath)
+    url = 'file:' + absolutePath.replace(/\\/g, '/')
+  } else {
+    url = rawUrl.replace(/\\/g, '/')
   }
 
-  // Already absolute or a remote URL — return as-is
-  return rawUrl.replace(/\\/g, '/')
-}
+  const isRemote = url.startsWith('libsql://')
+  const authToken = isRemote ? process.env.DATABASE_AUTH_TOKEN : undefined
 
-function createPrismaClient(): PrismaClient {
-  const url = resolveDbUrl()
-  const adapter = new PrismaLibSql({ url })
+  const adapter = new PrismaLibSql({ url, authToken })
   return new PrismaClient({ adapter } as any)
 }
 
