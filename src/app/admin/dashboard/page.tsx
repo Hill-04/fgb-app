@@ -25,7 +25,7 @@ export default async function AdminDashboardPage() {
     })
   ])
 
-  const openChampionships = championships.filter((c: { status: string }) => c.status === 'REGISTRATION_OPEN').length
+  const openChampionships = championships.filter(c => c.status === 'REGISTRATION_OPEN').length
   const totalChampionships = championships.length
   const pendingRegistrations = await prisma.registration.count({ where: { status: 'PENDING' } })
 
