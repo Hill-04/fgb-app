@@ -2,6 +2,17 @@
 // npm install --save-dev prisma dotenv
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
+import * as fs from "fs";
+
+// Tentar carregar do .env.local primeiro (desenvolvimento)
+const envLocal = ".env.local";
+if (fs.existsSync(envLocal)) {
+  const envContent = fs.readFileSync(envLocal, "utf-8");
+  const match = envContent.match(/DATABASE_URL="(.+)"/);
+  if (match) {
+    process.env.DATABASE_URL = match[1];
+  }
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
@@ -9,6 +20,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    url: process.env["DATABASE_URL"] || "file:./prisma/dev.db",
   },
 });

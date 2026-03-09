@@ -1,65 +1,91 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { v4 as uuidv4 } from 'uuid';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { firstName, lastName, email, password, teamName, city, gymName } = body;
+    const {
+      email,
+      password,
+      teamName,
+      city,
+      responsible,
+      phone,
+      sex,
+      categories,
+      gym
+    } = body;
 
-    // TODO: In a real app, use NextAuth and bcrypt to hash the password
-    // Also validate input safely with zod
-
-    // For the MVP, we assume a single Tenant (FGB)
-    // Let's create one if it doesn't exist just in case
-    let tenant = await prisma.tenant.findFirst();
-    if (!tenant) {
-      tenant = await prisma.tenant.create({
-        data: {
-          name: 'Federação Gaúcha de Basquete',
-          domain: 'fgb',
-        }
-      });
+    // Validação básica
+    if (!email || !password || !teamName || !city || !responsible || !phone || !sex) {
+      return NextResponse.json({ error: 'Todos os campos obrigatórios devem ser preenchidos' }, { status: 400 });
     }
 
-    // Check if email already exists
+    if (!gym || !gym.name || !gym.address || !gym.city || !gym.capacity || !gym.availability) {
+      return NextResponse.json({ error: 'Dados do ginásio incompletos' }, { status: 400 });
+    }
+
+    // Verificar se o email já existe
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return NextResponse.json({ error: 'E-mail já está em uso' }, { status: 400 });
     }
 
-    // Hash the password before storing
-    const hashedPassword = await bcrypt.hash(password, 10)
+    // Verificar se o nome da equipe já existe
+    const existingTeam = await prisma.team.findUnique({ where: { name: teamName } });
+    if (existingTeam) {
+      return NextResponse.json({ error: 'Já existe uma equipe com este nome' }, { status: 400 });
+    }
 
-    // Create the Team and the User in a transaction
+    // Hash da senha
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Criar User + Team + Gym em uma transação
     const result = await prisma.$transaction(async (tx) => {
+      // 1. Criar usuário
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          password: hashedPassword,
+          role: 'TEAM',
+        }
+      });
+
+      // 2. Criar equipe vinculada ao usuário
       const newTeam = await tx.team.create({
         data: {
           name: teamName,
-          city: city,
-          contactName: `${firstName} ${lastName}`,
-          contactEmail: email,
-          tenantId: tenant.id,
-          gymName: gymName || 'Não informado',
+          city,
+          state: 'RS',
+          responsible,
+          phone,
+          sex,
+          userId: newUser.id,
         }
       });
 
-      const newUser = await tx.user.create({
+      // 3. Criar ginásio da equipe
+      const newGym = await tx.gym.create({
         data: {
-          name: `${firstName} ${lastName}`,
-          email: email,
-          password: hashedPassword,
-          role: 'TEAM',
-          tenantId: tenant.id,
-          teamId: newTeam.id
+          name: gym.name,
+          address: gym.address,
+          city: gym.city,
+          capacity: gym.capacity,
+          availability: gym.availability,
+          canHost: gym.canHost !== undefined ? gym.canHost : true,
+          teamId: newTeam.id,
         }
       });
 
-      return { team: newTeam, user: newUser };
+      return { user: newUser, team: newTeam, gym: newGym };
     });
 
-    return NextResponse.json({ success: true, teamId: result.team.id });
+    return NextResponse.json({
+      success: true,
+      message: 'Equipe cadastrada com sucesso!',
+      teamId: result.team.id
+    });
 
   } catch (error) {
     console.error('Registration error:', error);

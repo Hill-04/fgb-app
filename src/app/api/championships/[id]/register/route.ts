@@ -1,30 +1,32 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session || (session.user as any).role !== 'TEAM') {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
+    const teamId = (session.user as any).teamId
     const { id: championshipId } = await params
     const body = await request.json()
-    const { selectedCategories, blockedDates } = body
+    const { selectedCategories, blockedDates, observations } = body
 
     if (!selectedCategories || selectedCategories.length === 0) {
       return NextResponse.json({ error: 'Selecione ao menos uma categoria' }, { status: 400 })
     }
 
-    // For MVP: use the first team in the DB as the "current team"
-    const team = await prisma.team.findFirst({ orderBy: { createdAt: 'asc' } })
-    if (!team) {
-      return NextResponse.json({ error: 'Nenhuma equipe encontrada. Por favor, cadastre sua equipe primeiro.' }, { status: 404 })
-    }
-
-    // Find categories by code in this championship
-    const categories = await prisma.category.findMany({
+    // Buscar categorias do campeonato
+    const categories = await prisma.championshipCategory.findMany({
       where: {
         championshipId,
-        code: { in: selectedCategories }
+        name: { in: selectedCategories }
       }
     })
 
@@ -32,39 +34,35 @@ export async function POST(
       return NextResponse.json({ error: 'Nenhuma categoria válida encontrada para este campeonato' }, { status: 400 })
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      // Create registrations for each selected category (skip duplicates)
-      const registrations = await Promise.all(
-        categories.map((cat) =>
-          tx.registration.upsert({
-            where: { teamId_categoryId: { teamId: team.id, categoryId: cat.id } },
-            update: {},
-            create: {
-              teamId: team.id,
-              categoryId: cat.id,
-              status: 'PENDING',
-            }
-          })
-        )
-      )
-
-      // Create blocked dates
-      let createdBlockedDates: any[] = []
-      if (blockedDates && blockedDates.length > 0) {
-        const datesToCreate = blockedDates.slice(0, 3).map((d: { date: string; reason?: string }) => ({
-          date: new Date(d.date),
-          reason: d.reason || null,
-          teamId: team.id,
-        }))
-        createdBlockedDates = await Promise.all(
-          datesToCreate.map((bd: any) => tx.blockedDate.create({ data: bd }))
-        )
+    // Criar inscrição
+    const registration = await prisma.registration.create({
+      data: {
+        championshipId,
+        teamId,
+        status: 'PENDING',
+        observations: observations || null,
+        categories: {
+          create: categories.map(cat => ({
+            categoryId: cat.id
+          }))
+        },
+        blockedDates: blockedDates && blockedDates.length > 0 ? {
+          create: blockedDates.map((bd: { date: string; reason?: string }) => ({
+            date: new Date(bd.date),
+            reason: bd.reason || null
+          }))
+        } : undefined
+      },
+      include: {
+        categories: {
+          include: {
+            category: true
+          }
+        }
       }
-
-      return { registrations, blockedDates: createdBlockedDates }
     })
 
-    return NextResponse.json({ success: true, ...result }, { status: 201 })
+    return NextResponse.json({ success: true, registration }, { status: 201 })
   } catch (error) {
     console.error('Error registering for championship:', error)
     return NextResponse.json({ error: 'Erro ao realizar inscrição' }, { status: 500 })

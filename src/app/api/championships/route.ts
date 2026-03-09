@@ -17,7 +17,7 @@ export async function GET() {
     const championshipsWithCounts = await Promise.all(
       championships.map(async (c) => {
         const registrationCount = await prisma.registration.count({
-          where: { category: { championshipId: c.id } }
+          where: { championshipId: c.id }
         })
         return { ...c, registrationCount }
       })
@@ -50,32 +50,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Nome, ano e pelo menos uma categoria são obrigatórios' }, { status: 400 })
     }
 
-    // Get or create default tenant
-    let tenant = await prisma.tenant.findFirst()
-    if (!tenant) {
-      tenant = await prisma.tenant.create({
-        data: {
-          name: 'Federação Gaúcha de Basquete',
-          domain: 'fgb',
-        }
-      })
-    }
-
     const championship = await prisma.$transaction(async (tx) => {
       const newChampionship = await tx.championship.create({
         data: {
           name,
-          year: Number(year),
-          minTeamsPerCategory: Number(minTeamsPerCategory) || 3,
-          tenantId: tenant.id,
+          description: body.description || null,
+          sex: body.sex || 'masculino',
+          format: body.format || 'todos_contra_todos',
+          phases: body.phases || 3,
+          minTeamsPerCat: Number(minTeamsPerCategory) || 3,
+          regDeadline: body.regDeadline ? new Date(body.regDeadline) : new Date(),
           status: 'DRAFT',
         }
       })
 
-      await tx.category.createMany({
+      await tx.championshipCategory.createMany({
         data: (selectedCodes as string[]).map((code: string) => ({
           name: CATEGORY_NAMES[code] || code,
-          code,
           championshipId: newChampionship.id,
         }))
       })

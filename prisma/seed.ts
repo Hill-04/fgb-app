@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, UserRole, ChampionshipStatus } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import bcrypt from 'bcryptjs'
 import * as dotenv from 'dotenv'
@@ -6,7 +6,19 @@ import * as dotenv from 'dotenv'
 dotenv.config()
 
 async function main() {
-  const url = process.env.DATABASE_URL
+  // Tentar carregar do .env.local primeiro (desenvolvimento)
+  let url = process.env.DATABASE_URL
+
+  // Se DATABASE_URL for libsql (produção) mas houver .env.local, usar o local
+  const fs = await import('fs')
+  if (fs.existsSync('.env.local')) {
+    const envContent = fs.readFileSync('.env.local', 'utf-8')
+    const match = envContent.match(/DATABASE_URL="(.+)"/)
+    if (match) {
+      url = match[1]
+    }
+  }
+
   if (!url) throw new Error('DATABASE_URL não definida')
 
   const isRemote = url.startsWith('libsql://')
@@ -15,81 +27,163 @@ async function main() {
   const adapter = new PrismaLibSql({ url, authToken })
   const prisma = new PrismaClient({ adapter } as any)
 
-  console.log('🌱 Iniciando seed...')
+  console.log('🌱 Iniciando seed do banco de dados...')
 
-  // Tenant
-  const tenant = await prisma.tenant.upsert({
-    where: { domain: 'fgb.rs.gov.br' },
-    update: {},
-    create: {
-      name: 'Federação Gaúcha de Basquete',
-      domain: 'fgb.rs.gov.br',
-    },
-  })
-  console.log('✓ Tenant criado:', tenant.name)
+  // Limpar dados existentes
+  console.log('🗑️  Limpando dados existentes...')
+  await prisma.message.deleteMany()
+  await prisma.notification.deleteMany()
+  await prisma.document.deleteMany()
+  await prisma.standing.deleteMany()
+  await prisma.game.deleteMany()
+  await prisma.block.deleteMany()
+  await prisma.blockedDate.deleteMany()
+  await prisma.registrationCategory.deleteMany()
+  await prisma.registration.deleteMany()
+  await prisma.championshipCategory.deleteMany()
+  await prisma.championship.deleteMany()
+  await prisma.gym.deleteMany()
+  await prisma.team.deleteMany()
+  await prisma.user.deleteMany()
+  await prisma.holiday.deleteMany()
 
-  // Admin user
+  // 1. Criar admin
+  console.log('👤 Criando administrador...')
   const adminPassword = await bcrypt.hash('admin123', 10)
-  const admin = await prisma.user.upsert({
-    where: { email: 'brayanalexguarnieri@gmail.com' },
-    update: {},
-    create: {
-      name: 'Brayan Alex Guarnieri',
+  const admin = await prisma.user.create({
+    data: {
       email: 'brayanalexguarnieri@gmail.com',
       password: adminPassword,
-      role: 'ADMIN',
-      tenantId: tenant.id,
-    },
+      role: UserRole.ADMIN,
+    }
   })
-  console.log('✓ Admin criado:', admin.email)
+  console.log('✅ Admin criado:', admin.email)
 
-  // Campeonato de exemplo
-  const championship = await prisma.championship.upsert({
-    where: { id: 'champ-2026-estadual' },
-    update: {},
-    create: {
-      id: 'champ-2026-estadual',
-      name: 'Campeonato Estadual de Basquete 2026',
-      year: 2026,
-      status: 'REGISTRATION_OPEN',
-      minTeamsPerCategory: 4,
-      tenantId: tenant.id,
-    },
-  })
-  console.log('✓ Campeonato criado:', championship.name)
+  // 2. Criar equipes reais do basquete gaúcho (masculino)
+  console.log('🏀 Criando equipes...')
 
-  // Categorias
-  const categorias = [
-    { name: 'Sub-12 Masculino', code: 'SUB12M' },
-    { name: 'Sub-14 Masculino', code: 'SUB14M' },
-    { name: 'Sub-16 Masculino', code: 'SUB16M' },
-    { name: 'Sub-12 Feminino',  code: 'SUB12F' },
-    { name: 'Sub-14 Feminino',  code: 'SUB14F' },
+  const teams = [
+    { name: "Flyboys", city: "Porto Alegre", responsible: "João Silva", phone: "(51) 99999-0001" },
+    { name: "Richmond", city: "Novo Hamburgo", responsible: "Pedro Santos", phone: "(51) 99999-0002" },
+    { name: "Amb", city: "Canoas", responsible: "Carlos Oliveira", phone: "(51) 99999-0003" },
+    { name: "Sinodal", city: "São Leopoldo", responsible: "Rafael Costa", phone: "(51) 99999-0004" },
+    { name: "Sogipa", city: "Porto Alegre", responsible: "Lucas Ferreira", phone: "(51) 99999-0005" },
+    { name: "Dunk", city: "Gravataí", responsible: "Marcelo Alves", phone: "(51) 99999-0006" },
+    { name: "Recreio", city: "Caxias do Sul", responsible: "Fernando Lima", phone: "(54) 99999-0007" },
+    { name: "Sojao", city: "Esteio", responsible: "Gabriel Souza", phone: "(51) 99999-0008" },
+    { name: "Juvenil", city: "Gravataí", responsible: "André Martins", phone: "(51) 99999-0009" },
+    { name: "Apacobas", city: "Sapucaia", responsible: "Ricardo Rocha", phone: "(51) 99999-0010" },
   ]
 
-  for (const cat of categorias) {
-    await prisma.category.upsert({
-      where: { id: `cat-${cat.code}-2026` },
-      update: {},
-      create: {
-        id: `cat-${cat.code}-2026`,
-        name: cat.name,
-        code: cat.code,
+  const defaultPassword = await bcrypt.hash('senha123', 10)
+
+  for (const teamData of teams) {
+    const user = await prisma.user.create({
+      data: {
+        email: `${teamData.name.toLowerCase()}@fgb.com.br`,
+        password: defaultPassword,
+        role: UserRole.TEAM,
+      }
+    })
+
+    const team = await prisma.team.create({
+      data: {
+        name: teamData.name,
+        city: teamData.city,
+        state: 'RS',
+        responsible: teamData.responsible,
+        phone: teamData.phone,
+        sex: 'masculino',
+        userId: user.id,
+      }
+    })
+
+    await prisma.gym.create({
+      data: {
+        name: `Ginásio ${teamData.name}`,
+        address: `Rua Principal, 123 - ${teamData.city}`,
+        city: teamData.city,
+        capacity: 500,
+        availability: 'sabado_domingo',
+        canHost: true,
+        teamId: team.id,
+      }
+    })
+
+    console.log(`✅ Equipe criada: ${team.name} (${team.city})`)
+  }
+
+  // 3. Criar feriados 2026
+  console.log('📅 Criando feriados...')
+  const holidays = [
+    { date: new Date('2026-02-16'), name: 'Carnaval', year: 2026 },
+    { date: new Date('2026-02-17'), name: 'Carnaval', year: 2026 },
+    { date: new Date('2026-04-03'), name: 'Sexta-feira Santa', year: 2026 },
+    { date: new Date('2026-04-05'), name: 'Páscoa', year: 2026 },
+    { date: new Date('2026-04-21'), name: 'Tiradentes', year: 2026 },
+    { date: new Date('2026-05-01'), name: 'Dia do Trabalho', year: 2026 },
+    { date: new Date('2026-05-10'), name: 'Dia das Mães', year: 2026 },
+    { date: new Date('2026-06-04'), name: 'Corpus Christi', year: 2026 },
+    { date: new Date('2026-06-13'), name: 'Festa Junina Santo Antônio', year: 2026 },
+    { date: new Date('2026-06-24'), name: 'Festa Junina São João', year: 2026 },
+    { date: new Date('2026-08-09'), name: 'Dia dos Pais', year: 2026 },
+    { date: new Date('2026-09-07'), name: 'Independência', year: 2026 },
+    { date: new Date('2026-09-20'), name: 'Revolução Farroupilha', year: 2026 },
+    { date: new Date('2026-10-12'), name: 'Dia das Crianças', year: 2026 },
+    { date: new Date('2026-11-02'), name: 'Finados', year: 2026 },
+    { date: new Date('2026-11-15'), name: 'Proclamação da República', year: 2026 },
+    { date: new Date('2026-12-25'), name: 'Natal', year: 2026 },
+  ]
+
+  for (const holiday of holidays) {
+    await prisma.holiday.create({ data: holiday })
+  }
+  console.log(`✅ ${holidays.length} feriados criados`)
+
+  // 4. Criar campeonato de exemplo
+  console.log('🏆 Criando campeonato de exemplo...')
+  const championship = await prisma.championship.create({
+    data: {
+      name: 'Estadual 2026 — Masculino',
+      description: 'Campeonato Estadual de Basquete Masculino do Rio Grande do Sul',
+      sex: 'masculino',
+      format: 'todos_contra_todos',
+      phases: 3,
+      minTeamsPerCat: 3,
+      startDate: new Date('2026-05-01'),
+      endDate: new Date('2026-11-30'),
+      regDeadline: new Date('2026-04-15'),
+      status: ChampionshipStatus.REGISTRATION_OPEN,
+    }
+  })
+
+  // Criar categorias do campeonato
+  const categories = ['Sub 12', 'Sub 13', 'Sub 15', 'Sub 17']
+  for (const catName of categories) {
+    await prisma.championshipCategory.create({
+      data: {
+        name: catName,
         championshipId: championship.id,
-      },
+        isViable: false,
+      }
     })
   }
-  console.log('✓ Categorias criadas:', categorias.length)
+  console.log(`✅ Campeonato criado: ${championship.name} com ${categories.length} categorias`)
 
-  console.log('\n✅ Seed concluído!')
-  console.log('\nCredenciais de acesso:')
-  console.log('  Email: brayanalexguarnieri@gmail.com')
-  console.log('  Senha: admin123')
+  console.log('')
+  console.log('🎉 Seed concluído com sucesso!')
+  console.log('')
+  console.log('📊 Dados criados:')
+  console.log(`   - 1 administrador (${admin.email} / senha: admin123)`)
+  console.log(`   - ${teams.length} equipes (senha padrão: senha123)`)
+  console.log(`   - ${holidays.length} feriados`)
+  console.log(`   - 1 campeonato com ${categories.length} categorias`)
+  console.log('')
 
   await prisma.$disconnect()
 }
 
 main().catch((e) => {
-  console.error('Erro no seed:', e)
+  console.error('❌ Erro no seed:', e)
   process.exit(1)
 })
