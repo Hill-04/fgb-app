@@ -1,6 +1,9 @@
 import { PrismaClient } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import bcrypt from 'bcryptjs'
+import * as dotenv from 'dotenv'
+
+dotenv.config()
 
 async function main() {
   const url = process.env.DATABASE_URL
