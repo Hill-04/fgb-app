@@ -3,13 +3,16 @@
   "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
 
   // Auto-push após commit
-  "git.postCommitCommand": "push",
+  "git.postCommitCommand": "sync",
 
   // Permite commit mesmo sem staging (stage automático)
   "git.enableSmartCommit": true,
 
-  // Não pede confirmação antes do push
-  "git.confirmSync": false,
+  // Sempre pede mensagem de commit se vazia
+  "git.requireGitUserConfig": true,
+
+  // Previne commits sem mensagem
+  "git.allowNoVerifyCommit": false,
 
   // Mostra decorações do git inline
   "git.decorations.enabled": true
