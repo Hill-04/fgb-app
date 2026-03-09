@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  domain    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  teams         Team[]
+  championships Championship[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String // Básico para MVP (o real usaria NextAuth com bcript/providers OAuth)
+  role      String   @default("TEAM") // ADMIN or TEAM
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  teamId    String? // Se for role=TEAM
+  team      Team?    @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id           String   @id @default(uuid())
+  name         String
+  city         String
+  contactName  String
+  contactPhone String?
+  contactEmail String?
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  
+  // Gym info
+  gymName      String?
+  gymAddress   String?
+  gymCapacity  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  registrations Registration[]
+  blockedDates  BlockedDate[]
+  homeMatches   Match[]        @relation("HomeTeam")
+  awayMatches   Match[]        @relation("AwayTeam")
+  venues        Venue[]
+}
+
+model Championship {
+  id                  String     @id @default(uuid())
+  name                String
+  year                Int
+  status              String     @default("DRAFT") // DRAFT, REGISTRATION_OPEN, SCHEDULED, IN_PROGRESS, FINISHED
+  minTeamsPerCategory Int        @default(3)
+  tenantId            String
+  tenant              Tenant     @relation(fields: [tenantId], references: [id])
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+
+  categories Category[]
+  phases     Phase[]
+}
+
+model Category {
+  id             String       @id @default(uuid())
+  name           String // ex: "Sub 12 Masculino"
+  code           String // ex: "SUB12M"
+  championshipId String
+  championship   Championship @relation(fields: [championshipId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  registrations Registration[]
+  matches       Match[]
+}
+
+model Registration {
+  id         String   @id @default(uuid())
+  status     String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  teamId     String
+  team       Team     @relation(fields: [teamId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([teamId, categoryId])
+}
+
+model BlockedDate {
+  id        String   @id @default(uuid())
+  date      DateTime // Data ou Início do Fim de semana
+  reason    String?
+  teamId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Phase {
+  id             String       @id @default(uuid())
+  name           String // ex: "1ª Fase", "Quartas de Final"
+  type           String // GROUP, PLAYOFF
+  championshipId String
+  championship   Championship @relation(fields: [championshipId], references: [id])
+  createdAt      DateTime     @default(now())
+
+  matches Match[]
+}
+
+model Venue {
+  id          String  @id @default(uuid())
+  name        String
+  address     String
+  city        String
+  capacity    Int?
+  isTeamGym   Boolean @default(false)
+  teamId      String?
+  team        Team?   @relation(fields: [teamId], references: [id])
+  
+  matches Match[]
+}
+
+model Match {
+  id            String    @id @default(uuid())
+  homeTeamId    String
+  homeTeam      Team      @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeamId    String
+  awayTeam      Team      @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  categoryId    String
+  category      Category  @relation(fields: [categoryId], references: [id])
+  phaseId       String
+  phase         Phase     @relation(fields: [phaseId], references: [id])
+  venueId       String?
+  venue         Venue?    @relation(fields: [venueId], references: [id])
+  status        String    @default("SCHEDULED") // SCHEDULED, PLAYED, CANCELED
+  scheduledTime DateTime?
+  homeScore     Int?
+  awayScore     Int?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
