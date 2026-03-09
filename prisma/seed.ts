@@ -31,11 +31,11 @@ async function main() {
   // Admin user
   const adminPassword = await bcrypt.hash('admin123', 10)
   const admin = await prisma.user.upsert({
-    where: { email: 'admin@fgb.rs.gov.br' },
+    where: { email: 'brayanalexguarnieri@gmail.com' },
     update: {},
     create: {
-      name: 'Administrador FGB',
-      email: 'admin@fgb.rs.gov.br',
+      name: 'Brayan Alex Guarnieri',
+      email: 'brayanalexguarnieri@gmail.com',
       password: adminPassword,
       role: 'ADMIN',
       tenantId: tenant.id,
@@ -83,7 +83,7 @@ async function main() {
 
   console.log('\n✅ Seed concluído!')
   console.log('\nCredenciais de acesso:')
-  console.log('  Email: admin@fgb.rs.gov.br')
+  console.log('  Email: brayanalexguarnieri@gmail.com')
   console.log('  Senha: admin123')
 
   await prisma.$disconnect()
