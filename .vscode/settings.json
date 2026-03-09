@@ -2,10 +2,20 @@
   // Caminho explícito do Git (corrige "Failed to execute git")
   "git.path": "C:\\Program Files\\Git\\cmd\\git.exe",
 
-  // DESABILITA commit pela interface (use terminal ou tasks)
-  "git.postCommitCommand": "none",
-  "git.enableSmartCommit": false,
-  "git.confirmSync": true,
+  // Auto-push após commit
+  "git.postCommitCommand": "push",
+
+  // Permite commit com stage automático
+  "git.enableSmartCommit": true,
+
+  // Confirma antes de fazer sync (push)
+  "git.confirmSync": false,
+
+  // Permite commit vazio (com mensagem padrão)
+  "git.allowEmptyCommits": false,
+
+  // Usa input box para mensagem se vazia
+  "git.useCommitInputAsStashMessage": true,
 
   // Mostra decorações do git inline
   "git.decorations.enabled": true
