@@ -6,9 +6,20 @@ datasource db {
   provider = "sqlite"
 }
 
-enum UserRole {
+enum TeamRole {
+  HEAD_COACH
   ADMIN
-  TEAM
+  AUXILIAR
+  PREPARADOR_FISICO
+  MEDICO
+  OUTRO
+}
+
+enum MembershipStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  INACTIVE
 }
 
 enum ChampionshipStatus {
@@ -38,34 +49,35 @@ enum RegistrationStatus {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  role      UserRole @default(TEAM)
-  team      Team?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String          @id @default(uuid())
+  name        String
+  email       String          @unique
+  password    String
+  defaultRole TeamRole        @default(AUXILIAR)
+  isAdmin     Boolean         @default(false)
+  membership  TeamMembership?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }
 
 model Team {
-  id             String   @id @default(uuid())
-  name           String   @unique
-  city           String
-  state          String   @default("RS")
-  responsible    String
-  phone          String
-  sex            String   // "masculino" ou "feminino"
-  userId         String   @unique
-  user           User     @relation(fields: [userId], references: [id])
+  id             String           @id @default(uuid())
+  name           String           @unique
+  logoUrl        String?
+  city           String?
+  state          String?          @default("RS")
+  phone          String?
+  sex            String?          // "masculino" ou "feminino"
+  members        TeamMembership[]
   gym            Gym?
   registrations  Registration[]
-  homeGames      Game[]   @relation("HomeTeam")
-  awayGames      Game[]   @relation("AwayTeam")
+  homeGames      Game[]           @relation("HomeTeam")
+  awayGames      Game[]           @relation("AwayTeam")
   standings      Standing[]
   notifications  Notification[]
-  sentMessages   Message[] @relation("SentMessages")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  sentMessages   Message[]        @relation("SentMessages")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model Gym {
@@ -232,4 +244,17 @@ model Holiday {
   date  DateTime
   name  String
   year  Int
+}
+
+model TeamMembership {
+  id          String           @id @default(uuid())
+  userId      String           @unique
+  teamId      String
+  role        TeamRole
+  status      MembershipStatus @default(PENDING)
+  user        User             @relation(fields: [userId], references: [id])
+  team        Team             @relation(fields: [teamId], references: [id])
+  requestedAt DateTime         @default(now())
+  approvedAt  DateTime?
+  updatedAt   DateTime         @updatedAt
 }

@@ -17,7 +17,14 @@ export const authOptions: NextAuthOptions = {
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
-          include: { team: true }
+          include: {
+            membership: {
+              where: { status: 'ACTIVE' },
+              include: {
+                team: true
+              }
+            }
+          }
         })
 
         if (!user) return null
@@ -28,10 +35,12 @@ export const authOptions: NextAuthOptions = {
 
         return {
           id: user.id,
+          name: user.name,
           email: user.email,
-          role: user.role,
-          teamId: user.team?.id || null,
-          teamName: user.team?.name || null
+          isAdmin: user.isAdmin,
+          teamId: user.membership?.team.id || null,
+          teamName: user.membership?.team.name || null,
+          teamRole: user.membership?.role || null
         }
       }
     })
@@ -40,18 +49,22 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
-        token.role = (user as any).role
+        token.name = (user as any).name
+        token.isAdmin = (user as any).isAdmin
         token.teamId = (user as any).teamId
         token.teamName = (user as any).teamName
+        token.teamRole = (user as any).teamRole
       }
       return token
     },
     async session({ session, token }) {
       if (session.user) {
         (session.user as any).id = token.id
-        ;(session.user as any).role = token.role
+        ;(session.user as any).name = token.name
+        ;(session.user as any).isAdmin = token.isAdmin
         ;(session.user as any).teamId = token.teamId
         ;(session.user as any).teamName = token.teamName
+        ;(session.user as any).teamRole = token.teamRole
       }
       return session
     }
