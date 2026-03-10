@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, ChampionshipStatus } from '@prisma/client'
+import { PrismaClient, ChampionshipStatus, TeamRole, MembershipStatus } from '@prisma/client'
 import { PrismaLibSql } from '@prisma/adapter-libsql'
 import bcrypt from 'bcryptjs'
 import * as dotenv from 'dotenv'
@@ -43,6 +43,7 @@ async function main() {
   await prisma.championshipCategory.deleteMany()
   await prisma.championship.deleteMany()
   await prisma.gym.deleteMany()
+  await prisma.teamMembership.deleteMany()
   await prisma.team.deleteMany()
   await prisma.user.deleteMany()
   await prisma.holiday.deleteMany()
@@ -52,9 +53,11 @@ async function main() {
   const adminPassword = await bcrypt.hash('admin123', 10)
   const admin = await prisma.user.create({
     data: {
+      name: 'Brayan Alex Guarnieri',
       email: 'brayanalexguarnieri@gmail.com',
       password: adminPassword,
-      role: UserRole.ADMIN,
+      defaultRole: TeamRole.ADMIN,
+      isAdmin: true,
     }
   })
   console.log('✅ Admin criado:', admin.email)
@@ -63,41 +66,55 @@ async function main() {
   console.log('🏀 Criando equipes...')
 
   const teams = [
-    { name: "Flyboys", city: "Porto Alegre", responsible: "João Silva", phone: "(51) 99999-0001" },
-    { name: "Richmond", city: "Novo Hamburgo", responsible: "Pedro Santos", phone: "(51) 99999-0002" },
-    { name: "Amb", city: "Canoas", responsible: "Carlos Oliveira", phone: "(51) 99999-0003" },
-    { name: "Sinodal", city: "São Leopoldo", responsible: "Rafael Costa", phone: "(51) 99999-0004" },
-    { name: "Sogipa", city: "Porto Alegre", responsible: "Lucas Ferreira", phone: "(51) 99999-0005" },
-    { name: "Dunk", city: "Gravataí", responsible: "Marcelo Alves", phone: "(51) 99999-0006" },
-    { name: "Recreio", city: "Caxias do Sul", responsible: "Fernando Lima", phone: "(54) 99999-0007" },
-    { name: "Sojao", city: "Esteio", responsible: "Gabriel Souza", phone: "(51) 99999-0008" },
-    { name: "Juvenil", city: "Gravataí", responsible: "André Martins", phone: "(51) 99999-0009" },
-    { name: "Apacobas", city: "Sapucaia", responsible: "Ricardo Rocha", phone: "(51) 99999-0010" },
+    { name: "Flyboys", city: "Porto Alegre", headCoach: "João Silva", phone: "(51) 99999-0001" },
+    { name: "Richmond", city: "Novo Hamburgo", headCoach: "Pedro Santos", phone: "(51) 99999-0002" },
+    { name: "Amb", city: "Canoas", headCoach: "Carlos Oliveira", phone: "(51) 99999-0003" },
+    { name: "Sinodal", city: "São Leopoldo", headCoach: "Rafael Costa", phone: "(51) 99999-0004" },
+    { name: "Sogipa", city: "Porto Alegre", headCoach: "Lucas Ferreira", phone: "(51) 99999-0005" },
+    { name: "Dunk", city: "Gravataí", headCoach: "Marcelo Alves", phone: "(51) 99999-0006" },
+    { name: "Recreio", city: "Caxias do Sul", headCoach: "Fernando Lima", phone: "(54) 99999-0007" },
+    { name: "Sojao", city: "Esteio", headCoach: "Gabriel Souza", phone: "(51) 99999-0008" },
+    { name: "Juvenil", city: "Gravataí", headCoach: "André Martins", phone: "(51) 99999-0009" },
+    { name: "Apacobas", city: "Sapucaia", headCoach: "Ricardo Rocha", phone: "(51) 99999-0010" },
   ]
 
   const defaultPassword = await bcrypt.hash('senha123', 10)
 
   for (const teamData of teams) {
-    const user = await prisma.user.create({
+    // Criar HEAD_COACH user
+    const headCoachUser = await prisma.user.create({
       data: {
+        name: teamData.headCoach,
         email: `${teamData.name.toLowerCase()}@fgb.com.br`,
         password: defaultPassword,
-        role: UserRole.TEAM,
+        defaultRole: TeamRole.HEAD_COACH,
+        isAdmin: false,
       }
     })
 
+    // Criar equipe
     const team = await prisma.team.create({
       data: {
         name: teamData.name,
         city: teamData.city,
         state: 'RS',
-        responsible: teamData.responsible,
         phone: teamData.phone,
         sex: 'masculino',
-        userId: user.id,
       }
     })
 
+    // Criar TeamMembership para o HEAD_COACH
+    await prisma.teamMembership.create({
+      data: {
+        userId: headCoachUser.id,
+        teamId: team.id,
+        role: TeamRole.HEAD_COACH,
+        status: MembershipStatus.ACTIVE,
+        approvedAt: new Date(),
+      }
+    })
+
+    // Criar ginásio
     await prisma.gym.create({
       data: {
         name: `Ginásio ${teamData.name}`,
@@ -110,7 +127,7 @@ async function main() {
       }
     })
 
-    console.log(`✅ Equipe criada: ${team.name} (${team.city})`)
+    console.log(`✅ Equipe criada: ${team.name} (HEAD_COACH: ${teamData.headCoach})`)
   }
 
   // 3. Criar feriados 2026

@@ -28,7 +28,17 @@ export default function LoginPage() {
       setLoading(false)
       return
     }
-    router.push('/team/dashboard')
+
+    // Buscar sessão para verificar se usuário tem equipe
+    const response = await fetch('/api/auth/session')
+    const session = await response.json()
+
+    // Redirecionar baseado em se tem equipe ou não
+    if (session?.user?.teamId) {
+      router.push('/team/dashboard')
+    } else {
+      router.push('/team/onboarding')
+    }
   }
 
   return (
@@ -168,7 +178,7 @@ export default function LoginPage() {
             <p className="text-sm text-slate-600">
               Não possui conta?{' '}
               <Link href="/register" className="text-orange-500 hover:text-orange-400 font-semibold transition-colors">
-                Registre sua equipe
+                Criar conta
               </Link>
             </p>
           </div>
