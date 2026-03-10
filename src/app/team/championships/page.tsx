@@ -54,7 +54,7 @@ export default async function TeamChampionshipsPage() {
                   <div>
                     <CardTitle className="text-xl">{championship.name}</CardTitle>
                     <CardDescription className="text-slate-300 mt-1">
-                      Temporada {championship.year}
+                      {championship.description || 'Campeonato FGB'}
                     </CardDescription>
                   </div>
                   <span className="inline-flex items-center rounded-full bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-400 border border-orange-500/30">
@@ -66,7 +66,7 @@ export default async function TeamChampionshipsPage() {
               <CardContent className="space-y-4">
                 <div className="flex gap-2 text-xs text-slate-400 font-medium flex-wrap">
                   <span className="bg-white/5 px-2 py-1 rounded">
-                    Mínimo {championship.minTeamsPerCategory} equipes/categoria
+                    Mínimo {championship.minTeamsPerCat} equipes/categoria
                   </span>
                   <span className="bg-white/5 px-2 py-1 rounded">
                     {championship.categories.length} categoria(s)

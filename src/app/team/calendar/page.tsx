@@ -4,19 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 export const dynamic = 'force-dynamic'
 
 export default async function TeamCalendarPage() {
-  // Fetch upcoming matches (likely empty for now)
-  const upcomingMatches = await prisma.match.findMany({
+  // Fetch upcoming games (likely empty for now)
+  const upcomingMatches = await prisma.game.findMany({
     where: {
       status: 'SCHEDULED',
-      scheduledTime: { gte: new Date() },
+      dateTime: { gte: new Date() },
     },
-    orderBy: { scheduledTime: 'asc' },
+    orderBy: { dateTime: 'asc' },
     take: 10,
     include: {
       homeTeam: { select: { name: true } },
       awayTeam: { select: { name: true } },
       category: { select: { name: true } },
-      venue: { select: { name: true, city: true } },
     }
   })
 
@@ -72,20 +71,18 @@ export default async function TeamCalendarPage() {
                         <span className="text-xs text-slate-500 bg-slate-800 px-2 py-0.5 rounded">
                           {match.category.name}
                         </span>
-                        {match.venue && (
-                          <span className="text-xs text-slate-500">
-                            {match.venue.name}, {match.venue.city}
-                          </span>
-                        )}
+                        <span className="text-xs text-slate-500">
+                          {match.location}, {match.city}
+                        </span>
                       </div>
                       <p className="font-semibold text-white">
                         {match.homeTeam.name} <span className="text-slate-500 font-normal">vs</span> {match.awayTeam.name}
                       </p>
                     </div>
-                    {match.scheduledTime && (
+                    {match.dateTime && (
                       <div className="text-right flex-shrink-0">
                         <p className="text-orange-400 font-semibold text-sm">
-                          {new Date(match.scheduledTime).toLocaleDateString('pt-BR', {
+                          {new Date(match.dateTime).toLocaleDateString('pt-BR', {
                             weekday: 'short',
                             day: '2-digit',
                             month: '2-digit',
@@ -93,7 +90,7 @@ export default async function TeamCalendarPage() {
                           })}
                         </p>
                         <p className="text-slate-400 text-xs">
-                          {new Date(match.scheduledTime).toLocaleTimeString('pt-BR', {
+                          {new Date(match.dateTime).toLocaleTimeString('pt-BR', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}

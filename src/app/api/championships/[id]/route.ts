@@ -7,19 +7,19 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+
     const championship = await prisma.championship.findUnique({
       where: { id },
       include: {
-        categories: {
-          include: {
-            _count: { select: { registrations: true } }
-          }
+        categories: true,
+        _count: {
+          select: { registrations: true }
         }
       }
     })
 
     if (!championship) {
-      return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Campeonato nao encontrado' }, { status: 404 })
     }
 
     return NextResponse.json(championship)

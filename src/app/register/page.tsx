@@ -256,7 +256,7 @@ export default function RegisterPage() {
                   </div>
                   <div className="space-y-2">
                     <Label className="label-uppercase text-[--text-dim]">Disponibilidade</Label>
-                    <Select value={gymAvailability} onValueChange={setGymAvailability}>
+                    <Select value={gymAvailability} onValueChange={(value) => setGymAvailability(value || 'sabado_domingo')}>
                       <SelectTrigger className="bg-[--bg-card] border-[--border-color] text-[--text-main]">
                         <SelectValue />
                       </SelectTrigger>
