@@ -21,7 +21,7 @@ export default function Home() {
           </Link>
           <Link href="/register">
             <Button className="bg-orange-600 hover:bg-orange-500 text-white h-9 px-5 text-sm font-semibold border-0 rounded-none transition-colors">
-              Registrar Equipe
+              Criar Conta
             </Button>
           </Link>
         </nav>
@@ -102,7 +102,7 @@ export default function Home() {
                     size="lg"
                     className="bg-orange-600 hover:bg-orange-500 text-white font-bold h-12 px-10 text-base border-0 rounded-none shadow-[0_0_50px_-8px_rgba(234,88,12,0.6)] transition-all hover:shadow-[0_0_60px_-8px_rgba(234,88,12,0.8)]"
                   >
-                    Registrar Equipe
+                    Criar Conta
                     <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                     </svg>
