@@ -7,39 +7,31 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { CategorySelector } from '@/components/CategorySelector'
-import { Section } from '@/components/Section'
 
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const [sex, setSex] = useState<'masculino' | 'feminino'>('masculino')
-  const [categories, setCategories] = useState<string[]>([])
-  const [gymAvailability, setGymAvailability] = useState('sabado_domingo')
-  const [canHost, setCanHost] = useState(true)
+  const [defaultRole, setDefaultRole] = useState<string>('AUXILIAR')
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
     const formData = new FormData(e.currentTarget)
+    const password = formData.get('password') as string
+    const confirmPassword = formData.get('confirmPassword') as string
+
+    if (password !== confirmPassword) {
+      alert("As senhas não coincidem")
+      setLoading(false)
+      return
+    }
+
     const data = {
+      name: formData.get('name'),
       email: formData.get('email'),
-      password: formData.get('password'),
-      teamName: formData.get('teamName'),
-      city: formData.get('city'),
-      responsible: formData.get('responsible'),
-      phone: formData.get('phone'),
-      sex,
-      categories,
-      gym: {
-        name: formData.get('gymName'),
-        address: formData.get('gymAddress'),
-        city: formData.get('gymCity'),
-        capacity: parseInt(formData.get('gymCapacity') as string),
-        availability: gymAvailability,
-        canHost,
-      }
+      password,
+      defaultRole
     }
 
     try {
@@ -57,7 +49,7 @@ export default function RegisterPage() {
         return
       }
 
-      alert("Equipe cadastrada com sucesso!")
+      alert("Conta criada com sucesso! Faça login para continuar.")
       router.push('/login')
     } catch {
       alert("Erro ao conectar ao servidor.")
@@ -85,12 +77,11 @@ export default function RegisterPage() {
 
         <div className="relative z-10">
           <h2 className="font-black uppercase text-[--text-main] leading-none tracking-tight mb-6 text-5xl">
-            Registre<br />
-            sua<br />
-            <span className="text-[--orange]">Equipe</span>
+            Crie sua<br />
+            <span className="text-[--orange]">Conta</span>
           </h2>
           <p className="text-[--text-secondary] text-sm leading-relaxed max-w-xs">
-            Crie sua conta para inscrever sua equipe nos campeonatos, gerenciar o ginásio e acompanhar o calendário.
+            Após criar sua conta, você poderá criar sua equipe ou solicitar entrada em uma equipe existente.
           </p>
         </div>
 
@@ -103,217 +94,90 @@ export default function RegisterPage() {
       </div>
 
       {/* Right panel — form */}
-      <div className="flex-1 flex flex-col justify-start items-center p-6 md:p-12 overflow-y-auto">
-        <div className="w-full max-w-2xl animate-fade-up">
+      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 overflow-y-auto">
+        <div className="w-full max-w-md animate-fade-up">
           <div className="mb-8">
             <h1 className="font-black text-3xl uppercase text-[--text-main] tracking-tight mb-2">
-              Cadastro de Equipe
+              Criar Conta
             </h1>
             <p className="text-[--text-secondary] text-sm">
-              Preencha todos os dados da sua equipe
+              Preencha seus dados para começar
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Dados da Equipe */}
-            <Section title="Dados da Equipe">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Nome da Equipe</Label>
-                  <Input
-                    name="teamName"
-                    placeholder="Ex: Flyboys"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Cidade</Label>
-                  <Input
-                    name="city"
-                    placeholder="Porto Alegre"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Nome Completo */}
+            <div className="space-y-2">
+              <Label className="label-uppercase text-[--text-dim]">Nome Completo</Label>
+              <Input
+                name="name"
+                placeholder="Ex: João Silva"
+                required
+                className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Responsável</Label>
-                  <Input
-                    name="responsible"
-                    placeholder="Nome completo"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Telefone</Label>
-                  <Input
-                    name="phone"
-                    placeholder="(51) 99999-9999"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-              </div>
+            {/* Email */}
+            <div className="space-y-2">
+              <Label className="label-uppercase text-[--text-dim]">E-mail</Label>
+              <Input
+                name="email"
+                type="email"
+                placeholder="seu@email.com"
+                required
+                className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
+              />
+            </div>
 
-              <div className="space-y-2">
-                <Label className="label-uppercase text-[--text-dim]">E-mail</Label>
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="contato@equipe.com.br"
-                  required
-                  className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                />
-              </div>
-            </Section>
-
-            {/* Naipe */}
-            <Section title="Naipe da Equipe">
-              <div className="flex gap-4">
-                <button
-                  type="button"
-                  onClick={() => setSex('masculino')}
-                  className={`flex-1 px-6 py-4 rounded-lg border-2 font-bold transition-all flex items-center justify-center gap-2 ${
-                    sex === 'masculino'
-                      ? 'bg-[--blue-admin]/20 border-[--blue-admin] text-[--blue-light]'
-                      : 'bg-[--bg-card] border-[--border-color] text-[--text-secondary]'
-                  }`}
-                >
-                  <span className="text-2xl">♂</span>
-                  <span>Masculino</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSex('feminino')}
-                  className={`flex-1 px-6 py-4 rounded-lg border-2 font-bold transition-all flex items-center justify-center gap-2 ${
-                    sex === 'feminino'
-                      ? 'bg-[--pink-female]/20 border-[--pink-female] text-[--pink-female]'
-                      : 'bg-[--bg-card] border-[--border-color] text-[--text-secondary]'
-                  }`}
-                >
-                  <span className="text-2xl">♀</span>
-                  <span>Feminino</span>
-                </button>
-              </div>
-            </Section>
-
-            {/* Categorias */}
-            <Section
-              title={`Categorias (${categories.length} selecionadas)`}
-              subtitle="Selecione as categorias que sua equipe disputa"
-            >
-              <CategorySelector selected={categories} onChange={setCategories} />
-            </Section>
-
-            {/* Ginásio */}
-            <Section title="Ginásio da Equipe">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="label-uppercase text-[--text-dim]">Nome do Ginásio</Label>
-                    <Input
-                      name="gymName"
-                      placeholder="Ex: Ginásio Municipal"
-                      required
-                      className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="label-uppercase text-[--text-dim]">Cidade</Label>
-                    <Input
-                      name="gymCity"
-                      placeholder="Porto Alegre"
-                      required
-                      className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Endereço</Label>
-                  <Input
-                    name="gymAddress"
-                    placeholder="Rua, número, bairro"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="label-uppercase text-[--text-dim]">Capacidade</Label>
-                    <Input
-                      name="gymCapacity"
-                      type="number"
-                      placeholder="300"
-                      required
-                      className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="label-uppercase text-[--text-dim]">Disponibilidade</Label>
-                    <Select value={gymAvailability} onValueChange={(value) => setGymAvailability(value || 'sabado_domingo')}>
-                      <SelectTrigger className="bg-[--bg-card] border-[--border-color] text-[--text-main]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sabado_domingo">Sábado e Domingo</SelectItem>
-                        <SelectItem value="sabado">Apenas Sábado</SelectItem>
-                        <SelectItem value="domingo">Apenas Domingo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="canHost"
-                    checked={canHost}
-                    onChange={(e) => setCanHost(e.target.checked)}
-                    className="w-4 h-4 rounded border-[--border-color] text-[--orange]"
-                  />
-                  <Label htmlFor="canHost" className="text-sm text-[--text-secondary] cursor-pointer">
-                    Este ginásio pode sediar jogos de campeonatos
-                  </Label>
-                </div>
-              </div>
-            </Section>
+            {/* Papel/Função */}
+            <div className="space-y-2">
+              <Label className="label-uppercase text-[--text-dim]">Sua Função</Label>
+              <Select value={defaultRole} onValueChange={setDefaultRole}>
+                <SelectTrigger className="bg-[--bg-card] border-[--border-color] text-[--text-main]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="AUXILIAR">Auxiliar Técnico</SelectItem>
+                  <SelectItem value="PREPARADOR_FISICO">Preparador Físico</SelectItem>
+                  <SelectItem value="MEDICO">Médico</SelectItem>
+                  <SelectItem value="OUTRO">Outro</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-[--text-dim]">
+                Esta será sua função padrão. O Head Coach poderá alterar seu papel após aprovação.
+              </p>
+            </div>
 
             {/* Senha */}
-            <Section title="Senha de Acesso">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Senha</Label>
-                  <Input
-                    name="password"
-                    type="password"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label className="label-uppercase text-[--text-dim]">Confirmar Senha</Label>
-                  <Input
-                    name="confirmPassword"
-                    type="password"
-                    required
-                    className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
-                  />
-                </div>
-              </div>
-            </Section>
+            <div className="space-y-2">
+              <Label className="label-uppercase text-[--text-dim]">Senha</Label>
+              <Input
+                name="password"
+                type="password"
+                required
+                minLength={6}
+                className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
+              />
+            </div>
+
+            {/* Confirmar Senha */}
+            <div className="space-y-2">
+              <Label className="label-uppercase text-[--text-dim]">Confirmar Senha</Label>
+              <Input
+                name="confirmPassword"
+                type="password"
+                required
+                minLength={6}
+                className="bg-[--bg-card] border-[--border-color] text-[--text-main]"
+              />
+            </div>
 
             <Button
               type="submit"
               className="w-full gradient-orange text-white font-bold h-12 shadow-lg"
               disabled={loading}
             >
-              {loading ? 'Cadastrando...' : 'Cadastrar Equipe'}
+              {loading ? 'Criando conta...' : 'Criar Conta'}
             </Button>
           </form>
 
