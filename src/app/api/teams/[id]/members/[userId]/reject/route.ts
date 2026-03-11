@@ -5,7 +5,7 @@ import { prisma } from '@/lib/db';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string; userId: string } }
+  { params }: { params: Promise<{ id: string; userId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function POST(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 });
     }
 
-    const { id: teamId, userId } = params;
+    const { id: teamId, userId } = await params;
 
     // Verificar se o usuário logado é HEAD_COACH ou ADMIN da equipe
     const requesterMembership = await prisma.teamMembership.findFirst({

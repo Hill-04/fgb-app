@@ -6,7 +6,7 @@ import { logger } from '@/lib/logger'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -15,7 +15,7 @@ export async function POST(
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    const teamId = params.id
+    const { id: teamId } = await params
 
     // Join team through service layer
     const membership = await TeamService.joinTeam(session.user.id, teamId)
