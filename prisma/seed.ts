@@ -1,5 +1,6 @@
 import { PrismaClient, ChampionshipStatus, TeamRole, MembershipStatus } from '@prisma/client'
-import { PrismaLibSql } from '@prisma/adapter-libsql'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
+import { createClient } from '@libsql/client'
 import bcrypt from 'bcryptjs'
 import * as dotenv from 'dotenv'
 
@@ -24,7 +25,8 @@ async function main() {
   const isRemote = url.startsWith('libsql://')
   const authToken = isRemote ? process.env.DATABASE_AUTH_TOKEN : undefined
 
-  const adapter = new PrismaLibSql({ url, authToken })
+  const libsql = createClient({ url, authToken })
+  const adapter = new PrismaLibSQL(libsql)
   const prisma = new PrismaClient({ adapter } as any)
 
   console.log('🌱 Iniciando seed do banco de dados...')
