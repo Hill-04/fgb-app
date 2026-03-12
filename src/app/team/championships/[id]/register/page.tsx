@@ -140,7 +140,7 @@ export default async function ChampionshipRegisterPage({
       {/* Registration Form */}
       <RegistrationForm
         championship={championship}
-        team={team}
+        team={team as any}
         holidays={holidays}
       />
     </div>

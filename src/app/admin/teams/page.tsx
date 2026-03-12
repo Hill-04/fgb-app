@@ -7,7 +7,14 @@ export const dynamic = 'force-dynamic'; // Ensures this page isn't statically co
 
 export default async function AdminTeamsPage() {
   const teams = await prisma.team.findMany({
-    include: { user: true, gym: true },
+    include: {
+      gym: true,
+      members: {
+        where: { role: 'HEAD_COACH', status: 'ACTIVE' },
+        include: { user: { select: { name: true, email: true } } },
+        take: 1
+      }
+    },
     orderBy: { name: 'asc' },
   });
 
@@ -43,19 +50,22 @@ export default async function AdminTeamsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  teams.map((team) => (
-                    <TableRow key={team.id} className="border-white/10 hover:bg-slate-800/50">
-                      <TableCell className="font-medium text-slate-200">{team.name}</TableCell>
-                      <TableCell className="text-slate-300">{team.responsible}</TableCell>
-                      <TableCell className="text-slate-300">{team.user?.email || 'N/A'}</TableCell>
-                      <TableCell className="text-slate-300">{team.city}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="outline" size="sm" className="bg-transparent border-white/20 text-blue-400 hover:text-blue-300 hover:bg-blue-950/30">
-                          Ver Detalhes
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  teams.map((team) => {
+                    const headCoach = team.members[0]?.user
+                    return (
+                      <TableRow key={team.id} className="border-white/10 hover:bg-slate-800/50">
+                        <TableCell className="font-medium text-slate-200">{team.name}</TableCell>
+                        <TableCell className="text-slate-300">{headCoach?.name || 'N/A'}</TableCell>
+                        <TableCell className="text-slate-300">{headCoach?.email || 'N/A'}</TableCell>
+                        <TableCell className="text-slate-300">{team.city}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" className="bg-transparent border-white/20 text-blue-400 hover:text-blue-300 hover:bg-blue-950/30">
+                            Ver Detalhes
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>

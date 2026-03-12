@@ -15,12 +15,11 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || '';
 
     const teams = await prisma.team.findMany({
-      where: {
+      where: search ? {
         name: {
-          contains: search,
-          mode: 'insensitive'
+          contains: search
         }
-      },
+      } : {},
       select: {
         id: true,
         name: true,

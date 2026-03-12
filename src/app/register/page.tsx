@@ -132,7 +132,7 @@ export default function RegisterPage() {
             {/* Papel/Função */}
             <div className="space-y-2">
               <Label className="label-uppercase text-[--text-dim]">Sua Função</Label>
-              <Select value={defaultRole} onValueChange={setDefaultRole}>
+              <Select value={defaultRole} onValueChange={(value) => value && setDefaultRole(value)}>
                 <SelectTrigger className="bg-[--bg-card] border-[--border-color] text-[--text-main]">
                   <SelectValue />
                 </SelectTrigger>

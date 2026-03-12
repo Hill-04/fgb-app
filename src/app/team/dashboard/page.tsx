@@ -58,7 +58,7 @@ export default async function TeamDashboardPage() {
   const openChampionships = await prisma.championship.findMany({
     where: {
       status: 'REGISTRATION_OPEN',
-      sex: team.sex
+      sex: team.sex || undefined
     },
     include: {
       categories: true,
@@ -154,7 +154,7 @@ export default async function TeamDashboardPage() {
                     Categorias
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {championship.categories.slice(0, 4).map((cat) => (
+                    {championship.categories.slice(0, 4).map((cat: { id: string; name: string }) => (
                       <Badge key={cat.id} variant="default" size="sm">
                         {cat.name}
                       </Badge>
