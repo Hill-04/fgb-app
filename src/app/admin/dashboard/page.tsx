@@ -42,10 +42,10 @@ export default async function AdminDashboardPage() {
       <div className="space-y-10">
         {/* Header */}
         <div className="animate-fade-in">
-          <h1 className="text-4xl font-display font-black text-slate-900 tracking-tight mb-2">
+          <h1 className="text-4xl font-display font-black text-[--text-main] tracking-tight mb-2">
             Dashboard Administrativo
           </h1>
-          <p className="text-slate-500 font-medium text-lg">
+          <p className="text-[--text-secondary] font-medium text-lg">
             Visão geral da Federação Gaúcha de Basquete
           </p>
         </div>
@@ -104,7 +104,7 @@ export default async function AdminDashboardPage() {
               action={
                 <Link
                   href="/admin/championships"
-                  className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-all bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl border border-blue-200 shadow-sm hover:shadow"
+                  className="text-sm font-bold text-[#FF6B00] hover:text-[#E66000] transition-all bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 px-5 py-2.5 rounded-xl border border-[#FF6B00]/20 shadow-sm hover:shadow"
                 >
                   Ver todas
                 </Link>
@@ -112,12 +112,12 @@ export default async function AdminDashboardPage() {
             >
               <div className="space-y-4">
                 {recentRegistrations.map((registration) => (
-                  <div key={registration.id} className="bg-white border border-slate-200 shadow-sm p-5 rounded-2xl flex items-center justify-between hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300">
+                  <div key={registration.id} className="glass-panel p-5 rounded-2xl flex items-center justify-between hover:border-[rgba(255,255,255,0.2)] hover:-translate-y-0.5 transition-all duration-300">
                     <div>
-                      <h3 className="font-bold text-lg text-slate-900 tracking-tight">
+                      <h3 className="font-bold text-lg text-[--text-main] tracking-tight">
                         {registration.team.name}
                       </h3>
-                      <p className="text-sm font-medium text-slate-500 mt-1">
+                      <p className="text-sm font-medium text-[--text-secondary] mt-1">
                         {registration.championship.name} • {registration.categories.length} categoria(s)
                       </p>
                     </div>
@@ -132,7 +132,7 @@ export default async function AdminDashboardPage() {
                         {registration.status === 'CONFIRMED' ? 'Confirmado' :
                          registration.status === 'PENDING' ? 'Pendente' : 'Rejeitado'}
                       </Badge>
-                      <span className="text-xs font-medium text-slate-500">
+                      <span className="text-xs font-medium text-[--text-dim]">
                         {new Date(registration.registeredAt).toLocaleDateString('pt-BR')}
                       </span>
                     </div>
@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
               action={
                 <Link
                   href="/admin/championships"
-                  className="text-sm font-bold text-orange-600 hover:text-orange-700 transition-all bg-orange-50 hover:bg-orange-100 px-5 py-2.5 rounded-xl border border-orange-200 shadow-sm hover:shadow"
+                  className="text-sm font-bold text-[#FF6B00] hover:text-[#E66000] transition-all bg-[#FF6B00]/10 hover:bg-[#FF6B00]/20 px-5 py-2.5 rounded-xl border border-[#FF6B00]/20 shadow-sm hover:shadow"
                 >
                   Gerenciar
                 </Link>
@@ -163,7 +163,7 @@ export default async function AdminDashboardPage() {
                   <Link
                     key={championship.id}
                     href={`/admin/championships/${championship.id}`}
-                    className="bg-white border border-slate-200 p-6 rounded-3xl flex flex-col justify-between hover:border-slate-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                    className="glass-panel p-6 rounded-3xl flex flex-col justify-between hover:border-[rgba(255,255,255,0.2)] hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
                   >
                     <div className="space-y-5 relative z-10">
                       <div className="flex flex-col gap-4">
@@ -184,37 +184,37 @@ export default async function AdminDashboardPage() {
                              championship.status === 'CONFIRMED' ? 'Confirmado' :
                              championship.status === 'ONGOING' ? 'Em andamento' : 'Concluído'}
                           </Badge>
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-slate-200 group-hover:scale-110 transition-all text-xl">
+                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-white/20 group-hover:scale-110 transition-all text-xl">
                             {championship.sex === 'masculino' ? '🏀' : '🎀'}
                           </div>
                         </div>
                         <div>
-                          <h3 className="font-display font-black text-xl text-slate-900 tracking-tight group-hover:text-orange-600 transition-colors leading-tight">
+                          <h3 className="font-display font-black text-xl text-[--text-main] tracking-tight group-hover:text-[#FF6B00] transition-colors leading-tight">
                             {championship.name}
                           </h3>
-                          <p className="text-sm font-bold text-slate-500 mt-1.5">
+                          <p className="text-sm font-bold text-[--text-secondary] mt-1.5">
                             {championship.sex === 'masculino' ? 'Masculino' : 'Feminino'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm font-medium text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                      <div className="flex items-center gap-4 text-sm font-medium text-[--text-main] bg-white/5 p-4 rounded-2xl border border-[rgba(255,255,255,0.05)]">
                         <div className="flex-1 flex flex-col">
-                          <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Categorias</span>
-                          <span className="text-lg font-bold text-slate-900">{championship._count.categories}</span>
+                          <span className="text-[10px] uppercase tracking-widest text-[--text-secondary] mb-1">Categorias</span>
+                          <span className="text-lg font-bold text-[--text-main]">{championship._count.categories}</span>
                         </div>
-                        <div className="w-px h-10 bg-slate-200"></div>
+                        <div className="w-px h-10 bg-[rgba(255,255,255,0.1)]"></div>
                         <div className="flex-1 flex flex-col">
-                          <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Inscrições</span>
-                          <span className="text-lg font-bold text-slate-900">{championship._count.registrations}</span>
+                          <span className="text-[10px] uppercase tracking-widest text-[--text-secondary] mb-1">Inscrições</span>
+                          <span className="text-lg font-bold text-[--text-main]">{championship._count.registrations}</span>
                         </div>
                       </div>
                     </div>
 
                     {championship.regDeadline && (
-                      <div className="text-xs font-semibold text-slate-600 mt-6 pt-5 border-t border-slate-100 flex items-center gap-2 relative z-10">
-                        <Calendar className="w-4 h-4 text-slate-500" />
-                        Prazo: <span className="text-slate-800">{new Date(championship.regDeadline).toLocaleDateString('pt-BR')}</span>
+                      <div className="text-xs font-semibold text-[--text-secondary] mt-6 pt-5 border-t border-[rgba(255,255,255,0.1)] flex items-center gap-2 relative z-10">
+                        <Calendar className="w-4 h-4 text-[--text-dim]" />
+                        Prazo: <span className="text-[--text-main]">{new Date(championship.regDeadline).toLocaleDateString('pt-BR')}</span>
                       </div>
                     )}
                   </Link>

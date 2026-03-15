@@ -4,23 +4,23 @@ import { Button } from '@/components/ui/button';
 export default function Home() {
   return (
     <div className="min-h-screen bg-[--bg-main] text-[--text-main] flex flex-col selection:bg-orange-500/20">
-      {/* Header - Premium Light Glass Style */}
-      <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-slate-200 bg-white/70 backdrop-blur-2xl sticky top-0 z-50">
+      {/* Header - Dark Premium Glass Style */}
+      <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[rgba(255,255,255,0.05)] bg-[rgba(5,5,5,0.7)] backdrop-blur-2xl sticky top-0 z-50">
         <Link className="flex items-center gap-3 group" href="#">
-          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-[10px] shadow-[0_4px_10px_rgba(234,88,12,0.2)] transition-transform duration-300 group-hover:scale-105 shrink-0">
+          <div className="w-9 h-9 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[10px] shadow-[0_4px_10px_rgba(255,107,0,0.2)] transition-transform duration-300 group-hover:scale-105 shrink-0">
             <span className="font-display font-black text-white text-xs tracking-tight">FGB</span>
           </div>
           <div className="hidden sm:block leading-none">
-            <div className="font-display font-bold text-xs text-slate-800 tracking-[0.2em] uppercase">Federação Gaúcha</div>
-            <div className="text-[10px] text-slate-500 tracking-widest uppercase mt-0.5">de Basquete</div>
+            <div className="font-display font-bold text-xs text-white tracking-[0.2em] uppercase">Federação Gaúcha</div>
+            <div className="text-[10px] text-[--text-dim] tracking-widest uppercase mt-0.5">de Basquete</div>
           </div>
         </Link>
         <nav className="flex gap-6 items-center">
-          <Link className="text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors" href="/login">
+          <Link className="text-sm font-bold text-[--text-secondary] hover:text-white transition-colors" href="/login">
             Entrar
           </Link>
           <Link href="/register">
-            <Button className="bg-orange-600 hover:bg-orange-700 text-white h-9 px-6 text-sm font-bold rounded-full transition-all shadow-md hover:shadow-lg hover:scale-105">
+            <Button className="bg-[#FF6B00] hover:bg-[#CC5500] text-white h-9 px-6 text-sm font-bold rounded-full transition-all shadow-[0_4px_15px_-3px_rgba(255,107,0,0.4)] hover:shadow-[0_8px_20px_-5px_rgba(255,107,0,0.5)] hover:scale-105">
               Criar Conta
             </Button>
           </Link>
@@ -31,11 +31,11 @@ export default function Home() {
         {/* Decorative: Soft light backgrounds and a subtle grid */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none select-none" aria-hidden="true">
           {/* Subtle grid pattern background */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000006_1px,transparent_1px),linear-gradient(to_bottom,#00000006_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
           
-          {/* Atmospheric glows - extremely subtle for light mode */}
-          <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-orange-600/[0.03] blur-[150px]" />
-          <div className="absolute top-[20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/[0.02] blur-[120px]" />
+          {/* Atmospheric glows - extremely subtle for dark mode */}
+          <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] rounded-full bg-[#FF6B00]/[0.05] blur-[150px]" />
+          <div className="absolute top-[20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/[0.04] blur-[120px]" />
         </div>
 
         {/* Hero */}
@@ -43,29 +43,29 @@ export default function Home() {
           <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
             {/* Pill Badge */}
             <div
-              className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 rounded-full mb-10 animate-fade-in shadow-sm"
+              className="inline-flex items-center gap-2 border border-[rgba(255,255,255,0.1)] bg-white/5 px-4 py-2 rounded-full mb-10 animate-fade-in shadow-sm"
               style={{ animationDelay: '0ms' }}
             >
-              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_8px_rgba(234,88,12,0.4)]" />
-              <span className="text-[11px] font-extrabold text-slate-700 tracking-[0.2em] uppercase">
+              <span className="w-2 h-2 rounded-full bg-[#FF6B00] animate-pulse shadow-[0_0_8px_rgba(255,107,0,0.5)]" />
+              <span className="text-[11px] font-extrabold text-[--text-main] tracking-[0.2em] uppercase">
                 Novo Sistema Integrado · 2026
               </span>
             </div>
 
             {/* Headline */}
             <h1
-              className="font-display font-black leading-[1.05] tracking-tighter text-slate-900 mb-8 animate-fade-up max-w-5xl"
+              className="font-display font-black leading-[1.05] tracking-tighter text-white mb-8 animate-fade-up max-w-5xl drop-shadow-lg"
               style={{ fontSize: 'clamp(3.5rem, 8vw, 6.5rem)', animationDelay: '80ms' }}
             >
               O Futuro do{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-700">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[--accent-sec]">
                 Basquete
               </span>{' '}
               Gaúcho
             </h1>
 
             <p
-              className="text-slate-600 text-lg md:text-xl max-w-2xl leading-relaxed mb-12 animate-fade-up font-medium"
+              className="text-[--text-secondary] text-lg md:text-xl max-w-2xl leading-relaxed mb-12 animate-fade-up font-medium"
               style={{ animationDelay: '160ms' }}
             >
               Automatize a organização de campeonatos. Inscrições digitais, definição de formatos
@@ -79,7 +79,7 @@ export default function Home() {
               <Link href="/register">
                 <Button
                   size="lg"
-                  className="bg-orange-600 hover:bg-orange-700 text-white font-bold h-14 px-10 text-base rounded-full shadow-[0_8px_20px_-6px_rgba(234,88,12,0.5)] transition-all hover:shadow-[0_12px_24px_-8px_rgba(234,88,12,0.6)] hover:scale-105"
+                  className="bg-[#FF6B00] hover:bg-[#CC5500] text-white font-bold h-14 px-10 text-base rounded-full shadow-[0_8px_20px_-6px_rgba(255,107,0,0.5)] transition-all hover:shadow-[0_12px_24px_-8px_rgba(255,107,0,0.6)] hover:scale-105"
                 >
                   Criar Conta
                   <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -91,7 +91,7 @@ export default function Home() {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="bg-white border-slate-300 text-slate-800 hover:bg-slate-50 hover:text-orange-600 h-14 px-10 text-base rounded-full transition-all shadow-sm hover:scale-105 hover:border-orange-200"
+                  className="bg-white/5 border-[rgba(255,255,255,0.1)] text-white hover:bg-white/10 hover:text-[#FF6B00] h-14 px-10 text-base rounded-full transition-all shadow-sm hover:scale-105 hover:border-[#FF6B00]/50"
                 >
                   Painel da Federação
                 </Button>
@@ -102,18 +102,18 @@ export default function Home() {
 
         {/* Stats bar - Solid Clean Variant */}
         <section className="relative z-10 px-6 md:px-14 py-10">
-          <div className="max-w-4xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.06)]">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+          <div className="max-w-4xl mx-auto glass-panel rounded-3xl p-8 md:p-12 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.3)]">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-10 md:gap-0 divide-y md:divide-y-0 md:divide-x divide-[rgba(255,255,255,0.05)]">
               {[
                 { value: '12+', label: 'Campeonatos/Ano' },
                 { value: '200+', label: 'Equipes Filiadas' },
                 { value: 'IA', label: 'Agendamento Inteligente' },
               ].map((stat) => (
                 <div key={stat.label} className="flex-1 w-full text-center px-4 pt-6 md:pt-0 first:pt-0">
-                  <div className="font-display font-black text-4xl md:text-5xl text-slate-900 leading-none tracking-tight">
+                  <div className="font-display font-black text-4xl md:text-5xl text-[--text-main] leading-none tracking-tight">
                     {stat.value}
                   </div>
-                  <div className="text-[11px] text-slate-500 mt-3 uppercase tracking-[0.2em] font-bold">
+                  <div className="text-[11px] text-[--text-secondary] mt-3 uppercase tracking-[0.2em] font-bold">
                     {stat.label}
                   </div>
                 </div>
@@ -122,14 +122,14 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Features - Premium Light Grid */}
+        {/* Features - Premium Dark Grid */}
         <section className="relative z-10 py-24 md:py-32 px-6 md:px-14">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16 md:mb-24">
-              <p className="text-[11px] text-orange-600 font-bold tracking-[0.3em] uppercase mb-4">
+              <p className="text-[11px] text-[#FF6B00] font-bold tracking-[0.3em] uppercase mb-4">
                 Plataforma
               </p>
-              <h2 className="font-display font-black text-4xl md:text-6xl uppercase text-slate-900 tracking-tight">
+              <h2 className="font-display font-black text-4xl md:text-6xl uppercase text-white tracking-tight drop-shadow-md">
                 Funcionalidades
               </h2>
             </div>
@@ -144,8 +144,8 @@ export default function Home() {
                   ),
                   title: 'Inscrição Digital',
                   desc: 'Equipes se inscrevem remotamente, informando categorias, ginásio e datas bloqueadas — sem burocracia.',
-                  color: 'from-orange-50 to-white',
-                  iconColor: 'bg-orange-100 text-orange-600'
+                  color: 'from-[#FF6B00]/10 to-transparent',
+                  iconColor: 'bg-[#FF6B00]/20 text-[#FF6B00] border border-[#FF6B00]/20'
                 },
                 {
                   icon: (
@@ -155,8 +155,8 @@ export default function Home() {
                   ),
                   title: 'Otimização IA',
                   desc: 'Scheduling inteligente agrupa categorias, minimiza viagens e detecta conflitos automaticamente.',
-                  color: 'from-blue-50 to-white',
-                  iconColor: 'bg-blue-100 text-blue-600'
+                  color: 'from-[#8B5CF6]/10 to-transparent',
+                  iconColor: 'bg-[#8B5CF6]/20 text-[#A78BFA] border border-[#8B5CF6]/20'
                 },
                 {
                   icon: (
@@ -166,13 +166,13 @@ export default function Home() {
                   ),
                   title: 'Súmulas e Calendário',
                   desc: 'Tabelas e documentos no formato oficial da FGB gerados automaticamente com um clique.',
-                  color: 'from-purple-50 to-white',
-                  iconColor: 'bg-purple-100 text-purple-600'
+                  color: 'from-[#3B82F6]/10 to-transparent',
+                  iconColor: 'bg-[#3B82F6]/20 text-[#60A5FA] border border-[#3B82F6]/20'
                 },
               ].map((feat) => (
                 <div
                   key={feat.title}
-                  className="group relative overflow-hidden bg-white border border-slate-200 rounded-3xl p-8 hover:border-slate-300 transition-all duration-300 hover:-translate-y-2 shadow-[0_4px_20px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_15px_30px_-10px_rgba(0,0,0,0.1)]"
+                  className="group relative overflow-hidden glass-panel rounded-3xl p-8 hover:border-[rgba(255,255,255,0.15)] transition-all duration-300 hover:-translate-y-2 shadow-[0_10px_30px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_40px_rgba(0,0,0,0.4)]"
                 >
                   <div className={`absolute inset-0 bg-gradient-to-br ${feat.color} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
                   
@@ -180,11 +180,11 @@ export default function Home() {
                     {feat.icon}
                   </div>
                   
-                  <h3 className="relative z-10 font-display font-bold text-2xl text-slate-900 mb-4 tracking-tight">
+                  <h3 className="relative z-10 font-display font-bold text-2xl text-[--text-main] mb-4 tracking-tight">
                     {feat.title}
                   </h3>
                   
-                  <p className="relative z-10 text-base text-slate-600 leading-relaxed font-medium">
+                  <p className="relative z-10 text-base text-[--text-secondary] leading-relaxed font-medium">
                     {feat.desc}
                   </p>
                 </div>
@@ -194,15 +194,15 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="relative z-10 border-t border-slate-200 bg-white py-8 px-6 md:px-14">
+      <footer className="relative z-10 border-t border-[rgba(255,255,255,0.05)] bg-[rgba(5,5,5,0.8)] backdrop-blur-md py-8 px-6 md:px-14">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-6 h-6 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-md shrink-0">
+            <div className="w-6 h-6 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-md shrink-0">
               <span className="font-display font-black text-white text-[10px] tracking-tight">FGB</span>
             </div>
-            <p className="text-sm text-slate-500 font-bold">Federação Gaúcha de Basquete</p>
+            <p className="text-sm text-[--text-dim] font-bold">Federação Gaúcha de Basquete</p>
           </div>
-          <p className="text-sm text-slate-500 font-medium">&copy; {new Date().getFullYear()} Todos os direitos reservados.</p>
+          <p className="text-sm text-[--text-dim] font-medium">&copy; {new Date().getFullYear()} Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

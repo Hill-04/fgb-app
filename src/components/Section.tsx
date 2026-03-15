@@ -11,7 +11,7 @@ type SectionProps = {
 export function Section({ title, subtitle, children, className, action }: SectionProps) {
   return (
     <div className={cn("space-y-6", className)}>
-      <div className="flex items-end justify-between border-b border-slate-200 pb-4">
+      <div className="flex items-end justify-between border-b border-[rgba(255,255,255,0.1)] pb-4">
         <div>
           <h2 className="text-2xl font-black text-[--text-main] tracking-tight">{title}</h2>
           {subtitle && (

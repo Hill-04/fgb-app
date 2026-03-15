@@ -92,20 +92,20 @@ export default function RegisterPage() {
           </Link>
 
           <h2
-            className="font-display font-black leading-[1.05] tracking-tighter text-slate-900 mb-6"
+            className="font-display font-black leading-[1.05] tracking-tighter text-[--text-main] mb-6"
             style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)' }}
           >
             Crie sua<br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-700">Conta.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FF6B00] to-[#CC5500]">Conta.</span>
           </h2>
           
-          <p className="text-slate-600 text-lg leading-relaxed max-w-sm mb-10 font-medium tracking-wide">
+          <p className="text-[--text-secondary] text-lg leading-relaxed max-w-sm mb-10 font-medium tracking-wide">
             Faça parte da nova temporada. Após criar sua conta, você poderá ingressar ou gerenciar sua equipe.
           </p>
 
-          <div className="inline-flex items-center gap-2 border border-slate-200 bg-white px-4 py-2 rounded-full w-fit shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_8px_rgba(234,88,12,0.5)]" />
-            <span className="text-[11px] font-extrabold text-slate-700 tracking-[0.2em] uppercase">
+          <div className="inline-flex items-center gap-2 border border-[rgba(255,255,255,0.1)] bg-white/5 px-4 py-2 rounded-full w-fit shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-[#FF6B00] animate-pulse shadow-[0_0_8px_rgba(255,107,0,0.5)]" />
+            <span className="text-[11px] font-extrabold text-[--text-main] tracking-[0.2em] uppercase">
               Temporada 2026 ativa
             </span>
           </div>
@@ -113,13 +113,13 @@ export default function RegisterPage() {
 
         {/* Right Side - Solid White Form Card */}
         <div className="w-full max-w-md animate-fade-up" style={{ animationDelay: '100ms' }}>
-          <div className="bg-white border border-slate-200 rounded-[2rem] p-8 md:p-10 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] relative overflow-hidden">
+          <div className="glass-panel p-8 md:p-10 relative overflow-hidden">
             
             <div className="mb-8 text-center lg:text-left relative z-10">
-              <h1 className="font-display font-black text-2xl md:text-3xl text-slate-900 tracking-tight mb-2">
+              <h1 className="font-display font-black text-2xl md:text-3xl text-[--text-main] tracking-tight mb-2">
                 Criar Conta
               </h1>
-              <p className="text-slate-500 text-sm font-medium">
+              <p className="text-[--text-secondary] text-sm font-medium">
                 Preencha seus dados para começar
               </p>
             </div>
@@ -127,20 +127,20 @@ export default function RegisterPage() {
             <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
               {/* Nome Completo */}
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] ml-1">
+                <Label className="text-[11px] font-bold text-[--text-secondary] uppercase tracking-[0.1em] ml-1">
                   Nome Completo
                 </Label>
                 <Input
                   name="name"
                   placeholder="Ex: João Silva"
                   required
-                  className="bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl h-11 px-4 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm"
+                  className="bg-transparent border-[rgba(255,255,255,0.1)] text-white placeholder:text-[--text-dim] rounded-xl h-11 px-4 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] transition-all shadow-sm"
                 />
               </div>
 
               {/* Email */}
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] ml-1">
+                <Label className="text-[11px] font-bold text-[--text-secondary] uppercase tracking-[0.1em] ml-1">
                   E-mail
                 </Label>
                 <Input
@@ -148,27 +148,27 @@ export default function RegisterPage() {
                   type="email"
                   placeholder="seu@email.com"
                   required
-                  className="bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl h-11 px-4 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm"
+                  className="bg-transparent border-[rgba(255,255,255,0.1)] text-white placeholder:text-[--text-dim] rounded-xl h-11 px-4 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] transition-all shadow-sm"
                 />
               </div>
 
               {/* Papel/Função */}
               <div className="space-y-2">
-                <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] ml-1">
+                <Label className="text-[11px] font-bold text-[--text-secondary] uppercase tracking-[0.1em] ml-1">
                   Sua Função
                 </Label>
                 <Select value={defaultRole} onValueChange={(value) => value && setDefaultRole(value)}>
-                  <SelectTrigger className="bg-white border border-slate-200 text-slate-900 rounded-xl h-11 px-4 focus:ring-1 focus:ring-orange-500 focus:border-orange-500 transition-all shadow-sm [&>span]:line-clamp-1">
+                  <SelectTrigger className="bg-transparent border-[rgba(255,255,255,0.1)] text-white rounded-xl h-11 px-4 focus:ring-1 focus:ring-[#FF6B00] focus:border-[#FF6B00] transition-all shadow-sm [&>span]:line-clamp-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-white border-slate-200 rounded-xl shadow-lg">
-                    <SelectItem value="AUXILIAR" className="focus:bg-slate-100 focus:text-slate-900 rounded-lg cursor-pointer">Auxiliar Técnico</SelectItem>
-                    <SelectItem value="PREPARADOR_FISICO" className="focus:bg-slate-100 focus:text-slate-900 rounded-lg cursor-pointer">Preparador Físico</SelectItem>
-                    <SelectItem value="MEDICO" className="focus:bg-slate-100 focus:text-slate-900 rounded-lg cursor-pointer">Médico</SelectItem>
-                    <SelectItem value="OUTRO" className="focus:bg-slate-100 focus:text-slate-900 rounded-lg cursor-pointer">Outro</SelectItem>
+                  <SelectContent className="glass-panel border-[rgba(255,255,255,0.1)] rounded-xl shadow-lg">
+                    <SelectItem value="AUXILIAR" className="focus:bg-white/10 focus:text-white rounded-lg cursor-pointer">Auxiliar Técnico</SelectItem>
+                    <SelectItem value="PREPARADOR_FISICO" className="focus:bg-white/10 focus:text-white rounded-lg cursor-pointer">Preparador Físico</SelectItem>
+                    <SelectItem value="MEDICO" className="focus:bg-white/10 focus:text-white rounded-lg cursor-pointer">Médico</SelectItem>
+                    <SelectItem value="OUTRO" className="focus:bg-white/10 focus:text-white rounded-lg cursor-pointer">Outro</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-[10px] text-slate-400 ml-1 mt-1 font-medium">
+                <p className="text-[10px] text-[--text-dim] ml-1 mt-1 font-medium">
                   Atribuído por padrão. O Head Coach pode alterar depois.
                 </p>
               </div>
@@ -176,7 +176,7 @@ export default function RegisterPage() {
               {/* Senhas (Grid) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] ml-1">
+                  <Label className="text-[11px] font-bold text-[--text-secondary] uppercase tracking-[0.1em] ml-1">
                     Senha
                   </Label>
                   <Input
@@ -184,12 +184,12 @@ export default function RegisterPage() {
                     type="password"
                     required
                     minLength={6}
-                    className="bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl h-11 px-4 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm"
+                    className="bg-transparent border-[rgba(255,255,255,0.1)] text-white placeholder:text-[--text-dim] rounded-xl h-11 px-4 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] transition-all shadow-sm"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[11px] font-bold text-slate-500 uppercase tracking-[0.1em] ml-1">
+                  <Label className="text-[11px] font-bold text-[--text-secondary] uppercase tracking-[0.1em] ml-1">
                     Confirmar Senha
                   </Label>
                   <Input
@@ -197,7 +197,7 @@ export default function RegisterPage() {
                     type="password"
                     required
                     minLength={6}
-                    className="bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl h-11 px-4 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-sm"
+                    className="bg-transparent border-[rgba(255,255,255,0.1)] text-white placeholder:text-[--text-dim] rounded-xl h-11 px-4 focus:border-[#FF6B00] focus:ring-1 focus:ring-[#FF6B00] transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -220,9 +220,9 @@ export default function RegisterPage() {
             </form>
 
             <div className="mt-8 text-center relative z-10">
-              <p className="text-sm text-slate-500 font-medium">
+              <p className="text-sm text-[--text-secondary] font-medium">
                 Já possui conta?{' '}
-                <Link href="/login" className="text-slate-800 hover:text-orange-600 font-bold transition-colors">
+                <Link href="/login" className="text-white hover:text-[#FF6B00] font-bold transition-colors">
                   Fazer login
                 </Link>
               </p>

@@ -66,14 +66,31 @@ export function GameCard({
         </div>
       </div>
 
-      {status !== "SCHEDULED" && !hasScore && (
-        <Badge
-          variant={status === "CANCELLED" ? "error" : "warning"}
-          size="sm"
-          className="mt-2"
-        >
-          {status === "CANCELLED" ? "Cancelado" : status === "POSTPONED" ? "Adiado" : status}
-        </Badge>
+      {/* Custom Status Display */}
+      {!hasScore && (
+        <div className="pt-1">
+          {status === "ONGOING" && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-live">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]"></span>
+              Em Andamento
+            </span>
+          )}
+          {status === "SCHEDULED" && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-scheduled">
+              Agendado
+            </span>
+          )}
+          {status === "FINISHED" && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-finished">
+              Finalizado
+            </span>
+          )}
+          {(status === "CANCELLED" || status === "POSTPONED") && (
+            <Badge variant={status === "CANCELLED" ? "error" : "warning"} size="sm">
+              {status === "CANCELLED" ? "Cancelado" : "Adiado"}
+            </Badge>
+          )}
+        </div>
       )}
     </div>
   )

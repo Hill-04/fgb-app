@@ -16,15 +16,15 @@ export function Badge({
   className
 }: BadgeProps) {
   const variantStyles = {
-    default: "bg-slate-100 text-slate-700 border-slate-200",
-    success: "bg-green-50 text-green-700 border-green-200",
-    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    error: "bg-red-50 text-red-700 border-red-200",
-    info: "bg-blue-50 text-blue-700 border-blue-200",
-    orange: "bg-orange-50 text-orange-700 border-orange-200",
-    blue: "bg-blue-50 text-blue-700 border-blue-200",
-    purple: "bg-purple-50 text-purple-700 border-purple-200",
-    pink: "bg-pink-50 text-pink-700 border-pink-200",
+    default: "bg-white/5 text-[--text-main] border-[--border-color]",
+    success: "bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20",
+    warning: "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20",
+    error: "bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20",
+    info: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
+    orange: "bg-[#FF6B00]/10 text-[#FF6B00] border-[#FF6B00]/20",
+    blue: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
+    purple: "bg-[#8B5CF6]/10 text-[#A78BFA] border-[#8B5CF6]/20",
+    pink: "bg-[#EC4899]/10 text-[#F472B6] border-[#EC4899]/20",
   }
 
   const sizeStyles = {
