@@ -48,20 +48,22 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
   const items = role === "ADMIN" ? adminNavItems : teamNavItems
 
   return (
-    <nav className={cn("w-[230px] bg-[--bg-sidebar] border-r border-[--border-color] flex flex-col", className)}>
+    <nav className={cn("w-[230px] glass-sidebar flex flex-col relative z-20", className)}>
       {/* Header */}
-      <div className="p-6 border-b border-[--border-color]">
-        <h1 className="text-xl font-bold text-[--text-main]">FGB</h1>
+      <div className="p-6 border-b border-white/5">
+        <h1 className="text-2xl font-black text-[--text-main] tracking-tight">FGB</h1>
         {teamName && (
-          <p className="text-sm text-[--text-secondary] mt-1">{teamName}</p>
+          <p className="text-sm font-medium text-[--text-secondary] mt-1">{teamName}</p>
         )}
         {role === "ADMIN" && (
-          <Badge variant="blue" size="sm" className="mt-2">Administrador</Badge>
+          <Badge variant="blue" size="sm" className="mt-3 bg-[--blue-admin]/30 border-[--blue-admin]/50 font-bold">
+            Administrador
+          </Badge>
         )}
       </div>
 
       {/* Nav Items */}
-      <div className="flex-1 p-4 space-y-1">
+      <div className="flex-1 p-4 space-y-1.5 overflow-y-auto">
         {items.map((item) => {
           const isActive = pathname === item.href
           const Icon = item.icon
@@ -71,22 +73,23 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all",
+                "flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-300 border border-transparent",
                 isActive
                   ? role === "ADMIN"
-                    ? "bg-[--blue-admin]/20 text-[--blue-light] border border-[--blue-admin]/30"
-                    : "bg-[--orange]/20 text-[--orange] border border-[--orange]/30"
-                  : "text-[--text-secondary] hover:bg-[--border-color]/50"
+                    ? "bg-[--blue-admin]/20 text-[--blue-light] border-[--blue-admin]/30 shadow-[0_0_20px_rgba(59,130,246,0.15)] translate-x-1"
+                    : "bg-[--orange]/20 text-[--orange] border-[--orange]/30 shadow-[0_0_20px_rgba(249,115,22,0.15)] translate-x-1"
+                  : "text-[--text-secondary] hover:bg-white/5 hover:border-white/10 hover:text-[--text-main]"
               )}
             >
               <div className="flex items-center gap-3">
-                <Icon className="w-5 h-5" />
-                <span className="font-medium text-sm">{item.label}</span>
+                <Icon className={cn("w-5 h-5 transition-transform", isActive ? "scale-110" : "")} />
+                <span className="font-semibold text-sm tracking-wide">{item.label}</span>
               </div>
               {item.badge !== undefined && item.badge > 0 && (
                 <Badge
                   variant={role === "ADMIN" ? "blue" : "orange"}
                   size="sm"
+                  className="shadow-lg"
                 >
                   {item.badge}
                 </Badge>
@@ -97,8 +100,8 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-4 border-t border-[--border-color]">
-        <p className="text-xs text-[--text-dim] text-center">
+      <div className="p-6 border-t border-white/5">
+        <p className="text-xs font-medium text-[--text-dim] text-center uppercase tracking-widest">
           FGB App © 2026
         </p>
       </div>

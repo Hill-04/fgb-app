@@ -36,29 +36,31 @@ export function PipelineSteps({ currentStep, className }: PipelineStepsProps) {
           <div
             key={step.id}
             className={cn(
-              "flex-1 min-w-[140px] card-fgb p-4 relative",
-              isCurrent && "border-[--warning]",
-              isCompleted && "border-[--success]",
-              isFuture && "opacity-50"
+              "flex-1 min-w-[140px] glass-panel p-5 relative transition-all duration-300",
+              isCurrent && "border-[--warning]/50 shadow-[0_0_15px_rgba(234,179,8,0.15)] -translate-y-1",
+              isCompleted && "border-[--success]/50",
+              isFuture && "opacity-50 grayscale"
             )}
           >
             {/* Status Badge */}
             <div
               className={cn(
-                "absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold",
-                isCompleted && "bg-[--success] text-white",
-                isCurrent && "bg-[--warning] text-white",
-                isFuture && "bg-[--border-color] text-[--text-dim]"
+                "absolute -top-3 -right-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-lg",
+                isCompleted && "bg-[--success] text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]",
+                isCurrent && "bg-[--warning] text-[#3f2b00] shadow-[0_0_10px_rgba(234,179,8,0.5)]",
+                isFuture && "bg-[--border-color] text-[--text-dim] border border-white/5"
               )}
             >
-              {isCompleted ? <Check className="w-4 h-4" /> : step.id}
+              {isCompleted ? <Check className="w-4 h-4" strokeWidth={3} /> : step.id}
             </div>
 
-            <div className="space-y-1">
-              <div className="label-uppercase text-[--text-dim]">
+            <div className="space-y-1.5 mt-1">
+              <div className="label-uppercase text-[--text-secondary] tracking-widest text-[9px]">
                 {step.description}
               </div>
-              <div className="text-lg font-bold text-[--text-main]">
+              <div className={cn("text-lg font-black tracking-tight", 
+                isCurrent ? "text-[--warning]" : isCompleted ? "text-[--text-main]" : "text-[--text-dim]"
+              )}>
                 {step.title}
               </div>
             </div>

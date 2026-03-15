@@ -101,24 +101,24 @@ export default async function AdminDashboardPage() {
             action={
               <Link
                 href="/admin/championships"
-                className="text-sm font-semibold text-[--orange] hover:text-[--orange-hover]"
+                className="text-sm font-bold text-[--blue-light] hover:text-white transition-colors bg-[--blue-admin]/10 hover:bg-[--blue-admin]/20 px-4 py-2 rounded-lg border border-[--blue-admin]/20"
               >
-                Ver todas →
+                Ver todas
               </Link>
             }
           >
-            <div className="space-y-3">
+            <div className="space-y-4">
               {recentRegistrations.map((registration) => (
-                <div key={registration.id} className="card-fgb p-4 flex items-center justify-between">
+                <div key={registration.id} className="glass-panel p-5 flex items-center justify-between hover:bg-white/5 transition-colors">
                   <div>
-                    <h3 className="font-semibold text-[--text-main]">
+                    <h3 className="font-bold text-lg text-[--text-main]">
                       {registration.team.name}
                     </h3>
-                    <p className="text-sm text-[--text-secondary] mt-1">
+                    <p className="text-sm font-medium text-[--text-secondary] mt-1">
                       {registration.championship.name} • {registration.categories.length} categoria(s)
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-col items-end gap-2">
                     <Badge
                       variant={
                         registration.status === 'CONFIRMED' ? 'success' :
@@ -129,7 +129,7 @@ export default async function AdminDashboardPage() {
                       {registration.status === 'CONFIRMED' ? 'Confirmado' :
                        registration.status === 'PENDING' ? 'Pendente' : 'Rejeitado'}
                     </Badge>
-                    <span className="text-xs text-[--text-dim]">
+                    <span className="text-xs font-medium text-[--text-dim]">
                       {new Date(registration.registeredAt).toLocaleDateString('pt-BR')}
                     </span>
                   </div>
@@ -147,53 +147,68 @@ export default async function AdminDashboardPage() {
             action={
               <Link
                 href="/admin/championships"
-                className="text-sm font-semibold text-[--orange] hover:text-[--orange-hover]"
+                className="text-sm font-bold text-[--orange] hover:text-white transition-colors bg-[--orange]/10 hover:bg-[--orange]/20 px-4 py-2 rounded-lg border border-[--orange]/20"
               >
-                Gerenciar →
+                Gerenciar
               </Link>
             }
           >
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {championships.slice(0, 6).map((championship) => (
                 <Link
                   key={championship.id}
                   href={`/admin/championships/${championship.id}`}
-                  className="card-fgb p-6 space-y-3 hover:border-[--border-hover] transition-colors"
+                  className="glass-panel p-6 flex flex-col justify-between hover:border-white/10 hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] hover:-translate-y-1 transition-all duration-300 group"
                 >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-bold text-lg text-[--text-main] mb-1">
-                        {championship.name}
-                      </h3>
-                      <p className="text-sm text-[--text-secondary]">
-                        {championship.sex === 'masculino' ? '♂ Masculino' : '♀ Feminino'}
-                      </p>
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start justify-between">
+                        <Badge
+                          variant={
+                            championship.status === 'REGISTRATION_OPEN' ? 'success' :
+                            championship.status === 'DRAFT' ? 'default' : 'blue'
+                          }
+                          className="shadow-sm"
+                        >
+                          {championship.status === 'DRAFT' ? 'Rascunho' :
+                           championship.status === 'REGISTRATION_OPEN' ? 'Aberto' :
+                           championship.status === 'REGISTRATION_CLOSED' ? 'Fechado' :
+                           championship.status === 'VALIDATING' ? 'Validando' :
+                           championship.status === 'SCHEDULING' ? 'IA' :
+                           championship.status === 'REVIEW' ? 'Revisão' :
+                           championship.status === 'CONFIRMED' ? 'Confirmado' :
+                           championship.status === 'ONGOING' ? 'Em andamento' : 'Concluído'}
+                        </Badge>
+                        <span className="text-xl opacity-50 group-hover:opacity-100 transition-opacity">
+                          {championship.sex === 'masculino' ? '🏀' : '🎀'}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="font-black text-xl text-[--text-main] tracking-tight group-hover:text-[--orange] transition-colors leading-tight">
+                          {championship.name}
+                        </h3>
+                        <p className="text-sm font-medium text-[--text-secondary] mt-1">
+                          {championship.sex === 'masculino' ? 'Masculino' : 'Feminino'}
+                        </p>
+                      </div>
                     </div>
-                    <Badge
-                      variant={
-                        championship.status === 'REGISTRATION_OPEN' ? 'success' :
-                        championship.status === 'DRAFT' ? 'default' : 'blue'
-                      }
-                    >
-                      {championship.status === 'DRAFT' ? 'Rascunho' :
-                       championship.status === 'REGISTRATION_OPEN' ? 'Aberto' :
-                       championship.status === 'REGISTRATION_CLOSED' ? 'Fechado' :
-                       championship.status === 'VALIDATING' ? 'Validando' :
-                       championship.status === 'SCHEDULING' ? 'IA' :
-                       championship.status === 'REVIEW' ? 'Revisão' :
-                       championship.status === 'CONFIRMED' ? 'Confirmado' :
-                       championship.status === 'ONGOING' ? 'Em andamento' : 'Concluído'}
-                    </Badge>
-                  </div>
 
-                  <div className="flex items-center gap-4 text-sm text-[--text-secondary]">
-                    <span>{championship._count.categories} categorias</span>
-                    <span>•</span>
-                    <span>{championship._count.registrations} inscrições</span>
+                    <div className="flex items-center gap-4 text-sm font-medium text-[--text-secondary] bg-white/5 p-3 rounded-xl border border-white/5">
+                      <div className="flex-1 flex flex-col">
+                        <span className="text-[10px] uppercase tracking-wider text-[--text-dim]">Categorias</span>
+                        <span className="text-lg font-bold text-[--text-main]">{championship._count.categories}</span>
+                      </div>
+                      <div className="w-px h-8 bg-white/10"></div>
+                      <div className="flex-1 flex flex-col">
+                        <span className="text-[10px] uppercase tracking-wider text-[--text-dim]">Inscrições</span>
+                        <span className="text-lg font-bold text-[--text-main]">{championship._count.registrations}</span>
+                      </div>
+                    </div>
                   </div>
 
                   {championship.regDeadline && (
-                    <div className="text-xs text-[--text-dim]">
+                    <div className="text-xs font-semibold text-[--text-dim] mt-6 pt-4 border-t border-white/5 flex items-center gap-2">
+                      <Calendar className="w-3.5 h-3.5" />
                       Prazo: {new Date(championship.regDeadline).toLocaleDateString('pt-BR')}
                     </div>
                   )}
