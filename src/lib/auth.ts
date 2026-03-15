@@ -42,6 +42,7 @@ export const authOptions: NextAuthOptions = {
           name: user.name,
           email: user.email,
           isAdmin: isAdmin,
+          role: isAdmin ? 'ADMIN' : 'TEAM', // Explicit role
           teamId: user.membership?.team.id || null,
           teamName: user.membership?.team.name || null,
           teamRole: user.membership?.role || null
@@ -55,6 +56,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id
         token.name = (user as any).name
         token.isAdmin = (user as any).isAdmin
+        token.role = (user as any).role
         token.teamId = (user as any).teamId
         token.teamName = (user as any).teamName
         token.teamRole = (user as any).teamRole
@@ -66,6 +68,7 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id
         ;(session.user as any).name = token.name
         ;(session.user as any).isAdmin = token.isAdmin
+        ;(session.user as any).role = token.role
         ;(session.user as any).teamId = token.teamId
         ;(session.user as any).teamName = token.teamName
         ;(session.user as any).teamRole = token.teamRole
