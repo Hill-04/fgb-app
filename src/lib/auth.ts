@@ -33,11 +33,15 @@ export const authOptions: NextAuthOptions = {
         const passwordMatch = await bcrypt.compare(credentials.password, user.password)
         if (!passwordMatch) return null
 
+        // Dynamic Supreme Admin Check
+        const supremeAdminEmail = process.env.SUPREME_ADMIN_EMAIL
+        const isAdmin = user.email === supremeAdminEmail ? true : user.isAdmin
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          isAdmin: user.isAdmin,
+          isAdmin: isAdmin,
           teamId: user.membership?.team.id || null,
           teamName: user.membership?.team.name || null,
           teamRole: user.membership?.role || null

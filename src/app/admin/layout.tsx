@@ -7,19 +7,17 @@ import { LayoutDashboard, Trophy, Users, CheckSquare, Cpu, Eye, FileText, Settin
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
 
-  if (!session || (session.user as any).role !== 'ADMIN') {
+  if (!session || !(session.user as any).isAdmin) {
     redirect('/login')
   }
 
   const navItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Campeonatos', href: '/admin/championships', icon: Trophy },
+    { label: 'Usuários', href: '/admin/users', icon: Users },
     { label: 'Equipes', href: '/admin/teams', icon: Users },
-    { label: 'Validação', href: '/admin/validation', icon: CheckSquare },
     { label: 'IA Scheduling', href: '/admin/scheduling', icon: Cpu },
-    { label: 'Revisão', href: '/admin/review', icon: Eye },
     { label: 'Relatórios', href: '/admin/reports', icon: FileText },
-    { label: 'Configurações', href: '/admin/settings', icon: Settings },
   ]
 
   return (

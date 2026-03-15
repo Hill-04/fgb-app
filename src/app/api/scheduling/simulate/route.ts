@@ -11,7 +11,7 @@ const anthropic = new Anthropic({
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'ADMIN') {
+    if (!session || !(session.user as any).isAdmin) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     // Vamos coletar campeonatos abertos/agendados e as equipes inscritas neles
     const championships = await prisma.championship.findMany({
       where: {
-        status: { in: ['REGISTRATION_OPEN', 'SCHEDULED'] }
+        status: { in: ['REGISTRATION_OPEN', 'SCHEDULING'] }
       },
       include: {
         categories: true,
@@ -40,13 +40,13 @@ export async function POST(request: Request) {
     }
 
     // Montar o prompt
-    const promptData = (championships as any[]).map(c => {
-      const teams = c.registrations.map(r => ({
+    const promptData = (championships as any[]).map((c: any) => {
+      const teams = c.registrations.map((r: any) => ({
         name: r.team.name,
         city: r.team.city,
         gym: r.team.gym ? r.team.gym.name : null,
-        categories: r.categories.map(cat => cat.category.name),
-        blockedDates: r.blockedDates.map(bd => ({
+        categories: r.categories.map((cat: any) => cat.category.name),
+        blockedDates: r.blockedDates.map((bd: any) => ({
           date: bd.date,
           reason: bd.reason
         }))
