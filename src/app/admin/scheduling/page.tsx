@@ -3,61 +3,96 @@
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import * as XLSX from 'xlsx'
+import jsPDF from 'jspdf'
+import 'jspdf-autotable'
 
 export default function SchedulingPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
+  const [error, setError] = useState('')
+  const [sendingEmail, setSendingEmail] = useState(false)
 
-  const handleSimulate = () => {
+  const handleSimulate = async () => {
     setLoading(true)
-    // Simulated AI API latency
-    setTimeout(() => {
-      setLoading(false)
-      setResult({
-        viableCategories: [
-          { id: 'sub17', title: 'Sub 17', teams: 4 },
-          { id: 'sub15', title: 'Sub 15', teams: 6 },
-          { id: 'sub13', title: 'Sub 13', teams: 4 },
-          { id: 'sub12', title: 'Sub 12', teams: 3 },
-        ],
-        blocks: [
-          {
-            id: 'B1',
-            title: 'Bloco 1 (Sub 15 + Sub 17)',
-            reason: '3 equipes disputam ambas as categorias (Flyboys, Amb, Sinodal). Agrupamento economiza R$ 12.000 em custos projetados de viagem.',
-            phases: [
-              {
-                name: 'Sede 1: Porto Alegre',
-                date: 'A Definir (1ª Fase)',
-                matches: 10
-              },
-              {
-                name: 'Sede 2: Santa Cruz do Sul',
-                date: 'A Definir (2ª Fase)',
-                matches: 10
-              }
-            ]
-          },
-          {
-            id: 'B2',
-            title: 'Bloco 2 (Sub 12 + Sub 13)',
-            reason: '2 equipes disputam ambas (Flyboys, Amb). Agrupamento reduz 32% do deslocamento total das equipes menores.',
-            phases: [
-              {
-                name: 'Sede 1: Lajeado',
-                date: 'A Definir (1ª Fase)',
-                matches: 6
-              }
-            ]
-          }
-        ],
-        dates: [
-          { phase: 'Bloco 1 - 1ª Fase', primary: '08 a 09 de Maio de 2026', alternate: '15 a 16 de Maio de 2026', conflictRemoved: 'Dia das Mães excluído' },
-          { phase: 'Bloco 1 - 2ª Fase', primary: '05 a 06 de Junho de 2026', alternate: '19 a 20 de Junho de 2026', conflictRemoved: 'Festa Junina e Corpus Christi evitados' },
-          { phase: 'Bloco 2 - Única', primary: '22 a 23 de Maio de 2026', alternate: '29 a 30 de Maio de 2026', conflictRemoved: '' },
-        ]
+    setError('')
+    try {
+      const res = await fetch('/api/scheduling/simulate', {
+        method: 'POST',
       })
-    }, 2500)
+      
+      const data = await res.json()
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Erro ao comunicar com a IA')
+      }
+      
+      setResult(data)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleExportExcel = () => {
+    if (!result) return
+    const ws = XLSX.utils.json_to_sheet(result.dates.map((d: any) => ({
+      'Fase / Bloco': d.phase,
+      'Data Principal Sugerida': d.primary,
+      'Data Plano B': d.alternate,
+      'Conflito Tratado': d.conflictRemoved || 'Nenhum'
+    })))
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, "Calendário")
+    XLSX.writeFile(wb, "calendario_fgb_2026.xlsx")
+  }
+
+  const handleExportPDF = () => {
+    if (!result) return
+    const doc = new jsPDF()
+    doc.text("Calendário de Jogos FGB 2026 - Sugestão IA", 14, 15)
+    
+    const tableBody = result.dates.map((d: any) => [
+      d.phase, d.primary, d.alternate, d.conflictRemoved || 'Nenhum'
+    ])
+    
+    ;(doc as any).autoTable({
+      startY: 20,
+      head: [['Fase / Bloco', 'Data Principal', 'Data Plano B', 'Conflito Tratado']],
+      body: tableBody,
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [234, 88, 12] } // Tailwind orange-600 approx
+    })
+    
+    doc.save("calendario_fgb_2026.pdf")
+  }
+
+  const handleSendEmails = async () => {
+    setSendingEmail(true)
+    try {
+      const res = await fetch('/api/emails/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          to: ['teste-equipe@exemplo.com'], // Mocado para o exemplo
+          subject: 'Tabela de Jogos - FGB 2026',
+          html: '<h1>A tabela de jogos foi gerada!</h1><p>Acesse o painel da sua equipe para visualizar os horários e locais.</p>'
+        })
+      })
+      if (res.ok) {
+        alert('Tabela de jogos enviada com sucesso para todas as equipes da categoria!')
+      } else {
+        alert('Falha ao enviar e-mail.')
+      }
+    } catch (err) {
+      alert('Erro ao enviar e-mail.')
+    } finally {
+      setSendingEmail(false)
+    }
   }
 
   return (
@@ -178,11 +213,16 @@ export default function SchedulingPage() {
               </div>
             </CardContent>
             <CardFooter className="bg-slate-950/50 rounded-b-lg border-t border-white/5 pt-4">
-              <div className="flex gap-4 w-full">
-                <Button className="font-semibold shadow-lg bg-emerald-600 hover:bg-emerald-700 text-white">
-                  Aprovar Calendário e Gerar Súmulas
+              <div className="flex flex-wrap gap-4 w-full">
+                <Button 
+                  onClick={handleSendEmails} 
+                  disabled={sendingEmail}
+                  className="font-semibold shadow-lg bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  {sendingEmail ? 'Enviando...' : 'Aprovar e Notificar Equipes (E-mail)'}
                 </Button>
-                <Button variant="outline" className="text-slate-300 border-white/20 hover:bg-white/10">Exportar Tabela de Jogos (Excel)</Button>
+                <Button variant="outline" onClick={handleExportExcel} className="text-slate-300 border-white/20 hover:bg-white/10">Exportar (Excel)</Button>
+                <Button variant="outline" onClick={handleExportPDF} className="text-slate-300 border-white/20 hover:bg-white/10">Gerar Relatório (PDF)</Button>
               </div>
             </CardFooter>
           </Card>
