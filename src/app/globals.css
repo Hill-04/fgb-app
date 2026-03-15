@@ -159,6 +159,15 @@
     @apply font-sans;
     font-family: 'Inter', sans-serif;
   }
+
+  /* Clean up Next.js / Vercel default badges & indicators */
+  next-portal, 
+  #vc-notification-host, 
+  .__next-build-watcher, 
+  [data-nextjs-toast-wrapper],
+  .nextjs-static-indicator {
+    display: none !important;
+  }
 }
 
 @keyframes fade-up {

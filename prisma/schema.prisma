@@ -97,6 +97,7 @@ model Gym {
 model Championship {
   id             String             @id @default(uuid())
   name           String
+  year           Int                @default(2026)
   description    String?
   sex            String             // "masculino" ou "feminino"
   format         String             @default("todos_contra_todos")

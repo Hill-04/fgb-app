@@ -66,12 +66,15 @@ export default function Home() {
 
               {/* Headline */}
               <h1
-                className="font-display font-black leading-[0.95] tracking-tighter text-white mb-8 animate-fade-up max-w-[800px] uppercase"
-                style={{ fontSize: 'clamp(3rem, 7vw, 6rem)', animationDelay: '80ms' }}
+                className="font-display font-black leading-[0.9] tracking-tighter text-white mb-8 animate-fade-up max-w-[800px] uppercase"
+                style={{ fontSize: 'clamp(3rem, 7vw, 6.5rem)', animationDelay: '80ms' }}
               >
                 O Futuro do<br />
-                <span className="text-[#FF6B00]">Basquete</span><br />
-                Gaúcho
+                <span className="text-[#FF6B00] inline-block mt-[-0.1em]">Basquete</span><br />
+                <span className="relative">
+                  Gaúcho
+                  <span className="absolute -bottom-2 left-0 w-24 h-1.5 bg-[#FF6B00] rounded-full opacity-50" />
+                </span>
               </h1>
 
               <p

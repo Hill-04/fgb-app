@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils"
 
 type BadgeProps = {
   children: React.ReactNode
-  variant?: "default" | "success" | "warning" | "error" | "info" | "orange" | "blue" | "purple" | "pink"
+  variant?: "default" | "success" | "warning" | "error" | "info" | "orange" | "blue" | "purple" | "pink" | "outline"
   size?: "sm" | "default"
   withDot?: boolean
   className?: string
@@ -25,6 +25,7 @@ export function Badge({
     blue: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
     purple: "bg-[#8B5CF6]/10 text-[#A78BFA] border-[#8B5CF6]/20",
     pink: "bg-[#EC4899]/10 text-[#F472B6] border-[#EC4899]/20",
+    outline: "bg-transparent border-white/20 text-slate-400",
   }
 
   const sizeStyles = {
@@ -42,6 +43,7 @@ export function Badge({
     blue: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
     purple: "bg-purple-400 shadow-[0_0_5px_rgba(168,85,247,0.4)] flex-shrink-0",
     pink: "bg-pink-400 shadow-[0_0_5px_rgba(236,72,153,0.4)] flex-shrink-0",
+    outline: "bg-slate-400 flex-shrink-0",
   }
 
   return (

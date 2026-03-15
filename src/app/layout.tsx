@@ -13,10 +13,7 @@ const dmSans = DM_Sans({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "FGB — Federação Gaúcha de Basquete",
-  description: "Sistema de gestão de campeonatos da Federação Gaúcha de Basquete",
-};
+import { Providers } from "@/components/Providers";
 
 export default function RootLayout({
   children,
@@ -26,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className={`${dmSans.variable} ${barlowCondensed.variable} antialiased`} suppressHydrationWarning>
-        {children}
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

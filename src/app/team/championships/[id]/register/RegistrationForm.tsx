@@ -7,7 +7,7 @@ import { Badge } from '@/components/Badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Calendar, MapPin, Users, FileText, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Calendar, MapPin, Users, FileText, AlertCircle, CheckCircle2, ChevronRight } from 'lucide-react'
 
 type Championship = {
   id: string
@@ -130,43 +130,47 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
   return (
     <div className="space-y-8">
       {/* Section Navigator */}
-      <div className="flex items-center justify-between gap-2 overflow-x-auto pb-2">
+      <div className="flex items-center justify-between gap-4 overflow-x-auto pb-6 scrollbar-hide">
         {sections.map((section, index) => {
           const Icon = section.icon
           const isActive = currentSection === section.number
           const isComplete = isSectionComplete(section.number)
 
           return (
-            <div key={section.number} className="flex items-center gap-2 flex-shrink-0">
+            <div key={section.number} className="flex items-center gap-4 flex-shrink-0">
               <button
                 onClick={() => setCurrentSection(section.number)}
                 className={`
-                  flex items-center gap-3 px-4 py-3 rounded-lg border transition-all
+                  flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all duration-300 relative group
                   ${isActive
-                    ? 'bg-[--orange] border-[--orange] text-white shadow-lg'
+                    ? 'bg-white/10 border-white/20 text-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] backdrop-blur-md'
                     : isComplete
-                    ? 'bg-[--bg-card] border-green-500/30 text-[--text-main] hover:border-green-500/50'
-                    : 'bg-[--bg-card] border-[--border] text-[--text-secondary] hover:border-[--border-hover]'
+                    ? 'bg-white/[0.03] border-green-500/20 text-slate-400 hover:border-green-500/40'
+                    : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/10 hover:bg-white/[0.04]'
                   }
                 `}
               >
                 <div className={`
-                  w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-                  ${isActive ? 'bg-white/20' : isComplete ? 'bg-green-500/20' : 'bg-white/5'}
+                  w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all duration-300
+                  ${isActive ? 'bg-[#FF6B00] shadow-[0_0_15px_rgba(255,107,0,0.3)] scale-110' : isComplete ? 'bg-green-500/10' : 'bg-white/5'}
                 `}>
                   {isComplete && !isActive ? (
-                    <CheckCircle2 className="w-4 h-4 text-green-400" />
+                    <CheckCircle2 className="w-5 h-5 text-green-400" />
                   ) : (
-                    <Icon className="w-4 h-4" />
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : 'text-inherit'}`} />
                   )}
                 </div>
-                <div className="text-left hidden md:block">
-                  <div className="text-xs opacity-70">Secao {section.number}</div>
-                  <div className="font-semibold">{section.title}</div>
+                <div className="text-left hidden lg:block">
+                  <div className="text-[10px] uppercase font-black tracking-widest opacity-50 mb-0.5">Etapa {section.number}</div>
+                  <div className="font-bold text-sm tracking-tight">{section.title}</div>
                 </div>
+
+                {isActive && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-[#FF6B00]" />
+                )}
               </button>
               {index < sections.length - 1 && (
-                <div className="w-8 h-0.5 bg-[--border] hidden lg:block" />
+                <ChevronRight className="w-4 h-4 text-slate-700 hidden lg:block" />
               )}
             </div>
           )
@@ -198,24 +202,33 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                     key={category.id}
                     onClick={() => handleToggleCategory(category.name)}
                     className={`
-                      p-4 rounded-lg border-2 transition-all text-left
+                      p-6 rounded-3xl border-2 transition-all duration-300 text-left relative overflow-hidden group/cat
                       ${isSelected
-                        ? 'bg-[--orange]/10 border-[--orange] shadow-lg shadow-[--orange]/20'
-                        : 'bg-[--bg-card] border-[--border] hover:border-[--border-hover]'
+                        ? 'bg-[#FF6B00]/10 border-[#FF6B00] shadow-[0_10px_25px_rgba(255,107,0,0.1)]'
+                        : 'bg-white/[0.02] border-white/5 hover:border-white/10 hover:bg-white/[0.04]'
                       }
                     `}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-bold text-[--text-main]">{category.name}</h3>
+                    {isSelected && (
+                      <div className="absolute top-0 left-0 w-1 h-full bg-[#FF6B00]" />
+                    )}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center">
+                        <Users className={`w-5 h-5 ${isSelected ? 'text-[#FF6B00]' : 'text-slate-600'}`} />
+                      </div>
                       <div className={`
-                        w-6 h-6 rounded-full border-2 flex items-center justify-center
-                        ${isSelected ? 'bg-[--orange] border-[--orange]' : 'border-[--border]'}
+                        w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300
+                        ${isSelected ? 'bg-[#FF6B00] border-[#FF6B00] scale-110' : 'border-white/10'}
                       `}>
                         {isSelected && (
-                          <CheckCircle2 className="w-4 h-4 text-white" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                         )}
                       </div>
                     </div>
+                    <h3 className={`font-display font-black text-xl tracking-tight ${isSelected ? 'text-white' : 'text-slate-400'}`}>
+                      {category.name}
+                    </h3>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Conferência RS</p>
                   </button>
                 )
               })}
@@ -229,13 +242,14 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
               </div>
             )}
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-8">
               <Button
                 onClick={() => setCurrentSection(2)}
                 disabled={selectedCategories.length === 0}
-                className="bg-[--orange] hover:bg-[--orange-hover] text-white"
+                className="bg-[#FF6B00] hover:bg-[#E66000] text-white px-8 h-12 rounded-xl font-bold transition-all shadow-lg hover:shadow-[#FF6B00]/20"
               >
-                Proxima Secao
+                Próxima Etapa
+                <ChevronRight className="ml-2 w-4 h-4" />
               </Button>
             </div>
           </div>

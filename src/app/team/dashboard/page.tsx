@@ -6,7 +6,8 @@ import { StatCard } from "@/components/StatCard"
 import { Section } from "@/components/Section"
 import { Badge } from "@/components/Badge"
 import Link from "next/link"
-import { Trophy, Calendar, Users, Award } from "lucide-react"
+import { Trophy, Calendar, Users, Award, MapPin, Shield } from "lucide-react"
+import { Brackets } from "@/components/Brackets"
 
 export default async function TeamDashboardPage() {
   const session = await getServerSession(authOptions)
@@ -79,13 +80,52 @@ export default async function TeamDashboardPage() {
     return (
       <div className="space-y-10">
         {/* Header */}
-        <div className="animate-fade-in">
-          <h1 className="text-4xl font-display font-black text-slate-900 tracking-tight mb-2">
-            Bem-vindo, {team.name}!
-          </h1>
-          <p className="text-slate-500 font-medium text-lg">
-            {team.city}, RS • {team.sex === 'masculino' ? '♂ Masculino' : '♀ Feminino'}
-          </p>
+        <div className="animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/[0.05] pb-10">
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 rounded-3xl bg-[#111] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-2xl">
+              {team.logoUrl ? (
+                <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
+              ) : (
+                <Shield className="w-10 h-10 text-slate-700" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <Badge variant="orange" className="bg-[#FF6B00]/10 text-[#FF6B00] border-[#FF6B00]/20 font-black uppercase tracking-widest text-[10px]">
+                  Equipe Oficial
+                </Badge>
+                <div className="h-4 w-px bg-white/10" />
+                <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">ID: {team.id.slice(0, 8)}</span>
+              </div>
+              <h1 className="text-5xl font-display font-black text-white tracking-tight leading-tight">
+                {team.name}
+              </h1>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="flex items-center gap-1.5 text-slate-400 font-bold uppercase tracking-widest text-[11px]">
+                  <MapPin className="w-3.5 h-3.5 text-[#FF6B00]" />
+                  {team.city}, {team.state || 'RS'}
+                </div>
+                <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                <div className="text-slate-400 font-bold uppercase tracking-widest text-[11px]">
+                  {team.sex === 'masculino' ? '♂ Categoria Masculina' : '♀ Categoria Feminina'}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-3">
+             <Link 
+               href="/team/profile" 
+               className="h-11 px-6 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center transition-all"
+             >
+               Editar Perfil
+             </Link>
+             <Link 
+               href="/team/registration" 
+               className="h-11 px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold text-xs flex items-center transition-all shadow-[0_4px_15px_rgba(255,107,0,0.2)]"
+             >
+               Novas Inscrições
+             </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -201,6 +241,28 @@ export default async function TeamDashboardPage() {
             </Section>
           </div>
         )}
+
+        {/* Playoffs / Chaveamento Section */}
+        <div className="animate-fade-up" style={{ animationDelay: '250ms' }}>
+          <Section
+            title="Playoffs & Chaveamento"
+            subtitle="Acompanhe a árvore de jogos e confrontos finais"
+          >
+            <div className="bg-[#111] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="bg-white/[0.02] px-6 py-4 border-b border-white/5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Trophy className="w-4 h-4 text-[#FF6B00]" />
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">Mata-Mata em Tempo Real</h3>
+                </div>
+                <Badge variant="orange" className="font-black text-[9px]">FASE FINAL</Badge>
+              </div>
+              <Brackets />
+              <div className="px-8 py-6 bg-white/[0.01] border-t border-white/5 text-center">
+                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">O motor de chaveamento organiza automaticamente os confrontos baseados no Ranking Estadual</p>
+              </div>
+            </div>
+          </Section>
+        </div>
 
         {/* Minhas Inscrições */}
         {team.registrations.length > 0 && (
