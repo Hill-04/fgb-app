@@ -4,24 +4,48 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Badge } from "./Badge"
-import { LucideIcon } from "lucide-react"
-
-export type NavItem = {
-  label: string
-  href: string
-  icon: LucideIcon
-  badge?: number
-}
+import { 
+  LayoutDashboard, Trophy, Users, Cpu, FileText, 
+  Home, Calendar, BarChart3, Bell, MessageSquare, ClipboardList 
+} from "lucide-react"
 
 type SideNavProps = {
-  items: NavItem[]
   role: "TEAM" | "ADMIN"
   teamName?: string
   className?: string
 }
 
-export function SideNav({ items, role, teamName, className }: SideNavProps) {
+export type NavItem = {
+  label: string
+  href: string
+  icon: any
+  badge?: number
+}
+
+export function SideNav({ role, teamName, className }: SideNavProps) {
   const pathname = usePathname()
+
+  const adminNavItems: NavItem[] = [
+    { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+    { label: 'Campeonatos', href: '/admin/championships', icon: Trophy },
+    { label: 'Usuários', href: '/admin/users', icon: Users },
+    { label: 'Equipes', href: '/admin/teams', icon: Users },
+    { label: 'IA Scheduling', href: '/admin/scheduling', icon: Cpu },
+    { label: 'Relatórios', href: '/admin/reports', icon: FileText },
+  ]
+
+  const teamNavItems: NavItem[] = [
+    { label: 'Início', href: '/team/dashboard', icon: Home },
+    { label: 'Campeonatos', href: '/team/championships', icon: Trophy },
+    { label: 'Calendário', href: '/team/calendar', icon: Calendar },
+    { label: 'Classificação', href: '/team/standings', icon: BarChart3 },
+    { label: 'Resultados', href: '/team/results', icon: ClipboardList },
+    { label: 'Documentos', href: '/team/documents', icon: FileText },
+    { label: 'Notificações', href: '/team/notifications', icon: Bell, badge: 0 },
+    { label: 'Chat FGB', href: '/team/chat', icon: MessageSquare },
+  ]
+
+  const items = role === "ADMIN" ? adminNavItems : teamNavItems
 
   return (
     <nav className={cn("w-[230px] bg-[--bg-sidebar] border-r border-[--border-color] flex flex-col", className)}>
@@ -59,7 +83,7 @@ export function SideNav({ items, role, teamName, className }: SideNavProps) {
                 <Icon className="w-5 h-5" />
                 <span className="font-medium text-sm">{item.label}</span>
               </div>
-              {item.badge && item.badge > 0 && (
+              {item.badge !== undefined && item.badge > 0 && (
                 <Badge
                   variant={role === "ADMIN" ? "blue" : "orange"}
                   size="sm"
