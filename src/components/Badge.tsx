@@ -16,15 +16,15 @@ export function Badge({
   className
 }: BadgeProps) {
   const variantStyles = {
-    default: "bg-white/5 text-slate-300 border-white/10 backdrop-blur-md",
-    success: "bg-green-500/10 text-green-400 border-green-500/20 backdrop-blur-md",
-    warning: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20 backdrop-blur-md",
-    error: "bg-red-500/10 text-red-500 border-red-500/20 backdrop-blur-md",
-    info: "bg-blue-500/10 text-blue-400 border-blue-500/20 backdrop-blur-md",
-    orange: "bg-orange-500/10 text-orange-500 border-orange-500/20 backdrop-blur-md",
-    blue: "bg-blue-500/10 text-blue-400 border-blue-500/20 backdrop-blur-md",
-    purple: "bg-purple-500/10 text-purple-400 border-purple-500/20 backdrop-blur-md",
-    pink: "bg-pink-500/10 text-pink-400 border-pink-500/20 backdrop-blur-md",
+    default: "bg-slate-100 text-slate-700 border-slate-200",
+    success: "bg-green-50 text-green-700 border-green-200",
+    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
+    error: "bg-red-50 text-red-700 border-red-200",
+    info: "bg-blue-50 text-blue-700 border-blue-200",
+    orange: "bg-orange-50 text-orange-700 border-orange-200",
+    blue: "bg-blue-50 text-blue-700 border-blue-200",
+    purple: "bg-purple-50 text-purple-700 border-purple-200",
+    pink: "bg-pink-50 text-pink-700 border-pink-200",
   }
 
   const sizeStyles = {
@@ -33,15 +33,15 @@ export function Badge({
   }
 
   const dotColor = {
-    default: "bg-slate-400 shadow-[0_0_5px_rgba(148,163,184,0.5)] flex-shrink-0",
-    success: "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.5)] flex-shrink-0",
-    warning: "bg-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.5)] flex-shrink-0",
-    error: "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.5)] flex-shrink-0",
-    info: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.5)] flex-shrink-0",
-    orange: "bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.5)] flex-shrink-0",
-    blue: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.5)] flex-shrink-0",
-    purple: "bg-purple-400 shadow-[0_0_5px_rgba(168,85,247,0.5)] flex-shrink-0",
-    pink: "bg-pink-400 shadow-[0_0_5px_rgba(236,72,153,0.5)] flex-shrink-0",
+    default: "bg-slate-400 shadow-sm flex-shrink-0",
+    success: "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)] flex-shrink-0",
+    warning: "bg-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.4)] flex-shrink-0",
+    error: "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.4)] flex-shrink-0",
+    info: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
+    orange: "bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.4)] flex-shrink-0",
+    blue: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
+    purple: "bg-purple-400 shadow-[0_0_5px_rgba(168,85,247,0.4)] flex-shrink-0",
+    pink: "bg-pink-400 shadow-[0_0_5px_rgba(236,72,153,0.4)] flex-shrink-0",
   }
 
   return (

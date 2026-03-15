@@ -48,17 +48,17 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
   const items = role === "ADMIN" ? adminNavItems : teamNavItems
 
   return (
-    <nav className={cn("w-[240px] bg-black/40 backdrop-blur-2xl border-r border-white/[0.04] saturate-150 flex flex-col relative z-20", className)}>
+    <nav className={cn("w-[240px] bg-white border-r border-slate-200 shadow-[2px_0_10px_rgba(0,0,0,0.02)] flex flex-col relative z-20", className)}>
       {/* Header */}
-      <div className="p-6 border-b border-white/[0.04]">
+      <div className="p-6 border-b border-slate-200">
         <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-[8px] shadow-[0_4px_15px_rgba(234,88,12,0.4)] transition-transform duration-300 group-hover:scale-105 shrink-0">
+          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-[8px] shadow-[0_4px_10px_rgba(234,88,12,0.2)] transition-transform duration-300 group-hover:scale-105 shrink-0">
             <span className="font-display font-black text-white text-[10px] tracking-tight">FGB</span>
           </div>
-          <span className="font-display font-black text-white tracking-tight">Sistema</span>
+          <span className="font-display font-black text-slate-900 tracking-tight">Sistema</span>
         </Link>
         {teamName && (
-          <p className="text-sm font-medium text-slate-400 mt-4 leading-tight">{teamName}</p>
+          <p className="text-sm font-bold text-slate-500 mt-4 leading-tight">{teamName}</p>
         )}
         {role === "ADMIN" && (
           <Badge variant="blue" size="sm" className="mt-4">
@@ -81,14 +81,14 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
                 "flex items-center justify-between gap-3 px-3 py-2.5 rounded-[12px] transition-all duration-300 group border border-transparent",
                 isActive
                   ? role === "ADMIN"
-                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)] translate-x-1"
-                    : "bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.1)] translate-x-1"
-                  : "text-slate-500 hover:bg-white/[0.04] hover:border-white/10 hover:text-slate-200"
+                    ? "bg-blue-50 text-blue-700 border-blue-200 shadow-sm translate-x-1"
+                    : "bg-orange-50 text-orange-700 border-orange-200 shadow-sm translate-x-1"
+                  : "text-slate-600 hover:bg-slate-50 hover:border-slate-200 hover:text-slate-900"
               )}
             >
               <div className="flex items-center gap-3">
                 <Icon className={cn("w-4 h-4 transition-transform", isActive ? "scale-110" : "group-hover:scale-110")} />
-                <span className={cn("font-medium text-sm tracking-wide transition-colors", isActive ? "font-semibold" : "")}>
+                <span className={cn("font-medium text-sm tracking-wide transition-colors", isActive ? "font-bold" : "")}>
                   {item.label}
                 </span>
               </div>
@@ -96,7 +96,7 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
                 <Badge
                   variant={role === "ADMIN" ? "blue" : "orange"}
                   size="sm"
-                  className="shadow-md ml-auto"
+                  className="shadow-sm ml-auto"
                 >
                   {item.badge}
                 </Badge>
@@ -107,8 +107,8 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-white/[0.04] bg-black/20">
-        <p className="text-[10px] font-bold text-slate-600 text-center uppercase tracking-[0.2em]">
+      <div className="p-6 border-t border-slate-200 bg-slate-50">
+        <p className="text-[10px] font-bold text-slate-500 text-center uppercase tracking-[0.2em]">
           FGB App © {new Date().getFullYear()}
         </p>
       </div>

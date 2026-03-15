@@ -42,10 +42,10 @@ export default async function AdminDashboardPage() {
       <div className="space-y-10">
         {/* Header */}
         <div className="animate-fade-in">
-          <h1 className="text-4xl font-display font-black text-white tracking-tight mb-2">
+          <h1 className="text-4xl font-display font-black text-slate-900 tracking-tight mb-2">
             Dashboard Administrativo
           </h1>
-          <p className="text-slate-400 font-medium text-lg">
+          <p className="text-slate-500 font-medium text-lg">
             Visão geral da Federação Gaúcha de Basquete
           </p>
         </div>
@@ -104,7 +104,7 @@ export default async function AdminDashboardPage() {
               action={
                 <Link
                   href="/admin/championships"
-                  className="text-sm font-bold text-blue-400 hover:text-white transition-all bg-blue-500/10 hover:bg-blue-500/20 px-5 py-2.5 rounded-xl border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)] hover:shadow-[0_0_20px_rgba(59,130,246,0.2)]"
+                  className="text-sm font-bold text-blue-600 hover:text-blue-700 transition-all bg-blue-50 hover:bg-blue-100 px-5 py-2.5 rounded-xl border border-blue-200 shadow-sm hover:shadow"
                 >
                   Ver todas
                 </Link>
@@ -112,12 +112,12 @@ export default async function AdminDashboardPage() {
             >
               <div className="space-y-4">
                 {recentRegistrations.map((registration) => (
-                  <div key={registration.id} className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-md p-5 rounded-2xl flex items-center justify-between hover:bg-white/[0.04] hover:-translate-y-0.5 transition-all duration-300">
+                  <div key={registration.id} className="bg-white border border-slate-200 shadow-sm p-5 rounded-2xl flex items-center justify-between hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300">
                     <div>
-                      <h3 className="font-bold text-lg text-white tracking-tight">
+                      <h3 className="font-bold text-lg text-slate-900 tracking-tight">
                         {registration.team.name}
                       </h3>
-                      <p className="text-sm font-medium text-slate-400 mt-1">
+                      <p className="text-sm font-medium text-slate-500 mt-1">
                         {registration.championship.name} • {registration.categories.length} categoria(s)
                       </p>
                     </div>
@@ -152,7 +152,7 @@ export default async function AdminDashboardPage() {
               action={
                 <Link
                   href="/admin/championships"
-                  className="text-sm font-bold text-orange-400 hover:text-white transition-all bg-orange-500/10 hover:bg-orange-500/20 px-5 py-2.5 rounded-xl border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)]"
+                  className="text-sm font-bold text-orange-600 hover:text-orange-700 transition-all bg-orange-50 hover:bg-orange-100 px-5 py-2.5 rounded-xl border border-orange-200 shadow-sm hover:shadow"
                 >
                   Gerenciar
                 </Link>
@@ -163,10 +163,8 @@ export default async function AdminDashboardPage() {
                   <Link
                     key={championship.id}
                     href={`/admin/championships/${championship.id}`}
-                    className="bg-white/[0.02] border border-white/[0.05] backdrop-blur-xl p-6 rounded-3xl flex flex-col justify-between hover:bg-white/[0.04] hover:border-white/10 hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
+                    className="bg-white border border-slate-200 p-6 rounded-3xl flex flex-col justify-between hover:border-slate-300 hover:shadow-md hover:-translate-y-1 transition-all duration-300 group relative overflow-hidden"
                   >
-                    <div className="absolute inset-0 rounded-3xl ring-1 ring-inset ring-white/5 pointer-events-none" />
-                    
                     <div className="space-y-5 relative z-10">
                       <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between">
@@ -186,39 +184,37 @@ export default async function AdminDashboardPage() {
                              championship.status === 'CONFIRMED' ? 'Confirmado' :
                              championship.status === 'ONGOING' ? 'Em andamento' : 'Concluído'}
                           </Badge>
-                          <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-white/10 group-hover:scale-110 transition-all">
-                            <span className="text-xl">
-                              {championship.sex === 'masculino' ? '🏀' : '🎀'}
-                            </span>
+                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center opacity-70 group-hover:opacity-100 group-hover:bg-slate-200 group-hover:scale-110 transition-all text-xl">
+                            {championship.sex === 'masculino' ? '🏀' : '🎀'}
                           </div>
                         </div>
                         <div>
-                          <h3 className="font-display font-black text-xl text-white tracking-tight group-hover:text-orange-400 transition-colors leading-tight drop-shadow-sm">
+                          <h3 className="font-display font-black text-xl text-slate-900 tracking-tight group-hover:text-orange-600 transition-colors leading-tight">
                             {championship.name}
                           </h3>
-                          <p className="text-sm font-medium text-slate-400 mt-1.5">
+                          <p className="text-sm font-bold text-slate-500 mt-1.5">
                             {championship.sex === 'masculino' ? 'Masculino' : 'Feminino'}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-4 text-sm font-medium text-slate-400 bg-white/[0.03] p-4 rounded-2xl border border-white/[0.05]">
+                      <div className="flex items-center gap-4 text-sm font-medium text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                         <div className="flex-1 flex flex-col">
                           <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Categorias</span>
-                          <span className="text-lg font-bold text-white">{championship._count.categories}</span>
+                          <span className="text-lg font-bold text-slate-900">{championship._count.categories}</span>
                         </div>
-                        <div className="w-px h-10 bg-white/10"></div>
+                        <div className="w-px h-10 bg-slate-200"></div>
                         <div className="flex-1 flex flex-col">
                           <span className="text-[10px] uppercase tracking-widest text-slate-500 mb-1">Inscrições</span>
-                          <span className="text-lg font-bold text-white">{championship._count.registrations}</span>
+                          <span className="text-lg font-bold text-slate-900">{championship._count.registrations}</span>
                         </div>
                       </div>
                     </div>
 
                     {championship.regDeadline && (
-                      <div className="text-xs font-semibold text-slate-500 mt-6 pt-5 border-t border-white/[0.05] flex items-center gap-2 relative z-10">
-                        <Calendar className="w-4 h-4 text-slate-400" />
-                        Prazo: <span className="text-slate-300">{new Date(championship.regDeadline).toLocaleDateString('pt-BR')}</span>
+                      <div className="text-xs font-semibold text-slate-600 mt-6 pt-5 border-t border-slate-100 flex items-center gap-2 relative z-10">
+                        <Calendar className="w-4 h-4 text-slate-500" />
+                        Prazo: <span className="text-slate-800">{new Date(championship.regDeadline).toLocaleDateString('pt-BR')}</span>
                       </div>
                     )}
                   </Link>
@@ -231,7 +227,7 @@ export default async function AdminDashboardPage() {
     )
   } catch (error: any) {
     return (
-      <div className="p-8 text-red-500 bg-red-500/10 border border-red-500/20 rounded-2xl backdrop-blur-md">
+      <div className="p-8 text-red-700 bg-red-50 border border-red-200 rounded-2xl">
         <h2 className="text-xl font-bold mb-4 tracking-tight">Erro de Servidor (Admin Dashboard)</h2>
         <pre className="whitespace-pre-wrap text-sm">{error.message}</pre>
         <pre className="whitespace-pre-wrap text-xs mt-4 opacity-70">{error.stack}</pre>

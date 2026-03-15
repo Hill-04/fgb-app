@@ -50,51 +50,51 @@
 }
 
 :root {
-  /* Cores FGB - Background Apple Dark */
-  --bg-main: #000000;
-  --bg-card: #0A0A0A;
-  --bg-sidebar: #050505;
+  /* Cores FGB - Background Premium Light */
+  --bg-main: #F8FAFC; /* slate-50 */
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
 
   /* Cores FGB - Primárias */
   --orange: #F97316;
-  --orange-hover: #FB923C;
-  --orange-dark: #EA580C;
+  --orange-hover: #EA580C;
+  --orange-dark: #C2410C;
   --blue-admin: #3B82F6;
   --blue-light: #60A5FA;
-  --blue-dark: #2563EB;
+  --blue-dark: #1D4ED8;
 
-  /* Cores FGB - Texto */
-  --text-main: #FAFAFA;
-  --text-secondary: #A1A1AA;
-  --text-dim: #71717A;
+  /* Cores FGB - Texto Premium Light */
+  --text-main: #0F172A; /* slate-900 */
+  --text-secondary: #475569; /* slate-600 */
+  --text-dim: #94A3B8; /* slate-400 */
 
   /* Cores FGB - Bordas e Extras */
-  --border-color: #27272A;
-  --border-hover: #3F3F46;
+  --border-color: #E2E8F0; /* slate-200 */
+  --border-hover: #CBD5E1; /* slate-300 */
   --success: #10B981;
   --warning: #F59E0B;
   --error: #EF4444;
-  --purple-ai: #A855F7;
+  --purple-ai: #8B5CF6;
   --pink-female: #EC4899;
 
-  /* Variáveis do shadcn (adaptadas para Apple Dark) */
-  --background: #000000;
-  --foreground: #FAFAFA;
-  --card: #0A0A0A;
-  --card-foreground: #FAFAFA;
-  --popover: #0A0A0A;
-  --popover-foreground: #FAFAFA;
+  /* Variáveis do shadcn (adaptadas para Premium Light) */
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --card: #FFFFFF;
+  --card-foreground: #0F172A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F172A;
   --primary: #F97316;
   --primary-foreground: #FFFFFF;
-  --secondary: #18181B;
-  --secondary-foreground: #FAFAFA;
-  --muted: #18181B;
-  --muted-foreground: #A1A1AA;
-  --accent: #3B82F6;
+  --secondary: #F1F5F9;
+  --secondary-foreground: #0F172A;
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #F97316; /* Orange hover states */
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #27272A;
-  --input: #27272A;
+  --border: #E2E8F0;
+  --input: #E2E8F0;
   --ring: #F97316;
   --chart-1: #F97316;
   --chart-2: #3B82F6;
@@ -102,17 +102,18 @@
   --chart-4: #A855F7;
   --chart-5: #EC4899;
   --radius: 1rem;
-  --sidebar: #050505;
-  --sidebar-foreground: #FAFAFA;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #0F172A;
   --sidebar-primary: #F97316;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #18181B;
-  --sidebar-accent-foreground: #FAFAFA;
-  --sidebar-border: #27272A;
+  --sidebar-accent: #FFF7ED; /* orange-50 */
+  --sidebar-accent-foreground: #EA580C; /* orange-600 */
+  --sidebar-border: #E2E8F0;
   --sidebar-ring: #F97316;
 }
 
 .dark {
+  /* Mantendo o Dark mode sutil como fallback */
   --background: #000000;
   --foreground: #FAFAFA;
   --card: #0A0A0A;
@@ -184,10 +185,10 @@
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 
 /* FGB Custom Classes */
 .label-uppercase {
@@ -205,38 +206,34 @@
   background: linear-gradient(135deg, var(--blue-admin) 0%, var(--blue-dark) 100%);
 }
 
-/* Apple Glassmorphism */
+/* Premium Light Components */
 .glass-sidebar {
-  background: rgba(5, 5, 5, 0.75);
-  backdrop-filter: blur(40px) saturate(150%);
-  -webkit-backdrop-filter: blur(40px) saturate(150%);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border-color);
+  box-shadow: 1px 0 10px rgba(0, 0, 0, 0.02);
 }
 
 .glass-panel {
-  background: rgba(15, 15, 15, 0.6);
-  backdrop-filter: blur(30px) saturate(150%);
-  -webkit-backdrop-filter: blur(30px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
   border-radius: 24px;
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.02);
 }
 
 .card-fgb {
-  background: rgba(20, 20, 25, 0.4);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #FFFFFF;
+  border: 1px solid var(--border-color);
   border-radius: 20px;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 10px -2px rgba(0, 0, 0, 0.03);
 }
 
 .card-fgb:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(30, 30, 35, 0.5);
-  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  transform: translateY(-2px) scale(1.01);
+  border-color: var(--border-hover);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  transform: translateY(-2px);
 }
 
 .accent-bar {
@@ -250,7 +247,7 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 3px;
+  height: 4px;
   background: var(--orange);
   border-radius: 20px 20px 0 0;
 }

@@ -48,7 +48,7 @@ export function PipelineSteps({ currentStep, className }: PipelineStepsProps) {
                 "absolute -top-3 -right-3 w-7 h-7 rounded-full flex items-center justify-center text-xs font-black shadow-lg",
                 isCompleted && "bg-[--success] text-white shadow-[0_0_10px_rgba(34,197,94,0.5)]",
                 isCurrent && "bg-[--warning] text-[#3f2b00] shadow-[0_0_10px_rgba(234,179,8,0.5)]",
-                isFuture && "bg-[--border-color] text-[--text-dim] border border-white/5"
+                isFuture && "bg-[--border-color] text-[--text-dim] border border-slate-200"
               )}
             >
               {isCompleted ? <Check className="w-4 h-4" strokeWidth={3} /> : step.id}
