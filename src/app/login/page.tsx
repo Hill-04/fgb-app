@@ -33,8 +33,10 @@ export default function LoginPage() {
     const response = await fetch('/api/auth/session')
     const session = await response.json()
 
-    // Redirecionar baseado em se tem equipe ou não
-    if (session?.user?.teamId) {
+    // Redirecionar baseado em acesso
+    if (session?.user?.isAdmin) {
+      router.push('/admin/dashboard')
+    } else if (session?.user?.teamId) {
       router.push('/team/dashboard')
     } else {
       router.push('/team/onboarding')
