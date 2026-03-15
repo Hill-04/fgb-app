@@ -50,10 +50,10 @@
 }
 
 :root {
-  /* Cores FGB - Background */
-  --bg-main: #0B0F1E;
-  --bg-card: #111827;
-  --bg-sidebar: #0D1224;
+  /* Cores FGB - Background Apple Dark */
+  --bg-main: #000000;
+  --bg-card: #0A0A0A;
+  --bg-sidebar: #050505;
 
   /* Cores FGB - Primárias */
   --orange: #F97316;
@@ -64,85 +64,85 @@
   --blue-dark: #2563EB;
 
   /* Cores FGB - Texto */
-  --text-main: #F1F5F9;
-  --text-secondary: #94A3B8;
-  --text-dim: #64748B;
+  --text-main: #FAFAFA;
+  --text-secondary: #A1A1AA;
+  --text-dim: #71717A;
 
   /* Cores FGB - Bordas e Extras */
-  --border-color: #1E293B;
-  --border-hover: #334155;
-  --success: #22C55E;
-  --warning: #EAB308;
+  --border-color: #27272A;
+  --border-hover: #3F3F46;
+  --success: #10B981;
+  --warning: #F59E0B;
   --error: #EF4444;
   --purple-ai: #A855F7;
   --pink-female: #EC4899;
 
-  /* Variáveis do shadcn (adaptadas para tema escuro FGB) */
-  --background: #0B0F1E;
-  --foreground: #F1F5F9;
-  --card: #111827;
-  --card-foreground: #F1F5F9;
-  --popover: #111827;
-  --popover-foreground: #F1F5F9;
+  /* Variáveis do shadcn (adaptadas para Apple Dark) */
+  --background: #000000;
+  --foreground: #FAFAFA;
+  --card: #0A0A0A;
+  --card-foreground: #FAFAFA;
+  --popover: #0A0A0A;
+  --popover-foreground: #FAFAFA;
   --primary: #F97316;
   --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
-  --secondary-foreground: #F1F5F9;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
+  --secondary: #18181B;
+  --secondary-foreground: #FAFAFA;
+  --muted: #18181B;
+  --muted-foreground: #A1A1AA;
   --accent: #3B82F6;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #1E293B;
-  --input: #1E293B;
+  --border: #27272A;
+  --input: #27272A;
   --ring: #F97316;
   --chart-1: #F97316;
   --chart-2: #3B82F6;
-  --chart-3: #22C55E;
+  --chart-3: #10B981;
   --chart-4: #A855F7;
   --chart-5: #EC4899;
-  --radius: 0.875rem;
-  --sidebar: #0D1224;
-  --sidebar-foreground: #F1F5F9;
+  --radius: 1rem;
+  --sidebar: #050505;
+  --sidebar-foreground: #FAFAFA;
   --sidebar-primary: #F97316;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F1F5F9;
-  --sidebar-border: #1E293B;
+  --sidebar-accent: #18181B;
+  --sidebar-accent-foreground: #FAFAFA;
+  --sidebar-border: #27272A;
   --sidebar-ring: #F97316;
 }
 
 .dark {
-  --background: #0B0F1E;
-  --foreground: #F1F5F9;
-  --card: #111827;
-  --card-foreground: #F1F5F9;
-  --popover: #111827;
-  --popover-foreground: #F1F5F9;
+  --background: #000000;
+  --foreground: #FAFAFA;
+  --card: #0A0A0A;
+  --card-foreground: #FAFAFA;
+  --popover: #0A0A0A;
+  --popover-foreground: #FAFAFA;
   --primary: #F97316;
   --primary-foreground: #FFFFFF;
-  --secondary: #1E293B;
-  --secondary-foreground: #F1F5F9;
-  --muted: #1E293B;
-  --muted-foreground: #94A3B8;
+  --secondary: #18181B;
+  --secondary-foreground: #FAFAFA;
+  --muted: #18181B;
+  --muted-foreground: #A1A1AA;
   --accent: #3B82F6;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #1E293B;
-  --input: #1E293B;
+  --border: #27272A;
+  --input: #27272A;
   --ring: #F97316;
   --chart-1: #F97316;
   --chart-2: #3B82F6;
-  --chart-3: #22C55E;
+  --chart-3: #10B981;
   --chart-4: #A855F7;
   --chart-5: #EC4899;
-  --sidebar: #0D1224;
-  --sidebar-foreground: #F1F5F9;
+  --sidebar: #050505;
+  --sidebar-foreground: #FAFAFA;
   --sidebar-primary: #F97316;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1E293B;
-  --sidebar-accent-foreground: #F1F5F9;
-  --sidebar-border: #1E293B;
+  --sidebar-accent: #18181B;
+  --sidebar-accent-foreground: #FAFAFA;
+  --sidebar-border: #27272A;
   --sidebar-ring: #F97316;
 }
 
@@ -186,15 +186,15 @@
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
 /* FGB Custom Classes */
 .label-uppercase {
   text-transform: uppercase;
-  letter-spacing: 1.2px;
+  letter-spacing: 1.5px;
   font-size: 0.625rem;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .gradient-orange {
@@ -205,41 +205,43 @@
   background: linear-gradient(135deg, var(--blue-admin) 0%, var(--blue-dark) 100%);
 }
 
-/* Glassmorphism & Cards */
+/* Apple Glassmorphism */
 .glass-sidebar {
-  background: rgba(13, 18, 36, 0.65);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(5, 5, 5, 0.75);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-panel {
-  background: rgba(17, 24, 39, 0.5);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  background: rgba(15, 15, 15, 0.6);
+  backdrop-filter: blur(30px) saturate(150%);
+  -webkit-backdrop-filter: blur(30px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .card-fgb {
-  background: rgba(17, 24, 39, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(20, 20, 25, 0.4);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 14px;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .card-fgb:hover {
   border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transform: translateY(-2px);
+  background: rgba(30, 30, 35, 0.5);
+  box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px) scale(1.01);
 }
 
 .accent-bar {
   position: relative;
+  border-radius: 20px;
 }
 
 .accent-bar::before {
@@ -250,7 +252,7 @@
   right: 0;
   height: 3px;
   background: var(--orange);
-  border-radius: 14px 14px 0 0;
+  border-radius: 20px 20px 0 0;
 }
 
 .badge-dot::before {

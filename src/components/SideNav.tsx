@@ -48,22 +48,27 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
   const items = role === "ADMIN" ? adminNavItems : teamNavItems
 
   return (
-    <nav className={cn("w-[230px] glass-sidebar flex flex-col relative z-20", className)}>
+    <nav className={cn("w-[240px] bg-black/40 backdrop-blur-2xl border-r border-white/[0.04] saturate-150 flex flex-col relative z-20", className)}>
       {/* Header */}
-      <div className="p-6 border-b border-white/5">
-        <h1 className="text-2xl font-black text-[--text-main] tracking-tight">FGB</h1>
+      <div className="p-6 border-b border-white/[0.04]">
+        <Link href="/" className="inline-flex items-center gap-3 group">
+          <div className="w-8 h-8 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-[8px] shadow-[0_4px_15px_rgba(234,88,12,0.4)] transition-transform duration-300 group-hover:scale-105 shrink-0">
+            <span className="font-display font-black text-white text-[10px] tracking-tight">FGB</span>
+          </div>
+          <span className="font-display font-black text-white tracking-tight">Sistema</span>
+        </Link>
         {teamName && (
-          <p className="text-sm font-medium text-[--text-secondary] mt-1">{teamName}</p>
+          <p className="text-sm font-medium text-slate-400 mt-4 leading-tight">{teamName}</p>
         )}
         {role === "ADMIN" && (
-          <Badge variant="blue" size="sm" className="mt-3 bg-[--blue-admin]/30 border-[--blue-admin]/50 font-bold">
+          <Badge variant="blue" size="sm" className="mt-4">
             Administrador
           </Badge>
         )}
       </div>
 
       {/* Nav Items */}
-      <div className="flex-1 p-4 space-y-1.5 overflow-y-auto">
+      <div className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden">
         {items.map((item) => {
           const isActive = pathname === item.href
           const Icon = item.icon
@@ -73,23 +78,25 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition-all duration-300 border border-transparent",
+                "flex items-center justify-between gap-3 px-3 py-2.5 rounded-[12px] transition-all duration-300 group border border-transparent",
                 isActive
                   ? role === "ADMIN"
-                    ? "bg-[--blue-admin]/20 text-[--blue-light] border-[--blue-admin]/30 shadow-[0_0_20px_rgba(59,130,246,0.15)] translate-x-1"
-                    : "bg-[--orange]/20 text-[--orange] border-[--orange]/30 shadow-[0_0_20px_rgba(249,115,22,0.15)] translate-x-1"
-                  : "text-[--text-secondary] hover:bg-white/5 hover:border-white/10 hover:text-[--text-main]"
+                    ? "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)] translate-x-1"
+                    : "bg-orange-500/10 text-orange-400 border-orange-500/20 shadow-[0_0_20px_rgba(249,115,22,0.1)] translate-x-1"
+                  : "text-slate-500 hover:bg-white/[0.04] hover:border-white/10 hover:text-slate-200"
               )}
             >
               <div className="flex items-center gap-3">
-                <Icon className={cn("w-5 h-5 transition-transform", isActive ? "scale-110" : "")} />
-                <span className="font-semibold text-sm tracking-wide">{item.label}</span>
+                <Icon className={cn("w-4 h-4 transition-transform", isActive ? "scale-110" : "group-hover:scale-110")} />
+                <span className={cn("font-medium text-sm tracking-wide transition-colors", isActive ? "font-semibold" : "")}>
+                  {item.label}
+                </span>
               </div>
               {item.badge !== undefined && item.badge > 0 && (
                 <Badge
                   variant={role === "ADMIN" ? "blue" : "orange"}
                   size="sm"
-                  className="shadow-lg"
+                  className="shadow-md ml-auto"
                 >
                   {item.badge}
                 </Badge>
@@ -100,9 +107,9 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-white/5">
-        <p className="text-xs font-medium text-[--text-dim] text-center uppercase tracking-widest">
-          FGB App © 2026
+      <div className="p-6 border-t border-white/[0.04] bg-black/20">
+        <p className="text-[10px] font-bold text-slate-600 text-center uppercase tracking-[0.2em]">
+          FGB App © {new Date().getFullYear()}
         </p>
       </div>
     </nav>

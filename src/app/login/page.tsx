@@ -44,151 +44,141 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#060810] flex">
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-[45%] relative flex-col justify-between p-14 overflow-hidden border-r border-white/[0.06]">
-        {/* Background decoration */}
-        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-          <svg
-            viewBox="0 0 600 700"
-            className="absolute inset-0 w-full h-full opacity-[0.04]"
-            fill="none"
-            stroke="white"
-            strokeWidth="1"
-          >
-            <circle cx="300" cy="350" r="120" />
-            <circle cx="300" cy="350" r="22" />
-            <rect x="20" y="20" width="560" height="660" />
-            <path d="M 20 230 L 220 230 L 220 470 L 20 470" />
-            <ellipse cx="220" cy="350" rx="100" ry="100" strokeDasharray="12 8" />
-            <path d="M 20 80 A 380 380 0 0 1 20 620" />
-          </svg>
-          <div className="absolute top-0 right-0 w-80 h-80 bg-orange-600/[0.15] blur-[120px] rounded-full" />
-          <div className="absolute bottom-0 left-0 w-60 h-60 bg-orange-500/[0.07] blur-[90px] rounded-full" />
-        </div>
-
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 relative z-10">
-          <div className="w-10 h-10 bg-orange-600 flex items-center justify-center rotate-45 shrink-0">
-            <span className="font-display font-black text-white text-sm -rotate-45 tracking-tight">FGB</span>
-          </div>
-          <div className="leading-none">
-            <div className="font-display font-bold text-sm text-white tracking-[0.18em] uppercase">Federação Gaúcha</div>
-            <div className="text-[11px] text-slate-500 tracking-widest uppercase mt-0.5">de Basquete</div>
-          </div>
-        </Link>
-
-        {/* Main text */}
-        <div className="relative z-10">
-          <h2
-            className="font-display font-black uppercase text-white leading-none tracking-tight mb-6"
-            style={{ fontSize: 'clamp(2.8rem, 5vw, 4.5rem)' }}
-          >
-            Bem-vindo<br />
-            de volta
-          </h2>
-          <p className="text-slate-500 text-sm leading-relaxed max-w-xs">
-            Acesse sua conta para gerenciar inscrições, calendário e documentos oficiais da sua equipe.
-          </p>
-        </div>
-
-        {/* Bottom badge */}
-        <div className="relative z-10 flex items-center gap-2">
-          <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-          <span className="text-[10px] font-bold text-slate-600 tracking-widest uppercase">
-            Temporada 2026 em andamento
-          </span>
-        </div>
+    <div className="min-h-screen bg-black flex relative overflow-hidden selection:bg-orange-500/30">
+      {/* Background decoration */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        {/* Subtle grid pattern background */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        
+        <div className="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-orange-600/[0.08] blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-5%] w-[500px] h-[500px] bg-blue-600/[0.05] blur-[100px] rounded-full" />
       </div>
 
-      {/* Right panel — form */}
-      <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 relative">
-        {/* Mobile logo */}
-        <Link href="/" className="lg:hidden mb-10 flex items-center gap-3">
-          <div className="w-9 h-9 bg-orange-600 flex items-center justify-center rotate-45 shrink-0">
-            <span className="font-display font-black text-white text-xs -rotate-45">FGB</span>
+      {/* Header/Logo for mobile */}
+      <div className="absolute top-6 left-6 z-20 lg:hidden">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-[10px] shadow-[0_4px_20px_rgba(234,88,12,0.4)] shrink-0">
+            <span className="font-display font-black text-white text-xs tracking-tight">FGB</span>
           </div>
-          <span className="font-display font-bold text-base text-white tracking-widest uppercase">
-            Federação Gaúcha de Basquete
-          </span>
         </Link>
+      </div>
 
-        <div className="w-full max-w-sm animate-fade-up">
-          <div className="mb-8">
-            <h1 className="font-display font-black text-3xl uppercase text-white tracking-tight mb-2">
-              Acesso ao Sistema
-            </h1>
-            <p className="text-slate-500 text-sm">
-              Digite seu e-mail e senha para continuar.
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                E-mail
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="contato@equipe.com.br"
-                required
-                className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-slate-600 rounded-none h-11 focus:border-orange-500/50 focus:ring-0 transition-colors"
-              />
+      <div className="w-full flex-1 flex flex-col lg:flex-row items-center justify-center p-6 relative z-10 gap-x-16">
+        
+        {/* Left Side Content (Desktop) */}
+        <div className="hidden lg:flex flex-col max-w-lg mb-12 lg:mb-0 animate-fade-in">
+          <Link href="/" className="flex items-center gap-4 mb-12 group inline-flex w-fit">
+            <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-700 flex items-center justify-center rounded-[14px] shadow-[0_4px_20px_rgba(234,88,12,0.4)] transition-transform duration-300 group-hover:scale-105 shrink-0">
+              <span className="font-display font-black text-white text-base tracking-tight">FGB</span>
             </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <Label htmlFor="password" className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                  Senha
-                </Label>
-                <Link href="#" className="text-xs text-orange-500 hover:text-orange-400 transition-colors">
-                  Esqueceu?
-                </Link>
-              </div>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-slate-600 rounded-none h-11 focus:border-orange-500/50 focus:ring-0 transition-colors"
-              />
-              {error && (
-                <p className="text-xs text-red-400 font-medium mt-1">{error}</p>
-              )}
+            <div className="leading-none">
+              <div className="font-display font-bold text-sm text-white tracking-[0.2em] uppercase">Federação Gaúcha</div>
+              <div className="text-xs text-slate-500 tracking-widest uppercase mt-0.5">de Basquete</div>
             </div>
+          </Link>
 
-            <Button
-              type="submit"
-              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold h-11 border-0 rounded-none shadow-[0_0_40px_-8px_rgba(234,88,12,0.5)] transition-all hover:shadow-[0_0_50px_-8px_rgba(234,88,12,0.7)] mt-2"
-              disabled={loading}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Entrando...
-                </span>
-              ) : 'Entrar'}
-            </Button>
-          </form>
+          <h2
+            className="font-display font-black leading-[1.05] tracking-tighter text-white mb-6"
+            style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)' }}
+          >
+            Bem-vindo<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">de volta.</span>
+          </h2>
+          
+          <p className="text-slate-400 text-lg leading-relaxed max-w-sm mb-10 font-medium tracking-wide">
+            Acesse sua conta para gerenciar inscrições, calendário e documentos oficiais da sua equipe.
+          </p>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-600">
-              Não possui conta?{' '}
-              <Link href="/register" className="text-orange-500 hover:text-orange-400 font-semibold transition-colors">
-                Criar conta
-              </Link>
-            </p>
+          <div className="inline-flex items-center gap-2 border border-white/10 bg-white/[0.03] backdrop-blur-md px-4 py-2 rounded-full w-fit">
+            <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(234,88,12,0.8)]" />
+            <span className="text-[11px] font-bold text-slate-300 tracking-[0.2em] uppercase">
+              Temporada 2026 ativa
+            </span>
           </div>
         </div>
 
-        <p className="absolute bottom-6 text-[10px] text-slate-700 text-center px-6 max-w-xs">
-          Ao fazer login, você concorda com os Termos de Serviço e Política de Privacidade da Federação.
-        </p>
+        {/* Right Side - Glass Form */}
+        <div className="w-full max-w-md animate-fade-up" style={{ animationDelay: '100ms' }}>
+          <div className="bg-white/[0.03] border border-white/[0.08] backdrop-blur-3xl rounded-[2rem] p-8 md:p-10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.5)] relative overflow-hidden">
+            {/* Subtle inner highlight */}
+            <div className="absolute inset-0 rounded-[2rem] ring-1 ring-inset ring-white/5 pointer-events-none" />
+            
+            <div className="mb-8 text-center lg:text-left relative z-10">
+              <h1 className="font-display font-black text-2xl md:text-3xl text-white tracking-tight mb-2">
+                Acesso ao Sistema
+              </h1>
+              <p className="text-slate-400 text-sm font-medium">
+                Digite seu e-mail e senha para continuar
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
+              <div className="space-y-2.5">
+                <Label htmlFor="email" className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em] ml-1">
+                  E-mail
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="contato@equipe.com.br"
+                  required
+                  className="bg-white/[0.03] border-white/10 text-white placeholder:text-slate-600 rounded-xl h-12 px-4 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 focus:bg-white/[0.05] transition-all"
+                />
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="flex justify-between items-center ml-1">
+                  <Label htmlFor="password" className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.1em]">
+                    Senha
+                  </Label>
+                  <Link href="#" className="text-xs font-semibold text-orange-500 hover:text-orange-400 transition-colors">
+                    Esqueceu?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  className="bg-white/[0.03] border-white/10 text-white placeholder:text-slate-600 rounded-xl h-12 px-4 focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 focus:bg-white/[0.05] transition-all"
+                />
+                {error && (
+                  <p className="text-xs text-red-400 font-medium mt-2 ml-1">{error}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold h-12 rounded-xl shadow-[0_0_30px_-5px_rgba(234,88,12,0.4)] transition-all hover:shadow-[0_0_40px_-5px_rgba(234,88,12,0.6)] hover:scale-[1.02] mt-4"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Autenticando...
+                  </span>
+                ) : 'Acessar Conta'}
+              </Button>
+            </form>
+
+            <div className="mt-8 text-center relative z-10">
+              <p className="text-sm text-slate-500 font-medium">
+                Não possui conta?{' '}
+                <Link href="/register" className="text-white hover:text-orange-400 font-bold transition-colors">
+                  Criar conta
+                </Link>
+              </p>
+            </div>
+          </div>
+          
+          <p className="text-[11px] text-slate-600 text-center mt-6 max-w-xs mx-auto font-medium">
+            Ao fazer login, você concorda com os Termos de Serviço e Política de Privacidade da Federação.
+          </p>
+        </div>
       </div>
     </div>
   )
