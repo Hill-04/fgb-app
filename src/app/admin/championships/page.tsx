@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import Link from 'next/link'
 import { Trophy, Calendar, Users, Edit2, Trash2, Plus } from 'lucide-react'
 
 type Category = {
@@ -253,22 +254,18 @@ export default function AdminChampionshipsPage() {
                 </div>
 
                 <div className="pt-6 border-t border-white/5 flex gap-3">
+                  <Link href={`/admin/championships/${c.id}/manage`} className="flex-1">
+                    <Button className="w-full bg-white/5 hover:bg-white/10 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest border border-white/10">
+                      Painel de Controle
+                    </Button>
+                  </Link>
                   {c.status === 'DRAFT' && (
                     <Button 
                       onClick={() => handleStatusChange(c.id, 'REGISTRATION_OPEN')}
                       disabled={updatingId === c.id}
-                      className="flex-1 bg-white/5 hover:bg-white/10 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest border border-white/10"
-                    >
-                      Abrir Inscrições
-                    </Button>
-                  )}
-                  {c.status === 'REGISTRATION_OPEN' && (
-                    <Button 
-                      onClick={() => handleStatusChange(c.id, 'REGISTRATION_CLOSED')}
-                      disabled={updatingId === c.id}
                       className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest"
                     >
-                      Encerrar Inscrições
+                      Abrir Inscrições
                     </Button>
                   )}
                 </div>

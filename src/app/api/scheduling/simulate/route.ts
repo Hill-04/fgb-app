@@ -53,11 +53,15 @@ export async function POST(request: Request) {
       }))
 
       return {
+        id: c.id,
         championshipName: c.name,
         minTeamsPerCat: c.minTeamsPerCat,
         format: c.format,
         phases: c.phases,
-        teams
+        teams: teams.map((t: any) => ({
+          ...t,
+          id: c.registrations.find((r:any) => r.team.name === t.name)?.team.id
+        }))
       }
     })
 
@@ -78,20 +82,29 @@ ${JSON.stringify(promptData, null, 2)}
 Você DEVE retornar APENAS UM JSON válido na seguinte estrutura, sem nenhum outro texto, usando as chaves exatas:
 {
   "viableCategories": [
-    { "id": "uuid-or-slug", "title": "Sub 17", "teams": 4 }
+    { "id": "uuid-cat-1", "title": "Sub 17", "teams": 4 }
   ],
   "blocks": [
     {
       "id": "B1",
       "title": "Bloco 1 (Sub 15 + Sub 17)",
-      "reason": "Explicação do agrupamento para economizar viagens",
+      "reason": "Explicação...",
+      "categories": ["Sub 15", "Sub 17"],
       "phases": [
-        { "name": "Sede 1: Porto Alegre", "date": "A Definir", "matches": 10 }
+        { 
+          "name": "Sede 1: Porto Alegre", 
+          "date": "2026-05-10T09:00:00Z", 
+          "location": "Ginásio Sogipa",
+          "city": "Porto Alegre",
+          "matches": [
+            { "homeTeamId": "uuid-1", "awayTeamId": "uuid-2", "categoryId": "uuid-cat-1", "phase": 1 }
+          ] 
+        }
       ]
     }
   ],
   "dates": [
-    { "phase": "Bloco 1 - 1ª Fase", "primary": "10 a 11 Maio 2026", "alternate": "17 a 18 Maio 2026", "conflictRemoved": "Justificativa..." }
+    { "phase": "Bloco 1 - 1ª Fase", "primary": "10 Maio", "alternate": "17 Maio", "conflictRemoved": "..." }
   ]
 }
 `

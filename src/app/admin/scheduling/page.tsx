@@ -12,6 +12,7 @@ export default function SchedulingPage() {
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
   const [sendingEmail, setSendingEmail] = useState(false)
+  const [applying, setApplying] = useState(false)
 
   const handleSimulate = async () => {
     setLoading(true)
@@ -67,6 +68,35 @@ export default function SchedulingPage() {
     })
     
     doc.save("calendario_fgb_2026.pdf")
+  }
+
+  const handleApply = async () => {
+    if (!result) return
+    if (!confirm('Deseja realmente aplicar este calendário? Isso criará os jogos e blocos reais no banco de dados e notificará as equipes.')) return
+    
+    setApplying(true)
+    try {
+      const res = await fetch('/api/scheduling/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          championshipId: result.championshipId || 'estadual-2026-masculino', // Idealmente viria do resultado ou contexto
+          blocks: result.blocks,
+          viableCategories: result.viableCategories
+        })
+      })
+      
+      if (res.ok) {
+        alert('Calendário aplicado com sucesso! Os jogos foram gerados.')
+        window.location.href = '/admin/games'
+      } else {
+        alert('Erro ao aplicar calendário.')
+      }
+    } catch (err) {
+      alert('Erro de conexão.')
+    } finally {
+      setApplying(false)
+    }
   }
 
   const handleSendEmails = async () => {
@@ -221,11 +251,18 @@ export default function SchedulingPage() {
             <CardFooter className="bg-white/5 rounded-b-[16px] border-t border-[rgba(255,255,255,0.1)] pt-4">
               <div className="flex flex-wrap gap-4 w-full">
                 <Button 
+                  onClick={handleApply} 
+                  disabled={applying}
+                  className="font-black uppercase tracking-widest shadow-[0_4px_15px_rgba(139,92,246,0.3)] bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl h-12 px-8"
+                >
+                  {applying ? 'Salvando...' : 'Aprovar e Confirmar Tabelas'}
+                </Button>
+                <Button 
                   onClick={handleSendEmails} 
                   disabled={sendingEmail}
-                  className="font-bold shadow-[0_4px_15px_rgba(16,185,129,0.3)] bg-[#10B981] hover:bg-[#059669] text-white rounded-xl"
+                  className="font-bold border border-white/10 bg-white/5 hover:bg-white/10 text-white rounded-xl"
                 >
-                  {sendingEmail ? 'Enviando...' : 'Aprovar e Notificar Equipes (E-mail)'}
+                  {sendingEmail ? 'Enviando...' : 'Notificar Equipes (E-mail)'}
                 </Button>
                 <Button variant="outline" onClick={handleExportExcel} className="text-[--text-secondary] border-[rgba(255,255,255,0.1)] bg-white/5 hover:text-white hover:bg-white/10 rounded-xl">Exportar (Excel)</Button>
                 <Button variant="outline" onClick={handleExportPDF} className="text-[--text-secondary] border-[rgba(255,255,255,0.1)] bg-white/5 hover:text-white hover:bg-white/10 rounded-xl">Gerar Relatório (PDF)</Button>

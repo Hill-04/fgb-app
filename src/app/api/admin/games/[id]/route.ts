@@ -41,9 +41,58 @@ export async function PATCH(
       }
     })
 
-    // Optional: Update standings if game is completed
-    if (status === 'COMPLETED') {
-      // Manual logic or trigger a background job to recalc standings
+    // Automated Standing Updates
+    if (status === 'COMPLETED' && game.homeScore !== null && game.awayScore !== null) {
+      const { homeTeamId, awayTeamId, categoryId } = game
+      
+      const homeWin = game.homeScore > game.awayScore
+      const awayWin = game.awayScore > game.homeScore
+
+      // Update Home Team Standing
+      await prisma.standing.upsert({
+        where: { teamId_categoryId: { teamId: homeTeamId, categoryId } },
+        create: {
+          teamId: homeTeamId,
+          categoryId,
+          played: 1,
+          wins: homeWin ? 1 : 0,
+          losses: homeWin ? 0 : 1,
+          points: homeWin ? 2 : 1,
+          pointsFor: game.homeScore,
+          pointsAg: game.awayScore,
+        },
+        update: {
+          played: { increment: 1 },
+          wins: { increment: homeWin ? 1 : 0 },
+          losses: { increment: homeWin ? 0 : 1 },
+          points: { increment: homeWin ? 2 : 1 },
+          pointsFor: { increment: game.homeScore },
+          pointsAg: { increment: game.awayScore },
+        }
+      })
+
+      // Update Away Team Standing
+      await prisma.standing.upsert({
+        where: { teamId_categoryId: { teamId: awayTeamId, categoryId } },
+        create: {
+          teamId: awayTeamId,
+          categoryId,
+          played: 1,
+          wins: awayWin ? 1 : 0,
+          losses: awayWin ? 0 : 1,
+          points: awayWin ? 2 : 1,
+          pointsFor: game.awayScore,
+          pointsAg: game.homeScore,
+        },
+        update: {
+          played: { increment: 1 },
+          wins: { increment: awayWin ? 1 : 0 },
+          losses: { increment: awayWin ? 0 : 1 },
+          points: { increment: awayWin ? 2 : 1 },
+          pointsFor: { increment: game.awayScore },
+          pointsAg: { increment: game.homeScore },
+        }
+      })
     }
 
     return NextResponse.json(game)
