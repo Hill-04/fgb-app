@@ -48,27 +48,18 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
   const items = role === "ADMIN" ? adminNavItems : teamNavItems
 
   return (
-    <nav className={cn("w-[240px] glass-sidebar flex flex-col relative z-20", className)}>
+    <nav className={cn("w-[80px] bg-[#060606] border-r border-[rgba(255,255,255,0.05)] flex flex-col relative z-20 items-center py-6", className)}>
       {/* Header */}
-      <div className="p-6 border-b border-[rgba(255,255,255,0.1)]">
-        <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-8 h-8 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[8px] shadow-[0_4px_10px_rgba(255,107,0,0.2)] transition-transform duration-300 group-hover:scale-105 shrink-0">
-            <span className="font-display font-black text-white text-[10px] tracking-tight">FGB</span>
+      <div className="mb-8 border-b border-[rgba(255,255,255,0.05)] pb-6 w-full flex justify-center">
+        <Link href="/" className="inline-flex items-center justify-center group">
+          <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[10px] shadow-[0_4px_10px_rgba(255,107,0,0.2)] transition-transform duration-300 group-hover:scale-110 shrink-0">
+            <span className="font-display font-black text-white text-[12px] tracking-tight">FGB</span>
           </div>
-          <span className="font-display font-black text-[--text-main] tracking-tight">Sistema</span>
         </Link>
-        {teamName && (
-          <p className="text-sm font-bold text-[--text-secondary] mt-4 leading-tight">{teamName}</p>
-        )}
-        {role === "ADMIN" && (
-          <Badge variant="blue" size="sm" className="mt-4">
-            Administrador
-          </Badge>
-        )}
       </div>
 
       {/* Nav Items */}
-      <div className="flex-1 p-4 space-y-1 overflow-y-auto overflow-x-hidden">
+      <div className="flex-1 w-full space-y-4 overflow-y-auto overflow-x-hidden flex flex-col items-center">
         {items.map((item) => {
           const isActive = pathname === item.href
           const Icon = item.icon
@@ -77,29 +68,38 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
             <Link
               key={item.href}
               href={item.href}
+              title={item.label}
               className={cn(
-                "flex items-center justify-between gap-3 px-3 py-2.5 rounded-[12px] transition-all duration-300 group border border-transparent",
+                "w-12 h-12 flex items-center justify-center rounded-2xl transition-all duration-300 group relative",
                 isActive
                   ? role === "ADMIN"
-                    ? "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20 shadow-sm translate-x-1"
-                    : "bg-[#FF6B00]/10 text-[#FF6B00] border-[#FF6B00]/20 shadow-sm translate-x-1"
-                  : "text-[--text-secondary] hover:bg-white/5 hover:border-[rgba(255,255,255,0.1)] hover:text-[--text-main]"
+                    ? "bg-[#3B82F6]/10 text-[#60A5FA] shadow-[0_4px_15px_rgba(59,130,246,0.2)]"
+                    : "bg-[#FF6B00]/10 text-[#FF6B00] shadow-[0_4px_15px_rgba(255,107,0,0.2)]"
+                  : "text-[--text-secondary] hover:bg-[#111111] hover:text-[--text-main]"
               )}
             >
-              <div className="flex items-center gap-3">
-                <Icon className={cn("w-4 h-4 transition-transform", isActive ? "scale-110" : "group-hover:scale-110")} />
-                <span className={cn("font-medium text-sm tracking-wide transition-colors", isActive ? "font-bold" : "")}>
-                  {item.label}
-                </span>
+              <Icon className={cn("w-6 h-6 transition-transform", isActive ? "scale-110" : "group-hover:scale-110")} />
+              
+              {/* Active Marker Indicator */}
+              {isActive && (
+                <div className={cn(
+                  "absolute -left-3 w-1.5 h-6 rounded-r-full",
+                  role === "ADMIN" ? "bg-[#3B82F6]" : "bg-[#FF6B00]"
+                )} />
+              )}
+
+              {/* Tooltip on hover (large screens) */}
+              <div className="absolute left-16 px-3 py-1.5 bg-[#151515] border border-[rgba(255,255,255,0.05)] text-[--text-main] text-xs font-bold rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all whitespace-nowrap z-50 shadow-xl">
+                {item.label}
               </div>
+
               {item.badge !== undefined && item.badge > 0 && (
-                <Badge
-                  variant={role === "ADMIN" ? "blue" : "orange"}
-                  size="sm"
-                  className="shadow-sm ml-auto"
-                >
-                  {item.badge}
-                </Badge>
+                <div className={cn(
+                  "absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center rounded-full text-[9px] font-black text-white",
+                  role === "ADMIN" ? "bg-[#3B82F6]" : "bg-[#FF6B00]"
+                )}>
+                  {item.badge > 9 ? '9+' : item.badge}
+                </div>
               )}
             </Link>
           )
@@ -107,9 +107,9 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
       </div>
 
       {/* Footer */}
-      <div className="p-6 border-t border-[rgba(255,255,255,0.1)] bg-white/5">
-        <p className="text-[10px] font-bold text-[--text-dim] text-center uppercase tracking-[0.2em]">
-          FGB App © {new Date().getFullYear()}
+      <div className="mt-8 border-t border-[rgba(255,255,255,0.05)] w-full pt-6 flex justify-center">
+        <p className="text-[9px] font-bold text-[--text-dim] text-center uppercase tracking-[0.2em] [writing-mode:vertical-rl] rotate-180">
+          FGB '26
         </p>
       </div>
     </nav>

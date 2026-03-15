@@ -44,7 +44,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "glass-panel rounded-2xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,255,255,0.2)]",
+        "bg-[#111111] rounded-2xl p-6 relative overflow-hidden group transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(255,255,255,0.05)] border border-[rgba(255,255,255,0.02)] hover:shadow-[0_0_20px_rgba(255,255,255,0.02)]",
         borderAccents[accent],
         "border-t-[3px]",
         className

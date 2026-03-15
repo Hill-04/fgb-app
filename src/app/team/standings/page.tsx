@@ -43,11 +43,14 @@ export default function StandingsPage() {
         </div>
         
         <div className="flex items-center gap-4">
-          <div className="glass-panel px-4 py-2 flex items-center gap-3 backdrop-blur-xl border border-[rgba(255,255,255,0.05)] rounded-2xl">
-            <Trophy className="w-5 h-5 text-[#FF6B00]" />
-            <div>
-              <p className="text-[10px] text-[--text-dim] uppercase tracking-widest font-black">Categoria</p>
-              <p className="text-sm font-bold text-[--text-main]">Sub 17 - Masculino</p>
+          {/* Filters */}
+          <div className="flex flex-wrap items-center gap-4 animate-fade-in" style={{ animationDelay: '200ms' }}>
+            <div className="bg-[#121212] px-4 py-2 flex items-center gap-3 border border-[rgba(255,255,255,0.05)] rounded-2xl">
+              <Trophy className="w-5 h-5 text-[#FF6B00]" />
+              <div>
+                <p className="text-[10px] text-[--text-dim] uppercase tracking-widest font-black">Categoria</p>
+                <p className="text-sm font-bold text-[--text-main]">Sub 17 - Masculino</p>
+              </div>
             </div>
           </div>
         </div>

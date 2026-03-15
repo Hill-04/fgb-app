@@ -50,10 +50,10 @@
 }
 
 :root {
-  /* Dark Premium Baseline */
-  --bg-main: #050505;
-  --bg-card: rgba(25, 25, 25, 0.7);
-  --bg-sidebar: #050505;
+  /* Flat Dark Premium Baseline */
+  --bg-main: #060606;
+  --bg-card: #121212;
+  --bg-sidebar: #060606;
 
   /* Primary Colors */
   --orange: #FF6B00;
@@ -78,11 +78,11 @@
   --pink-female: #EC4899;
 
   /* shadcn/ui vars mapped */
-  --background: #050505;
+  --background: #060606;
   --foreground: #FFFFFF;
-  --card: rgba(25, 25, 25, 0.7);
+  --card: #121212;
   --card-foreground: #FFFFFF;
-  --popover: rgba(25, 25, 25, 0.8);
+  --popover: #121212;
   --popover-foreground: #FFFFFF;
   --primary: #FF6B00;
   --primary-foreground: #FFFFFF;
@@ -108,17 +108,17 @@
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: rgba(255, 255, 255, 0.05);
   --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
+  --sidebar-border: rgba(255, 255, 255, 0.05);
   --sidebar-ring: #FF6B00;
 }
 
 .dark {
   /* Fallback if user toggles, identical to root for enforced dark premium */
-  --background: #050505;
+  --background: #060606;
   --foreground: #FFFFFF;
-  --card: rgba(25, 25, 25, 0.7);
+  --card: #121212;
   --card-foreground: #FFFFFF;
-  --popover: rgba(25, 25, 25, 0.8);
+  --popover: #121212;
   --popover-foreground: #FFFFFF;
   --primary: #FF6B00;
   --primary-foreground: #FFFFFF;
@@ -206,29 +206,23 @@
   background: linear-gradient(135deg, var(--blue-admin) 0%, var(--blue-dark) 100%);
 }
 
-/* Premium Dark Components */
+/* Flat Dark Components */
 .glass-sidebar {
-  background: rgba(5, 5, 5, 0.8) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: var(--bg-main) !important;
   border-right: 1px solid var(--border-color) !important;
 }
 
 .glass-panel {
-  background: rgba(25, 25, 25, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.8);
 }
 
 .card-fgb {
-  background: rgba(25, 25, 25, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  background: var(--bg-card);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
   transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
