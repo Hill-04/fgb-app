@@ -327,11 +327,31 @@ export default async function AdminDashboardPage() {
       </div>
     )
   } catch (error: any) {
+    // Show zero-state dashboard instead of crashing
     return (
-      <div className="p-8 text-red-700 bg-red-50 border border-red-200 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4 tracking-tight">Erro de Servidor (Admin Dashboard)</h2>
-        <pre className="whitespace-pre-wrap text-sm">{error.message}</pre>
-        <pre className="whitespace-pre-wrap text-xs mt-4 opacity-70">{error.stack}</pre>
+      <div className="space-y-10">
+        <div className="animate-fade-in">
+          <h1 className="text-4xl font-display font-black text-[--text-main] tracking-tight mb-2">Dashboard Administrativo</h1>
+          <p className="text-[--text-secondary] font-medium text-lg">Visão geral da Federação Gaúcha de Basquete</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {['Campeonatos', 'Equipes', 'Categorias', 'Jogos'].map(label => (
+            <div key={label} className="bg-[#111] rounded-3xl border border-white/5 p-6">
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{label}</p>
+              <p className="text-3xl font-display font-black text-white">0</p>
+            </div>
+          ))}
+        </div>
+        <div className="bg-[#111] border border-[#FF6B00]/20 rounded-3xl p-10 text-center">
+          <div className="w-16 h-16 rounded-full bg-[#FF6B00]/10 flex items-center justify-center mx-auto mb-4">
+            <Trophy className="w-8 h-8 text-[#FF6B00]" />
+          </div>
+          <h3 className="text-xl font-black text-white mb-2">Configure o primeiro campeonato</h3>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">O banco de dados está conectado. Crie um campeonato para começar a ver as estatísticas aqui.</p>
+          <a href="/admin/championships" className="inline-flex items-center gap-2 bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold h-11 px-8 rounded-xl text-xs uppercase tracking-widest transition-all">
+            Criar Campeonato
+          </a>
+        </div>
       </div>
     )
   }

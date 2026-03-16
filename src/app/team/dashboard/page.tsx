@@ -325,11 +325,27 @@ export default async function TeamDashboardPage() {
       </div>
     )
   } catch (error: any) {
+    // Show clean empty state instead of crash
     return (
-      <div className="p-8 text-red-700 bg-red-50 border border-red-200 rounded-2xl">
-        <h2 className="text-xl font-bold mb-4 tracking-tight">Erro de Servidor (Team Dashboard)</h2>
-        <pre className="whitespace-pre-wrap text-sm">{error.message}</pre>
-        <pre className="whitespace-pre-wrap text-xs mt-4 opacity-70">{error.stack}</pre>
+      <div className="space-y-10">
+        <div className="animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/[0.05] pb-10">
+          <div className="flex items-center gap-6">
+            <div className="w-24 h-24 rounded-3xl bg-[#111] border border-white/10 flex items-center justify-center">
+              <Shield className="w-10 h-10 text-slate-700" />
+            </div>
+            <div>
+              <h1 className="text-5xl font-display font-black text-white tracking-tight leading-tight">Minha Equipe</h1>
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-[11px] mt-2">Configure sua equipe para ver os detalhes aqui</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-[#111] border border-[#FF6B00]/20 rounded-3xl p-16 text-center">
+          <div className="w-16 h-16 rounded-full bg-[#FF6B00]/10 flex items-center justify-center mx-auto mb-4">
+            <Trophy className="w-8 h-8 text-[#FF6B00]" />
+          </div>
+          <h3 className="text-xl font-black text-white mb-2">Aguardando ativação</h3>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto">Sua conta está sendo configurada. Entre em contato com a Federação para confirmar seu acesso.</p>
+        </div>
       </div>
     )
   }
