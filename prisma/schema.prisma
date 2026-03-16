@@ -8,149 +8,107 @@ datasource db {
   url      = "file:./dev.db"
 }
 
-enum TeamRole {
-  HEAD_COACH
-  ADMIN
-  AUXILIAR
-  PREPARADOR_FISICO
-  MEDICO
-  OUTRO
-}
-
-enum MembershipStatus {
-  PENDING
-  ACTIVE
-  REJECTED
-  INACTIVE
-}
-
-enum ChampionshipStatus {
-  DRAFT
-  REGISTRATION_OPEN
-  REGISTRATION_CLOSED
-  VALIDATING
-  SCHEDULING
-  REVIEW
-  CONFIRMED
-  ONGOING
-  COMPLETED
-}
-
-enum GameStatus {
-  SCHEDULED
-  IN_PROGRESS
-  COMPLETED
-  CANCELLED
-  POSTPONED
-}
-
-enum RegistrationStatus {
-  PENDING
-  CONFIRMED
-  REJECTED
-}
-
 model User {
   id          String          @id @default(uuid())
   name        String
   email       String          @unique
   password    String
-  defaultRole TeamRole        @default(AUXILIAR)
+  defaultRole String          @default("AUXILIAR")
   isAdmin     Boolean         @default(false)
-  membership  TeamMembership?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+  membership  TeamMembership?
 }
 
 model Team {
-  id             String           @id @default(uuid())
-  name           String           @unique
-  logoUrl        String?
-  city           String?
-  state          String?          @default("RS")
-  phone          String?
-  sex            String?          // "masculino" ou "feminino"
-  members        TeamMembership[]
-  gym            Gym?
-  registrations  Registration[]
-  homeGames      Game[]           @relation("HomeTeam")
-  awayGames      Game[]           @relation("AwayTeam")
-  standings      Standing[]
-  notifications  Notification[]
-  sentMessages   Message[]        @relation("SentMessages")
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  id            String           @id @default(uuid())
+  name          String           @unique
+  logoUrl       String?
+  city          String?
+  state         String?          @default("RS")
+  phone         String?
+  sex           String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  awayGames     Game[]           @relation("AwayTeam")
+  homeGames     Game[]           @relation("HomeTeam")
+  gym           Gym?
+  sentMessages  Message[]        @relation("SentMessages")
+  notifications Notification[]
+  registrations Registration[]
+  standings     Standing[]
+  members       TeamMembership[]
 }
 
 model Gym {
-  id           String @id @default(uuid())
+  id           String  @id @default(uuid())
   name         String
   address      String
   city         String
   capacity     Int
-  availability String // "sabado_domingo", "sabado", "domingo"
+  availability String
   canHost      Boolean @default(true)
   teamId       String  @unique
   team         Team    @relation(fields: [teamId], references: [id])
 }
 
 model Championship {
-  id             String             @id @default(uuid())
+  id             String                 @id @default(uuid())
   name           String
-  year           Int                @default(2026)
+  year           Int                    @default(2026)
   description    String?
-  sex            String             // "masculino" ou "feminino"
-  format         String             @default("todos_contra_todos")
-  phases         Int                @default(3)
-  minTeamsPerCat Int                @default(3)
+  sex            String
+  format         String                 @default("todos_contra_todos")
+  phases         Int                    @default(3)
+  minTeamsPerCat Int                    @default(3)
   startDate      DateTime?
   endDate        DateTime?
   regDeadline    DateTime
-  status         ChampionshipStatus @default(DRAFT)
-  categories     ChampionshipCategory[]
-  registrations  Registration[]
-  games          Game[]
+  status         String                 @default("DRAFT")
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
   blocks         Block[]
+  categories     ChampionshipCategory[]
   documents      Document[]
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  games          Game[]
+  registrations  Registration[]
 }
 
 model ChampionshipCategory {
-  id             String       @id @default(uuid())
-  name           String       // "Sub 12", "Sub 13", etc.
+  id             String                 @id @default(uuid())
+  name           String
   championshipId String
-  championship   Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
-  isViable       Boolean      @default(false) // true se >= minTeamsPerCat
+  isViable       Boolean                @default(false)
+  championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  games          Game[]
   registrations  RegistrationCategory[]
   standings      Standing[]
-  games          Game[]
 
   @@unique([championshipId, name])
 }
 
 model Registration {
-  id             String       @id @default(uuid())
+  id             String                 @id @default(uuid())
   championshipId String
   teamId         String
-  status         RegistrationStatus @default(PENDING)
-  championship   Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
-  team           Team         @relation(fields: [teamId], references: [id])
-  categories     RegistrationCategory[]
-  blockedDates   BlockedDate[]
+  status         String                 @default("PENDING")
   observations   String?
-  registeredAt   DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  registeredAt   DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+  blockedDates   BlockedDate[]
+  team           Team                   @relation(fields: [teamId], references: [id])
+  championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  categories     RegistrationCategory[]
 
   @@unique([championshipId, teamId])
 }
 
 model RegistrationCategory {
-  id             String                @id @default(uuid())
+  id             String               @id @default(uuid())
   registrationId String
   categoryId     String
-  registration   Registration          @relation(fields: [registrationId], references: [id], onDelete: Cascade)
-  category       ChampionshipCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category       ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  registration   Registration         @relation(fields: [registrationId], references: [id], onDelete: Cascade)
 
   @@unique([registrationId, categoryId])
 }
@@ -158,55 +116,55 @@ model RegistrationCategory {
 model BlockedDate {
   id             String       @id @default(uuid())
   registrationId String
-  date           DateTime     // O sábado do fim de semana bloqueado
-  reason         String?      // "outro_campeonato", "evento", "feriado", etc.
+  date           DateTime
+  reason         String?
   registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
 }
 
 model Block {
   id             String       @id @default(uuid())
-  name           String       // "Bloco A", "Bloco B"
+  name           String
   championshipId String
+  categories     String
   championship   Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
-  categories     String       // JSON array: ["Sub 12", "Sub 13"]
   games          Game[]
 }
 
 model Game {
-  id             String                @id @default(uuid())
+  id             String               @id @default(uuid())
   championshipId String
   categoryId     String
   blockId        String?
   homeTeamId     String
   awayTeamId     String
-  phase          Int                   // 1, 2, 3
+  phase          Int
   dateTime       DateTime
-  altDateTime    DateTime?             // Data alternativa (Plano B)
+  altDateTime    DateTime?
   location       String
   city           String
-  status         GameStatus            @default(SCHEDULED)
+  status         String               @default("SCHEDULED")
   homeScore      Int?
   awayScore      Int?
-  championship   Championship          @relation(fields: [championshipId], references: [id])
-  category       ChampionshipCategory  @relation(fields: [categoryId], references: [id])
-  block          Block?                @relation(fields: [blockId], references: [id])
-  homeTeam       Team                  @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  awayTeam       Team                  @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  createdAt      DateTime              @default(now())
+  createdAt      DateTime             @default(now())
+  awayTeam       Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam       Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  block          Block?               @relation(fields: [blockId], references: [id])
+  category       ChampionshipCategory @relation(fields: [categoryId], references: [id])
+  championship   Championship         @relation(fields: [championshipId], references: [id])
 }
 
 model Standing {
-  id         String                @id @default(uuid())
+  id         String               @id @default(uuid())
   teamId     String
   categoryId String
-  played     Int     @default(0)
-  wins       Int     @default(0)
-  losses     Int     @default(0)
-  points     Int     @default(0)
-  pointsFor  Int     @default(0)
-  pointsAg   Int     @default(0)
-  team       Team                  @relation(fields: [teamId], references: [id])
-  category   ChampionshipCategory  @relation(fields: [categoryId], references: [id])
+  played     Int                  @default(0)
+  wins       Int                  @default(0)
+  losses     Int                  @default(0)
+  points     Int                  @default(0)
+  pointsFor  Int                  @default(0)
+  pointsAg   Int                  @default(0)
+  category   ChampionshipCategory @relation(fields: [categoryId], references: [id])
+  team       Team                 @relation(fields: [teamId], references: [id])
 
   @@unique([teamId, categoryId])
 }
@@ -214,12 +172,12 @@ model Standing {
 model Document {
   id             String       @id @default(uuid())
   name           String
-  type           String       // "relatorio_geral", "tabela_confrontos", "calendario_equipe", "custos", "ata"
-  format         String       // "pdf", "docx", "xlsx"
+  type           String
+  format         String
   url            String?
   championshipId String
-  championship   Championship @relation(fields: [championshipId], references: [id])
   createdAt      DateTime     @default(now())
+  championship   Championship @relation(fields: [championshipId], references: [id])
 }
 
 model Notification {
@@ -227,37 +185,37 @@ model Notification {
   teamId    String
   title     String
   message   String
-  type      String   // "info", "warning", "success", "danger"
+  type      String
   read      Boolean  @default(false)
-  team      Team     @relation(fields: [teamId], references: [id])
   createdAt DateTime @default(now())
+  team      Team     @relation(fields: [teamId], references: [id])
 }
 
 model Message {
-  id        String   @id @default(uuid())
-  content   String
+  id         String   @id @default(uuid())
+  content    String
   fromTeamId String?
-  fromAdmin  Boolean @default(false)
-  team       Team?   @relation("SentMessages", fields: [fromTeamId], references: [id])
+  fromAdmin  Boolean  @default(false)
   createdAt  DateTime @default(now())
+  team       Team?    @relation("SentMessages", fields: [fromTeamId], references: [id])
 }
 
 model Holiday {
-  id    String   @id @default(uuid())
-  date  DateTime
-  name  String
-  year  Int
+  id   String   @id @default(uuid())
+  date DateTime
+  name String
+  year Int
 }
 
 model TeamMembership {
-  id          String           @id @default(uuid())
-  userId      String           @unique
+  id          String    @id @default(uuid())
+  userId      String    @unique
   teamId      String
-  role        TeamRole
-  status      MembershipStatus @default(PENDING)
-  user        User             @relation(fields: [userId], references: [id])
-  team        Team             @relation(fields: [teamId], references: [id])
-  requestedAt DateTime         @default(now())
+  role        String
+  status      String    @default("PENDING")
+  requestedAt DateTime  @default(now())
   approvedAt  DateTime?
-  updatedAt   DateTime         @updatedAt
+  updatedAt   DateTime  @updatedAt
+  team        Team      @relation(fields: [teamId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 }

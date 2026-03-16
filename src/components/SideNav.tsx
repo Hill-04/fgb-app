@@ -31,7 +31,9 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
   const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Campeonatos', href: '/admin/championships', icon: Trophy },
-    { label: 'Jogos', href: '/admin/games', icon: ClipboardList },
+    { label: 'Resultados', href: '/admin/results', icon: ClipboardList },
+    { label: 'Classificação', href: '/admin/standings', icon: BarChart3 },
+    { label: 'Jogos', href: '/admin/games', icon: Calendar },
     { label: 'Usuários', href: '/admin/users', icon: Users },
     { label: 'Equipes', href: '/admin/teams', icon: Shield },
     { label: 'Calendário IA', href: '/admin/scheduling', icon: Cpu },
