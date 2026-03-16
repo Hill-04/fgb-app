@@ -1,4 +1,4 @@
-import { PrismaClient, ChampionshipStatus, TeamRole, MembershipStatus } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { PrismaLibSQL } from '@prisma/adapter-libsql'
 import { createClient } from '@libsql/client'
 import bcrypt from 'bcryptjs'
@@ -58,7 +58,7 @@ async function main() {
       name: 'Brayan Alex Guarnieri',
       email: 'brayanalexguarnieri@gmail.com',
       password: adminPassword,
-      defaultRole: TeamRole.ADMIN,
+      defaultRole: 'ADMIN',
       isAdmin: true,
     }
   })
@@ -89,7 +89,7 @@ async function main() {
         name: teamData.headCoach,
         email: `${teamData.name.toLowerCase()}@fgb.com.br`,
         password: defaultPassword,
-        defaultRole: TeamRole.HEAD_COACH,
+        defaultRole: 'HEAD_COACH',
         isAdmin: false,
       }
     })
@@ -110,8 +110,8 @@ async function main() {
       data: {
         userId: headCoachUser.id,
         teamId: team.id,
-        role: TeamRole.HEAD_COACH,
-        status: MembershipStatus.ACTIVE,
+        role: 'HEAD_COACH',
+        status: 'ACTIVE',
         approvedAt: new Date(),
       }
     })
@@ -172,7 +172,7 @@ async function main() {
       startDate: new Date('2026-05-01'),
       endDate: new Date('2026-11-30'),
       regDeadline: new Date('2026-04-15'),
-      status: ChampionshipStatus.REGISTRATION_OPEN,
+      status: 'REGISTRATION_OPEN',
     }
   })
 
