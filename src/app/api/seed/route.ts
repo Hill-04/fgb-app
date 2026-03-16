@@ -37,26 +37,36 @@ export async function POST(req: Request) {
 
     const teams: any[] = []
     for (const def of teamDefs) {
+      const userEmail = `${def.name.toLowerCase().replace(/\s+/g, '.')}@fgb.test`
       const user = await prisma.user.upsert({
-        where: { email: `${def.name.toLowerCase().replace(/\s+/g, '.')}@fgb.test` },
+        where: { email: userEmail },
         update: {},
         create: {
           name: `Responsável — ${def.name}`,
-          email: `${def.name.toLowerCase().replace(/\s+/g, '.')}@fgb.test`,
+          email: userEmail,
           password: await bcrypt.hash('fgb@2026', 10),
           isAdmin: false
         }
       })
-      const gym = await prisma.gym.upsert({
-        where: { name: `Ginásio ${def.name}` },
-        update: {},
-        create: { name: `Ginásio ${def.name}`, address: `Rua das Flores, 100`, city: def.city }
-      })
+      
       const team = await prisma.team.upsert({
         where: { name: def.name },
         update: {},
-        create: { name: def.name, city: def.city, gymId: gym.id }
+        create: { 
+          name: def.name, 
+          city: def.city,
+          gym: {
+            create: {
+              name: `Ginásio ${def.name}`,
+              address: `Rua das Flores, 100`,
+              city: def.city,
+              capacity: 500,
+              availability: 'sabado_domingo'
+            }
+          }
+        }
       })
+
       await prisma.teamMembership.upsert({
         where: { userId: user.id },
         update: {},
@@ -73,33 +83,36 @@ export async function POST(req: Request) {
     const endDate = new Date()
     endDate.setDate(endDate.getDate() + 60)
 
-    const championship = await prisma.championship.upsert({
-      where: { name: 'Campeonato Estadual FGB 2026' },
-      update: {},
-      create: {
-        name: 'Campeonato Estadual FGB 2026',
-        description: 'Campeonato oficial estadual da Federação Gaúcha de Basquete - Temporada 2026',
-        sex: 'misto',
-        minTeamsPerCat: 4,
-        type: 'estadual',
-        regDeadline,
-        startDate,
-        endDate,
-        status: 'IN_PROGRESS',
-        createdById: admin.id
-      }
+    // Using findFirst because name is not unique in schema
+    let championship = await prisma.championship.findFirst({
+      where: { name: 'Campeonato Estadual FGB 2026' }
     })
+
+    if (!championship) {
+      championship = await prisma.championship.create({
+        data: {
+          name: 'Campeonato Estadual FGB 2026',
+          description: 'Campeonato oficial estadual da Federação Gaúcha de Basquete - Temporada 2026',
+          sex: 'misto',
+          minTeamsPerCat: 4,
+          regDeadline,
+          startDate,
+          endDate,
+          status: 'ONGOING',
+        }
+      })
+    }
 
     // 4. Categories
     const catMasc = await prisma.championshipCategory.upsert({
       where: { championshipId_name: { championshipId: championship.id, name: 'Adulto Masculino' } },
       update: {},
-      create: { championshipId: championship.id, name: 'Adulto Masculino', ageGroup: 'adulto', sex: 'masculino' }
+      create: { championshipId: championship.id, name: 'Adulto Masculino' }
     })
     const catFem = await prisma.championshipCategory.upsert({
       where: { championshipId_name: { championshipId: championship.id, name: 'Adulto Feminino' } },
       update: {},
-      create: { championshipId: championship.id, name: 'Adulto Feminino', ageGroup: 'adulto', sex: 'feminino' }
+      create: { championshipId: championship.id, name: 'Adulto Feminino' }
     })
 
     // 5. Registrations
@@ -108,42 +121,49 @@ export async function POST(req: Request) {
 
     for (const team of mascTeams) {
       await prisma.registration.upsert({
-        where: { teamId_championshipId: { teamId: team.id, championshipId: championship.id } },
+        where: { championshipId_teamId: { teamId: team.id, championshipId: championship.id } },
         update: {},
-        create: { teamId: team.id, championshipId: championship.id, categoryId: catMasc.id, status: 'APPROVED' }
+        create: { 
+          teamId: team.id, 
+          championshipId: championship.id, 
+          status: 'CONFIRMED',
+          categories: {
+            create: { categoryId: catMasc.id }
+          }
+        }
       })
     }
     for (const team of femTeams) {
       await prisma.registration.upsert({
-        where: { teamId_championshipId: { teamId: team.id, championshipId: championship.id } },
+        where: { championshipId_teamId: { teamId: team.id, championshipId: championship.id } },
         update: {},
-        create: { teamId: team.id, championshipId: championship.id, categoryId: catFem.id, status: 'APPROVED' }
+        create: { 
+          teamId: team.id, 
+          championshipId: championship.id, 
+          status: 'CONFIRMED',
+          categories: {
+            create: { categoryId: catFem.id }
+          }
+        }
       })
     }
 
     // 6. Games with completed results
     const gameData = [
-      // Masculino — round 1 (completed)
-      { homeIdx: 0, awayIdx: 1, catId: catMasc.id, homeScore: 82, awayScore: 71, daysAgo: 15, status: 'COMPLETED' },
-      { homeIdx: 2, awayIdx: 3, catId: catMasc.id, homeScore: 65, awayScore: 79, daysAgo: 15, status: 'COMPLETED' },
-      // Masculino — round 2 (completed)
-      { homeIdx: 0, awayIdx: 2, catId: catMasc.id, homeScore: 90, awayScore: 88, daysAgo: 8, status: 'COMPLETED' },
-      { homeIdx: 1, awayIdx: 3, catId: catMasc.id, homeScore: 74, awayScore: 68, daysAgo: 8, status: 'COMPLETED' },
-      // Masculino — round 3 (upcoming)
-      { homeIdx: 0, awayIdx: 3, catId: catMasc.id, homeScore: null, awayScore: null, daysAgo: -7, status: 'SCHEDULED' },
-      { homeIdx: 1, awayIdx: 2, catId: catMasc.id, homeScore: null, awayScore: null, daysAgo: -7, status: 'SCHEDULED' },
-      // Feminino — round 1 (completed)
-      { homeIdx: 4, awayIdx: 5, catId: catFem.id, homeScore: 58, awayScore: 63, daysAgo: 14, status: 'COMPLETED' },
-      { homeIdx: 6, awayIdx: 7, catId: catFem.id, homeScore: 71, awayScore: 59, daysAgo: 14, status: 'COMPLETED' },
-      // Feminino — round 2 (completed)
-      { homeIdx: 4, awayIdx: 6, catId: catFem.id, homeScore: 67, awayScore: 72, daysAgo: 7, status: 'COMPLETED' },
-      { homeIdx: 5, awayIdx: 7, catId: catFem.id, homeScore: 80, awayScore: 75, daysAgo: 7, status: 'COMPLETED' },
-      // Feminino — round 3 (upcoming)
-      { homeIdx: 5, awayIdx: 6, catId: catFem.id, homeScore: null, awayScore: null, daysAgo: -8, status: 'SCHEDULED' },
-      { homeIdx: 4, awayIdx: 7, catId: catFem.id, homeScore: null, awayScore: null, daysAgo: -8, status: 'SCHEDULED' },
+      { homeIdx: 0, awayIdx: 1, catId: catMasc.id, homeScore: 82, awayScore: 71, daysAgo: 15, status: 'COMPLETED' as const },
+      { homeIdx: 2, awayIdx: 3, catId: catMasc.id, homeScore: 65, awayScore: 79, daysAgo: 15, status: 'COMPLETED' as const },
+      { homeIdx: 0, awayIdx: 2, catId: catMasc.id, homeScore: 90, awayScore: 88, daysAgo: 8, status: 'COMPLETED' as const },
+      { homeIdx: 1, awayIdx: 3, catId: catMasc.id, homeScore: 74, awayScore: 68, daysAgo: 8, status: 'COMPLETED' as const },
+      { homeIdx: 0, awayIdx: 3, catId: catMasc.id, homeScore: null, awayScore: null, daysAgo: -7, status: 'SCHEDULED' as const },
+      { homeIdx: 1, awayIdx: 2, catId: catMasc.id, homeScore: null, awayScore: null, daysAgo: -7, status: 'SCHEDULED' as const },
+      { homeIdx: 4, awayIdx: 5, catId: catFem.id, homeScore: 58, awayScore: 63, daysAgo: 14, status: 'COMPLETED' as const },
+      { homeIdx: 6, awayIdx: 7, catId: catFem.id, homeScore: 71, awayScore: 59, daysAgo: 14, status: 'COMPLETED' as const },
+      { homeIdx: 4, awayIdx: 6, catId: catFem.id, homeScore: 67, awayScore: 72, daysAgo: 7, status: 'COMPLETED' as const },
+      { homeIdx: 5, awayIdx: 7, catId: catFem.id, homeScore: 80, awayScore: 75, daysAgo: 7, status: 'COMPLETED' as const },
+      { homeIdx: 5, awayIdx: 6, catId: catFem.id, homeScore: null, awayScore: null, daysAgo: -8, status: 'SCHEDULED' as const },
+      { homeIdx: 4, awayIdx: 7, catId: catFem.id, homeScore: null, awayScore: null, daysAgo: -8, status: 'SCHEDULED' as const },
     ]
 
-    // Clear existing games for this championship to avoid duplicates
     await prisma.game.deleteMany({ where: { championshipId: championship.id } })
 
     for (const g of gameData) {
@@ -151,7 +171,7 @@ export async function POST(req: Request) {
       gameDate.setDate(gameDate.getDate() - g.daysAgo)
       await prisma.game.create({
         data: {
-          championshipId: championship.id,
+          championshipId: championship.id!,
           categoryId: g.catId,
           homeTeamId: teams[g.homeIdx].id,
           awayTeamId: teams[g.awayIdx].id,
@@ -168,20 +188,18 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      message: '✅ Seed completed!',
       data: {
         championship: championship.name,
         teams: teams.length,
-        games: gameData.length,
-        categories: 2
+        games: gameData.length
       }
     })
   } catch (error: any) {
     console.error('Seed error:', error)
-    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
 
 export async function GET() {
-  return NextResponse.json({ message: 'Use POST with { secret: "fgb-seed-2026" } to seed' })
+  return NextResponse.json({ message: 'Use POST with secret' })
 }
