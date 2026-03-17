@@ -9,17 +9,35 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as any).role !== 'TEAM') {
+    if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const teamId = (session.user as any).teamId
     const { id: championshipId } = await params
     const body = await request.json()
-    const { selectedCategories, blockedDates, observations } = body
+    const { selectedCategories, blockedDates, observations, teamId: manualTeamId, status: manualStatus } = body
+
+    const isAdmin = (session.user as any).isAdmin
+    
+    // Se não for admin, usa o teamId do próprio usuário logado
+    // Se for admin, pode passar um teamId no corpo da requisição
+    const teamId = isAdmin ? (manualTeamId || (session.user as any).teamId) : (session.user as any).teamId
+
+    if (!teamId) {
+      return NextResponse.json({ error: 'ID da equipe não identificado' }, { status: 400 })
+    }
 
     if (!selectedCategories || selectedCategories.length === 0) {
       return NextResponse.json({ error: 'Selecione ao menos uma categoria' }, { status: 400 })
+    }
+
+    // Verificar se o campeonato existe
+    const championship = await prisma.championship.findUnique({
+      where: { id: championshipId }
+    })
+
+    if (!championship) {
+      return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
     }
 
     // Buscar categorias do campeonato
@@ -39,7 +57,7 @@ export async function POST(
       data: {
         championshipId,
         teamId,
-        status: 'PENDING',
+        status: isAdmin && manualStatus ? manualStatus : 'PENDING',
         observations: observations || null,
         categories: {
           create: categories.map(cat => ({

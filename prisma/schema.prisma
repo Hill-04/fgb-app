@@ -57,16 +57,50 @@ model Championship {
   name           String
   year           Int                    @default(2026)
   description    String?
-  sex            String
+  sex            String                 @default("masculino")
+
+  // Competition format
   format         String                 @default("todos_contra_todos")
-  phases         Int                    @default(3)
+  // todos_contra_todos | eliminatorio | grupos_eliminatorio | misto
+
+  // Turns / rounds
+  turns          Int                    @default(1)
+  // 1=turno único | 2=turno+returno | 3=três turnos
+
+  // Number of phases
+  phases         Int                    @default(1)
+
+  // Field / venue control
+  fieldControl   String                 @default("alternado")
+  // alternado | sede_fixa | sede_rotativa
+
+  // Tiebreaker criteria (comma-separated ordered list)
+  tiebreakers    String                 @default("pontos,saldo,confronto_direto,pontos_marcados")
+
+  // Relegation / Promotion
+  hasRelegation  Boolean                @default(false)
+  relegationDown Int                    @default(0)
+  promotionUp    Int                    @default(0)
+
+  // Playoff configuration
+  hasPlayoffs    Boolean                @default(false)
+  playoffTeams   Int                    @default(4)
+  playoffFormat  String                 @default("melhor_de_1")
+  // melhor_de_1 | melhor_de_3 | melhor_de_5
+  hasThirdPlace  Boolean                @default(true)
+
+  // Category grouping blocks
+  hasBlocks      Boolean                @default(false)
+
+  // Registration
   minTeamsPerCat Int                    @default(3)
   startDate      DateTime?
   endDate        DateTime?
-  regDeadline    DateTime
+  regDeadline    DateTime               @default(now())
   status         String                 @default("DRAFT")
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
+
   blocks         Block[]
   categories     ChampionshipCategory[]
   documents      Document[]

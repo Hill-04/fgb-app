@@ -4,13 +4,15 @@ import { Section } from '@/components/Section'
 import { Badge } from '@/components/Badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Trophy, Users, Calendar, AlertTriangle, CheckCircle2, Ghost, ArrowRight, Settings2 } from 'lucide-react'
+import { Trophy, AlertTriangle, CheckCircle2, Ghost, ArrowRight, Settings2 } from 'lucide-react'
 import Link from 'next/link'
+import { ManualRegistrationModal } from '../ManualRegistrationModal'
+import { RegistrationActions } from '../RegistrationActions'
 
 export const dynamic = 'force-dynamic'
 
 type ManagePageProps = {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ChampionshipManagePage({ params }: ManagePageProps) {
@@ -30,7 +32,8 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
           categories: {
             include: { category: true }
           }
-        }
+        },
+        orderBy: { registeredAt: 'desc' }
       }
     }
   })
@@ -57,16 +60,23 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
         </div>
         
         <div className="flex gap-3">
-           <Badge variant="blue" className="px-4 py-2 border-blue-500/20 text-[10px] h-fit">
+            <Link href="/admin/championships">
+              <Button variant="ghost" className="h-12 px-6 rounded-xl font-bold text-slate-400 hover:text-white hover:bg-white/5 uppercase tracking-widest text-[10px]">
+                <Settings2 className="w-4 h-4 mr-2" />
+                Editar Regras
+              </Button>
+            </Link>
+            <ManualRegistrationModal championshipId={championship.id} categories={championship.categories} />
+            <Badge variant="blue" className="px-6 h-12 flex items-center border-blue-500/20 text-[10px] uppercase font-black tracking-widest bg-blue-500/5">
               Status: {championship.status}
-           </Badge>
+            </Badge>
         </div>
       </div>
 
       {/* Categories Viability Grid */}
       <Section title="Viabilidade de Categorias" subtitle={`Mínimo exigido: ${minTeams} equipes por categoria`}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
-           {championship.categories.map((cat) => {
+           {championship.categories.map((cat: any) => {
              const teamCount = cat._count.registrations
              const isViable = teamCount >= minTeams
              
@@ -114,39 +124,48 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Equipe</th>
                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Cidade</th>
                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Categorias</th>
-                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Status</th>
-                           <th className="px-6 py-4 text-right"></th>
+                           <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest text-center">Inscrição</th>
+                           <th className="px-6 py-4 text-right pr-12 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Ações</th>
                         </tr>
                      </thead>
                      <tbody className="divide-y divide-white/5">
-                        {championship.registrations.map((reg) => (
-                           <tr key={reg.id} className="hover:bg-white/[0.02] transition-colors group">
-                              <td className="px-6 py-5">
-                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-display font-black text-[#FF6B00]">
-                                       {reg.team.name.charAt(0)}
-                                    </div>
-                                    <span className="font-bold text-white text-sm">{reg.team.name}</span>
-                                 </div>
-                              </td>
-                              <td className="px-6 py-5 text-sm font-medium text-slate-400">{reg.team.city || 'N/A'}</td>
-                              <td className="px-6 py-5">
-                                 <div className="flex flex-wrap gap-1.5">
-                                    {reg.categories.map(rc => (
-                                       <Badge key={rc.id} variant="default" className="bg-white/5 border-white/10 text-[8px] font-bold uppercase">{rc.category.name}</Badge>
-                                    ))}
-                                 </div>
-                              </td>
-                              <td className="px-6 py-5">
-                                 <Badge variant={reg.status === 'CONFIRMED' ? 'success' : 'orange'} className="text-[9px] uppercase font-black">
-                                    {reg.status}
-                                 </Badge>
-                              </td>
-                              <td className="px-6 py-5 text-right flex justify-end">
-                                 <Button variant="ghost" size="sm" className="h-9 px-4 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-white/5">Detalhes</Button>
+                        {championship.registrations.length === 0 ? (
+                           <tr>
+                              <td colSpan={5} className="px-6 py-20 text-center">
+                                 <Ghost className="w-12 h-12 text-white/5 mx-auto mb-4" />
+                                 <p className="text-slate-500 text-sm font-medium uppercase tracking-widest">Nenhuma inscrição realizada até o momento.</p>
                               </td>
                            </tr>
-                        ))}
+                        ) : (
+                           championship.registrations.map((reg: any) => (
+                              <tr key={reg.id} className="hover:bg-white/[0.02] transition-colors group">
+                                 <td className="px-6 py-5">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center font-display font-black text-[#FF6B00]">
+                                          {reg.team.name.charAt(0)}
+                                       </div>
+                                       <span className="font-bold text-white text-sm">{reg.team.name}</span>
+                                    </div>
+                                 </td>
+                                 <td className="px-6 py-5 text-sm font-medium text-slate-400">{reg.team.city || 'N/A'}</td>
+                                 <td className="px-6 py-5">
+                                    <div className="flex flex-wrap gap-1.5">
+                                       {reg.categories.map((rc: any) => (
+                                          <Badge key={rc.id} variant="default" className="bg-white/5 border-white/10 text-[8px] font-bold uppercase">{rc.category.name}</Badge>
+                                       ))}
+                                    </div>
+                                 </td>
+                                 <td className="px-6 py-5 text-center">
+                                    <Badge variant={reg.status === 'CONFIRMED' ? 'success' : reg.status === 'REJECTED' ? 'error' : 'orange'} className="text-[9px] uppercase font-black px-3 py-1">
+                                       {reg.status === 'CONFIRMED' ? 'CONFIRMADA' : reg.status === 'REJECTED' ? 'REJEITADA' : 'PENDENTE'}
+                                    </Badge>
+                                 </td>
+                                 <td className="px-6 py-5 text-right flex justify-end">
+                                    <RegistrationActions registrationId={reg.id} currentStatus={reg.status} />
+                                 </td>
+                              </tr>
+                           ))
+                        )}
                      </tbody>
                   </table>
                </div>

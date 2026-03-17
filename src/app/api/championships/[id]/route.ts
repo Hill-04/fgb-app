@@ -1,33 +1,33 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+function codeToName(code: string): string {
+  const match = code.match(/^SUB(\d+)(M|F)$/)
+  if (!match) return code
+  return `Sub ${match[1]} ${match[2] === 'M' ? 'Masculino' : 'Feminino'}`
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-
     const championship = await prisma.championship.findUnique({
       where: { id },
       include: {
         categories: true,
-        _count: {
-          select: { registrations: true }
-        }
-      }
+        _count: { select: { registrations: true } },
+      },
     })
-
-    if (!championship) {
-      return NextResponse.json({ error: 'Campeonato nao encontrado' }, { status: 404 })
-    }
-
+    if (!championship) return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
     return NextResponse.json(championship)
   } catch (error) {
     console.error('Error fetching championship:', error)
     return NextResponse.json({ error: 'Erro ao buscar campeonato' }, { status: 500 })
   }
 }
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -35,54 +35,58 @@ export async function PATCH(
   try {
     const { id } = await params
     const body = await request.json()
-    const { name, year, minTeamsPerCat, description, categories: selectedCodes } = body
+    const {
+      name, year, sex, minTeamsPerCat, categories: selectedCodes,
+      format, turns, phases, fieldControl, tiebreakers,
+      hasRelegation, relegationDown, promotionUp,
+      hasPlayoffs, playoffTeams, playoffFormat, hasThirdPlace,
+      hasBlocks, regDeadline, startDate, endDate,
+    } = body
 
-    const updatedChampionship = await prisma.$transaction(async (tx) => {
-      // 1. Update basic fields
-      const championship = await tx.championship.update({
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.championship.update({
         where: { id },
         data: {
-          name: name?.trim(),
-          year: year ? Number(year) : undefined,
-          minTeamsPerCat: minTeamsPerCat ? Number(minTeamsPerCat) : undefined,
-          description: description || undefined,
-        }
+          ...(name && { name: name.trim() }),
+          ...(year && { year: Number(year) }),
+          ...(sex && { sex }),
+          ...(minTeamsPerCat !== undefined && { minTeamsPerCat: Number(minTeamsPerCat) }),
+          ...(format && { format }),
+          ...(turns !== undefined && { turns: Number(turns) }),
+          ...(phases !== undefined && { phases: Number(phases) }),
+          ...(fieldControl && { fieldControl }),
+          ...(tiebreakers && { tiebreakers: Array.isArray(tiebreakers) ? tiebreakers.join(',') : tiebreakers }),
+          ...(hasRelegation !== undefined && { hasRelegation: Boolean(hasRelegation) }),
+          ...(relegationDown !== undefined && { relegationDown: Number(relegationDown) }),
+          ...(promotionUp !== undefined && { promotionUp: Number(promotionUp) }),
+          ...(hasPlayoffs !== undefined && { hasPlayoffs: Boolean(hasPlayoffs) }),
+          ...(playoffTeams !== undefined && { playoffTeams: Number(playoffTeams) }),
+          ...(playoffFormat && { playoffFormat }),
+          ...(hasThirdPlace !== undefined && { hasThirdPlace: Boolean(hasThirdPlace) }),
+          ...(hasBlocks !== undefined && { hasBlocks: Boolean(hasBlocks) }),
+          ...(regDeadline && { regDeadline: new Date(regDeadline) }),
+          ...(startDate && { startDate: new Date(startDate) }),
+          ...(endDate && { endDate: new Date(endDate) }),
+        },
       })
 
-      // 2. If categories are provided, replace them
       if (selectedCodes) {
-        // Delete existing categories
-        await tx.championshipCategory.deleteMany({
-          where: { championshipId: id }
-        })
-
-        const CATEGORY_NAMES: Record<string, string> = {
-          SUB12M: 'Sub 12 Masculino',
-          SUB12F: 'Sub 12 Feminino',
-          SUB13M: 'Sub 13 Masculino',
-          SUB13F: 'Sub 13 Feminino',
-          SUB15M: 'Sub 15 Masculino',
-          SUB15F: 'Sub 15 Feminino',
-          SUB17M: 'Sub 17 Masculino',
-          SUB17F: 'Sub 17 Feminino',
-        }
-
-        // Create new ones
+        await tx.championshipCategory.deleteMany({ where: { championshipId: id } })
         await tx.championshipCategory.createMany({
           data: (selectedCodes as string[]).map((code: string) => ({
-            name: CATEGORY_NAMES[code] || code,
+            name: codeToName(code),
             championshipId: id,
-          }))
+          })),
         })
       }
 
       return tx.championship.findUnique({
         where: { id },
-        include: { categories: true }
+        include: { categories: true, _count: { select: { registrations: true } } },
       })
     })
 
-    return NextResponse.json(updatedChampionship)
+    return NextResponse.json(updated)
   } catch (error) {
     console.error('Error updating championship:', error)
     return NextResponse.json({ error: 'Erro ao atualizar campeonato' }, { status: 500 })
@@ -96,24 +100,14 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    // Requisito: Não permitir deletar se houver inscrições (para segurança de dados)
-    const registrations = await prisma.registration.count({
-      where: { championshipId: id }
-    })
-
+    const registrations = await prisma.registration.count({ where: { championshipId: id } })
     if (registrations > 0) {
       return NextResponse.json({ error: 'Não é possível excluir um campeonato com inscrições ativas.' }, { status: 400 })
     }
 
     await prisma.$transaction(async (tx) => {
-      // Delete categories first
-      await tx.championshipCategory.deleteMany({
-        where: { championshipId: id }
-      })
-      // Delete championship
-      await tx.championship.delete({
-        where: { id }
-      })
+      await tx.championshipCategory.deleteMany({ where: { championshipId: id } })
+      await tx.championship.delete({ where: { id } })
     })
 
     return NextResponse.json({ success: true })
