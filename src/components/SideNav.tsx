@@ -8,7 +8,7 @@ import { Badge } from "./Badge"
 import { 
   LayoutDashboard, Trophy, Users, Cpu, FileText, 
   Home, Calendar, BarChart3, Bell, MessageSquare, ClipboardList,
-  ChevronLeft, ChevronRight, Shield
+  ChevronLeft, ChevronRight, Shield, FlaskConical
 } from "lucide-react"
 
 type SideNavProps = {
@@ -38,6 +38,7 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
     { label: 'Equipes', href: '/admin/teams', icon: Shield },
     { label: 'Calendário IA', href: '/admin/scheduling', icon: Cpu },
     { label: 'Relatórios', href: '/admin/reports', icon: FileText },
+    { label: 'Simulação', href: '/admin/simulation', icon: FlaskConical },
   ]
 
   const teamNavItems: NavItem[] = [
