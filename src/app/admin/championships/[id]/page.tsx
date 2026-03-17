@@ -102,7 +102,9 @@ export default async function ChampionshipDetailsPage({
                           <ul className="text-sm text-slate-400 list-disc pl-5">
                             {reg.blockedDates.map((bd) => (
                               <li key={bd.id}>
-                                {new Date(bd.date).toLocaleDateString()} {bd.reason ? `(${bd.reason})` : ''}
+                                {new Date(bd.startDate).toLocaleDateString()}
+                                {bd.endDate ? ` até ${new Date(bd.endDate).toLocaleDateString()}` : ''} 
+                                {bd.reason ? ` (${bd.reason})` : ''}
                               </li>
                             ))}
                           </ul>

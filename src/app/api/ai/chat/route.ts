@@ -140,7 +140,12 @@ Você é um agente especializado em organização de campeonatos de basquete. Vo
       context += "\n";
 
       cat.registrations?.forEach((r: any) => {
-        const blocked = r.registration?.blockedDates?.map((d: any) => d.date.toISOString().split('T')[0]).join(", ");
+        const blocked = r.registration?.blockedDates?.map((d: any) => {
+          const start = d.startDate.toISOString().split('T')[0];
+          const end = d.endDate ? ` até ${d.endDate.toISOString().split('T')[0]}` : '';
+          const reason = d.reason ? ` (${d.reason})` : '';
+          return `${start}${end}${reason}`;
+        }).join(", ");
         if (blocked) {
           context += `  - ${r.registration?.team?.name} bloqueou: ${blocked}\n`;
         }
@@ -165,7 +170,7 @@ Você é um agente especializado em organização de campeonatos de basquete. Vo
 
   context += `\n### FERIADOS\n`;
   holidays.forEach((h: any) => {
-    context += `- ${h.date.toISOString().split('T')[0]}: ${h.name}\n`;
+    context += `- ${h.date.toISOString().split('T')[0]}: ${h.name}${h.isFamilyHoliday ? ' (Familiar)' : ''}${h.reason ? ` - Motivo: ${h.reason}` : ''}\n`;
   });
 
   context += `\n### GINÁSIOS E EQUIPES\n`;

@@ -68,7 +68,8 @@ export async function POST(request: Request) {
             city: reg.team.city,
             gym: reg.team.gym?.name || 'Não informado',
             blockedDates: reg.blockedDates.map((bd: any) => ({
-              date: bd.date,
+              startDate: bd.startDate,
+              endDate: bd.endDate,
               reason: bd.reason
             }))
           }
