@@ -27,11 +27,18 @@ export const authOptions: NextAuthOptions = {
           }
         })
 
-        if (!user) return null
+        if (!user) {
+          console.log(`[AUTH] User not found: ${credentials.email}`)
+          return null
+        }
 
         // Verificar senha (sempre bcrypt agora)
         const passwordMatch = await bcrypt.compare(credentials.password, user.password)
-        if (!passwordMatch) return null
+        if (!passwordMatch) {
+          console.log(`[AUTH] Password mismatch for: ${credentials.email}`)
+          return null
+        }
+        console.log(`[AUTH] Successful login: ${credentials.email}`)
 
         // Dynamic Supreme Admin Check
         const supremeAdminEmail = process.env.SUPREME_ADMIN_EMAIL

@@ -87,9 +87,9 @@ export function RegistrationActions({
     gymAddress: registration.gymAddress,
     gymCity: registration.gymCity,
     gymMapsLink: registration.gymMapsLink,
-    blockedDates: registration.blockedDates.map((bd: any) => ({
-      startDate: bd.startDate,
-      endDate: bd.endDate,
+    blockedDates: (registration.blockedDates || []).map((bd: any) => ({
+      startDate: bd.startDate instanceof Date ? bd.startDate.toISOString() : bd.startDate,
+      endDate: bd.endDate instanceof Date ? bd.endDate.toISOString() : bd.endDate,
       reason: bd.reason
     })),
     observations: registration.observations,

@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         create: {
           name: `Responsável — ${def.name}`,
           email: userEmail,
-          password: await bcrypt.hash('fgb@2026', 10),
+          password: await bcrypt.hash('senha123', 10),
           isAdmin: false
         }
       })

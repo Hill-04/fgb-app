@@ -160,12 +160,19 @@ export function ManualRegistrationModal({
 
   const isDateBlocked = (date: Date) => {
     const dStr = format(date, 'yyyy-MM-dd')
-    return blockedDates.some(bd => bd.startDate.startsWith(dStr))
+    return blockedDates.some(bd => {
+      // Ensure we have a string to compare
+      const start = typeof bd.startDate === 'string' ? bd.startDate : format(new Date(bd.startDate), 'yyyy-MM-dd')
+      return start.startsWith(dStr)
+    })
   }
 
   const isHoliday = (date: Date) => {
     const dStr = format(date, 'yyyy-MM-dd')
-    return holidays.find(h => h.date.startsWith(dStr))
+    return holidays.find(h => {
+      const hDate = typeof h.date === 'string' ? h.date : format(new Date(h.date), 'yyyy-MM-dd')
+      return hDate.startsWith(dStr)
+    })
   }
 
   const toggleWeekend = (sat: Date, sun: Date) => {
