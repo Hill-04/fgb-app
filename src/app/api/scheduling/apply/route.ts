@@ -13,11 +13,16 @@ export async function POST(request: Request) {
     const { blocks, viableCategories, championshipId } = await request.json()
 
     if (!championshipId || !blocks) {
-      return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 })
+      return NextResponse.json({ error: 'Dados incompletos: championshipId e blocks são obrigatórios' }, { status: 400 })
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Atualizar viabilidade das categorias
+      // 1. Limpar dados antigos de agendamento se existirem (para permitir re-agendamento)
+      // Opcional: Podíamos arquivar, mas para este MVP vamos limpar e criar novos
+      await tx.game.deleteMany({ where: { championshipId } })
+      await tx.block.deleteMany({ where: { championshipId } })
+
+      // 2. Atualizar viabilidade das categorias
       if (viableCategories) {
         for (const vc of viableCategories) {
           await tx.championshipCategory.updateMany({
@@ -30,7 +35,7 @@ export async function POST(request: Request) {
         }
       }
 
-      // 2. Criar Blocos e Jogos
+      // 3. Criar Blocos e Jogos
       const createdBlocks = []
       for (const blockData of blocks) {
         const block = await tx.block.create({
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
                   homeTeamId: match.homeTeamId,
                   awayTeamId: match.awayTeamId,
                   phase: match.phase || 1,
-                  dateTime: new Date(phase.date),
+                  dateTime: phase.date ? new Date(phase.date) : new Date(),
                   location: phase.location || 'A definir',
                   city: phase.city || 'A definir',
                   status: 'SCHEDULED'
@@ -64,7 +69,7 @@ export async function POST(request: Request) {
         createdBlocks.push(block)
       }
 
-      // 3. Atualizar status do campeonato
+      // 4. Atualizar status do campeonato
       await tx.championship.update({
         where: { id: championshipId },
         data: { status: 'CONFIRMED' }

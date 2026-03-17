@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 import Anthropic from '@anthropic-ai/sdk'
 
 const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || 'dummy_key',
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
 })
 
 export async function POST(request: Request) {
@@ -15,143 +15,159 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    // 1. Coletar dados do BD para enviar ao Claude
-    // Vamos coletar campeonatos abertos/agendados e as equipes inscritas neles
-    const championships = await prisma.championship.findMany({
-      where: {
-        status: { in: ['REGISTRATION_OPEN', 'SCHEDULING'] }
-      },
+    const { championshipId } = await request.json()
+    if (!championshipId) {
+      return NextResponse.json({ error: 'championshipId é obrigatório' }, { status: 400 })
+    }
+
+    // 1. Coletar dados do campeonato específico
+    const championship = await prisma.championship.findUnique({
+      where: { id: championshipId },
       include: {
-        categories: true,
-        registrations: {
+        categories: {
           include: {
-            team: {
-              include: { gym: true }
-            },
-            categories: { include: { category: true } },
-            blockedDates: true
+            registrations: {
+              include: {
+                registration: {
+                  include: {
+                    team: { include: { gym: true } },
+                    blockedDates: true
+                  }
+                }
+              }
+            }
           }
         }
       }
-    })
+    }) as any
 
-    if (championships.length === 0) {
-      return NextResponse.json({ error: 'Nenhum campeonato válido para escalonamento encontrado.' }, { status: 400 })
+    if (!championship) {
+      return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
     }
 
-    // Montar o prompt
-    const promptData = (championships as any[]).map((c: any) => {
-      const teams = c.registrations.map((r: any) => ({
-        name: r.team.name,
-        city: r.team.city,
-        gym: r.team.gym ? r.team.gym.name : null,
-        categories: r.categories.map((cat: any) => cat.category.name),
-        blockedDates: r.blockedDates.map((bd: any) => ({
-          date: bd.date,
-          reason: bd.reason
-        }))
+    // 2. Preparar dados para a IA
+    const promptData = {
+      championship: {
+        name: championship.name,
+        format: championship.format,
+        phases: championship.phases,
+        turns: championship.turns,
+        fieldControl: championship.fieldControl,
+        startDate: championship.startDate,
+        endDate: championship.endDate,
+        minTeamsPerCat: championship.minTeamsPerCat
+      },
+      categories: championship.categories.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name,
+        teams: cat.registrations.map((regMatch: any) => {
+          const reg = regMatch.registration
+          return {
+            id: reg.team.id,
+            name: reg.team.name,
+            city: reg.team.city,
+            gym: reg.team.gym?.name || 'Não informado',
+            blockedDates: reg.blockedDates.map((bd: any) => ({
+              date: bd.date,
+              reason: bd.reason
+            }))
+          }
+        })
       }))
-
-      return {
-        id: c.id,
-        championshipName: c.name,
-        minTeamsPerCat: c.minTeamsPerCat,
-        format: c.format,
-        phases: c.phases,
-        teams: teams.map((t: any) => ({
-          ...t,
-          id: c.registrations.find((r:any) => r.team.name === t.name)?.team.id
-        }))
-      }
-    })
+    }
 
     const prompt = `
-Você é um especialista em logística e escalonamento de campeonatos de basquete.
-Sua tarefa é analisar os dados de inscrições de equipes, cruzar informações geográficas e datas bloqueadas,
-e retornar um cronograma otimizado no formato JSON.
+Você é um especialista em logística de basquete. Sua tarefa é criar um cronograma otimizado para o campeonato "${championship.name}".
 
-As metas são:
-1. Agrupar categorias que possuam as mesmas equipes para reduzir custos de viagem (ex: Sub 15 e Sub 17 juntas).
-2. Determinar as "viableCategories" (categorias viáveis): só ocorrem se tiverem o mínimo de equipes exigido pelo campeonato.
-3. Definir blocos (blocks) de jogos por fases, sugerindo sedes apropriadas (cidades das equipes com ginásios).
-4. Evitar conflito de datas com "blockedDates" informadas pelas equipes. Forneça uma data primária e uma secundária.
+REGRAS DO CAMPEONATO:
+- Formato: ${championship.format}
+- Turnos: ${championship.turns}
+- Fases: ${championship.phases}
+- Controle de Campo: ${championship.fieldControl}
+- Período: ${championship.startDate?.toISOString() || 'Não definido'} até ${championship.endDate?.toISOString() || 'Não definido'}
 
-Abaixo os dados dos campeonatos vigentes:
-${JSON.stringify(promptData, null, 2)}
+OBJETIVOS:
+1. Validar viabilidade: Apenas categorias com pelo menos ${championship.minTeamsPerCat} equipes são viáveis.
+2. Agrupamento (Blocks): Agrupe categorias que possuam as mesmas equipes ou cidades próximas para reduzir viagens.
+3. Sedes: Sugira ginásios baseados nas equipes locais.
+4. Datas: Evite os "blockedDates" informados pelas equipes.
 
-Você DEVE retornar APENAS UM JSON válido na seguinte estrutura, sem nenhum outro texto, usando as chaves exatas:
+RETORNE APENAS UM JSON VÁLIDO:
 {
   "viableCategories": [
-    { "id": "uuid-cat-1", "title": "Sub 17", "teams": 4 }
+    { "id": "uuid", "title": "Nome da Categoria", "teamsCount": 5 }
   ],
   "blocks": [
     {
       "id": "B1",
-      "title": "Bloco 1 (Sub 15 + Sub 17)",
-      "reason": "Explicação...",
-      "categories": ["Sub 15", "Sub 17"],
+      "title": "Bloco 1 (Ex: Sub 15 e Sub 17)",
+      "reason": "Explicação logistica aqui",
+      "categories": ["Nome Cat 1", "Nome Cat 2"],
       "phases": [
-        { 
-          "name": "Sede 1: Porto Alegre", 
-          "date": "2026-05-10T09:00:00Z", 
-          "location": "Ginásio Sogipa",
-          "city": "Porto Alegre",
+        {
+          "name": "Fase 1 - Sede X",
+          "date": "ISO_DATE_STRING",
+          "location": "Nome do Ginásio",
+          "city": "Cidade",
           "matches": [
-            { "homeTeamId": "uuid-1", "awayTeamId": "uuid-2", "categoryId": "uuid-cat-1", "phase": 1 }
-          ] 
+            { "homeTeamId": "uuid", "awayTeamId": "uuid", "categoryId": "uuid", "phase": 1 }
+          ]
         }
       ]
     }
   ],
-  "dates": [
-    { "phase": "Bloco 1 - 1ª Fase", "primary": "10 Maio", "alternate": "17 Maio", "conflictRemoved": "..." }
-  ]
+  "summary": {
+    "totalMatches": 20,
+    "totalTravelSaved": "Explicação curta"
+  }
 }
+
+DADOS DAS CATEGORIAS E EQUIPES:
+${JSON.stringify(promptData.categories, null, 2)}
 `
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      // Retorna dado mock se a chave não estiver presente para n quebrar o fluxo MVP na demonstração
+      // Retorna Mock se offline
       return NextResponse.json({
-        mocked: true,
-        viableCategories: [
-          { id: 'sub17', title: 'Sub 17 (Mock)', teams: 5 },
-          { id: 'sub15', title: 'Sub 15 (Mock)', teams: 7 }
-        ],
+        viableCategories: (championship.categories as any[]).map((c: any) => ({
+          id: c.id,
+          title: c.name,
+          teamsCount: c.registrations.length
+        })),
         blocks: [
           {
-            id: 'B1',
-            title: 'Bloco Exemplo (IA offline)',
-            reason: 'Chave API não configurada. Mostrando dados exemplo.',
-            phases: [{ name: 'Sede Caxias do Sul', date: 'A Definir', matches: 8 }]
+            id: 'mock-b1',
+            title: 'Bloco Simulado (IA Offline)',
+            reason: 'Chave API Anthropic não configurada.',
+            categories: (championship.categories as any[]).slice(0, 2).map((c: any) => c.name),
+            phases: [
+              {
+                name: 'Eliminatória - Sede POA',
+                date: new Date().toISOString(),
+                location: 'Ginásio Teste',
+                city: 'Porto Alegre',
+                matches: []
+              }
+            ]
           }
         ],
-        dates: [
-          { phase: 'Bloco Único', primary: '08 Maio', alternate: '15 Maio', conflictRemoved: 'Mocks' }
-        ]
-      }, { status: 200 })
+        summary: { totalMatches: 0, totalTravelSaved: "N/A" }
+      })
     }
 
     const message = await anthropic.messages.create({
-      model: 'claude-3-opus-20240229',
-      max_tokens: 3000,
-      system: 'Você deve retornar somente JSON estritamente formatado. Sem markdown backticks envolta do json se puder, ou somente JSON válido.',
+      model: 'claude-3-5-sonnet-20240620',
+      max_tokens: 4000,
+      system: 'Você é um assistente logístico que retorna apenas JSON puro.',
       messages: [{ role: 'user', content: prompt }]
     });
 
-    const responseContent = message.content[0].type === 'text' ? message.content[0].text : '{}';
-    let jsonData = {};
+    const responseContent = message.content[0].type === 'text' ? message.content[0].text : '{}'
+    const cleanedJSON = responseContent.replace(/```json/g, '').replace(/```/g, '').trim()
     
-    try {
-      const cleanedJSON = responseContent.replace(/```json/g, '').replace(/```/g, '').trim();
-      jsonData = JSON.parse(cleanedJSON);
-    } catch (e) {
-      console.error('Failed to parse Claude JSON', responseContent);
-      return NextResponse.json({ error: 'Falha ao processar simulação. O formato retornado não é válido.' }, { status: 500 });
-    }
-
-    return NextResponse.json(jsonData, { status: 200 })
+    return NextResponse.json(JSON.parse(cleanedJSON))
   } catch (error) {
-    console.error('Error simulating schedule:', error)
-    return NextResponse.json({ error: 'Erro ao executar a IA' }, { status: 500 })
+    console.error('AI Scheduling Error:', error)
+    return NextResponse.json({ error: 'Erro ao gerar agendamento IA' }, { status: 500 })
   }
 }

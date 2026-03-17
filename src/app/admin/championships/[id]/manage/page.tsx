@@ -182,7 +182,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
                   </div>
                   <h2 className="text-3xl font-display font-black text-white tracking-tight mb-4 leading-tight">Agrupamento e Viagens</h2>
                   <p className="text-slate-500 font-medium mb-8 max-w-md">A IA irá analisar as equipes inscritas e sugerir quais categorias devem jogar juntas nas mesmas sedes para reduzir os custos em 50%.</p>
-                  <Link href={`/admin/scheduling`}>
+                  <Link href={`/admin/championships/${championship.id}/scheduling`}>
                      <Button className="bg-[#8B5CF6] hover:bg-[#7c3aed] text-white font-black uppercase tracking-widest h-14 px-8 rounded-2xl shadow-xl shadow-[#8B5CF6]/20 transition-all hover:scale-105 active:scale-95">
                         Iniciar Otimização IA
                      </Button>
