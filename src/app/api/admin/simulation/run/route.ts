@@ -51,6 +51,7 @@ export async function POST(request: Request) {
         // Clean any previous simulation first
         const existing = await prisma.championship.findFirst({ where: { name: SIM_NAME } })
         if (existing) {
+          console.log(`[SIM] Cleaning existing simulation: ${existing.id}`)
           await prisma.standing.deleteMany({ where: { category: { championshipId: existing.id } } })
           await prisma.game.deleteMany({ where: { championshipId: existing.id } })
           await prisma.blockedDate.deleteMany({ where: { registration: { championshipId: existing.id } } })
@@ -102,12 +103,17 @@ export async function POST(request: Request) {
         const weekends = getWeekends(new Date('2026-05-01'), new Date('2026-10-31'))
 
         for (const tc of teamConfig) {
+          console.log(`[SIM] Processing team: ${tc.name}`)
           const team = await prisma.team.findFirst({ where: { name: { contains: tc.name } } })
-          if (!team) continue
+          if (!team) {
+            console.log(`[SIM] Team not found: ${tc.name}`)
+            continue
+          }
 
           const gym = await prisma.gym.findFirst({ where: { teamId: team.id } })
           const canHost = hostTeams.includes(tc.name)
 
+          console.log(`[SIM] Registering team: ${team.name} (canHost: ${canHost})`)
           const reg = await prisma.registration.create({
             data: {
               championshipId: championship.id,
@@ -118,14 +124,17 @@ export async function POST(request: Request) {
               gymAddress: canHost && gym ? gym.address : null,
               gymCity: canHost && gym ? gym.city : null,
               categories: {
-                create: tc.categories.map(catName => ({ categoryId: catMap[catName].id }))
+                create: tc.categories
+                  .filter(catName => !!catMap[catName])
+                  .map(catName => ({ categoryId: catMap[catName].id }))
               }
             }
           })
 
           // Add 2-3 random blocked weekends
           const numBlocked = rand(2, 3)
-          const pickedWeekends = weekends.sort(() => Math.random() - 0.5).slice(0, numBlocked)
+          const pickedWeekends = [...weekends].sort(() => Math.random() - 0.5).slice(0, numBlocked)
+          console.log(`[SIM] Adding ${numBlocked} blocked dates for ${team.name}`)
           for (const sat of pickedWeekends) {
             await prisma.blockedDate.create({
               data: {

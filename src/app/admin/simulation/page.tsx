@@ -41,6 +41,12 @@ export default function SimulationPage() {
   const abortRef = useRef<AbortController | null>(null)
 
   const updateStep = (data: Partial<Step> & { step: number }) => {
+    if (data.step === -1) {
+      // Global error
+      setSteps(prev => prev.map(s => s.status === 'loading' ? { ...s, status: 'error', detail: data.detail } : s))
+      setRunning(false)
+      return
+    }
     setSteps(prev => prev.map(s => s.step === data.step ? { ...s, ...data } : s))
     if (data.summary) setSummary(data.summary)
   }
