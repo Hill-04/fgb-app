@@ -2,11 +2,9 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-})
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 export async function POST(request: Request) {
   try {
@@ -127,7 +125,7 @@ DADOS DAS CATEGORIAS E EQUIPES:
 ${JSON.stringify(promptData.categories, null, 2)}
 `
 
-    if (!process.env.ANTHROPIC_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
       // Retorna Mock se offline
       return NextResponse.json({
         viableCategories: (championship.categories as any[]).map((c: any) => ({
@@ -139,7 +137,7 @@ ${JSON.stringify(promptData.categories, null, 2)}
           {
             id: 'mock-b1',
             title: 'Bloco Simulado (IA Offline)',
-            reason: 'Chave API Anthropic não configurada.',
+            reason: 'Chave API Gemini não configurada.',
             categories: (championship.categories as any[]).slice(0, 2).map((c: any) => c.name),
             phases: [
               {
@@ -156,15 +154,12 @@ ${JSON.stringify(promptData.categories, null, 2)}
       })
     }
 
-    const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
-      max_tokens: 4000,
-      system: 'Você é um assistente logístico que retorna apenas JSON puro.',
-      messages: [{ role: 'user', content: prompt }]
-    });
-
-    const responseContent = message.content[0].type === 'text' ? message.content[0].text : '{}'
-    const cleanedJSON = responseContent.replace(/```json/g, '').replace(/```/g, '').trim()
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text()
+    
+    const cleanedJSON = text.replace(/```json/g, '').replace(/```/g, '').trim()
     
     return NextResponse.json(JSON.parse(cleanedJSON))
   } catch (error) {

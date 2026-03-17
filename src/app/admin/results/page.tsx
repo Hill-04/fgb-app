@@ -26,7 +26,7 @@ export default async function AdminResultsPage({
 
     const games = await prisma.game.findMany({
       where: {
-        status: 'COMPLETED',
+        status: 'FINISHED',
         ...(championshipId && { championshipId }),
         ...(categoryId && { categoryId })
       },

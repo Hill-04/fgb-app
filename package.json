@@ -1,5 +1,5 @@
 {
-  "name": "fgb-app",
+  "name": "fgb-championship-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,6 +9,7 @@
     "postinstall": "prisma generate",
     "lint": "eslint",
     "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
+    "seed:test": "ts-node --project tsconfig.seed.json prisma/seed-test-flow.ts",
     "seed:prod": "DATABASE_URL=$TURSO_DATABASE_URL DATABASE_AUTH_TOKEN=$TURSO_AUTH_TOKEN ts-node --project tsconfig.seed.json prisma/seed.ts"
   },
   "dependencies": {

@@ -55,13 +55,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Campos obrigatórios ausentes' }, { status: 400 })
     }
 
+    // Conflict Validation: Check if either team has blocked dates for this game time
+    const gameDate = new Date(dateTime)
+    
+    const conflicts = await prisma.blockedDate.findMany({
+      where: {
+        registration: {
+          championshipId,
+          teamId: { in: [homeTeamId, awayTeamId] }
+        },
+        OR: [
+          { startDate: { lte: gameDate }, endDate: { gte: gameDate } },
+          { startDate: { lte: gameDate }, endDate: null }
+        ]
+      },
+      include: { registration: { include: { team: true } } }
+    })
+
+    if (conflicts.length > 0) {
+      const teamNames = conflicts.map(c => c.registration.team.name).join(', ')
+      return NextResponse.json({ 
+        error: `Conflito de data bloqueada para: ${teamNames}`,
+        conflicts: conflicts.map(c => ({ team: c.registration.team.name, reason: c.reason }))
+      }, { status: 409 })
+    }
+
     const game = await prisma.game.create({
       data: {
         championshipId,
         categoryId,
         homeTeamId,
         awayTeamId,
-        dateTime: new Date(dateTime),
+        dateTime: gameDate,
         location,
         city,
         phase: Number(phase) || 1

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { recalculateIsViable } from '@/services/registration-service'
 
 export async function POST(
   request: Request,
@@ -95,6 +96,9 @@ export async function POST(
         }
       }
     })
+
+    // Recalcular viabilidade das categorias
+    await recalculateIsViable(championshipId)
 
     return NextResponse.json({ success: true, registration }, { status: 201 })
   } catch (error) {

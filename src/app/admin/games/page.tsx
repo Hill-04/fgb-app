@@ -29,7 +29,7 @@ type Championship = {
 const STATUS_OPTIONS = [
   { value: 'SCHEDULED', label: 'Agendado', color: 'bg-slate-500/10 text-slate-400 border-slate-500/20' },
   { value: 'IN_PROGRESS', label: 'Em Andamento', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-  { value: 'COMPLETED', label: 'Encerrado', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
+  { value: 'FINISHED', label: 'Encerrado', color: 'bg-green-500/10 text-green-500 border-green-500/20' },
   { value: 'CANCELLED', label: 'Cancelado', color: 'bg-red-500/10 text-red-500 border-red-500/20' },
 ]
 

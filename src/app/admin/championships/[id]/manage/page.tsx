@@ -160,9 +160,13 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
                                        {reg.status === 'CONFIRMED' ? 'CONFIRMADA' : reg.status === 'REJECTED' ? 'REJEITADA' : 'PENDENTE'}
                                     </Badge>
                                  </td>
-                                 <td className="px-6 py-5 text-right flex justify-end">
-                                    <RegistrationActions registrationId={reg.id} currentStatus={reg.status} />
-                                 </td>
+                                  <td className="px-6 py-5 text-right flex justify-end">
+                                    <RegistrationActions 
+                                      championshipId={championship.id}
+                                      registration={reg}
+                                      categories={championship.categories}
+                                    />
+                                  </td>
                               </tr>
                            ))
                         )}
