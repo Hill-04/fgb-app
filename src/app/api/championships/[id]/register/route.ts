@@ -15,12 +15,22 @@ export async function POST(
 
     const { id: championshipId } = await params
     const body = await request.json()
-    const { selectedCategories, blockedDates, observations, teamId: manualTeamId, status: manualStatus } = body
+    const { 
+      selectedCategories, 
+      blockedDates, 
+      observations, 
+      teamId: manualTeamId, 
+      status: manualStatus,
+      canHost,
+      gymName,
+      gymAddress,
+      gymCity,
+      gymMapsLink
+    } = body
 
     const isAdmin = (session.user as any).isAdmin
     
     // Se não for admin, usa o teamId do próprio usuário logado
-    // Se for admin, pode passar um teamId no corpo da requisição
     const teamId = isAdmin ? (manualTeamId || (session.user as any).teamId) : (session.user as any).teamId
 
     if (!teamId) {
@@ -59,14 +69,20 @@ export async function POST(
         teamId,
         status: isAdmin && manualStatus ? manualStatus : 'PENDING',
         observations: observations || null,
+        canHost: Boolean(canHost),
+        gymName: gymName || null,
+        gymAddress: gymAddress || null,
+        gymCity: gymCity || null,
+        gymMapsLink: gymMapsLink || null,
         categories: {
           create: categories.map(cat => ({
             categoryId: cat.id
           }))
         },
         blockedDates: blockedDates && blockedDates.length > 0 ? {
-          create: blockedDates.map((bd: { date: string; reason?: string }) => ({
-            date: new Date(bd.date),
+          create: blockedDates.map((bd: { startDate: string; endDate?: string; reason?: string }) => ({
+            startDate: new Date(bd.startDate),
+            endDate: bd.endDate ? new Date(bd.endDate) : null,
             reason: bd.reason || null
           }))
         } : undefined

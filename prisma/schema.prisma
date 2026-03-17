@@ -106,6 +106,14 @@ model Registration {
   observations   String?
   registeredAt   DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
+
+  // Gym Hosting / Sede
+  canHost        Boolean                @default(false)
+  gymName        String?
+  gymAddress     String?
+  gymCity        String?
+  gymMapsLink    String?
+
   blockedDates   BlockedDate[]
   team           Team                   @relation(fields: [teamId], references: [id])
   championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
@@ -127,7 +135,8 @@ model RegistrationCategory {
 model BlockedDate {
   id             String       @id @default(uuid())
   registrationId String
-  date           DateTime
+  startDate      DateTime
+  endDate        DateTime?
   reason         String?
   registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
 }
@@ -212,10 +221,12 @@ model Message {
 }
 
 model Holiday {
-  id   String   @id @default(uuid())
-  date DateTime
-  name String
-  year Int
+  id               String   @id @default(uuid())
+  date             DateTime
+  name             String
+  year             Int
+  reason           String?
+  isFamilyHoliday  Boolean  @default(false)
 }
 
 model TeamMembership {
