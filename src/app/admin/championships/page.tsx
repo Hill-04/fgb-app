@@ -258,49 +258,71 @@ export default function AdminChampionshipsPage() {
   }
 
   const renderStep2 = () => (
-    <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1">
-      <div className="space-y-3">
+    <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-4">
         <SectionLabel>Formato da Competição</SectionLabel>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
-            { value: 'todos_contra_todos', label: 'Pontos Corridos' },
-            { value: 'eliminatorio', label: 'Mata-Mata' },
-            { value: 'grupos_eliminatorio', label: 'Grupos + Mata-Mata' },
-            { value: 'misto', label: 'Pontos + Playoffs' },
-          ].map(o => <OptionButton key={o.value} active={form.format === o.value} onClick={() => setField('format', o.value)}>{o.label}</OptionButton>)}
+            { value: 'todos_contra_todos', label: 'Pontos Corridos', desc: 'As equipes jogam entre si e a classificação é definida pela tabela geral.' },
+            { value: 'eliminatorio', label: 'Mata-Mata', desc: 'Séries eliminatórias desde o início. Quem perde está fora.' },
+            { value: 'grupos_eliminatorio', label: 'Grupos + Mata-Mata', desc: 'Fase inicial em grupos seguida por eliminatórias.' },
+            { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguidos por mata-mata final.' },
+          ].map(o => (
+            <button key={o.value} type="button" onClick={() => setField('format', o.value)}
+              className={`p-4 rounded-2xl border text-left transition-all ${form.format === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-xs font-black uppercase tracking-widest ${form.format === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
+                {form.format === o.value && <Check className="w-4 h-4 text-[#FF6B00]" />}
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium leading-tight">{o.desc}</p>
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="space-y-3">
-        <SectionLabel>Número de Turnos</SectionLabel>
-        <div className="flex gap-2">
-          {[['1', 'Turno Único'], ['2', 'Turno + Returno'], ['3', 'Três Turnos']].map(([v, l]) =>
-            <OptionButton key={v} active={form.turns === v} onClick={() => setField('turns', v)}>{l}</OptionButton>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-3">
+          <SectionLabel>Número de Turnos</SectionLabel>
+          <div className="flex gap-2">
+            {[['1', '1'], ['2', '2'], ['3', '3']].map(([v, l]) =>
+              <OptionButton key={v} active={form.turns === v} onClick={() => setField('turns', v)}>{l} {Number(v) === 1 ? 'Turno' : 'Turnos'}</OptionButton>
+            )}
+          </div>
+          <p className="text-[9px] text-slate-600 font-medium italic">Quantas vezes as mesmas equipes se enfrentam na fase regular.</p>
+        </div>
+
+        <div className="space-y-3">
+          <SectionLabel>Número de Fases</SectionLabel>
+          <div className="flex gap-1.5 flex-wrap">
+            {['0', '1', '2', '3', '4', '5', '6', '7', '8'].map(v =>
+              <button key={v} type="button" onClick={() => setField('phases', v)}
+                className={`w-9 h-9 rounded-lg border text-[11px] font-black transition-all ${form.phases === v ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-600/20' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
+                {v}
+              </button>
+            )}
+          </div>
+          <p className="text-[9px] text-slate-600 font-medium italic">0 se for apenas fase única.</p>
         </div>
       </div>
 
-      <div className="space-y-3">
-        <SectionLabel>Número de Fases</SectionLabel>
-        <div className="flex gap-2">
-          {['1', '2', '3'].map(v =>
-            <OptionButton key={v} active={form.phases === v} onClick={() => setField('phases', v)}>{v} {v === '1' ? 'fase' : 'fases'}</OptionButton>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SectionLabel>Mando de Campo</SectionLabel>
-        <div className="flex gap-2 flex-wrap">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           {[
-            { value: 'alternado', label: 'Alternado' },
-            { value: 'sede_fixa', label: 'Sede Fixa' },
-            { value: 'sede_rotativa', label: 'Sede Rotativa' },
-          ].map(o => <OptionButton key={o.value} active={form.fieldControl === o.value} onClick={() => setField('fieldControl', o.value)}>{o.label}</OptionButton>)}
+            { value: 'alternado', label: 'Alternado', desc: 'Cada equipe joga uma em casa.' },
+            { value: 'sede_fixa', label: 'Sede Fixa', desc: 'Todos os jogos em um único ginásio.' },
+            { value: 'sede_rotativa', label: 'Sede Rotativa', desc: 'Cada rodada em uma cidade diferente.' },
+          ].map(o => (
+            <button key={o.value} type="button" onClick={() => setField('fieldControl', o.value)}
+              className={`p-4 rounded-2xl border text-left transition-all ${form.fieldControl === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+              <span className={`block text-[10px] font-black uppercase tracking-widest mb-1 ${form.fieldControl === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
+              <p className="text-[9px] text-slate-500 font-medium leading-tight">{o.desc}</p>
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <SectionLabel>Critérios de Desempate (em ordem)</SectionLabel>
         <div className="grid grid-cols-2 gap-2">
           {[
@@ -323,17 +345,18 @@ export default function AdminChampionshipsPage() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-3 p-4 bg-white/5 rounded-2xl border border-white/10">
         <SectionLabel>Agrupamento de Categorias em Blocos</SectionLabel>
         <Toggle checked={form.hasBlocks} onCheckedChange={v => setField('hasBlocks', v)}
           label="Deixar a IA agrupar categorias por blocos de viagem" />
+        <p className="text-[9px] text-slate-500 font-medium ml-13">Agrupa Sub 12 e Sub 13 no mesmo ginásio para reduzir custos.</p>
       </div>
 
       <div className="space-y-4">
         <SectionLabel>Rebaixamento / Promoção</SectionLabel>
         <Toggle checked={form.hasRelegation} onCheckedChange={v => setField('hasRelegation', v)} label="Habilitar rebaixamento/promoção" />
         {form.hasRelegation && (
-          <div className="grid grid-cols-2 gap-4 mt-3">
+          <div className="grid grid-cols-2 gap-4 mt-3 animate-in fade-in slide-in-from-top-2">
             <div><SectionLabel>Equipes que descem</SectionLabel>
               <Input type="number" min="0" value={form.relegationDown} onChange={e => setField('relegationDown', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" /></div>
             <div><SectionLabel>Equipes que sobem</SectionLabel>
@@ -346,27 +369,35 @@ export default function AdminChampionshipsPage() {
 
   const renderStep3 = () => (
     <div className="space-y-6">
-      <Toggle checked={form.hasPlayoffs} onCheckedChange={v => setField('hasPlayoffs', v)} label="Este campeonato tem fase de playoffs" />
+      <Toggle checked={form.hasPlayoffs} onCheckedChange={v => setField('hasPlayoffs', v)} label="Este campeonato tem fase de playoffs (Mata-Mata Final)" />
 
       {form.hasPlayoffs && (
-        <div className="space-y-5 bg-white/[0.02] border border-white/5 p-5 rounded-2xl">
+        <div className="space-y-6 bg-white/[0.02] border border-white/5 p-6 rounded-3xl animate-in zoom-in-95 duration-200">
           <div className="space-y-3">
-            <SectionLabel>Equipes classificadas</SectionLabel>
-            <div className="flex gap-2">
-              {['2', '4', '8'].map(v => <OptionButton key={v} active={form.playoffTeams === v} onClick={() => setField('playoffTeams', v)}>Top {v}</OptionButton>)}
-            </div>
-          </div>
-          <div className="space-y-3">
-            <SectionLabel>Formato das séries</SectionLabel>
+            <SectionLabel>Equipes classificadas para Playoffs</SectionLabel>
             <div className="flex gap-2 flex-wrap">
-              {[
-                { value: 'melhor_de_1', label: 'Melhor de 1' },
-                { value: 'melhor_de_3', label: 'Melhor de 3' },
-                { value: 'melhor_de_5', label: 'Melhor de 5' },
-              ].map(o => <OptionButton key={o.value} active={form.playoffFormat === o.value} onClick={() => setField('playoffFormat', o.value)}>{o.label}</OptionButton>)}
+              {['2', '4', '8', '16'].map(v => <OptionButton key={v} active={form.playoffTeams === v} onClick={() => setField('playoffTeams', v)}>Top {v}</OptionButton>)}
             </div>
           </div>
-          <Toggle checked={form.hasThirdPlace} onCheckedChange={v => setField('hasThirdPlace', v)} label="Disputa de 3º lugar" />
+          <div className="space-y-4">
+            <SectionLabel>Formato das séries</SectionLabel>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { value: 'melhor_de_1', label: 'Melhor de 1', desc: 'Jogo único eliminatório.' },
+                { value: 'melhor_de_3', label: 'Melhor de 3', desc: 'Vence quem ganhar 2 jogos.' },
+                { value: 'melhor_de_5', label: 'Melhor de 5', desc: 'Vence quem ganhar 3 jogos.' },
+              ].map(o => (
+                <button key={o.value} type="button" onClick={() => setField('playoffFormat', o.value)}
+                  className={`p-4 rounded-2xl border text-left transition-all ${form.playoffFormat === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+                  <span className={`block text-[10px] font-black uppercase tracking-widest mb-1 ${form.playoffFormat === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
+                  <p className="text-[9px] text-slate-500 font-medium leading-tight">{o.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="pt-4 border-t border-white/5">
+            <Toggle checked={form.hasThirdPlace} onCheckedChange={v => setField('hasThirdPlace', v)} label="Incluir disputa de 3º lugar" />
+          </div>
         </div>
       )}
     </div>
@@ -374,12 +405,12 @@ export default function AdminChampionshipsPage() {
 
   const renderStep4 = () => (
     <div className="space-y-6">
-      <div className="space-y-2">
-        <SectionLabel>Prazo de Inscrições</SectionLabel>
-        <Input type="date" value={form.regDeadline} onChange={e => setField('regDeadline', e.target.value)}
-          className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="space-y-2">
+          <SectionLabel>Prazo de Inscrições</SectionLabel>
+          <Input type="date" value={form.regDeadline} onChange={e => setField('regDeadline', e.target.value)}
+            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
+        </div>
         <div className="space-y-2">
           <SectionLabel>Início do Campeonato</SectionLabel>
           <Input type="date" value={form.startDate} onChange={e => setField('startDate', e.target.value)}
@@ -393,15 +424,19 @@ export default function AdminChampionshipsPage() {
       </div>
 
       {/* Summary */}
-      <div className="bg-[#FF6B00]/5 border border-[#FF6B00]/20 rounded-2xl p-5 space-y-2 text-sm">
-        <p className="text-[#FF6B00] font-black uppercase tracking-widest text-[10px] mb-3">Resumo do Campeonato</p>
-        <p className="text-slate-300"><span className="text-slate-500">Nome:</span> {form.name || '—'}</p>
-        <p className="text-slate-300"><span className="text-slate-500">Sexo:</span> {form.sex}</p>
-        <p className="text-slate-300"><span className="text-slate-500">Categorias:</span> {form.categories.length} selecionadas</p>
-        <p className="text-slate-300"><span className="text-slate-500">Formato:</span> {form.format} · {form.turns} turno(s) · {form.phases} fase(s)</p>
-        <p className="text-slate-300"><span className="text-slate-500">Mando:</span> {form.fieldControl}</p>
-        <p className="text-slate-300"><span className="text-slate-500">Playoffs:</span> {form.hasPlayoffs ? `Sim — Top ${form.playoffTeams} (${form.playoffFormat})` : 'Não'}</p>
-        <p className="text-slate-300"><span className="text-slate-500">Blocos IA:</span> {form.hasBlocks ? 'Sim' : 'Não'}</p>
+      <div className="bg-[#FF6B00]/5 border border-[#FF6B00]/20 rounded-[32px] p-8 space-y-3 text-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B00]/5 rounded-full blur-3xl -mr-16 -mt-16" />
+        <p className="text-[#FF6B00] font-black uppercase tracking-[0.2em] text-[10px] mb-4">Resumo da Configuração</p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-3">
+          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Nome:</span> {form.name || '—'}</p>
+          <p className="text-slate-300 capitalize"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Sexo:</span> {form.sex}</p>
+          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Categorias:</span> {form.categories.length}</p>
+          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Formato:</span> {form.format.replace(/_/g, ' ')}</p>
+          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Estrutura:</span> {form.turns} turno(s) · {form.phases} fase(s)</p>
+          <p className="text-slate-300 capitalize"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Mando:</span> {form.fieldControl.replace(/_/g, ' ')}</p>
+          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Playoffs:</span> {form.hasPlayoffs ? `Top ${form.playoffTeams}` : 'Não'}</p>
+          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">IA Blocos:</span> {form.hasBlocks ? 'Sim' : 'Não'}</p>
+        </div>
       </div>
     </div>
   )
@@ -476,50 +511,56 @@ export default function AdminChampionshipsPage() {
 
       {/* ─── Multi-step Modal ─── */}
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-2xl bg-[#0A0A0A] border-white/10 text-white rounded-3xl shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 md:p-8 animate-in fade-in duration-200">
+          <Card className="w-full max-w-2xl bg-[#0A0A0A] border-white/10 text-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             {/* Step indicators */}
-            <div className="flex border-b border-white/5">
+            <div className="flex border-b border-white/5 shrink-0">
               {STEPS.map((s, i) => (
-                <div key={i} className={`flex-1 px-3 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[#FF6B00] bg-[#FF6B00]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
-                  <p className={`text-[9px] font-black uppercase tracking-widest ${i === step ? 'text-[#FF6B00]' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>{s.title}</p>
+                <div key={i} className={`flex-1 px-2 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[#FF6B00] bg-[#FF6B00]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
+                  <p className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest ${i === step ? 'text-[#FF6B00]' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>{s.title}</p>
                 </div>
               ))}
             </div>
 
-            <CardHeader className="px-8 pt-8 pb-4">
-              <CardTitle className="text-2xl font-display font-black uppercase tracking-tight">
-                {editingId ? 'Editar Campeonato' : STEPS[step].title}
-              </CardTitle>
-              <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{STEPS[step].desc}</CardDescription>
-            </CardHeader>
+            <div className="overflow-y-auto flex-1 custom-scrollbar">
+              <CardHeader className="px-6 md:px-10 pt-8 pb-4">
+                <CardTitle className="text-2xl md:text-3xl font-display font-black uppercase tracking-tight">
+                  {editingId ? 'Editar Campeonato' : STEPS[step].title}
+                </CardTitle>
+                <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{STEPS[step].desc}</CardDescription>
+              </CardHeader>
 
-            <CardContent className="px-8 pb-8">
-              {stepContent[step]()}
+              <CardContent className="px-6 md:px-10 pb-10">
+                {stepContent[step]()}
 
-              {formError && (
-                <p className="mt-4 text-red-500 text-xs font-bold uppercase tracking-widest bg-red-500/10 p-3 rounded-xl border border-red-500/20">{formError}</p>
-              )}
+                {formError && (
+                  <p className="mt-6 text-red-500 text-xs font-bold uppercase tracking-widest bg-red-500/10 p-4 rounded-2xl border border-red-500/20 animate-in shake-in">
+                    {formError}
+                  </p>
+                )}
+              </CardContent>
+            </div>
 
-              <div className="flex gap-4 pt-6 mt-6 border-t border-white/5">
+            <div className="px-6 md:px-10 py-6 border-t border-white/5 bg-[#0D0D0D] shrink-0">
+              <div className="flex gap-4">
                 {step === 0 ? (
-                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-12 font-bold text-slate-400 hover:text-white rounded-xl">Cancelar</Button>
+                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">Cancelar</Button>
                 ) : (
-                  <Button variant="ghost" type="button" onClick={prevStep} className="flex-1 h-12 font-bold text-slate-400 hover:text-white rounded-xl">
-                    <ChevronLeft className="w-4 h-4 mr-1" /> Voltar
+                  <Button variant="ghost" type="button" onClick={prevStep} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">
+                    <ChevronLeft className="w-5 h-5 mr-1" /> Voltar
                   </Button>
                 )}
                 {step < STEPS.length - 1 ? (
-                  <Button type="button" onClick={nextStep} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-12 rounded-xl">
-                    Próximo <ChevronRight className="w-4 h-4 ml-1" />
+                  <Button type="button" onClick={nextStep} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    Próximo <ChevronRight className="w-5 h-5 ml-1" />
                   </Button>
                 ) : (
-                  <Button type="button" onClick={handleSubmit} disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-12 rounded-xl shadow-lg shadow-orange-600/20">
-                    {submitLoading ? 'Salvando...' : (editingId ? 'Salvar Alterações' : 'Criar Campeonato')}
+                  <Button type="button" onClick={handleSubmit} disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                    {submitLoading ? 'Processando...' : (editingId ? 'Confirmar Edição' : 'Criar Campeonato')}
                   </Button>
                 )}
               </div>
-            </CardContent>
+            </div>
           </Card>
         </div>
       )}
