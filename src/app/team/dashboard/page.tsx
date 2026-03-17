@@ -6,7 +6,7 @@ import { StatCard } from "@/components/StatCard"
 import { Section } from "@/components/Section"
 import { Badge } from "@/components/Badge"
 import Link from "next/link"
-import { Trophy, Calendar, Users, Award, MapPin, Shield, CheckCircle2, ChevronRight, PartyPopper } from "lucide-react"
+import { Trophy, Calendar, Users, Award, MapPin, Shield, CheckCircle2, ChevronRight, PartyPopper, Brackets as BracketsIcon } from "lucide-react"
 import { Brackets } from "@/components/Brackets"
 import { cn } from "@/lib/utils"
 
@@ -346,7 +346,7 @@ export default async function TeamDashboardPage() {
               <div className="bg-white/[0.02] px-8 py-6 border-b border-white/5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center">
-                    <Brackets className="w-5 h-5 text-[#FF6B00]" />
+                    <BracketsIcon className="w-5 h-5 text-[#FF6B00]" />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-white uppercase tracking-tighter italic">Key Chaveamento FGB</h3>

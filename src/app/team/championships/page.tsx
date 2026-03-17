@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { Trophy, Calendar, Users, CheckCircle2 } from 'lucide-react'
+import { Trophy, Calendar, Users, CheckCircle2, ChevronRight } from 'lucide-react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 

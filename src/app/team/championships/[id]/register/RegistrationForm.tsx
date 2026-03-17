@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Calendar, MapPin, Users, FileText, AlertCircle, CheckCircle2, ChevronRight, Info, ExternalLink, PartyPopper } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 
 type Championship = {
@@ -41,8 +42,8 @@ type Holiday = {
   date: Date
   name: string
   year: number
-  reason?: string
-  isFamilyHoliday?: boolean
+  reason: string | null
+  isFamilyHoliday: boolean
 }
 
 type Props = {
