@@ -72,12 +72,16 @@ export async function PATCH(
 
       if (selectedCodes) {
         await tx.championshipCategory.deleteMany({ where: { championshipId: id } })
-        await tx.championshipCategory.createMany({
-          data: (selectedCodes as string[]).map((code: string) => ({
-            name: codeToName(code),
-            championshipId: id,
-          })),
-        })
+        
+        // Fix for SQLite: individual creates because createMany doesn't handle @default(uuid()) for PKs
+        for (const code of (selectedCodes as string[])) {
+          await tx.championshipCategory.create({
+            data: {
+              name: codeToName(code),
+              championshipId: id,
+            },
+          })
+        }
       }
 
       return tx.championship.findUnique({
@@ -87,9 +91,9 @@ export async function PATCH(
     })
 
     return NextResponse.json(updated)
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error updating championship:', error)
-    return NextResponse.json({ error: 'Erro ao atualizar campeonato' }, { status: 500 })
+    return NextResponse.json({ error: error?.message || 'Erro ao atualizar campeonato' }, { status: 500 })
   }
 }
 

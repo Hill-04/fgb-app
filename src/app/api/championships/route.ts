@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     if (!name?.trim()) return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
     if (!selectedCodes || selectedCodes.length === 0) return NextResponse.json({ error: 'Selecione ao menos uma categoria' }, { status: 400 })
 
-const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime())
+    const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime())
 
     const championship = await prisma.$transaction(async (tx) => {
       const c = await tx.championship.create({
@@ -70,12 +70,15 @@ const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime())
         },
       })
 
-      await tx.championshipCategory.createMany({
-        data: (selectedCodes as string[]).map((code: string) => ({
-          name: codeToName(code),
-          championshipId: c.id,
-        })),
-      })
+      // Fix for SQLite: individual creates because createMany doesn't handle @default(uuid()) for PKs
+      for (const code of (selectedCodes as string[])) {
+        await tx.championshipCategory.create({
+          data: {
+            name: codeToName(code),
+            championshipId: c.id,
+          },
+        })
+      }
 
       return tx.championship.findUnique({
         where: { id: c.id },
@@ -84,8 +87,10 @@ const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime())
     })
 
     return NextResponse.json(championship, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating championship:', error)
-    return NextResponse.json({ error: 'Erro ao criar campeonato' }, { status: 500 })
+    // Return more specific error if possible to help user debug
+    const message = error?.message || 'Erro interno ao criar campeonato'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
