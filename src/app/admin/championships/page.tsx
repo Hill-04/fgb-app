@@ -15,6 +15,7 @@ type Category = { id: string; name: string }
 type Championship = {
   id: string; name: string; year: number; status: string; sex: string
   minTeamsPerCat: number; categories: Category[]; _count?: { registrations: number }
+  isSimulation?: boolean
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -477,6 +478,11 @@ export default function AdminChampionshipsPage() {
                     <div className="flex items-center gap-3 mb-2 flex-wrap">
                       <h3 className="text-2xl font-display font-black text-white uppercase tracking-tighter">{c.name}</h3>
                       <Badge className={`px-3 py-1 text-[9px] font-black tracking-widest uppercase border ${STATUS_STYLES[c.status] || STATUS_STYLES.DRAFT}`}>{STATUS_LABELS[c.status] || c.status}</Badge>
+                      {c.isSimulation && (
+                        <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                          Simulação
+                        </Badge>
+                      )}
                     </div>
                     <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
                       <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-[#FF6B00]" /> {c.year}</span>

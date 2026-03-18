@@ -20,21 +20,21 @@ export default async function AdminStandingsPage({
     const params = await searchParams
     const { championshipId, categoryId } = params
 
-    const championships = await prisma.championship.findMany({
-      include: { categories: true },
+    const championships = await (prisma.championship.findMany({
+      include: { categories: true } as any,
       orderBy: { createdAt: 'desc' }
-    })
+    }) as any)
 
     let standings: any[] = []
     let categoryInfo: any = null
 
     if (categoryId) {
-      categoryInfo = await prisma.championshipCategory.findUnique({
+      categoryInfo = await (prisma.championshipCategory.findUnique({
         where: { id: categoryId },
         include: {
-          championship: { select: { name: true } },
-        }
-      })
+          championship: { select: { name: true, isSimulation: true } },
+        } as any
+      }) as any)
 
       standings = await prisma.standing.findMany({
         where: { categoryId },
@@ -71,6 +71,11 @@ export default async function AdminStandingsPage({
                  categoryName={categoryInfo?.name || ''} 
                  championshipName={categoryInfo?.championship.name || ''} 
                />
+               {categoryInfo?.championship.isSimulation && (
+                 <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20 mr-2 h-10">
+                   Simulação
+                 </Badge>
+               )}
                <Badge className="bg-[#FF6B00]/10 text-[#FF6B00] border-[#FF6B00]/20 h-10 px-4 flex items-center gap-2">
                  <Shield className="w-4 h-4" />
                  <span className="text-[10px] font-black uppercase tracking-widest">{categoryInfo?.name}</span>
@@ -89,7 +94,7 @@ export default async function AdminStandingsPage({
                 defaultValue={championshipId ?? ''}
               >
                 <option value="" className="bg-[#0A0A0A]">Selecione o Campeonato...</option>
-                {championships.map(c => <option key={c.id} value={c.id} className="bg-[#0A0A0A]">{c.name}</option>)}
+                {championships.map((championship: any) => <option key={championship.id} value={championship.id} className="bg-[#0A0A0A]">{championship.name}</option>)}
               </select>
             </div>
             <div className="space-y-1.5 flex-1 min-w-[250px]">
@@ -101,7 +106,7 @@ export default async function AdminStandingsPage({
                 disabled={!championshipId}
               >
                 <option value="" className="bg-[#0A0A0A]">Selecione a Categoria...</option>
-                {championshipId && championships.find(c => c.id === championshipId)?.categories.map(cat => (
+                {championshipId && championships.find((c: any) => c.id === championshipId)?.categories.map((cat: any) => (
                   <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.name}</option>
                 ))}
               </select>

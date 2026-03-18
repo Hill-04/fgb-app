@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+
 // Generate category name from code e.g. SUB12M -> "Sub 12 Masculino"
 function codeToName(code: string): string {
   const match = code.match(/^SUB(\d+)(M|F)$/)
@@ -12,13 +15,17 @@ function codeToName(code: string): string {
 
 export async function GET() {
   try {
-    const championships = await prisma.championship.findMany({
+    const session = await getServerSession(authOptions)
+    const isAdmin = (session?.user as any)?.isAdmin
+
+    const championships = await (prisma.championship.findMany({
+      where: (isAdmin ? {} : { isSimulation: false }) as any,
       orderBy: { createdAt: 'desc' },
       include: {
         categories: true,
         _count: { select: { registrations: true } },
       },
-    })
+    }) as any)
     return NextResponse.json(championships)
   } catch (error) {
     console.error('Error fetching championships:', error)

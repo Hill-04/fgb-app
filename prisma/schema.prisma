@@ -78,6 +78,7 @@ model Championship {
   status         String                 @default("DRAFT")
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
+  isSimulation   Boolean                @default(false)
   blocks         Block[]
   categories     ChampionshipCategory[]
   documents      Document[]

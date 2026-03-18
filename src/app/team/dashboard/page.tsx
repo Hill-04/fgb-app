@@ -57,31 +57,27 @@ export default async function TeamDashboardPage() {
       return <div>Equipe não encontrada</div>
     }
 
-    // Buscar campeonatos abertos e check registrations
-    const openChampionships = await prisma.championship.findMany({
+    // Buscar campeonatos abertos
+    const openChampionships = await (prisma.championship.findMany({
       where: {
         status: 'REGISTRATION_OPEN',
-        // sex: team.sex || undefined // Removendo filtro restritivo para aparecerem todos
-      },
+        isSimulation: false,
+      } as any,
       include: {
         categories: true,
-        _count: {
-          select: {
-            registrations: true
-          }
-        },
+        _count: { select: { registrations: true } },
         registrations: {
           where: { teamId }
         }
-      },
+      } as any,
       take: 6
-    })
+    }) as any)
 
     const nextGame = team.homeGames[0]
-    const totalCategories = team.registrations.reduce((acc, reg) => acc + reg.categories.length, 0)
+    const totalCategories = team.registrations.reduce((acc: number, reg: any) => acc + reg.categories.length, 0)
     // Mudança: Contar qualquer inscrição não rejeitada para o status principal
-    const activeRegistrations = team.registrations.filter(r => r.status !== 'REJECTED').length
-    const confirmedRegistrations = team.registrations.filter(r => r.status === 'CONFIRMED').length
+    const activeRegistrations = team.registrations.filter((r: any) => r.status !== 'REJECTED').length
+    const confirmedRegistrations = team.registrations.filter((r: any) => r.status === 'CONFIRMED').length
 
     return (
       <div className="space-y-10">
@@ -180,7 +176,7 @@ export default async function TeamDashboardPage() {
               subtitle="Inscrições abertas e oportunidades de jogo"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {openChampionships.map((championship) => {
+                {openChampionships.map((championship: any) => {
                   const isRegistered = championship.registrations.length > 0
                   
                   return (

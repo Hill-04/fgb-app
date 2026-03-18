@@ -11,8 +11,11 @@ export default async function TeamChampionshipsPage() {
   const teamId = (session?.user as any)?.teamId
 
   try {
-    const championships = await prisma.championship.findMany({
-      where: { status: 'REGISTRATION_OPEN' },
+    const championships = await (prisma.championship.findMany({
+      where: { 
+        status: 'REGISTRATION_OPEN',
+        isSimulation: false
+      } as any,
       orderBy: { createdAt: 'desc' },
       include: {
         categories: {
@@ -22,8 +25,8 @@ export default async function TeamChampionshipsPage() {
         registrations: teamId ? {
           where: { teamId }
         } : false
-      }
-    })
+      } as any
+    }) as any)
 
     return (
       <div className="space-y-10 max-w-5xl mx-auto">
@@ -48,7 +51,7 @@ export default async function TeamChampionshipsPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {championships.map((championship) => {
+            {championships.map((championship: any) => {
               const isRegistered = championship.registrations && championship.registrations.length > 0
               
               return (
@@ -96,7 +99,7 @@ export default async function TeamChampionshipsPage() {
                           <div>
                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Categorias disponíveis</p>
                             <div className="flex flex-wrap gap-2">
-                              {championship.categories.map((cat) => (
+                              {championship.categories.map((cat: any) => (
                                 <div key={cat.id} className="bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-[#FF6B00]/5 hover:border-[#FF6B00]/20 transition-all">
                                   <p className="text-xs font-bold text-white">{cat.name}</p>
                                   <p className="text-[10px] text-slate-500 mt-0.5">{cat._count.registrations} equipe(s)</p>

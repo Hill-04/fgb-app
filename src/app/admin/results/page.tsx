@@ -19,25 +19,25 @@ export default async function AdminResultsPage({
     const params = await searchParams
     const { championshipId, categoryId } = params
 
-    const championships = await prisma.championship.findMany({
+    const championships = await (prisma.championship.findMany({
       include: { categories: true },
       orderBy: { createdAt: 'desc' }
-    })
+    }) as any)
 
-    const games = await prisma.game.findMany({
+    const games = await (prisma.game.findMany({
       where: {
-        status: 'FINISHED',
+        status: 'COMPLETED',
         ...(championshipId && { championshipId }),
         ...(categoryId && { categoryId })
       },
       include: {
         homeTeam: { select: { name: true, logoUrl: true } },
         awayTeam: { select: { name: true, logoUrl: true } },
-        championship: { select: { name: true } },
+        championship: { select: { name: true, isSimulation: true } },
         category: { select: { name: true } }
       },
       orderBy: { dateTime: 'desc' }
-    })
+    }) as any)
 
     return (
       <div className="space-y-8 max-w-6xl mx-auto">
@@ -56,7 +56,7 @@ export default async function AdminResultsPage({
                 defaultValue={championshipId ?? ''}
               >
                 <option value="" className="bg-[#0A0A0A]">Todos os Campeonatos</option>
-                {championships.map(c => <option key={c.id} value={c.id} className="bg-[#0A0A0A]">{c.name}</option>)}
+                {championships.map((c: any) => <option key={c.id} value={c.id} className="bg-[#0A0A0A]">{c.name}</option>)}
               </select>
             </div>
             <div className="space-y-1.5 flex-1 min-w-[200px]">
@@ -67,7 +67,7 @@ export default async function AdminResultsPage({
                 defaultValue={categoryId ?? ''}
               >
                 <option value="" className="bg-[#0A0A0A]">Todas as Categorias</option>
-                {championshipId && championships.find(c => c.id === championshipId)?.categories.map(cat => (
+                {championshipId && championships.find((c: any) => c.id === championshipId)?.categories.map((cat: any) => (
                   <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.name}</option>
                 ))}
               </select>
@@ -86,10 +86,17 @@ export default async function AdminResultsPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game) => (
+            {games.map((game: any) => (
               <div key={game.id} className="bg-[#121212] border border-white/5 rounded-3xl overflow-hidden hover:border-[#FF6B00]/30 transition-all duration-300">
                 <div className="p-5 pb-3 border-b border-white/5 flex justify-between items-center">
-                  <Badge variant="outline" className="text-[8px] uppercase tracking-tighter opacity-70">{game.category.name}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[8px] uppercase tracking-tighter opacity-70">{game.category.name}</Badge>
+                    {(game.championship as any).isSimulation && (
+                      <Badge className="text-[7px] font-black tracking-widest uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20 px-2 py-0.5">
+                        Simulação
+                      </Badge>
+                    )}
+                  </div>
                   <span className="text-[9px] font-black text-[#FF6B00] uppercase tracking-widest truncate ml-2">{game.championship.name}</span>
                 </div>
                 <div className="p-6">
