@@ -170,8 +170,8 @@ model Game {
   awayTeam       Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
   homeTeam       Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
   block          Block?               @relation(fields: [blockId], references: [id])
-  category       ChampionshipCategory @relation(fields: [categoryId], references: [id])
-  championship   Championship         @relation(fields: [championshipId], references: [id])
+  category       ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  championship   Championship         @relation(fields: [championshipId], references: [id], onDelete: Cascade)
 }
 
 model Standing {
@@ -184,7 +184,7 @@ model Standing {
   points     Int                  @default(0)
   pointsFor  Int                  @default(0)
   pointsAg   Int                  @default(0)
-  category   ChampionshipCategory @relation(fields: [categoryId], references: [id])
+  category   ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   team       Team                 @relation(fields: [teamId], references: [id])
 
   @@unique([teamId, categoryId])
@@ -198,7 +198,7 @@ model Document {
   url            String?
   championshipId String
   createdAt      DateTime     @default(now())
-  championship   Championship @relation(fields: [championshipId], references: [id])
+  championship   Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
 }
 
 model Notification {

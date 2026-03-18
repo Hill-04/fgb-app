@@ -91,7 +91,7 @@ OBJETIVOS:
 3. Sedes: Sugira ginásios baseados nas equipes locais.
 4. Datas: Evite os "blockedDates" informados pelas equipes.
 
-RETORNE APENAS UM JSON VÁLIDO:
+RETORNE APENAS UM JSON VÁLIDO (em Português):
 {
   "viableCategories": [
     { "id": "uuid", "title": "Nome da Categoria", "teamsCount": 5 }
@@ -117,7 +117,11 @@ RETORNE APENAS UM JSON VÁLIDO:
   ],
   "summary": {
     "totalMatches": 20,
-    "totalTravelSaved": "Explicação curta"
+    "totalTravelSaved": "Explicação curta",
+    "costSavingsTips": [
+      "Agrupar jogos de categorias diferentes no mesmo ginásio economiza 30% em arbitragem",
+      "Utilizar a sede da Equipe X reduz custos de deslocamento em R$ 500"
+    ]
   }
 }
 

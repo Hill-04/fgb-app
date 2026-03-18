@@ -5,6 +5,7 @@ import { Badge } from '@/components/Badge'
 import { RegistrationActions } from './RegistrationActions'
 import { ManualRegistrationModal } from './ManualRegistrationModal'
 import { ChampionshipManagementActions } from './ChampionshipManagementActions'
+import { AIOptimizerModal } from './AIOptimizerModal'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Calendar, MapPin, Users, Info } from 'lucide-react'
 import { format } from 'date-fns'
@@ -62,6 +63,10 @@ export default async function ChampionshipDetailsPage({
         </div>
         
         <div className="flex gap-4">
+          <AIOptimizerModal 
+            championshipId={championship.id} 
+            championshipName={championship.name} 
+          />
           <ChampionshipManagementActions 
             championshipId={championship.id} 
             championshipName={championship.name} 

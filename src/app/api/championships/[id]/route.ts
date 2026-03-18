@@ -104,15 +104,7 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    const registrations = await prisma.registration.count({ where: { championshipId: id } })
-    if (registrations > 0) {
-      return NextResponse.json({ error: 'Não é possível excluir um campeonato com inscrições ativas.' }, { status: 400 })
-    }
-
-    await prisma.$transaction(async (tx) => {
-      await tx.championshipCategory.deleteMany({ where: { championshipId: id } })
-      await tx.championship.delete({ where: { id } })
-    })
+    await prisma.championship.delete({ where: { id } })
 
     return NextResponse.json({ success: true })
   } catch (error) {

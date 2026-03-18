@@ -32,12 +32,10 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
   const adminNavItems: NavItem[] = [
     { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Campeonatos', href: '/admin/championships', icon: Trophy },
-    { label: 'Resultados', href: '/admin/results', icon: ClipboardList },
+    { label: 'Agenda de Jogos', href: '/admin/matches', icon: Calendar },
     { label: 'Classificação', href: '/admin/standings', icon: BarChart3 },
-    { label: 'Jogos', href: '/admin/games', icon: Calendar },
     { label: 'Usuários', href: '/admin/users', icon: Users },
     { label: 'Equipes', href: '/admin/teams', icon: Shield },
-    { label: 'Calendário IA', href: '/admin/scheduling', icon: Cpu },
     { label: 'Relatórios', href: '/admin/reports', icon: FileText },
     { label: 'Simulação', href: '/admin/simulation', icon: FlaskConical },
   ]
@@ -45,9 +43,8 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
   const teamNavItems: NavItem[] = [
     { label: 'Início', href: '/team/dashboard', icon: Home },
     { label: 'Campeonatos', href: '/team/championships', icon: Trophy },
-    { label: 'Calendário', href: '/team/calendar', icon: Calendar },
     { label: 'Classificação', href: '/team/standings', icon: BarChart3 },
-    { label: 'Resultados', href: '/team/results', icon: ClipboardList },
+    { label: 'Jogos e Resultados', href: '/team/calendar', icon: Calendar },
     { label: 'Documentos', href: '/team/documents', icon: FileText },
     { label: 'Notificações', href: '/team/notifications', icon: Bell, badge: 0 },
     { label: 'Chat FGB', href: '/team/chat', icon: MessageSquare },

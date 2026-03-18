@@ -12,12 +12,19 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const championshipId = searchParams.get('championshipId')
   const categoryId = searchParams.get('categoryId')
+  const teamId = searchParams.get('teamId')
 
   try {
     const games = await prisma.game.findMany({
       where: {
         ...(championshipId && { championshipId }),
         ...(categoryId && { categoryId }),
+        ...(teamId && {
+          OR: [
+            { homeTeamId: teamId },
+            { awayTeamId: teamId }
+          ]
+        }),
       },
       include: {
         homeTeam: { select: { name: true } },
