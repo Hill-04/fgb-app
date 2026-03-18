@@ -19,6 +19,7 @@
     "@libsql/client": "0.8.0",
     "@prisma/adapter-libsql": "6.2.0",
     "@prisma/client": "6.2.0",
+    "@radix-ui/react-visually-hidden": "^1.2.4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.13",

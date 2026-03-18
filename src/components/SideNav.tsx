@@ -15,6 +15,7 @@ type SideNavProps = {
   role: "TEAM" | "ADMIN"
   teamName?: string
   className?: string
+  onItemClick?: () => void
 }
 
 export type NavItem = {
@@ -24,7 +25,7 @@ export type NavItem = {
   badge?: number
 }
 
-export function SideNav({ role, teamName, className }: SideNavProps) {
+export function SideNav({ role, teamName, className, onItemClick }: SideNavProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
 
@@ -63,13 +64,13 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
       {/* Collapse Toggle */}
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-20 w-6 h-6 bg-[#111] border border-white/10 rounded-full flex items-center justify-center text-slate-400 hover:text-white hover:border-[#FF6B00]/50 transition-all z-30 shadow-lg"
+        className="absolute -right-3 top-20 w-6 h-6 bg-[#111] border border-white/10 rounded-full hidden md:flex items-center justify-center text-slate-400 hover:text-white hover:border-[#FF6B00]/50 transition-all z-30 shadow-lg"
       >
         {isCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
       </button>
 
-      {/* Header */}
-      <div className={cn("mb-8 border-b border-[rgba(255,255,255,0.05)] pb-6 w-full flex", isCollapsed ? "justify-center" : "justify-start px-2")}>
+      {/* Header - Hidden on mobile drawer since drawer has its own close/header */}
+      <div className={cn("mb-8 border-b border-[rgba(255,255,255,0.05)] pb-6 w-full hidden md:flex", isCollapsed ? "justify-center" : "justify-start px-2")}>
         <Link href="/" className="inline-flex items-center gap-3 group">
           <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[10px] shadow-[0_4px_10px_rgba(255,107,0,0.2)] transition-transform duration-300 group-hover:scale-110 shrink-0">
             <span className="font-display font-black text-white text-[12px] tracking-tight">FGB</span>
@@ -97,6 +98,9 @@ export function SideNav({ role, teamName, className }: SideNavProps) {
               key={item.href}
               href={item.href}
               title={isCollapsed ? item.label : ""}
+              onClick={() => {
+                if (onItemClick) onItemClick()
+              }}
               className={cn(
                 "flex items-center rounded-xl transition-all duration-300 group relative",
                 isCollapsed ? "w-12 h-12 justify-center" : "w-full h-11 px-3 gap-3",

@@ -86,8 +86,8 @@ export default async function TeamDashboardPage() {
     return (
       <div className="space-y-10">
         {/* Header */}
-        <div className="animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/[0.05] pb-10">
-          <div className="flex items-center gap-6">
+        <div className="animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/[0.05] pb-10">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
             <div className="w-24 h-24 rounded-3xl bg-[#111] border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-2xl relative group">
               {team.logoUrl ? (
                 <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -104,10 +104,10 @@ export default async function TeamDashboardPage() {
                 <div className="h-4 w-px bg-white/10" />
                 <span className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">CONFERÊNCIA RS</span>
               </div>
-              <h1 className="text-5xl font-display font-black text-white tracking-tight leading-tight italic uppercase">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-display font-black text-white tracking-tight leading-tight italic uppercase">
                 {team.name}
               </h1>
-              <div className="flex items-center gap-4 mt-2">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-4 mt-2">
                 <div className="flex items-center gap-1.5 text-slate-400 font-bold uppercase tracking-widest text-[11px]">
                   <MapPin className="w-3.5 h-3.5 text-[#FF6B00]" />
                   {team.city}, {team.state || 'RS'}
@@ -119,17 +119,17 @@ export default async function TeamDashboardPage() {
               </div>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
              <Link 
                href="/team/profile" 
-               className="h-11 px-6 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center transition-all group"
+               className="h-11 px-6 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-white font-bold text-xs flex items-center justify-center transition-all group"
              >
                Editar Perfil
                <ChevronRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform" />
              </Link>
              <Link 
                href="/team/championships" 
-               className="h-11 px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase italic tracking-tighter text-xs flex items-center transition-all shadow-[0_4px_15px_rgba(255,107,0,0.3)] hover:scale-105 active:scale-95"
+               className="h-11 px-6 rounded-xl bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase italic tracking-tighter text-xs flex items-center justify-center transition-all shadow-[0_4px_15px_rgba(255,107,0,0.3)] hover:scale-105 active:scale-95"
              >
                Novas Inscrições
                <Trophy className="w-3.5 h-3.5 ml-2" />

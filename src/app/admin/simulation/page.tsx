@@ -117,7 +117,7 @@ export default function SimulationPage() {
   return (
     <div className="space-y-10 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center">
@@ -125,7 +125,7 @@ export default function SimulationPage() {
             </div>
             <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">FGB Championship App</span>
           </div>
-          <h1 className="text-4xl font-display font-black tracking-tighter text-white uppercase italic">
+          <h1 className="text-3xl sm:text-4xl font-display font-black tracking-tighter text-white uppercase italic leading-tight">
             Simulação de Campeonato
           </h1>
           <p className="text-slate-500 text-sm mt-2 max-w-xl">
@@ -134,26 +134,26 @@ export default function SimulationPage() {
           </p>
         </div>
 
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
           <Button
             onClick={cleanSimulation}
             disabled={cleaning || running}
             variant="ghost"
-            className="text-red-500/70 hover:text-red-500 hover:bg-red-500/10 border border-red-500/20 rounded-xl h-12 px-6 font-bold"
+            className="flex-1 sm:flex-none text-red-500/70 hover:text-red-500 hover:bg-red-500/10 border border-red-500/20 rounded-xl h-12 px-6 font-bold"
           >
             {cleaning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-            Limpar Simulação
+            Limpar
           </Button>
 
           <Button
             onClick={runSimulation}
             disabled={running || cleaning}
-            className="bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-wider h-12 px-8 rounded-xl shadow-lg shadow-purple-600/20 transition-all hover:scale-105 active:scale-95"
+            className="flex-[2] sm:flex-none bg-purple-600 hover:bg-purple-500 text-white font-black uppercase tracking-wider h-12 px-8 rounded-xl shadow-lg shadow-purple-600/20 transition-all hover:scale-105 active:scale-95"
           >
             {running ? (
               <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Simulando...</>
             ) : (
-              <><Play className="w-5 h-5 mr-2" />Rodar Simulação Completa</>
+              <><Play className="w-5 h-5 mr-2" />Simular Tudo</>
             )}
           </Button>
         </div>
@@ -268,13 +268,13 @@ export default function SimulationPage() {
                 </div>
               </div>
 
-              <div className="flex gap-2">
-                <Link href="/admin/standings" className="flex-1">
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Link href="/admin/standings" className="w-full sm:flex-1">
                   <Button variant="outline" className="w-full text-purple-400 border-purple-500/30 hover:bg-purple-500/10 rounded-xl h-9 text-xs font-bold">
                     Ver Classificação
                   </Button>
                 </Link>
-                <Link href="/admin/results" className="flex-1">
+                <Link href="/admin/results" className="w-full sm:flex-1">
                   <Button variant="outline" className="w-full text-purple-400 border-purple-500/30 hover:bg-purple-500/10 rounded-xl h-9 text-xs font-bold">
                     Ver Resultados
                   </Button>

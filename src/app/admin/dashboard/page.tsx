@@ -76,7 +76,7 @@ export default async function AdminDashboardPage() {
       <div className="space-y-10">
         {/* Header */}
         <div className="animate-fade-in">
-          <h1 className="text-4xl font-display font-black text-[--text-main] tracking-tight mb-2">
+          <h1 className="text-3xl sm:text-4xl font-display font-black text-[--text-main] tracking-tight mb-2">
             Dashboard Administrativo
           </h1>
           <p className="text-[--text-secondary] font-medium text-lg">
@@ -142,7 +142,7 @@ export default async function AdminDashboardPage() {
               {nextGame ? (
                 <div className="flex flex-col">
                   {/* Scoreboard */}
-                  <div className="flex justify-between items-center bg-[#151515] p-6 rounded-2xl border border-[rgba(255,255,255,0.02)] mb-4">
+                  <div className="flex flex-col sm:flex-row justify-between items-center bg-[#151515] p-6 rounded-2xl border border-[rgba(255,255,255,0.02)] mb-4 gap-6">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-3xl shrink-0">
                         {nextGame.homeTeam.name.charAt(0)}
@@ -151,9 +151,9 @@ export default async function AdminDashboardPage() {
                     </div>
 
                     <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-4 font-display font-black text-5xl tracking-tighter text-white">
+                      <div className="flex items-center gap-4 font-display font-black text-4xl sm:text-5xl tracking-tighter text-white">
                         <span>{nextGame.homeScore || 0}</span>
-                        <span className="text-[--text-dim] text-4xl">-</span>
+                        <span className="text-[--text-dim] text-3xl sm:text-4xl">-</span>
                         <span>{nextGame.awayScore || 0}</span>
                       </div>
                       <span className="text-xs font-bold text-[#FF6B00] tracking-widest uppercase mt-3">4º Quarto</span>
