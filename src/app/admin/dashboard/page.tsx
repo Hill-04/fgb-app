@@ -1,363 +1,398 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
-import { PipelineSteps } from '@/components/PipelineSteps'
-import { Section } from '@/components/Section'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, FileCheck, Calendar, Sparkles } from 'lucide-react'
-import { AdminRegistrationModal } from '@/components/AdminRegistrationModal'
+import { Trophy, Users, Calendar, BarChart3, ArrowRight, CheckCircle2, PlayCircle, Flag, Settings } from 'lucide-react'
 import { Brackets } from '@/components/Brackets'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { DeleteChampionship } from '@/components/DeleteChampionship'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminDashboardPage() {
-  try {
-    const [
-      teamCount, 
-      championships, 
-      registrationCount, 
-      recentRegistrations,
-      pendingRegistrationsCount,
-      confirmedRegistrationsCount,
-      newRegistrationsCount,
-      nextGame,
-      topStandings,
-      playoffCategory
-    ] = await Promise.all([
-      prisma.team.count(),
-      prisma.championship.findMany({
-        include: {
-          _count: { select: { categories: true, registrations: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.registration.count(),
-      prisma.registration.findMany({
-        take: 5,
-        orderBy: { registeredAt: 'desc' },
-        include: {
-          team: true,
-          championship: true,
-          categories: {
-            include: {
-              category: true
-            }
-          }
-        }
-      }),
-      prisma.registration.count({ where: { status: 'PENDING' } }),
-      prisma.registration.count({ where: { status: 'CONFIRMED' } }),
-      prisma.registration.count({ 
-        where: { 
-          registeredAt: { gte: new Date(Date.now() - 48 * 60 * 60 * 1000) } 
-        } 
-      }),
-      prisma.game.findFirst({
-        where: { status: { in: ['IN_PROGRESS', 'SCHEDULED'] } },
-        orderBy: { dateTime: 'asc' },
-        include: { homeTeam: true, awayTeam: true, category: true, championship: true }
-      }),
-      prisma.standing.findMany({
-        take: 8,
-        orderBy: [
-          { wins: 'desc' },
-          { pointsFor: 'desc' }
-        ],
-        include: {
-          team: true,
-          category: true
-        }
-      }),
-      prisma.championshipCategory.findFirst({
-        where: {
-          games: {
-            some: { phase: { gt: 1 } }
-          }
-        },
-        include: {
-          championship: true,
-          games: {
-            where: { phase: { gt: 1 } },
-            include: {
-              homeTeam: { select: { name: true, logoUrl: true } },
-              awayTeam: { select: { name: true, logoUrl: true } }
-            },
-            orderBy: { dateTime: 'asc' }
-          }
-        }
-      })
-    ])
+interface PageProps {
+  searchParams: Promise<{ championshipId?: string }>
+}
 
-    const openChampionships = championships.filter(c => c.status === 'REGISTRATION_OPEN').length
-    const totalCategories = 8 // Sub 12 ao Sub 19
-    const totalGames = await prisma.game.count()
+export default async function AdminDashboardPage({ searchParams }: PageProps) {
+  const { championshipId } = await searchParams
+
+  try {
+    // 1. Fetch available championships for the selector
+    const allChampionships = await prisma.championship.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true }
+    })
+
+    // 2. Determine active championship
+    const activeChampionshipId = championshipId || allChampionships[0]?.id
+
+    if (!activeChampionshipId) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10">
+          <div className="w-20 h-20 rounded-3xl bg-orange-500/10 flex items-center justify-center mb-6">
+            <Trophy className="w-10 h-10 text-orange-500" />
+          </div>
+          <h1 className="text-2xl font-black text-white mb-2">Nenhum Campeonato Encontrado</h1>
+          <p className="text-slate-500 max-w-sm mb-8">Comece criando seu primeiro campeonato para ativar a Central de Comando.</p>
+          <Link 
+            href="/admin/championships" 
+            className="h-12 px-8 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center transition-all"
+          >
+            Criar Campeonato
+          </Link>
+        </div>
+      )
+    }
+
+    // 3. Fetch data for the selected championship
+    const championship = await prisma.championship.findUnique({
+      where: { id: activeChampionshipId },
+      include: {
+        categories: {
+          include: {
+            _count: { select: { games: true } }
+          }
+        },
+        _count: {
+          select: {
+            registrations: { where: { status: 'CONFIRMED' } },
+            games: true
+          }
+        }
+      }
+    })
+
+    if (!championship) return <div>Campeonato não encontrado</div>
+
+    const confirmedTeams = championship._count.registrations
+    const totalGames = championship._count.games
+    const completedGames = await prisma.game.count({
+      where: { championshipId: activeChampionshipId, status: 'FINISHED' }
+    })
+
+    const nextGame = await prisma.game.findFirst({
+      where: { 
+        championshipId: activeChampionshipId, 
+        status: 'SCHEDULED',
+        dateTime: { gt: new Date() }
+      },
+      orderBy: { dateTime: 'asc' },
+      include: { homeTeam: true, awayTeam: true, category: true }
+    })
+
+    const lastResults = await prisma.game.findMany({
+      where: { championshipId: activeChampionshipId, status: 'FINISHED' },
+      orderBy: { dateTime: 'desc' },
+      take: 5,
+      include: { homeTeam: true, awayTeam: true, category: true }
+    })
+
+    const upcomingGames = await prisma.game.findMany({
+      where: { championshipId: activeChampionshipId, status: 'SCHEDULED' },
+      orderBy: { dateTime: 'asc' },
+      take: 5,
+      include: { homeTeam: true, awayTeam: true, category: true }
+    })
+
+    // Fetch top 3 of first category
+    const firstCategory = championship.categories[0]
+    const topStandings = firstCategory ? await prisma.standing.findMany({
+      where: { categoryId: firstCategory.id },
+      orderBy: [
+        { points: 'desc' },
+        { wins: 'desc' }
+      ],
+      take: 3,
+      include: { team: true }
+    }) : []
+
+    // Fetch playoff preview for first category with playoffs
+    const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({
+      where: { 
+        championshipId: activeChampionshipId,
+        games: { some: { phase: { gt: 1 } } }
+      },
+      include: {
+        games: {
+          where: { phase: { gt: 1 } },
+          include: {
+            homeTeam: { select: { name: true, logoUrl: true } },
+            awayTeam: { select: { name: true, logoUrl: true } }
+          },
+          orderBy: { dateTime: 'asc' }
+        }
+      }
+    }) : null
+
+    // Status / Pipeline mapping
+    const statusMap = {
+      'DRAFT': 1,
+      'REGISTRATION_OPEN': 2,
+      'REGISTRATION_CLOSED': 3,
+      'ONGOING': 4,
+      'FINISHED': 5
+    }
+    const currentStep = statusMap[championship.status as keyof typeof statusMap] || 1
 
     return (
-      <div className="space-y-10">
-        {/* Header */}
-        <div className="animate-fade-in">
-          <h1 className="text-3xl sm:text-4xl font-display font-black text-[--text-main] tracking-tight mb-2">
-            Dashboard Administrativo
-          </h1>
-          <p className="text-[--text-secondary] font-medium text-lg">
-            Visão geral da Federação Gaúcha de Basquete
-          </p>
+      <div className="space-y-8 pb-10">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Central de Comando</span>
+              <Badge variant="blue" size="sm" className="bg-blue-500/10 text-blue-500 border-blue-500/20">ADMIN</Badge>
+            </div>
+            <h1 className="text-3xl font-black text-white tracking-tight">{championship.name}</h1>
+          </div>
+
+          <div className="flex items-center gap-3">
+             <DeleteChampionship 
+               championshipId={activeChampionshipId} 
+               championshipName={championship.name} 
+             />
+             
+             <form action="/admin/dashboard" method="GET">
+               <div className="relative group">
+                 <select 
+                   name="championshipId"
+                   defaultValue={activeChampionshipId}
+                   onChange={(e) => e.target.form?.submit()}
+                   className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                 >
+                   {allChampionships.map(c => (
+                     <option key={c.id} value={c.id}>{c.name}</option>
+                   ))}
+                 </select>
+                 <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
+               </div>
+             </form>
+          </div>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-up" style={{ animationDelay: '100ms' }}>
+        {/* 4 Cards Stat Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Campeonatos"
-            value={championships.length}
-            sublabel={`${openChampionships} com inscrições abertas`}
+            label="Status Atual"
+            value={championship.status}
+            sublabel="Situação do campeonato"
             accent="orange"
-            icon={<Trophy className="w-5 h-5" />}
+            icon={<Settings className="w-5 h-5" />}
           />
-
           <StatCard
-            label="Equipes"
-            value={teamCount}
-            sublabel="Cadastradas no sistema"
+            label="Equipes Escritas"
+            value={confirmedTeams}
+            sublabel="Times confirmados"
             accent="blue"
             icon={<Users className="w-5 h-5" />}
           />
-
           <StatCard
-            label="Categorias"
-            value={totalCategories}
-            sublabel="Sub 12 ao Sub 19"
+            label="Progresso de Jogos"
+            value={`${completedGames}/${totalGames}`}
+            sublabel="Jogos realizados"
             accent="purple"
-            icon={<FileCheck className="w-5 h-5" />}
-          />
-
-          <StatCard
-            label="Jogos"
-            value={totalGames}
-            sublabel="Agendados total"
-            accent="green"
             icon={<Calendar className="w-5 h-5" />}
+          />
+          <StatCard
+            label="Próximo Jogo"
+            value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"}
+            sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo agendado"}
+            accent="green"
+            icon={<PlayCircle className="w-5 h-5" />}
           />
         </div>
 
-        {/* Bento Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-fade-up" style={{ animationDelay: '200ms' }}>
+        {/* Visual Pipeline */}
+        <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Pipeline de Execução</h3>
+            <Badge variant="purple" size="sm" className="bg-purple-500/10 text-purple-500 border-purple-500/20">ESTÁVEL</Badge>
+          </div>
           
-          {/* Main Content Column (Left - 8 cols) */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-            
-            {/* Live Match Module */}
-            <div className="bg-[#111111] p-6 rounded-3xl border border-[rgba(255,255,255,0.05)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="font-display font-black text-2xl text-[--text-main] tracking-tight">Live Match / Próximo Jogo</h2>
-                  <p className="text-sm font-medium text-[--text-secondary]">Último jogo agendado</p>
-                </div>
-                {nextGame && (
-                  <Badge variant="blue" className="shadow-sm">
-                    {nextGame.status === 'IN_PROGRESS' ? 'AO VIVO' : 'Agendado'}
-                  </Badge>
-                )}
-              </div>
-
-              {nextGame ? (
-                <div className="flex flex-col">
-                  {/* Scoreboard */}
-                  <div className="flex flex-col sm:flex-row justify-between items-center bg-[#151515] p-6 rounded-2xl border border-[rgba(255,255,255,0.02)] mb-4 gap-6">
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-3xl shrink-0">
-                        {nextGame.homeTeam.name.charAt(0)}
+          <div className="flex flex-wrap md:flex-nowrap gap-2">
+            {[
+              { id: 1, label: "Criar", icon: Trophy },
+              { id: 2, label: "Inscrições", icon: Users },
+              { id: 3, label: "Organizar IA", icon: Sparkles },
+              { id: 4, label: "Em Andamento", icon: PlayCircle },
+              { id: 5, label: "Encerrar", icon: Flag }
+            ].map((step, idx, arr) => {
+              const isPast = currentStep > step.id
+              const isCurrent = currentStep === step.id
+              
+              return (
+                <div key={step.id} className="flex-1 min-w-[120px] flex items-center">
+                  <div className={`flex-1 p-4 rounded-2xl border transition-all ${
+                    isCurrent ? 'bg-orange-500/10 border-orange-500/30' : 
+                    isPast ? 'bg-green-500/5 border-green-500/20' : 'bg-white/chan05 border-white/5'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                        isCurrent ? 'bg-orange-500 text-white' :
+                        isPast ? 'bg-green-500/20 text-green-500' : 'bg-white/5 text-slate-500'
+                      }`}>
+                        {isPast ? <CheckCircle2 className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
                       </div>
-                      <span className="font-bold text-[--text-main] text-center">{nextGame.homeTeam.name}</span>
-                    </div>
-
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-4 font-display font-black text-4xl sm:text-5xl tracking-tighter text-white">
-                        <span>{nextGame.homeScore || 0}</span>
-                        <span className="text-[--text-dim] text-3xl sm:text-4xl">-</span>
-                        <span>{nextGame.awayScore || 0}</span>
-                      </div>
-                      <span className="text-xs font-bold text-[#FF6B00] tracking-widest uppercase mt-3">4º Quarto</span>
-                    </div>
-
-                    <div className="flex flex-col items-center gap-3">
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center text-3xl shrink-0">
-                        {nextGame.awayTeam.name.charAt(0)}
-                      </div>
-                      <span className="font-bold text-[--text-main] text-center">{nextGame.awayTeam.name}</span>
-                    </div>
-                  </div>
-
-                  {/* Team Stats VS (Mocked Structure) */}
-                  <div className="bg-[#151515] p-5 rounded-2xl border border-[rgba(255,255,255,0.02)]">
-                    <h4 className="text-[10px] font-bold text-[--text-secondary] uppercase tracking-widest mb-4">Team Stats VS</h4>
-                    <div className="space-y-4">
-                      {/* Stat Row */}
                       <div>
-                        <div className="flex justify-between text-xs font-medium text-[--text-main] mb-1.5">
-                          <span>45%</span>
-                          <span className="text-[--text-secondary]">FG%</span>
-                          <span>38%</span>
-                        </div>
-                        <div className="flex gap-1 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-[#3B82F6]" style={{ width: '45%' }}></div>
-                          <div className="bg-[#FF6B00]" style={{ width: '55%' }}></div>
-                        </div>
-                      </div>
-                      {/* Stat Row */}
-                      <div>
-                        <div className="flex justify-between text-xs font-medium text-[--text-main] mb-1.5">
-                          <span>12</span>
-                          <span className="text-[--text-secondary]">Turnovers</span>
-                          <span>18</span>
-                        </div>
-                        <div className="flex gap-1 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-[#3B82F6]" style={{ width: '60%' }}></div>
-                          <div className="bg-[#FF6B00]" style={{ width: '40%' }}></div>
-                        </div>
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${
+                          isCurrent ? 'text-orange-500' : isPast ? 'text-green-500' : 'text-slate-500'
+                        }`}>{step.id}. {step.label}</p>
+                        <p className="text-[9px] text-slate-600 font-bold">{isPast ? 'CONCLUÍDO' : isCurrent ? 'ATIVO' : 'AGUARDANDO'}</p>
                       </div>
                     </div>
                   </div>
+                  {idx < arr.length - 1 && (
+                    <ArrowRight className="w-4 h-4 text-slate-800 mx-1 hidden lg:block" />
+                  )}
                 </div>
-              ) : (
-                <p className="text-[--text-secondary]">Nenhum jogo em andamento ou agendado no momento.</p>
-              )}
-            </div>
-
-            {/* AI Brackets Module */}
-            <div className="bg-[#111111] p-6 rounded-3xl border border-[rgba(255,255,255,0.05)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-              <div className="flex justify-between items-center mb-6">
-                <div>
-                  <h2 className="font-display font-black text-2xl text-[--text-main] tracking-tight text-white">Motor de Chaveamento</h2>
-                  <p className="text-sm font-medium text-[--text-secondary]">
-                    {playoffCategory ? `${playoffCategory.championship.name} - ${playoffCategory.name}` : 'Nenhum playoff ativo'}
-                  </p>
-                </div>
-                {playoffCategory && (
-                  <div className="bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/30 px-3 py-1.5 rounded-full flex items-center gap-2">
-                    <Sparkles className="w-3 h-3 text-[#8B5CF6]" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Optimized by AI</span>
-                  </div>
-                )}
-              </div>
-
-              {playoffCategory ? (
-                <div className="flex justify-center">
-                  <Brackets games={playoffCategory.games as any} className="p-0 scale-90 origin-center" />
-                </div>
-              ) : (
-                <div className="h-48 border border-dashed border-white/5 rounded-2xl flex items-center justify-center text-[10px] font-black text-slate-700 uppercase tracking-widest">
-                  Aguardando encerramento da fase regular
-                </div>
-              )}
-            </div>
-
+              )
+            })}
           </div>
 
-          {/* Right Layout Column (4 cols) */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-            
-            {/* Registration Management Module */}
-            <div className="bg-[#111111] p-6 rounded-3xl border border-[rgba(255,255,255,0.05)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
-              <h2 className="font-display font-black text-2xl text-[--text-main] tracking-tight mb-2">Gerenciar Inscrições</h2>
-              <p className="text-sm font-medium text-[--text-secondary] mb-6">Status dos times e envio de docs</p>
+          <div className="mt-8 p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 flex items-center gap-4">
+             <div className="text-2xl">🏀</div>
+             <div className="flex-1">
+               <p className="text-sm font-black text-white">Status: {championship.status}</p>
+               <p className="text-xs text-slate-500 font-medium">
+                 {currentStep === 1 && "Complete as informações básicas para abrir as inscrições."}
+                 {currentStep === 2 && "Acompanhe as inscrições dos times e valide os documentos."}
+                 {currentStep === 3 && "Use nossa IA para gerar o calendário e organizar categorias."}
+                 {currentStep === 4 && "Registre os resultados dos jogos realizados para atualizar a classificação."}
+                 {currentStep === 5 && "O campeonato foi finalizado. Veja o relatório final."}
+               </p>
+             </div>
+             <Link 
+              href={currentStep === 4 ? "/admin/matches" : "/admin/championships"}
+              className="h-10 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center transition-all"
+             >
+               {currentStep === 4 ? "Registrar Resultados →" : "Gerenciar →"}
+             </Link>
+          </div>
+        </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-[#151515] p-4 rounded-xl border border-[rgba(255,255,255,0.02)]">
-                  <span className="text-[10px] text-[--text-secondary] font-bold uppercase tracking-widest">Novos (48h)</span>
-                  <div className="text-2xl font-black text-[#FF6B00] mt-1">{newRegistrationsCount}</div>
+        {/* 2 Column Grid for Games/Results */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Próximos Jogos */}
+          <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">Próximos Jogos</h3>
+              <Link href="/admin/matches" className="text-[10px] font-black text-blue-500 uppercase hover:underline">Ver Todos →</Link>
+            </div>
+            <div className="divide-y divide-white/5">
+              {upcomingGames.length > 0 ? upcomingGames.map((game) => (
+                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-all">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-black text-white">{game.homeTeam.name} vs {game.awayTeam.name}</span>
+                    <span className="text-[9px] font-bold text-slate-500">{format(game.dateTime, "dd MMM • HH:mm", { locale: ptBR })}</span>
+                  </div>
+                  <Badge variant="purple" size="sm">{game.category.name}</Badge>
                 </div>
-                <div className="bg-[#151515] p-4 rounded-xl border border-[rgba(255,255,255,0.02)]">
-                  <span className="text-[10px] text-[--text-secondary] font-bold uppercase tracking-widest">Pendentes</span>
-                  <div className="text-2xl font-black text-[#10B981] mt-1">{pendingRegistrationsCount}</div>
+              )) : (
+                <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Nenhum jogo agendado.</div>
+              )}
+            </div>
+          </div>
+
+          {/* Últimos Resultados */}
+          <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">Últimos Resultados</h3>
+              <Link href="/admin/matches" className="text-[10px] font-black text-green-500 uppercase hover:underline">Histórico →</Link>
+            </div>
+            <div className="divide-y divide-white/5">
+              {lastResults.length > 0 ? lastResults.map((game) => (
+                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-all">
+                  <div className="flex items-center gap-4">
+                     <Badge variant="purple" size="sm" className="hidden sm:inline-flex">{game.category.name}</Badge>
+                     <div className="flex items-center gap-3">
+                       <span className="text-xs font-bold text-white leading-none">{game.homeTeam.name}</span>
+                       <span className="text-lg font-black text-orange-500 tabular-nums">{game.homeScore}-{game.awayScore}</span>
+                       <span className="text-xs font-bold text-white leading-none">{game.awayTeam.name}</span>
+                     </div>
+                  </div>
+                  <Badge variant="green" size="sm">ENCERRADO</Badge>
                 </div>
-              </div>
+              )) : (
+                <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Sem resultados recentes.</div>
+              )}
+            </div>
+          </div>
+        </div>
 
-              <div className="bg-[#151515] p-4 rounded-xl border border-[rgba(255,255,255,0.02)] flex justify-between items-center mb-6">
-                <span className="text-[10px] text-[--text-secondary] font-bold uppercase tracking-widest">Completos (Confirmados)</span>
-                <span className="text-lg font-black text-[--text-main]">{confirmedRegistrationsCount}</span>
-              </div>
+        {/* Bottom Grid: Standings + Brackets */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Quick Standings - 3 cols */}
+          <div className="lg:col-span-3 bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden h-fit">
+            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">
+                Classificação — {firstCategory?.name || "Geral"}
+              </h3>
+              <Link href="/admin/standings" className="text-[10px] font-black text-orange-500 uppercase hover:underline">Ver Completa →</Link>
+            </div>
+            <div className="divide-y divide-white/5">
+              {topStandings.length > 0 ? topStandings.map((standing, idx) => (
+                <div key={standing.id} className="px-6 py-4 flex items-center justify-between animate-fade-in group" style={{ animationDelay: `${idx * 50}ms` }}>
+                  <div className="flex items-center gap-4">
+                    <span className={`text-xl font-black ${
+                      idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'
+                    }`}>{idx + 1}°</span>
+                    <span className="text-sm font-bold text-white group-hover:text-orange-500 transition-colors">{standing.team.name}</span>
+                  </div>
+                  <div className="flex items-center gap-6">
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">PTS</p>
+                      <p className="text-sm font-black text-white leading-none">{standing.points}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">V</p>
+                      <p className="text-sm font-black text-green-500 leading-none">{standing.wins}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">D</p>
+                      <p className="text-sm font-black text-red-500 leading-none">{standing.losses}</p>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Aguardando início dos jogos.</div>
+              )}
+            </div>
+          </div>
 
-              <AdminRegistrationModal />
+          {/* Brackets Preview - 2 cols */}
+          <div className="lg:col-span-2 bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 h-fit">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">Bracket Preview</h3>
+              <Badge variant="purple" size="sm">Playoffs</Badge>
             </div>
 
-            {/* Estadual Ranking Module */}
-            <div className="bg-[#111111] p-6 rounded-3xl border border-[rgba(255,255,255,0.05)] shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex-1">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-display font-black text-2xl text-[--text-main] tracking-tight">Ranking 2024</h2>
-                <Badge variant="default" size="sm">Geral</Badge>
+            {playoffCategory ? (
+              <div className="transform scale-90 origin-top">
+                <Brackets games={playoffCategory.games as any} />
               </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                   <thead>
-                     <tr className="border-b border-[rgba(255,255,255,0.05)]">
-                       <th className="pb-3 text-[10px] font-bold text-[--text-dim] uppercase tracking-widest text-center w-8">POS</th>
-                       <th className="pb-3 text-[10px] font-bold text-[--text-dim] uppercase tracking-widest pl-2">Time</th>
-                       <th className="pb-3 text-[10px] font-bold text-[--text-dim] uppercase tracking-widest text-center">V</th>
-                       <th className="pb-3 text-[10px] font-bold text-[--text-dim] uppercase tracking-widest text-center">D</th>
-                       <th className="pb-3 text-[10px] font-bold text-[--text-dim] uppercase tracking-widest text-right">Form</th>
-                     </tr>
-                   </thead>
-                   <tbody className="divide-y divide-[rgba(255,255,255,0.02)]">
-                     {topStandings.length > 0 ? topStandings.map((stand, idx) => (
-                       <tr key={stand.id} className="hover:bg-white/[0.02] transition-colors group">
-                         <td className="py-4 text-xs font-black text-[--text-secondary] text-center">{idx + 1}</td>
-                         <td className="py-4 pl-2 font-bold text-sm text-[--text-main] group-hover:text-[#FF6B00] transition-colors">
-                           {stand.team.name}
-                         </td>
-                         <td className="py-4 text-sm font-medium text-[#10B981] text-center">{stand.wins}</td>
-                         <td className="py-4 text-sm font-medium text-[--text-secondary] text-center">{stand.losses}</td>
-                         <td className="py-4 text-right flex justify-end gap-1 items-center h-full pt-4.5">
-                           {/* Structural Mocks for Form (last 5 games) */}
-                           <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-                           <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-                           <span className="w-2 h-2 rounded-full bg-[#EF4444]"></span>
-                           <span className="w-2 h-2 rounded-full bg-[#10B981]"></span>
-                           <span className="w-2 h-2 rounded-full bg-white/20"></span>
-                         </td>
-                       </tr>
-                     )) : (
-                       <tr>
-                         <td colSpan={5} className="py-6 text-center text-sm text-[--text-secondary]">
-                           Sem dados de classificação suficientes.
-                         </td>
-                       </tr>
-                     )}
-                   </tbody>
-                </table>
+            ) : (
+              <div className="h-40 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-center p-6 bg-white/[0.01]">
+                <BarChart3 className="w-8 h-8 text-slate-700 mb-3" />
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Indisponível em fase regular</p>
               </div>
-
-            </div>
+            )}
           </div>
         </div>
       </div>
     )
   } catch (error: any) {
-    // Show zero-state dashboard instead of crashing
+    console.error("Dashboard Error:", error)
     return (
-      <div className="space-y-10">
-        <div className="animate-fade-in">
-          <h1 className="text-4xl font-display font-black text-[--text-main] tracking-tight mb-2">Dashboard Administrativo</h1>
-          <p className="text-[--text-secondary] font-medium text-lg">Visão geral da Federação Gaúcha de Basquete</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {['Campeonatos', 'Equipes', 'Categorias', 'Jogos'].map(label => (
-            <div key={label} className="bg-[#111] rounded-3xl border border-white/5 p-6">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">{label}</p>
-              <p className="text-3xl font-display font-black text-white">0</p>
-            </div>
-          ))}
-        </div>
-        <div className="bg-[#111] border border-[#FF6B00]/20 rounded-3xl p-10 text-center">
-          <div className="w-16 h-16 rounded-full bg-[#FF6B00]/10 flex items-center justify-center mx-auto mb-4">
-            <Trophy className="w-8 h-8 text-[#FF6B00]" />
-          </div>
-          <h3 className="text-xl font-black text-white mb-2">Configure o primeiro campeonato</h3>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-6">O banco de dados está conectado. Crie um campeonato para começar a ver as estatísticas aqui.</p>
-          <a href="/admin/championships" className="inline-flex items-center gap-2 bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold h-11 px-8 rounded-xl text-xs uppercase tracking-widest transition-all">
-            Criar Campeonato
-          </a>
-        </div>
+      <div className="bg-[#0A0A0A] border border-red-500/20 rounded-3xl p-20 text-center">
+        <h2 className="text-2xl font-black text-white mb-2">Erro ao carregar Dashboard</h2>
+        <p className="text-slate-500 mb-6 font-mono text-xs">{error.message}</p>
+        <Link 
+          href="/admin/championships" 
+          className="h-10 px-8 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-black uppercase tracking-widest inline-flex items-center transition-all"
+        >
+          Tentar Recarregar
+        </Link>
       </div>
     )
   }

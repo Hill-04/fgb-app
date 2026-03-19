@@ -25,6 +25,11 @@ export async function PATCH(
       city
     } = body
 
+    const oldGame = await prisma.game.findUnique({
+      where: { id },
+      select: { status: true, categoryId: true }
+    })
+
     const updateData: any = {}
     if (homeScore !== undefined) updateData.homeScore = Number(homeScore)
     if (awayScore !== undefined) updateData.awayScore = Number(awayScore)
@@ -75,9 +80,10 @@ export async function PATCH(
       }
     })
 
-    // Automated Standing Updates using Service
-    if (game.status === 'FINISHED' || status === 'FINISHED') {
-      await StandingService.updateFromGame(game.id)
+    // Automated Standing Updates
+    // Recalculate if it IS finished or WAS finished (case of status change or score fix)
+    if (game.status === 'FINISHED' || oldGame?.status === 'FINISHED') {
+      await StandingService.recalculateForCategory(game.categoryId)
     }
 
     return NextResponse.json(game)
@@ -98,7 +104,13 @@ export async function DELETE(
 
   try {
     const { id } = await params
+    const game = await prisma.game.findUnique({ where: { id }, select: { categoryId: true, status: true } })
     await prisma.game.delete({ where: { id } })
+    
+    if (game?.status === 'FINISHED') {
+      await StandingService.recalculateForCategory(game.categoryId)
+    }
+    
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json({ error: 'Erro ao excluir jogo' }, { status: 500 })

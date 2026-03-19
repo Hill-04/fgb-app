@@ -229,13 +229,13 @@ export async function POST(request: Request) {
 
           await prisma.game.update({
             where: { id: game.id },
-            data: { homeScore, awayScore, status: 'COMPLETED' }
+            data: { homeScore, awayScore, status: 'FINISHED' }
           })
         }
 
         for (const cat of createdCategories) {
           const games = await prisma.game.findMany({
-            where: { categoryId: cat.id, status: 'COMPLETED' }
+            where: { categoryId: cat.id, status: 'FINISHED' }
           })
           const regs = await prisma.registrationCategory.findMany({
             where: { categoryId: cat.id },
