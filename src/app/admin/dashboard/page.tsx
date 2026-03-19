@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, Calendar, BarChart3, ArrowRight, CheckCircle2, PlayCircle, Flag, Settings } from 'lucide-react'
+import { Trophy, Users, Calendar, BarChart3, ArrowRight, CheckCircle2, PlayCircle, Flag, Settings, Sparkles } from 'lucide-react'
 import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -311,7 +311,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                        <span className="text-xs font-bold text-white leading-none">{game.awayTeam.name}</span>
                      </div>
                   </div>
-                  <Badge variant="green" size="sm">ENCERRADO</Badge>
+                  <Badge variant="success" size="sm">ENCERRADO</Badge>
                 </div>
               )) : (
                 <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Sem resultados recentes.</div>

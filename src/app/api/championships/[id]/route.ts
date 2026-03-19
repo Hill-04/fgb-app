@@ -134,14 +134,14 @@ export async function DELETE(
       const categoryIds = catIds.map(c => c.id)
       const registrationIds = regIds.map(r => r.id)
 
-      // 2. Delete in order
-      await tx.game.deleteMany({ where: { championshipId: id } })
+      // 2. Delete in order (Children first)
+      await tx.document.deleteMany({ where: { championshipId: id } })
       await tx.standing.deleteMany({ where: { categoryId: { in: categoryIds } } })
+      await tx.game.deleteMany({ where: { championshipId: id } })
       await tx.blockedDate.deleteMany({ where: { registrationId: { in: registrationIds } } })
       await tx.registrationCategory.deleteMany({ where: { registrationId: { in: registrationIds } } })
       await tx.registration.deleteMany({ where: { championshipId: id } })
       await tx.block.deleteMany({ where: { championshipId: id } })
-      await tx.document.deleteMany({ where: { championshipId: id } })
       await tx.championshipCategory.deleteMany({ where: { championshipId: id } })
       
       // 3. Delete the championship itself
