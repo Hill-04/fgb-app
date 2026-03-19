@@ -4,8 +4,9 @@ import { StatCard } from '@/components/StatCard'
 import { PipelineSteps } from '@/components/PipelineSteps'
 import { Section } from '@/components/Section'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, FileCheck, Calendar } from 'lucide-react'
+import { Trophy, Users, FileCheck, Calendar, Sparkles } from 'lucide-react'
 import { AdminRegistrationModal } from '@/components/AdminRegistrationModal'
+import { Brackets } from '@/components/Brackets'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +21,8 @@ export default async function AdminDashboardPage() {
       confirmedRegistrationsCount,
       newRegistrationsCount,
       nextGame,
-      topStandings
+      topStandings,
+      playoffCategory
     ] = await Promise.all([
       prisma.team.count(),
       prisma.championship.findMany({
@@ -64,6 +66,24 @@ export default async function AdminDashboardPage() {
         include: {
           team: true,
           category: true
+        }
+      }),
+      prisma.championshipCategory.findFirst({
+        where: {
+          games: {
+            some: { phase: { gt: 1 } }
+          }
+        },
+        include: {
+          championship: true,
+          games: {
+            where: { phase: { gt: 1 } },
+            include: {
+              homeTeam: { select: { name: true, logoUrl: true } },
+              awayTeam: { select: { name: true, logoUrl: true } }
+            },
+            orderBy: { dateTime: 'asc' }
+          }
         }
       })
     ])
@@ -207,42 +227,28 @@ export default async function AdminDashboardPage() {
             <div className="bg-[#111111] p-6 rounded-3xl border border-[rgba(255,255,255,0.05)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
               <div className="flex justify-between items-center mb-6">
                 <div>
-                  <h2 className="font-display font-black text-2xl text-[--text-main] tracking-tight">Motor de Chaveamento</h2>
-                  <p className="text-sm font-medium text-[--text-secondary]">Playoffs (Sub 17)</p>
+                  <h2 className="font-display font-black text-2xl text-[--text-main] tracking-tight text-white">Motor de Chaveamento</h2>
+                  <p className="text-sm font-medium text-[--text-secondary]">
+                    {playoffCategory ? `${playoffCategory.championship.name} - ${playoffCategory.name}` : 'Nenhum playoff ativo'}
+                  </p>
                 </div>
-                <div className="bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/30 px-3 py-1.5 rounded-full flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#8B5CF6] animate-pulse"></span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Optimized by AI</span>
-                </div>
+                {playoffCategory && (
+                  <div className="bg-[#8B5CF6]/10 text-[#A78BFA] border border-[#8B5CF6]/30 px-3 py-1.5 rounded-full flex items-center gap-2">
+                    <Sparkles className="w-3 h-3 text-[#8B5CF6]" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Optimized by AI</span>
+                  </div>
+                )}
               </div>
 
-              {/* Bracket Structure (Structural rendering) */}
-              <div className="flex gap-8 justify-center items-stretch py-4 overflow-x-auto min-h-[200px]">
-                {/* Quarter Finals */}
-                <div className="flex flex-col justify-around gap-6">
-                   <div className="bg-[#151515] p-3 rounded-lg border border-[rgba(255,255,255,0.02)] min-w-[140px]">
-                     <div className="text-xs font-bold text-[--text-main] flex justify-between"><span>#1 Seed</span><span>—</span></div>
-                     <div className="text-xs font-bold text-[--text-secondary] flex justify-between mt-2 pt-2 border-t border-white/5"><span>#8 Seed</span><span>—</span></div>
-                   </div>
-                   <div className="bg-[#151515] p-3 rounded-lg border border-[rgba(255,255,255,0.02)] min-w-[140px]">
-                     <div className="text-xs font-bold text-[--text-main] flex justify-between"><span>#4 Seed</span><span>—</span></div>
-                     <div className="text-xs font-bold text-[--text-secondary] flex justify-between mt-2 pt-2 border-t border-white/5"><span>#5 Seed</span><span>—</span></div>
-                   </div>
+              {playoffCategory ? (
+                <div className="flex justify-center">
+                  <Brackets games={playoffCategory.games as any} className="p-0 scale-90 origin-center" />
                 </div>
-                
-                {/* Visual connecting lines */}
-                <div className="w-px bg-[rgba(255,255,255,0.1)] relative">
-                  <div className="absolute top-1/4 h-1/2 w-4 border-r border-y border-[rgba(255,255,255,0.1)] left-0"></div>
+              ) : (
+                <div className="h-48 border border-dashed border-white/5 rounded-2xl flex items-center justify-center text-[10px] font-black text-slate-700 uppercase tracking-widest">
+                  Aguardando encerramento da fase regular
                 </div>
-
-                {/* Semi Finals */}
-                <div className="flex flex-col justify-center gap-6">
-                   <div className="bg-[#151515] p-3 rounded-lg border border-[#FF6B00]/30 min-w-[140px] shadow-[0_0_15px_rgba(255,107,0,0.1)]">
-                     <div className="text-xs font-bold text-[#FF6B00] flex justify-between"><span>TBD</span><span>—</span></div>
-                     <div className="text-xs font-bold text-[--text-secondary] flex justify-between mt-2 pt-2 border-t border-white/5"><span>TBD</span><span>—</span></div>
-                   </div>
-                </div>
-              </div>
+              )}
             </div>
 
           </div>

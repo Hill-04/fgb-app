@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions)
-  if (!session || !(session.user as any).isAdmin) {
+  if (!session) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 

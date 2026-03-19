@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
-import { Trophy, Calendar, Users, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { Trophy, Calendar, Users, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react'
+import { SimulationModal } from '@/components/SimulationModal'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -109,8 +110,13 @@ export default function AdminChampionshipsPage() {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [form, setForm] = useState<FormState>(defaultForm())
   const [formError, setFormError] = useState('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deletingChampionship, setDeletingChampionship] = useState<any>(null)
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
+  const [showSimModal, setShowSimModal] = useState(false)
+  const [form, setForm] = useState<FormState>(defaultForm())
 
   const setField = (key: keyof FormState, value: any) => setForm(f => ({ ...f, [key]: value }))
 
@@ -176,11 +182,37 @@ export default function AdminChampionshipsPage() {
     } catch { setFormError('Erro de conexão') } finally { setSubmitLoading(false) }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Apagar este campeonato e todas as inscrições?')) return
-    const res = await fetch(`/api/championships/${id}`, { method: 'DELETE' })
-    if (res.ok) fetchChampionships()
-    else { const d = await res.json(); alert(d.error || 'Erro ao excluir') }
+  const handleDeleteClick = async (c: Championship) => {
+    try {
+      const res = await fetch(`/api/championships/${c.id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setDeletingChampionship(data)
+        setDeleteConfirmationText('')
+        setShowDeleteConfirm(true)
+      }
+    } catch (err) {
+      alert('Erro ao buscar dados do campeonato')
+    }
+  }
+
+  const confirmDelete = async () => {
+    if (deleteConfirmationText !== deletingChampionship.name) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/championships/${deletingChampionship.id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setShowDeleteConfirm(false)
+        fetchChampionships()
+      } else {
+        const d = await res.json()
+        alert(d.error || 'Erro ao excluir')
+      }
+    } catch {
+      alert('Erro de conexão')
+    } finally {
+      setIsDeleting(false)
+    }
   }
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -453,10 +485,21 @@ export default function AdminChampionshipsPage() {
           <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">Campeonatos</h1>
           <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">Gestão Geral da Temporada</p>
         </div>
-        <Button onClick={openCreateDialog} className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold px-8 h-12 rounded-xl shadow-lg shadow-orange-600/20 transition-all hover:scale-105">
-          <Plus className="w-5 h-5 mr-2" /> Novo Campeonato
-        </Button>
+        <div className="flex gap-3">
+          <Button onClick={() => setShowSimModal(true)} variant="outline" className="border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 font-bold px-6 h-12 rounded-xl transition-all hover:scale-105">
+            <Sparkles className="w-4 h-4 mr-2" /> Simular com IA
+          </Button>
+          <Button onClick={openCreateDialog} className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold px-8 h-12 rounded-xl shadow-lg shadow-orange-600/20 transition-all hover:scale-105">
+            <Plus className="w-5 h-5 mr-2" /> Novo Campeonato
+          </Button>
+        </div>
       </div>
+
+      <SimulationModal 
+        isOpen={showSimModal} 
+        onClose={() => setShowSimModal(false)} 
+        onComplete={fetchChampionships}
+      />
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
@@ -492,7 +535,7 @@ export default function AdminChampionshipsPage() {
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" size="icon" onClick={() => openEditDialog(c)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white"><Edit2 className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(c.id)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(c)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mb-8">
@@ -567,6 +610,70 @@ export default function AdminChampionshipsPage() {
                 )}
               </div>
             </div>
+          </Card>
+        </div>
+      )}
+
+      {/* ─── Deletion Confirmation Modal ─── */}
+      {showDeleteConfirm && deletingChampionship && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <Card className="w-full max-w-lg bg-[#0A0A0A] border-red-500/20 text-white rounded-[32px] shadow-2xl overflow-hidden">
+            <CardHeader className="p-8 text-center">
+              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
+                <Trash2 className="w-8 h-8 text-red-500" />
+              </div>
+              <CardTitle className="text-2xl font-display font-black uppercase tracking-tight text-white">
+                Confirmar Exclusão
+              </CardTitle>
+              <CardDescription className="text-slate-400 mt-2">
+                Esta ação é irreversível e apagará todos os dados vinculados.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="px-8 pb-8 space-y-6">
+              <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-6 space-y-3">
+                <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Itens que serão removidos:</p>
+                <div className="grid grid-cols-2 gap-y-2 text-xs font-bold">
+                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.games || 0} Jogos</p>
+                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.registrations || 0} Inscrições</p>
+                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.categories || 0} Categorias</p>
+                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.standings || 0} Classificações</p>
+                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.documents || 0} Documentos</p>
+                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.blocks || 0} Blocos</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  Para confirmar, digite o nome do campeonato:
+                </Label>
+                <p className="text-xs font-black text-white bg-white/5 p-3 rounded-lg border border-white/5 text-center">
+                  {deletingChampionship.name}
+                </p>
+                <Input 
+                  value={deleteConfirmationText} 
+                  onChange={e => setDeleteConfirmationText(e.target.value)}
+                  placeholder="Digite o nome aqui..."
+                  className="bg-white/5 border-white/10 h-12 rounded-xl text-center font-bold text-white focus:border-red-500"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="flex-1 h-12 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-xl"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  disabled={isDeleting || deleteConfirmationText !== deletingChampionship.name}
+                  onClick={confirmDelete}
+                  className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20"
+                >
+                  {isDeleting ? 'Excluindo...' : 'Apagar Tudo'}
+                </Button>
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}

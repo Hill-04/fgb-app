@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db"
 import { BarChart3, Shield, Trophy } from "lucide-react"
 import { Badge } from "@/components/Badge"
 import { ExportStandingsButtons } from "./ExportStandingsButtons"
+import { Brackets } from "@/components/Brackets"
 
 export const dynamic = 'force-dynamic'
 
@@ -37,16 +38,29 @@ export default async function AdminStandingsPage({
           : selectedChampionship.categories
 
         categoriesWithStandings = await Promise.all(targetCategories.map(async (cat: any) => {
-          const standings = await prisma.standing.findMany({
-            where: { categoryId: cat.id },
-            include: {
-              team: { select: { id: true, name: true, logoUrl: true } }
-            },
-            orderBy: [
-              { points: 'desc' },
-              { pointsFor: 'desc' }
-            ]
-          })
+          const [standings, games] = await Promise.all([
+            prisma.standing.findMany({
+              where: { categoryId: cat.id },
+              include: {
+                team: { select: { id: true, name: true, logoUrl: true } }
+              },
+              orderBy: [
+                { points: 'desc' },
+                { pointsFor: 'desc' }
+              ]
+            }),
+            prisma.game.findMany({
+              where: { 
+                categoryId: cat.id,
+                phase: { gt: 1 }
+              },
+              include: {
+                homeTeam: { select: { name: true, logoUrl: true } },
+                awayTeam: { select: { name: true, logoUrl: true } }
+              },
+              orderBy: { dateTime: 'asc' }
+            })
+          ])
           
           // Tiebreaker Sort (Balance)
           standings.sort((a, b) => {
@@ -57,6 +71,7 @@ export default async function AdminStandingsPage({
           return {
             ...cat,
             standings,
+            games,
             championship: selectedChampionship
           }
         }))
@@ -218,6 +233,15 @@ export default async function AdminStandingsPage({
                         ))}
                       </tbody>
                     </table>
+                    {catGroup.championship.hasPlayoffs && catGroup.games.length > 0 && (
+                      <div className="border-t border-white/5 mt-10 pt-10 px-10">
+                        <div className="mb-8">
+                          <h3 className="text-xl font-display font-black text-white uppercase tracking-wider italic">Fase de Playoffs</h3>
+                          <p className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest mt-1">Duelos de Eliminação Direta</p>
+                        </div>
+                        <Brackets games={catGroup.games} className="p-0" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

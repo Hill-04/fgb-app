@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { SideNav } from "@/components/SideNav"
 import { MobileHeader } from "@/components/MobileHeader"
+import { AIAssistantBubble } from "@/components/AIAssistantBubble"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
@@ -25,6 +26,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {children}
         </div>
       </main>
+      <AIAssistantBubble />
     </div>
   )
 }

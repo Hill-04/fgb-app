@@ -13,15 +13,31 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const championship = await prisma.championship.findUnique({
-      where: { id },
-      include: {
-        categories: true,
-        _count: { select: { registrations: true } },
-      },
+    const [championship, counts] = await prisma.$transaction(async (tx) => {
+      const catIds = await tx.championshipCategory.findMany({ where: { championshipId: id }, select: { id: true } })
+      const regIds = await tx.registration.findMany({ where: { championshipId: id }, select: { id: true } })
+      const cIds = catIds.map(c => c.id)
+      const rIds = regIds.map(r => r.id)
+
+      const champ = await tx.championship.findUnique({
+        where: { id },
+        include: { categories: true }
+      })
+
+      return [
+        champ,
+        {
+          games: await tx.game.count({ where: { championshipId: id } }),
+          registrations: await tx.registration.count({ where: { championshipId: id } }),
+          categories: await tx.championshipCategory.count({ where: { championshipId: id } }),
+          standings: await tx.standing.count({ where: { categoryId: { in: cIds } } }),
+          documents: await tx.document.count({ where: { championshipId: id } }),
+          blocks: await tx.block.count({ where: { championshipId: id } }),
+        }
+      ] as const
     })
-    if (!championship) return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
-    return NextResponse.json(championship)
+
+    return NextResponse.json({ ...championship, deletionCounts: counts })
   } catch (error) {
     console.error('Error fetching championship:', error)
     return NextResponse.json({ error: 'Erro ao buscar campeonato' }, { status: 500 })
@@ -104,7 +120,33 @@ export async function DELETE(
   try {
     const { id } = await params
 
-    await prisma.championship.delete({ where: { id } })
+    await prisma.$transaction(async (tx) => {
+      // 1. Get dependent IDs
+      const catIds = await tx.championshipCategory.findMany({ 
+        where: { championshipId: id }, 
+        select: { id: true } 
+      })
+      const regIds = await tx.registration.findMany({ 
+        where: { championshipId: id }, 
+        select: { id: true } 
+      })
+
+      const categoryIds = catIds.map(c => c.id)
+      const registrationIds = regIds.map(r => r.id)
+
+      // 2. Delete in order
+      await tx.game.deleteMany({ where: { championshipId: id } })
+      await tx.standing.deleteMany({ where: { categoryId: { in: categoryIds } } })
+      await tx.blockedDate.deleteMany({ where: { registrationId: { in: registrationIds } } })
+      await tx.registrationCategory.deleteMany({ where: { registrationId: { in: registrationIds } } })
+      await tx.registration.deleteMany({ where: { championshipId: id } })
+      await tx.block.deleteMany({ where: { championshipId: id } })
+      await tx.document.deleteMany({ where: { championshipId: id } })
+      await tx.championshipCategory.deleteMany({ where: { championshipId: id } })
+      
+      // 3. Delete the championship itself
+      await tx.championship.delete({ where: { id } })
+    })
 
     return NextResponse.json({ success: true })
   } catch (error) {

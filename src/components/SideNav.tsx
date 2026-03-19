@@ -44,7 +44,7 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
     { label: 'Início', href: '/team/dashboard', icon: Home },
     { label: 'Campeonatos', href: '/team/championships', icon: Trophy },
     { label: 'Classificação', href: '/team/standings', icon: BarChart3 },
-    { label: 'Jogos e Resultados', href: '/team/calendar', icon: Calendar },
+    { label: 'Jogos e Resultados', href: '/team/matches', icon: Calendar },
     { label: 'Documentos', href: '/team/documents', icon: FileText },
     { label: 'Notificações', href: '/team/notifications', icon: Bell, badge: 0 },
     { label: 'Chat FGB', href: '/team/chat', icon: MessageSquare },

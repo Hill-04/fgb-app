@@ -2,114 +2,135 @@
 
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/Badge"
-import { Trophy, ChevronRight } from "lucide-react"
+import { Trophy, ChevronRight, Users } from "lucide-react"
+import { cn } from "@/lib/utils"
 
-type MatchItemProps = {
-  homeTeam: string
-  awayTeam: string
-  homeScore?: number
-  awayScore?: number
-  homeLogo?: string
-  awayLogo?: string
+type Game = {
+  id: string
+  homeTeam: { name: string, logoUrl?: string | null }
+  awayTeam: { name: string, logoUrl?: string | null }
+  homeScore: number | null
+  awayScore: number | null
   status: string
-  isFinal?: boolean
+  phase: number
 }
 
-function MatchItem({ homeTeam, awayTeam, homeScore, awayScore, homeLogo, awayLogo, status, isFinal }: MatchItemProps) {
-  const isHomeWinner = homeScore !== undefined && awayScore !== undefined && homeScore > awayScore
-  const isAwayWinner = homeScore !== undefined && awayScore !== undefined && awayScore > homeScore
+type Props = {
+  games: Game[]
+  className?: string
+}
+
+function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
+  const homeScore = game.homeScore ?? 0
+  const awayScore = game.awayScore ?? 0
+  const isHomeWinner = game.status === 'COMPLETED' && homeScore > awayScore
+  const isAwayWinner = game.status === 'COMPLETED' && awayScore > homeScore
+  const isScheduled = game.status === 'SCHEDULED'
 
   return (
     <div className="relative group">
-      <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-lg transition-all hover:border-[#FF6B00]/30 w-64">
+      <div className={cn(
+        "bg-[#111] border rounded-2xl overflow-hidden shadow-lg transition-all duration-500 w-64",
+        isFinal ? "border-orange-500/40 shadow-orange-500/10" : "border-white/5 hover:border-white/20"
+      )}>
         {/* Home Team */}
-        <div className={`flex items-center justify-between p-3 border-b border-white/[0.03] ${isHomeWinner ? 'bg-[#FF6B00]/5' : ''}`}>
+        <div className={cn(
+          "flex items-center justify-between p-3 border-b border-white/[0.03] transition-colors",
+          isHomeWinner ? "bg-orange-500/10" : ""
+        )}>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-               {homeLogo ? <img src={homeLogo} alt={homeTeam} className="w-full h-full object-cover" /> : <div className="text-[8px] font-black opacity-30 italic">L</div>}
+               {game.homeTeam.logoUrl ? <img src={game.homeTeam.logoUrl} alt={game.homeTeam.name} className="w-full h-full object-cover" /> : <Users className="w-3 h-3 text-slate-700" />}
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-tight truncate w-32 ${isHomeWinner ? 'text-white' : 'text-slate-500'}`}>
-              {homeTeam}
+            <span className={cn(
+              "text-[10px] font-black uppercase tracking-tight truncate w-32",
+              isHomeWinner ? "text-white" : isScheduled ? "text-slate-400" : "text-slate-600"
+            )}>
+              {game.homeTeam.name}
             </span>
           </div>
-          {homeScore !== undefined && (
-            <span className={`text-sm font-display font-black ${isHomeWinner ? 'text-[#FF6B00]' : 'text-slate-600'}`}>{homeScore}</span>
+          {game.status === 'COMPLETED' && (
+            <span className={cn("text-sm font-display font-black", isHomeWinner ? "text-[#FF6B00]" : "text-slate-600")}>{homeScore}</span>
           )}
         </div>
 
         {/* Away Team */}
-        <div className={`flex items-center justify-between p-3 ${isAwayWinner ? 'bg-[#FF6B00]/5' : ''}`}>
+        <div className={cn(
+          "flex items-center justify-between p-3 transition-colors",
+          isAwayWinner ? "bg-orange-500/10" : ""
+        )}>
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
-               {awayLogo ? <img src={awayLogo} alt={awayTeam} className="w-full h-full object-cover" /> : <div className="text-[8px] font-black opacity-30 italic">L</div>}
+               {game.awayTeam.logoUrl ? <img src={game.awayTeam.logoUrl} alt={game.awayTeam.name} className="w-full h-full object-cover" /> : <Users className="w-3 h-3 text-slate-700" />}
             </div>
-            <span className={`text-[10px] font-black uppercase tracking-tight truncate w-32 ${isAwayWinner ? 'text-white' : 'text-slate-500'}`}>
-              {awayTeam}
+            <span className={cn(
+              "text-[10px] font-black uppercase tracking-tight truncate w-32",
+              isAwayWinner ? "text-white" : isScheduled ? "text-slate-400" : "text-slate-600"
+            )}>
+              {game.awayTeam.name}
             </span>
           </div>
-          {awayScore !== undefined && (
-            <span className={`text-sm font-display font-black ${isAwayWinner ? 'text-[#FF6B00]' : 'text-slate-600'}`}>{awayScore}</span>
+          {game.status === 'COMPLETED' && (
+            <span className={cn("text-sm font-display font-black", isAwayWinner ? "text-[#FF6B00]" : "text-slate-600")}>{awayScore}</span>
           )}
         </div>
+
+        {isScheduled && (
+          <div className="bg-white/[0.02] py-1 text-center border-t border-white/[0.03]">
+             <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Aguardando Jogo</span>
+          </div>
+        )}
       </div>
       
-      {/* Connector lines (CSS approach) */}
       {!isFinal && (
-        <>
-          <div className="absolute top-1/2 -right-6 w-6 h-[1px] bg-white/10 group-hover:bg-[#FF6B00]/30 transition-colors" />
-        </>
+        <div className="absolute top-1/2 -right-6 w-6 h-px bg-white/10" />
       )}
     </div>
   )
 }
 
-export function Brackets() {
+export function Brackets({ games, className }: Props) {
+  const semiFinals = games.filter(g => g.phase === 2).slice(0, 2)
+  const final = games.find(g => g.phase === 3)
+
+  if (games.length === 0) return null
+
   return (
-    <div className="p-8 overflow-x-auto">
+    <div className={cn("p-8 overflow-x-auto custom-scrollbar", className)}>
       <div className="flex items-center gap-12 min-w-max pb-10">
         {/* Semi Finals */}
         <div className="flex flex-col gap-12">
-          <div className="space-y-4">
-             <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Semi-Final 1</span>
-             <MatchItem 
-              homeTeam="Grêmio Náutico" 
-              homeLogo="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR_x_O3Y_q0qVvL7H_0U8zR0Z2_k_W3u0Z_jQ&s"
-              awayTeam="Sogipa" 
-              homeScore={84} 
-              awayScore={79} 
-              status="Final"
-             />
-          </div>
-          <div className="space-y-4">
-             <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Semi-Final 2</span>
-             <MatchItem 
-              homeTeam="União Corinthians" 
-              awayTeam="Caxias do Sul" 
-              homeScore={72} 
-              awayScore={86} 
-              status="Final"
-             />
-          </div>
+          {semiFinals.length > 0 ? semiFinals.map((game, i) => (
+            <div key={game.id} className="space-y-4">
+              <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest px-4">Semi-Final {i + 1}</span>
+              <MatchItem game={game as any} />
+            </div>
+          )) : (
+            <div className="w-64 h-24 border border-dashed border-white/10 rounded-2xl flex items-center justify-center text-[10px] font-black text-slate-700 uppercase">
+              Semis a definir
+            </div>
+          )}
         </div>
 
         {/* Finals Connector */}
         <div className="flex flex-col items-center justify-center h-full relative">
-           <div className="w-[1px] h-[calc(100%-80px)] bg-white/10 absolute top-1/2 -translate-y-1/2 -left-6" />
+           <div className="w-px h-full bg-white/10 absolute top-0 -left-6" />
         </div>
 
         {/* Grand Final */}
         <div className="flex flex-col items-center justify-center">
           <div className="space-y-4">
              <div className="flex items-center justify-center gap-2 mb-2">
-                <Trophy className="w-4 h-4 text-[#FF6B00]" />
-                <span className="text-[9px] font-black text-[#FF6B00] uppercase tracking-widest">Grande Final</span>
+                <Trophy className="w-5 h-5 text-[#FF6B00] animate-bounce" />
+                <span className="text-sm font-display font-black text-[#FF6B00] uppercase tracking-tighter italic">Grande Final</span>
              </div>
-             <MatchItem 
-              homeTeam="Grêmio Náutico" 
-              awayTeam="Caxias do Sul" 
-              status="Scheduled"
-              isFinal
-             />
+             {final ? (
+               <MatchItem game={final as any} isFinal />
+             ) : (
+               <div className="w-64 h-24 border border-dashed border-orange-500/20 rounded-2xl flex items-center justify-center text-[10px] font-black text-orange-500/30 uppercase">
+                 Final a definir
+               </div>
+             )}
           </div>
         </div>
       </div>

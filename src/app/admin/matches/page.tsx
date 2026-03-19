@@ -6,16 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/Badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { 
-  Trophy, 
-  Calendar, 
-  MapPin, 
-  Search, 
-  Edit3, 
-  Trash2, 
-  Plus, 
-  LayoutGrid, 
-  List, 
+import {
+  Trophy,
+  Calendar,
+  MapPin,
+  Search,
+  Edit3,
+  Trash2,
+  Plus,
+  LayoutGrid,
+  List,
   Filter,
   Users,
   ChevronRight,
@@ -37,6 +37,7 @@ type Game = {
 type Championship = {
   id: string
   name: string
+  isSimulation: boolean
   categories: { id: string, name: string }[]
 }
 
@@ -57,13 +58,13 @@ export default function AdminMatchesPage() {
   const [championships, setChampionships] = useState<Championship[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // Filters
   const [selectedChamp, setSelectedChamp] = useState('')
   const [selectedCat, setSelectedCat] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('')
   const [viewMode, setViewMode] = useState<'CARD' | 'TABLE'>('CARD')
-  
+
   // Dialog
   const [showDialog, setShowDialog] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -83,7 +84,7 @@ export default function AdminMatchesPage() {
         fetch('/api/championships'),
         fetch('/api/teams')
       ])
-      
+
       if (champRes.ok) setChampionships(await champRes.json())
       if (teamRes.ok) {
         const teamData = await teamRes.json()
@@ -94,7 +95,7 @@ export default function AdminMatchesPage() {
       if (selectedChamp) url.searchParams.set('championshipId', selectedChamp)
       if (selectedCat) url.searchParams.set('categoryId', selectedCat)
       if (selectedTeam) url.searchParams.set('teamId', selectedTeam)
-      
+
       const gameRes = await fetch(url.toString())
       if (gameRes.ok) setGames(await gameRes.json())
     } catch (err) {
@@ -160,19 +161,19 @@ export default function AdminMatchesPage() {
           <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">Agenda de Jogos</h1>
           <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">Gestão unificada de partidas e resultados</p>
         </div>
-        
+
         <div className="flex items-center gap-2 bg-[#111] p-1 rounded-xl border border-white/5">
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setViewMode('CARD')}
             className={`h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'CARD' ? 'bg-[#FF6B00] text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
             <LayoutGrid className="w-3.5 h-3.5 mr-2" /> Cards
           </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setViewMode('TABLE')}
             className={`h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'TABLE' ? 'bg-[#FF6B00] text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
@@ -187,12 +188,12 @@ export default function AdminMatchesPage() {
           <Filter className="w-4 h-4 text-[#FF6B00]" />
           <span className="text-[10px] uppercase font-black text-white tracking-[0.2em]">Filtros Avançados</span>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="space-y-2">
             <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Campeonato</Label>
-            <select 
-              value={selectedChamp} 
+            <select
+              value={selectedChamp}
               onChange={e => { setSelectedChamp(e.target.value); setSelectedCat('') }}
               className="w-full bg-white/[0.03] border-white/10 border h-12 rounded-2xl px-4 text-sm text-white focus:outline-none focus:border-[#FF6B00]/50 transition-colors"
             >
@@ -203,8 +204,8 @@ export default function AdminMatchesPage() {
 
           <div className="space-y-2">
             <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Categoria</Label>
-            <select 
-              value={selectedCat} 
+            <select
+              value={selectedCat}
               onChange={e => setSelectedCat(e.target.value)}
               disabled={!selectedChamp}
               className="w-full bg-white/[0.03] border-white/10 border h-12 rounded-2xl px-4 text-sm text-white focus:outline-none focus:border-[#FF6B00]/50 transition-colors disabled:opacity-30"
@@ -220,8 +221,8 @@ export default function AdminMatchesPage() {
             <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Filtrar por Equipe</Label>
             <div className="relative">
               <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-              <select 
-                value={selectedTeam} 
+              <select
+                value={selectedTeam}
                 onChange={e => setSelectedTeam(e.target.value)}
                 className="w-full bg-white/[0.03] border-white/10 border h-12 rounded-2xl pl-10 pr-4 text-sm text-white focus:outline-none focus:border-[#FF6B00]/50 transition-colors"
               >
@@ -236,7 +237,7 @@ export default function AdminMatchesPage() {
       {/* Content */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="bg-white/5 border border-white/5 h-56 animate-pulse rounded-[32px]" />)}
+          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="bg-white/5 border border-white/5 h-56 animate-pulse rounded-[32px]" />)}
         </div>
       ) : games.length === 0 ? (
         <div className="py-32 text-center bg-white/[0.02] rounded-[40px] border border-dashed border-white/10">
@@ -248,54 +249,59 @@ export default function AdminMatchesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {games.map(game => (
             <Card key={game.id} className="bg-[#121212] border-white/5 rounded-[32px] overflow-hidden group hover:border-[#FF6B00]/30 transition-all duration-300 shadow-2xl">
-               <CardHeader className="p-6 pb-2 border-b border-white/5 bg-white/[0.01]">
-                  <div className="flex justify-between items-center">
+              <CardHeader className="p-6 pb-2 border-b border-white/5 bg-white/[0.01]">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
                     <Badge variant="outline" className="text-[9px] uppercase font-black tracking-tight text-[#FF6B00] border-[#FF6B00]/20 bg-[#FF6B00]/5">{game.category.name}</Badge>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(game)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-500 hover:text-white"><Edit3 className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDelete(game.id)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-500 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                    {championships.find(c => c.id === selectedChamp)?.isSimulation && (
+                      <Badge variant="purple" className="text-[8px] bg-purple-500/10 text-purple-400 border-purple-500/20">Simulação</Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0">
+                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(game)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-500 hover:text-white"><Edit3 className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDelete(game.id)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-500 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="flex items-center justify-between gap-6 mb-8 relative">
+                  <div className="flex-1 text-center">
+                    <div className="text-[9px] font-black uppercase text-slate-600 mb-2 tracking-widest">CASA</div>
+                    <div className="font-display font-black text-white text-base uppercase leading-tight min-h-[3rem] flex items-center justify-center">{game.homeTeam.name}</div>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <div className="text-4xl font-display font-black italic text-white mb-1 drop-shadow-lg">
+                      {game.status === 'SCHEDULED' ? 'vs' : `${game.homeScore} — ${game.awayScore}`}
                     </div>
                   </div>
-               </CardHeader>
-               <CardContent className="p-8">
-                  <div className="flex items-center justify-between gap-6 mb-8 relative">
-                     <div className="flex-1 text-center">
-                        <div className="text-[9px] font-black uppercase text-slate-600 mb-2 tracking-widest">CASA</div>
-                        <div className="font-display font-black text-white text-base uppercase leading-tight min-h-[3rem] flex items-center justify-center">{game.homeTeam.name}</div>
-                     </div>
-                     
-                     <div className="flex flex-col items-center">
-                        <div className="text-4xl font-display font-black italic text-white mb-1 drop-shadow-lg">
-                           {game.status === 'SCHEDULED' ? 'vs' : `${game.homeScore} — ${game.awayScore}`}
-                        </div>
-                     </div>
 
-                     <div className="flex-1 text-center">
-                        <div className="text-[9px] font-black uppercase text-slate-600 mb-2 tracking-widest">FORA</div>
-                        <div className="font-display font-black text-white text-base uppercase leading-tight min-h-[3rem] flex items-center justify-center">{game.awayTeam.name}</div>
-                     </div>
+                  <div className="flex-1 text-center">
+                    <div className="text-[9px] font-black uppercase text-slate-600 mb-2 tracking-widest">FORA</div>
+                    <div className="font-display font-black text-white text-base uppercase leading-tight min-h-[3rem] flex items-center justify-center">{game.awayTeam.name}</div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/5">
-                     <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Data & Hora</span>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300 uppercase">
-                          <Clock className="w-3.5 h-3.5 text-[#FF6B00]" />
-                          {new Date(game.dateTime).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(game.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                     </div>
-                     <div className="flex flex-col gap-1.5 text-right">
-                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Localização</span>
-                        <div className="flex items-center justify-end gap-2 text-[10px] font-bold text-slate-300 uppercase">
-                          <span className="truncate max-w-[120px]">{game.location}</span>
-                          <MapPin className="w-3.5 h-3.5 text-[#FF6B00]" />
-                        </div>
-                     </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 pt-6 border-t border-white/5">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Data & Hora</span>
+                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300 uppercase">
+                      <Clock className="w-3.5 h-3.5 text-[#FF6B00]" />
+                      {new Date(game.dateTime).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(game.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-               </CardContent>
-               <div className={`py-3 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] border-t border-white/5 ${STATUS_OPTIONS.find(o => o.value === game.status)?.color}`}>
-                  {STATUS_OPTIONS.find(o => o.value === game.status)?.label}
-               </div>
+                  <div className="flex flex-col gap-1.5 text-right">
+                    <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Localização</span>
+                    <div className="flex items-center justify-end gap-2 text-[10px] font-bold text-slate-300 uppercase">
+                      <span className="truncate max-w-[120px]">{game.location}</span>
+                      <MapPin className="w-3.5 h-3.5 text-[#FF6B00]" />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <div className={`py-3 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] border-t border-white/5 ${STATUS_OPTIONS.find(o => o.value === game.status)?.color}`}>
+                {STATUS_OPTIONS.find(o => o.value === game.status)?.label}
+              </div>
             </Card>
           ))}
         </div>
@@ -357,66 +363,66 @@ export default function AdminMatchesPage() {
       {/* Edit Result Modal */}
       {showDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-           <Card className="w-full max-w-lg bg-[#0A0A0A] border-white/10 text-white rounded-[40px] shadow-2xl overflow-hidden">
-              <CardHeader className="p-10 border-b border-white/5 text-center bg-white/[0.01]">
-                 <CardTitle className="text-3xl font-display font-black uppercase tracking-tight">Atualizar Partida</CardTitle>
-                 <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Lançamento de placar e gerenciamento de status</CardDescription>
-              </CardHeader>
-              <CardContent className="p-10">
-                 <form onSubmit={handleSubmit} className="space-y-10">
-                    <div className="bg-white/5 p-8 rounded-[32px] border border-white/10 flex items-center justify-center gap-8 shadow-inner">
-                       <div className="text-center flex-1">
-                          <Label className="text-[10px] font-black mb-4 block text-slate-500 tracking-[0.2em]">CASA</Label>
-                          <Input 
-                            type="number" 
-                            value={formHomeScore} 
-                            onChange={e => setFormHomeScore(e.target.value)} 
-                            className="text-center text-5xl font-display font-black h-24 bg-transparent border-white/10 focus:border-[#FF6B00] rounded-2xl"
-                          />
-                       </div>
-                       <div className="text-2xl font-black text-slate-800 italic transform rotate-12">VS</div>
-                       <div className="text-center flex-1">
-                          <Label className="text-[10px] font-black mb-4 block text-slate-500 tracking-[0.2em]">FORA</Label>
-                          <Input 
-                            type="number" 
-                            value={formAwayScore} 
-                            onChange={e => setFormAwayScore(e.target.value)} 
-                            className="text-center text-5xl font-display font-black h-24 bg-transparent border-white/10 focus:border-[#FF6B00] rounded-2xl"
-                          />
-                       </div>
-                    </div>
+          <Card className="w-full max-w-lg bg-[#0A0A0A] border-white/10 text-white rounded-[40px] shadow-2xl overflow-hidden">
+            <CardHeader className="p-10 border-b border-white/5 text-center bg-white/[0.01]">
+              <CardTitle className="text-3xl font-display font-black uppercase tracking-tight">Atualizar Partida</CardTitle>
+              <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Lançamento de placar e gerenciamento de status</CardDescription>
+            </CardHeader>
+            <CardContent className="p-10">
+              <form onSubmit={handleSubmit} className="space-y-10">
+                <div className="bg-white/5 p-8 rounded-[32px] border border-white/10 flex items-center justify-center gap-8 shadow-inner">
+                  <div className="text-center flex-1">
+                    <Label className="text-[10px] font-black mb-4 block text-slate-500 tracking-[0.2em]">CASA</Label>
+                    <Input
+                      type="number"
+                      value={formHomeScore}
+                      onChange={e => setFormHomeScore(e.target.value)}
+                      className="text-center text-5xl font-display font-black h-24 bg-transparent border-white/10 focus:border-[#FF6B00] rounded-2xl"
+                    />
+                  </div>
+                  <div className="text-2xl font-black text-slate-800 italic transform rotate-12">VS</div>
+                  <div className="text-center flex-1">
+                    <Label className="text-[10px] font-black mb-4 block text-slate-500 tracking-[0.2em]">FORA</Label>
+                    <Input
+                      type="number"
+                      value={formAwayScore}
+                      onChange={e => setFormAwayScore(e.target.value)}
+                      className="text-center text-5xl font-display font-black h-24 bg-transparent border-white/10 focus:border-[#FF6B00] rounded-2xl"
+                    />
+                  </div>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-6">
-                       <div className="space-y-3">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Status Final</Label>
-                          <select 
-                            value={formStatus} 
-                            onChange={e => setFormStatus(e.target.value)}
-                            className="w-full bg-white/[0.03] border-white/10 border h-14 rounded-2xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]/50"
-                          >
-                             {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value} className="bg-[#0A0A0A]">{o.label}</option>)}
-                          </select>
-                       </div>
-                       <div className="space-y-3">
-                          <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Data e Hora</Label>
-                          <Input type="datetime-local" value={formDate} onChange={e => setFormDate(e.target.value)} className="bg-white/[0.03] border-white/10 h-14 rounded-2xl px-4 font-bold" />
-                       </div>
-                    </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Status Final</Label>
+                    <select
+                      value={formStatus}
+                      onChange={e => setFormStatus(e.target.value)}
+                      className="w-full bg-white/[0.03] border-white/10 border h-14 rounded-2xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]/50"
+                    >
+                      {STATUS_OPTIONS.map(o => <option key={o.value} value={o.value} className="bg-[#0A0A0A]">{o.label}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-3">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Data e Hora</Label>
+                    <Input type="datetime-local" value={formDate} onChange={e => setFormDate(e.target.value)} className="bg-white/[0.03] border-white/10 h-14 rounded-2xl px-4 font-bold" />
+                  </div>
+                </div>
 
-                    <div className="space-y-3">
-                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Local da Partida</Label>
-                       <Input value={formLocation} onChange={e => setFormLocation(e.target.value)} placeholder="Ex: Ginásio Municipal" className="bg-white/[0.03] border-white/10 h-14 rounded-2xl px-4 font-bold" />
-                    </div>
+                <div className="space-y-3">
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Local da Partida</Label>
+                  <Input value={formLocation} onChange={e => setFormLocation(e.target.value)} placeholder="Ex: Ginásio Municipal" className="bg-white/[0.03] border-white/10 h-14 rounded-2xl px-4 font-bold" />
+                </div>
 
-                    <div className="flex gap-4 pt-4">
-                       <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">Cancelar</Button>
-                       <Button disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20 active:scale-95 transition-all">
-                          {submitLoading ? 'Processando...' : 'Confirmar Resultado'}
-                       </Button>
-                    </div>
-                 </form>
-              </CardContent>
-           </Card>
+                <div className="flex gap-4 pt-4">
+                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">Cancelar</Button>
+                  <Button disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20 active:scale-95 transition-all">
+                    {submitLoading ? 'Processando...' : 'Confirmar Resultado'}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

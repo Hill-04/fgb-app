@@ -73,6 +73,27 @@ export default async function TeamDashboardPage() {
       take: 6
     }) as any)
 
+    // Fetch playoff bracket preview for team (first championship category with playoffs)
+    const playoffCategory = await prisma.championshipCategory.findFirst({
+      where: {
+        championship: {
+          registrations: { some: { teamId } },
+          hasPlayoffs: true
+        },
+        games: { some: { phase: { gt: 1 } } }
+      },
+      include: {
+        games: {
+          where: { phase: { gt: 1 } },
+          include: {
+            homeTeam: { select: { name: true, logoUrl: true } },
+            awayTeam: { select: { name: true, logoUrl: true } }
+          },
+          orderBy: { dateTime: 'asc' }
+        }
+      }
+    })
+
     const nextGame = team.homeGames[0]
     const totalCategories = team.registrations.reduce((acc: number, reg: any) => acc + reg.categories.length, 0)
     // Mudança: Contar qualquer inscrição não rejeitada para o status principal
@@ -351,7 +372,13 @@ export default async function TeamDashboardPage() {
                 </div>
                 <Badge variant="orange" className="font-black text-[10px] italic px-4 h-8 bg-[#FF6B00] text-white">PLAYOFFS 2026</Badge>
               </div>
-              <Brackets />
+              {playoffCategory ? (
+                <Brackets games={playoffCategory.games as any} />
+              ) : (
+                <div className="py-20 text-center opacity-40">
+                  <p className="text-slate-500 text-sm font-black uppercase tracking-widest">Aguardando definição dos playoffs</p>
+                </div>
+              )}
               <div className="px-8 py-6 bg-white/[0.01] border-t border-white/5 text-center">
                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">IA Engine optimized for tournament brackets</p>
               </div>

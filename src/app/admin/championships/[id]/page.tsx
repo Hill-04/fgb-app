@@ -7,11 +7,11 @@ import { ManualRegistrationModal } from './ManualRegistrationModal'
 import { ChampionshipManagementActions } from './ChampionshipManagementActions'
 import { AIOptimizerModal } from './AIOptimizerModal'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Calendar, MapPin, Users, Info } from 'lucide-react'
+import { Calendar, MapPin, Users, Info, Zap } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-export const dynamic = 'force-dynamic'
+import { ChampionshipAIPipeline } from './ChampionshipAIPipeline'
 
 export default async function ChampionshipDetailsPage({
   params
@@ -47,22 +47,33 @@ export default async function ChampionshipDetailsPage({
     FINISHED: 'Encerrado',
   }
 
+  // Map status to pipeline step
+  const statusToStep: Record<string, number> = {
+    DRAFT: 1,
+    REGISTRATION_OPEN: 2,
+    SCHEDULED: 4,
+    IN_PROGRESS: 6,
+    FINISHED: 6
+  }
+  const currentStep = statusToStep[championship.status] || 1
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+    <div className="space-y-10 animate-in fade-in duration-500 pb-20">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <Badge variant="blue" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+            <Badge variant="blue" className="bg-blue-500/10 text-blue-400 border-blue-500/20 px-3 font-black uppercase tracking-widest text-[9px]">
               {statusLabels[championship.status] || championship.status}
             </Badge>
-            <span className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">FGB Championship App</span>
+            <div className="h-4 w-px bg-white/10" />
+            <span className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">Painel de Controle IA</span>
           </div>
-          <h1 className="text-4xl font-display font-black tracking-tighter text-white uppercase italic">
+          <h1 className="text-5xl font-display font-black tracking-tighter text-white uppercase italic leading-none">
             {championship.name}
           </h1>
         </div>
         
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           <AIOptimizerModal 
             championshipId={championship.id} 
             championshipName={championship.name} 
@@ -78,6 +89,20 @@ export default async function ChampionshipDetailsPage({
             endDate={championship.endDate || undefined}
           />
         </div>
+      </div>
+
+      {/* AI Pipeline */}
+      <div className="bg-[#111] p-10 rounded-[3rem] border border-white/5 space-y-8 shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+        <div className="flex items-center justify-between">
+           <div className="flex items-center gap-3">
+              <Zap className="w-5 h-5 text-[#FF6B00]" />
+              <h3 className="text-lg font-display font-black text-white uppercase tracking-tight">Fluxo de Otimização Inteligente</h3>
+           </div>
+           <Badge className="bg-[#FF6B00]/10 text-[#FF6B00] border-[#FF6B00]/20 font-black uppercase tracking-widest text-[9px]">
+              Fase {currentStep} de 6
+           </Badge>
+        </div>
+        <ChampionshipAIPipeline currentStep={currentStep} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
