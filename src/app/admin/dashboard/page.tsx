@@ -225,7 +225,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                 <div key={step.id} className="flex-1 min-w-[120px] flex items-center">
                   <div className={`flex-1 p-4 rounded-2xl border transition-all ${
                     isCurrent ? 'bg-orange-500/10 border-orange-500/30' : 
-                    isPast ? 'bg-green-500/5 border-green-500/20' : 'bg-white/chan05 border-white/5'
+                    isPast ? 'bg-green-500/5 border-green-500/20' : 'bg-white/[0.05] border-white/5'
                   }`}>
                     <div className="flex items-center gap-3">
                       <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
