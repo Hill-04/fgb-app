@@ -62,6 +62,10 @@ export async function POST(req: NextRequest) {
       parts: [{ text: msg.content }],
     })) || [];
 
+    if (!geminiModel) {
+      return NextResponse.json({ error: "Serviço de IA não configurado. Verifique a GEMINI_API_KEY." }, { status: 503 });
+    }
+
     const chat = geminiModel.startChat({
       history: chatHistory,
       systemInstruction: systemPrompt,
