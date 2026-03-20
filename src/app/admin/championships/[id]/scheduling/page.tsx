@@ -8,9 +8,7 @@ import { Section } from '@/components/Section'
 import { ArrowLeft, Sparkles, Calendar, MapPin, Trophy, ShieldAlert, CheckCircle2, Loader2, Download, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+// jspdf e xlsx movidos para carregamento dinâmico ou removidos se não utilizados para compatibilidade com Turbopack
 
 export default function ChampionshipSchedulingPage() {
   const { id } = useParams()

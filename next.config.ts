@@ -1,12 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  typescript: {
-    ignoreBuildErrors: true,
-  },
+  /* No Turbopack do Next 16, os erros de lint/ts devem ser tratados via CLI ou variáveis de ambiente se necessário */
 };
 
 export default nextConfig;

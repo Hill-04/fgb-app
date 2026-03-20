@@ -2,9 +2,7 @@
 
 import { Button } from '@/components/ui/button'
 import { FileDown, FileSpreadsheet, FileText } from 'lucide-react'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-import * as XLSX from 'xlsx'
+// Imports dinâmicos movidos para dentro das funções de exportação para compatibilidade com Turbopack/SSR
 
 type ExportStandingsButtonsProps = {
   standings: any[]
@@ -14,7 +12,9 @@ type ExportStandingsButtonsProps = {
 
 export function ExportStandingsButtons({ standings, categoryName, championshipName }: ExportStandingsButtonsProps) {
   
-  const exportPDF = () => {
+  const exportPDF = async () => {
+    const jsPDF = (await import('jspdf')).default
+    const autoTable = (await import('jspdf-autotable')).default
     const doc = new jsPDF()
     
     doc.setFontSize(18)
@@ -46,7 +46,8 @@ export function ExportStandingsButtons({ standings, categoryName, championshipNa
     doc.save(`FGB_Standings_${categoryName.replace(/\s+/g, '_')}.pdf`)
   }
 
-  const exportExcel = () => {
+  const exportExcel = async () => {
+    const XLSX = await import('xlsx')
     const data = standings.map((s, i) => ({
       Posição: `${i + 1}º`,
       Equipe: s.team.name,
