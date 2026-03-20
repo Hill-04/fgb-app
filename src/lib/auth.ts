@@ -19,7 +19,6 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
           include: {
             membership: {
-              where: { status: 'ACTIVE' },
               include: {
                 team: true
               }
@@ -44,15 +43,18 @@ export const authOptions: NextAuthOptions = {
         const supremeAdminEmail = process.env.SUPREME_ADMIN_EMAIL
         const isAdmin = user.email === supremeAdminEmail ? true : user.isAdmin
 
+        // Filtrar membership ativo apenas
+        const activeMembership = user.membership?.status === 'ACTIVE' ? user.membership : null
+
         return {
           id: user.id,
           name: user.name,
           email: user.email,
           isAdmin: isAdmin,
           role: isAdmin ? 'ADMIN' : 'TEAM', // Explicit role
-          teamId: user.membership?.team.id || null,
-          teamName: user.membership?.team.name || null,
-          teamRole: user.membership?.role || null
+          teamId: activeMembership?.team?.id || null,
+          teamName: activeMembership?.team?.name || null,
+          teamRole: activeMembership?.role || null
         }
       }
     })

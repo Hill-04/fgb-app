@@ -11,8 +11,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const DATABASE_URL = process.env.DATABASE_URL!
+    const DATABASE_URL = process.env.DATABASE_URL
     const DATABASE_AUTH_TOKEN = process.env.DATABASE_AUTH_TOKEN
+
+    if (!DATABASE_URL) {
+      return NextResponse.json({ error: 'DATABASE_URL is not configured' }, { status: 500 })
+    }
 
     // Use raw libsql to run ALTER TABLE migrations
     const client = createClient({
