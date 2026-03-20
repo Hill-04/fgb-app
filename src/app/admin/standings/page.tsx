@@ -4,12 +4,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { BarChart3, Shield, Trophy, Medal } from "lucide-react"
 import { Badge } from "@/components/Badge"
-import dynamic from 'next/dynamic'
-
-const ExportStandingsButtons = dynamic(
-  () => import('./ExportStandingsButtons').then(mod => mod.ExportStandingsButtons),
-  { ssr: false }
-)
+import { ExportStandingsButtons } from "./ExportStandingsWrapper"
 import { Brackets } from "@/components/Brackets"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
