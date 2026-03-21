@@ -43,6 +43,54 @@ export default async function ChampionshipDetailsPage({
       where: { championshipId: id, status: 'FINISHED' }
     })
 
+    const registrationCount = await prisma.registration.count({
+      where: { championshipId: id, status: 'CONFIRMED' }
+    })
+    const categoryCount = championship.categories.length
+    const scheduledGames = await prisma.game.count({
+      where: { championshipId: id, status: 'SCHEDULED' }
+    })
+    const hasGamesScheduled = scheduledGames > 0
+    const minTeams = championship.minTeamsPerCat || 4
+    const teamsNeeded = Math.max(0, (minTeams * categoryCount) - registrationCount)
+
+    const firstCategory = championship.categories[0]
+    const topStandings = firstCategory ? await prisma.standing.findMany({
+      where: { categoryId: firstCategory.id },
+      orderBy: [
+        { points: 'desc' },
+        { wins: 'desc' }
+      ],
+      take: 3,
+      include: { team: true }
+    }) : []
+
+    const pipelineChecklist: Record<number, { task: string; done: boolean }[]> = {
+      1: [ // DRAFT
+        { task: 'Nome e ano definidos', done: !!championship.name },
+        { task: 'Categorias configuradas', done: categoryCount > 0 },
+        { task: 'Data de início definida', done: !!championship.startDate },
+      ],
+      2: [ // REGISTRATION_OPEN
+        { task: `Mínimo de times por categoria (${minTeams})`, done: teamsNeeded === 0 },
+        { task: 'Prazo de inscrições definido', done: !!championship.regDeadline },
+        { task: `Times inscritos: ${registrationCount}`, done: registrationCount > 0 },
+      ],
+      3: [ // REGISTRATION_CLOSED
+        { task: 'Inscrições encerradas', done: true },
+        { task: 'Times confirmados nas categorias', done: registrationCount >= (minTeams * categoryCount) },
+      ],
+      4: [ // ONGOING
+        { task: 'Calendário de jogos gerado', done: hasGamesScheduled },
+        { task: 'Chaveamento definido', done: hasGamesScheduled },
+        { task: 'Resultados sendo registrados', done: completedGames > 0 },
+      ],
+      5: [ // FINISHED
+        { task: 'Todos os jogos realizados', done: completedGames === totalGames && totalGames > 0 },
+        { task: 'Classificação final registrada', done: topStandings.length > 0 },
+      ],
+    }
+
     const nextGame = await prisma.game.findFirst({
       where: { 
         championshipId: id, 
@@ -67,16 +115,7 @@ export default async function ChampionshipDetailsPage({
       include: { homeTeam: true, awayTeam: true, category: true }
     })
 
-    const firstCategory = championship.categories[0]
-    const topStandings = firstCategory ? await prisma.standing.findMany({
-      where: { categoryId: firstCategory.id },
-      orderBy: [
-        { points: 'desc' },
-        { wins: 'desc' }
-      ],
-      take: 3,
-      include: { team: true }
-    }) : []
+
 
     const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({
       where: { 
@@ -108,11 +147,11 @@ export default async function ChampionshipDetailsPage({
       <div className="space-y-8 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Status Atual"
-            value={formatChampionshipStatus(championship.status)}
-            sublabel="Situação do campeonato"
-            accent="orange"
-            icon={<Settings className="w-5 h-5" />}
+            label="Categorias"
+            value={categoryCount}
+            sublabel="categorias ativas"
+            accent="blue"
+            icon={<BarChart3 className="w-5 h-5" />}
           />
           <StatCard
             label="Equipes Escritas"
@@ -156,24 +195,48 @@ export default async function ChampionshipDetailsPage({
               
               return (
                 <div key={step.id} className="flex-1 min-w-[120px] flex items-center">
-                  <div className={`flex-1 p-4 rounded-2xl border transition-all ${
-                    isCurrent ? 'bg-orange-500/10 border-orange-500/30' : 
-                    isPast ? 'bg-green-500/5 border-green-500/20' : 'bg-white/[0.05] border-white/5'
+                  <div className={`flex-1 p-5 rounded-[24px] border transition-all ${
+                    isCurrent ? 'bg-[#FF6B00]/10 border-[#FF6B00]/30 ring-1 ring-[#FF6B00]/20' : 
+                    isPast ? 'bg-green-500/5 border-green-500/10' : 'bg-white/[0.02] border-white/5 opacity-50'
                   }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isCurrent ? 'bg-orange-500 text-white' :
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-transform ${isCurrent ? 'scale-110' : ''} ${
+                        isCurrent ? 'bg-[#FF6B00] text-white shadow-lg shadow-orange-600/20' :
                         isPast ? 'bg-green-500/20 text-green-500' : 'bg-white/5 text-slate-500'
                       }`}>
                         {isPast ? <CheckCircle2 className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
                       </div>
                       <div>
                         <p className={`text-[10px] font-black uppercase tracking-widest ${
-                          isCurrent ? 'text-orange-500' : isPast ? 'text-green-500' : 'text-slate-500'
+                          isCurrent ? 'text-[#FF6B00]' : isPast ? 'text-green-500' : 'text-slate-500'
                         }`}>{step.id}. {step.label}</p>
-                        <p className="text-[9px] text-slate-600 font-bold">{isPast ? 'CONCLUÍDO' : isCurrent ? 'ATIVO' : 'AGUARDANDO'}</p>
+                        <p className="text-[9px] text-slate-600 font-bold tracking-tight">{isPast ? 'CONCLUÍDO' : isCurrent ? 'EM FOCO' : 'AGUARDANDO'}</p>
                       </div>
                     </div>
+
+                    {isCurrent && pipelineChecklist[step.id] && (
+                      <div className="space-y-2 border-t border-white/5 pt-4">
+                        {pipelineChecklist[step.id].map((item, i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                              item.done ? 'bg-green-500' : 'bg-white/10'
+                            }`}>
+                              {item.done && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                            </div>
+                            <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                              item.done ? 'text-green-400 line-through opacity-60' : 'text-slate-400'
+                            }`}>
+                              {item.task}
+                            </span>
+                          </div>
+                        ))}
+                        {teamsNeeded > 0 && currentStep === 2 && (
+                          <p className="text-[9px] font-black text-yellow-500 uppercase tracking-widest mt-3 flex items-center gap-1.5">
+                            <span className="animate-pulse">⚠️</span> Faltam {teamsNeeded} time(s) para liberar
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   {idx < arr.length - 1 && (
                     <ArrowRight className="w-4 h-4 text-slate-800 mx-1 hidden lg:block" />

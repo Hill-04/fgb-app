@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { Trophy, Calendar, BarChart3, Users, Settings } from 'lucide-react'
 
+import { ChampionshipTabs } from './ChampionshipTabs'
+
 export default async function ChampionshipLayout({
   children,
   params,
@@ -20,14 +22,6 @@ export default async function ChampionshipLayout({
 
   if (!championship) notFound()
 
-  const tabs = [
-    { label: 'Visão Geral', href: `/admin/championships/${id}`, icon: Trophy },
-    { label: 'Jogos', href: `/admin/championships/${id}/matches`, icon: Calendar },
-    { label: 'Classificação', href: `/admin/championships/${id}/standings`, icon: BarChart3 },
-    { label: 'Inscrições', href: `/admin/championships/${id}/registrations`, icon: Users },
-    { label: 'Configurações', href: `/admin/championships/${id}/settings`, icon: Settings },
-  ]
-
   const statusColor: Record<string, string> = {
     'DRAFT': 'text-slate-400 bg-slate-500/10 border-slate-500/20',
     'REGISTRATION_OPEN': 'text-blue-400 bg-blue-500/10 border-blue-500/20',
@@ -39,7 +33,7 @@ export default async function ChampionshipLayout({
 
   return (
     <div className="space-y-6 pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-4 md:px-0">
         <div>
           <Link
             href="/admin/championships"
@@ -56,20 +50,11 @@ export default async function ChampionshipLayout({
         </span>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-white/5 overflow-x-auto">
-        {tabs.map((tab) => (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            className="flex items-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:text-white whitespace-nowrap border-b-2 border-transparent hover:border-orange-500/50 transition-all"
-          >
-            <tab.icon className="w-3.5 h-3.5" />
-            {tab.label}
-          </Link>
-        ))}
-      </div>
+      <ChampionshipTabs id={id} />
 
-      {children}
+      <div className="px-4 md:px-0">
+        {children}
+      </div>
     </div>
   )
 }

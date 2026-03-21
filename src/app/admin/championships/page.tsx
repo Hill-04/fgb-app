@@ -9,13 +9,14 @@ import { Checkbox } from '@/components/ui/checkbox'
 import Link from 'next/link'
 import { Trophy, Calendar, Users, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react'
 import { SimulationModal } from '@/components/SimulationModal'
+import { formatChampionshipStatus } from '@/lib/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Category = { id: string; name: string }
 type Championship = {
   id: string; name: string; year: number; status: string; sex: string
-  minTeamsPerCat: number; categories: Category[]; _count?: { registrations: number }
+  minTeamsPerCat: number; categories: Category[]; _count?: { registrations: number; games: number }
   isSimulation?: boolean
 }
 
@@ -36,7 +37,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 const STATUS_STYLES: Record<string, string> = {
   DRAFT: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-  REGISTRATION_OPEN: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+  REGISTRATION_OPEN: 'bg-[#FF6B00]/10 text-orange-400 border-[#FF6B00]/20',
   REGISTRATION_CLOSED: 'bg-red-500/10 text-red-400 border-red-500/20',
   CONFIRMED: 'bg-green-500/10 text-green-400 border-green-500/20',
   ONGOING: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -479,11 +480,15 @@ export default function AdminChampionshipsPage() {
   // ─── Page JSX ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="space-y-8 max-w-[1200px] mx-auto">
+    <div className="space-y-8 max-w-[1200px] mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">Campeonatos</h1>
-          <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">Gestão Geral da Temporada</p>
+          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">
+            Campeonatos
+          </h1>
+          <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">
+            Gestão de Competições da Federação
+          </p>
         </div>
         <div className="flex gap-3">
           <Button onClick={() => setShowSimModal(true)} variant="outline" className="border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 font-bold px-6 h-12 rounded-xl transition-all hover:scale-105">
@@ -502,8 +507,8 @@ export default function AdminChampionshipsPage() {
       />
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-64 bg-white/5 rounded-3xl" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-white/5 rounded-3xl" />)}
         </div>
       ) : championships.length === 0 ? (
         <div className="bg-[#111] border border-white/5 rounded-3xl p-20 text-center">
@@ -514,48 +519,72 @@ export default function AdminChampionshipsPage() {
       ) : (
         <div className="space-y-12">
           {/* Active Championships */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* New Championship Card */}
+            <button
+              onClick={openCreateDialog}
+              className="group bg-[#121212] border border-dashed border-white/10 hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all flex flex-col items-center justify-center gap-4 min-h-[220px]"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FF6B00]/10 transition-all">
+                <Plus className="w-6 h-6 text-slate-500 group-hover:text-[#FF6B00] transition-colors" />
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-black text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors">
+                  Novo Campeonato
+                </p>
+                <p className="text-[10px] text-slate-600 mt-1">Criar e configurar</p>
+              </div>
+            </button>
+
             {championships.filter(c => c.status !== 'ARCHIVED').map((c) => (
-              <Card key={c.id} className="bg-[#121212] border-white/5 overflow-hidden group hover:border-[#FF6B00]/30 transition-all duration-300 rounded-3xl">
-                <CardContent className="p-8">
-                  <div className="flex justify-between items-start mb-6">
+              <div key={c.id} className="relative group">
+                <Link
+                  href={`/admin/championships/${c.id}`}
+                  className="bg-[#121212] border border-white/5 hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all hover:bg-[#FF6B00]/[0.02] block h-full min-h-[220px]"
+                >
+                  <div className="flex items-start justify-between mb-5">
+                    <div className="w-12 h-12 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center">
+                      <Trophy className="w-6 h-6 text-[#FF6B00]" />
+                    </div>
+                    <Badge className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${STATUS_STYLES[c.status] || STATUS_STYLES['DRAFT']}`}>
+                      {formatChampionshipStatus(c.status)}
+                    </Badge>
+                  </div>
+
+                  <h3 className="text-xl font-display font-black text-white uppercase tracking-tight group-hover:text-[#FF6B00] transition-colors leading-tight mb-1">
+                    {c.name}
+                  </h3>
+
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-5 line-clamp-1">
+                    {c.categories.map(cat => cat.name).join(' · ') || 'Sem categorias'}
+                  </p>
+
+                  <div className="flex items-center gap-6 pt-4 border-t border-white/5">
                     <div>
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <h3 className="text-2xl font-display font-black text-white uppercase tracking-tighter">{c.name}</h3>
-                        <Badge className={`px-3 py-1 text-[9px] font-black tracking-widest uppercase border ${STATUS_STYLES[c.status] || STATUS_STYLES.DRAFT}`}>{STATUS_LABELS[c.status] || c.status}</Badge>
-                        {c.isSimulation && (
-                          <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20">
-                            Simulação
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                        <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-[#FF6B00]" /> {c.year}</span>
-                        <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-[#FF6B00]" /> {c._count?.registrations || 0} Inscrições</span>
-                        <span className="capitalize">{c.sex}</span>
-                      </div>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Times</p>
+                      <p className="text-lg font-black text-white leading-none">{c._count?.registrations || 0}</p>
                     </div>
-                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(c)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white"><Edit2 className="w-4 h-4" /></Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(c)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                    <div>
+                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Jogos</p>
+                      <p className="text-lg font-black text-white leading-none">{c._count?.games || 0}</p>
+                    </div>
+                    <div className="flex-1 text-right">
+                      <span className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                        Abrir Painel →
+                      </span>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2 mb-8">
-                    {c.categories.map(cat => <span key={cat.id} className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.05] rounded-lg text-[9px] font-black text-slate-400 uppercase">{cat.name}</span>)}
+                </Link>
+                
+                <div className="absolute top-4 right-12 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  <div className="pointer-events-auto">
+                     <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditDialog(c); }} className="h-8 w-8 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white"><Edit2 className="w-3.5 h-3.5" /></Button>
                   </div>
-                  <div className="pt-6 border-t border-white/5 flex gap-3">
-                    <Link href={`/admin/championships/${c.id}`} className="flex-1">
-                      <Button className="w-full bg-white/5 hover:bg-white/10 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest border border-white/10">Painel de Controle</Button>
-                    </Link>
-                    {c.status === 'DRAFT' && (
-                      <Button onClick={() => handleStatusChange(c.id, 'REGISTRATION_OPEN')} disabled={updatingId === c.id}
-                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest">
-                        Abrir Inscrições
-                      </Button>
-                    )}
+                  <div className="pointer-events-auto">
+                     <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteClick(c); }} className="h-8 w-8 rounded-lg hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></Button>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
 
@@ -566,31 +595,40 @@ export default function AdminChampionshipsPage() {
                 <Trash2 className="w-5 h-5 text-white/30" />
                 Histórico Arquivado
               </h2>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 opacity-50 hover:opacity-100 transition-opacity duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50 hover:opacity-100 transition-opacity duration-500">
                 {championships.filter(c => c.status === 'ARCHIVED').map((c) => (
-                  <Card key={c.id} className="bg-[#121212] border-white/5 overflow-hidden group hover:border-[#FF6B00]/30 transition-all duration-300 rounded-3xl grayscale hover:grayscale-0">
-                    <CardContent className="p-8">
-                      <div className="flex justify-between items-start mb-6">
-                        <div>
-                          <div className="flex items-center gap-3 mb-2 flex-wrap">
-                            <h3 className="text-2xl font-display font-black text-white uppercase tracking-tighter">{c.name}</h3>
-                            <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-slate-500/10 text-slate-400 border-slate-500/20">Arquivado</Badge>
-                          </div>
-                          <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {c.year}</span>
-                            <span className="capitalize">{c.sex}</span>
-                          </div>
+                  <div key={c.id} className="relative group grayscale hover:grayscale-0 transition-all">
+                    <Link
+                      href={`/admin/championships/${c.id}`}
+                      className="bg-[#121212] border border-white/5 hover:border-slate-500/30 rounded-3xl p-6 transition-all block h-full"
+                    >
+                      <div className="flex items-start justify-between mb-5">
+                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
+                          <Trophy className="w-6 h-6 text-slate-600" />
                         </div>
-                        <div className="flex gap-2">
-                           <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'DRAFT')} className="h-9 w-9 rounded-xl hover:bg-orange-500/10 text-slate-500 hover:text-orange-500" title="Restaurar para Rascunho"><Calendar className="w-4 h-4" /></Button>
-                           <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(c)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-500 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
-                        </div>
+                        <Badge className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border bg-slate-500/10 text-slate-400 border-slate-500/20">
+                          Arquivado
+                        </Badge>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                         {c.categories.map(cat => <span key={cat.id} className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.05] rounded-lg text-[9px] font-black text-slate-400 uppercase">{cat.name}</span>)}
+
+                      <h3 className="text-xl font-display font-black text-white/70 uppercase tracking-tight leading-tight mb-1">
+                        {c.name}
+                      </h3>
+
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-5 line-clamp-1">
+                        {c.year} · {c.sex}
+                      </p>
+
+                      <div className="flex items-center gap-2 pt-4 border-t border-white/5">
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStatusChange(c.id, 'DRAFT'); }} className="h-8 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-orange-500">
+                          Restaurar
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteClick(c); }} className="h-8 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-red-500 ml-auto">
+                          Excluir
+                        </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </Link>
+                  </div>
                 ))}
               </div>
             </div>
@@ -602,7 +640,6 @@ export default function AdminChampionshipsPage() {
       {showDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 md:p-8 animate-in fade-in duration-200">
           <Card className="w-full max-w-2xl bg-[#0A0A0A] border-white/10 text-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Step indicators */}
             <div className="flex border-b border-white/5 shrink-0">
               {STEPS.map((s, i) => (
                 <div key={i} className={`flex-1 px-2 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[#FF6B00] bg-[#FF6B00]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
@@ -654,7 +691,6 @@ export default function AdminChampionshipsPage() {
         </div>
       )}
 
-      {/* ─── Deletion Confirmation Modal ─── */}
       {showDeleteConfirm && deletingChampionship && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in fade-in duration-200">
           <Card className="w-full max-w-lg bg-[#0A0A0A] border-red-500/20 text-white rounded-[32px] shadow-2xl overflow-hidden">
@@ -722,5 +758,5 @@ export default function AdminChampionshipsPage() {
 }
 
 function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${className}`}>{children}</span>
+  return <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-semibold ${className}`}>{children}</span>
 }
