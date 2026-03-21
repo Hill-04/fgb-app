@@ -153,12 +153,11 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                championshipName={championship.name} 
              />
              
-             <form action="/admin/dashboard" method="GET">
+             <form action="/admin/dashboard" method="GET" className="flex items-center gap-2">
                <div className="relative group">
                  <select 
                    name="championshipId"
                    defaultValue={activeChampionshipId}
-                   onChange={(e) => e.target.form?.submit()}
                    className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                  >
                    {allChampionships.map(c => (
@@ -167,6 +166,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                  </select>
                  <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
                </div>
+               <button type="submit" className="h-9 px-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/10">IR</button>
              </form>
           </div>
         </div>
