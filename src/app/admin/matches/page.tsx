@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/Badge'
@@ -18,7 +19,8 @@ import {
   Filter,
   Users,
   Clock,
-  ChevronDown
+  ChevronDown,
+  ArrowRight
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -51,6 +53,17 @@ const STATUS_OPTIONS = [
 ]
 
 export default function AdminMatchesPage() {
+  return (
+    <Suspense fallback={<div className="p-10 text-white flex justify-center mt-20">Carregando painel de jogos...</div>}>
+      <AdminMatchesContent />
+    </Suspense>
+  )
+}
+
+function AdminMatchesContent() {
+  const searchParams = useSearchParams()
+  const urlChampionshipId = searchParams.get('championshipId')
+
   const [games, setGames] = useState<Game[]>([])
   const [championships, setChampionships] = useState<Championship[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,18 +88,21 @@ export default function AdminMatchesPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true)
+    let activeChampId = selectedChamp
     try {
       const champRes = await fetch('/api/championships')
       if (champRes.ok) {
-        const champData = await champRes.json()
+        const champDataFull = await champRes.json()
+        const champData = champDataFull.filter((c: any) => c.status !== 'ARCHIVED')
         setChampionships(champData)
         if (!selectedChamp && champData.length > 0) {
-          setSelectedChamp(champData[0].id)
+          activeChampId = urlChampionshipId || champData[0].id
+          setSelectedChamp(activeChampId)
         }
       }
 
       const url = new URL('/api/admin/games', window.location.origin)
-      if (selectedChamp) url.searchParams.set('championshipId', selectedChamp)
+      if (activeChampId) url.searchParams.set('championshipId', activeChampId)
       if (selectedCat) url.searchParams.set('categoryId', selectedCat)
 
       const gameRes = await fetch(url.toString())
@@ -161,7 +177,24 @@ export default function AdminMatchesPage() {
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Gestão de placares e calendário</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-[#111] p-1 rounded-xl border border-white/5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <form action="/admin/matches" method="GET">
+            <div className="relative">
+              <select
+                name="championshipId"
+                value={selectedChamp}
+                onChange={e => { setSelectedChamp(e.target.value); setSelectedCat(''); }}
+                className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+              >
+                {championships.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
+            </div>
+          </form>
+
+          <div className="flex items-center gap-2 bg-[#111] p-1 rounded-xl border border-white/5">
           <Button
             variant="ghost"
             size="sm"
@@ -186,6 +219,7 @@ export default function AdminMatchesPage() {
           </Button>
         </div>
       </div>
+    </div>
 
       {/* Advanced Filters */}
       <div className="bg-[#0A0A0A] border border-white/5 p-8 rounded-[32px] space-y-6">

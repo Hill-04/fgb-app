@@ -22,26 +22,101 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
     // 1. Fetch available championships for the selector
     const allChampionships = await prisma.championship.findMany({
       orderBy: { createdAt: 'desc' },
+      where: { status: { not: 'ARCHIVED' } },
       select: { id: true, name: true }
     })
 
     // 2. Determine active championship
-    const activeChampionshipId = championshipId || allChampionships[0]?.id
+    const activeChampionshipId = championshipId || null
 
     if (!activeChampionshipId) {
+      const championships = await prisma.championship.findMany({
+        orderBy: { createdAt: 'desc' },
+        where: { status: { not: 'ARCHIVED' } },
+        include: {
+          _count: {
+            select: {
+              registrations: { where: { status: 'CONFIRMED' } },
+              games: true,
+            }
+          },
+          categories: { select: { id: true, name: true } }
+        }
+      })
+
+      const statusColor: Record<string, string> = {
+        'DRAFT': 'text-slate-400 bg-slate-500/10 border-slate-500/20',
+        'REGISTRATION_OPEN': 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+        'REGISTRATION_CLOSED': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
+        'ONGOING': 'text-green-400 bg-green-500/10 border-green-500/20',
+        'FINISHED': 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+      }
+
       return (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-10">
-          <div className="w-20 h-20 rounded-3xl bg-orange-500/10 flex items-center justify-center mb-6">
-            <Trophy className="w-10 h-10 text-orange-500" />
+        <div className="space-y-8 pb-10">
+          <div>
+            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">
+              Central de Comando
+            </span>
+            <h1 className="text-3xl font-black text-white tracking-tight mt-1">
+              Todos os Campeonatos
+            </h1>
+            <p className="text-slate-500 text-sm mt-1">
+              Selecione um campeonato para gerenciar
+            </p>
           </div>
-          <h1 className="text-2xl font-black text-white mb-2">Nenhum Campeonato Encontrado</h1>
-          <p className="text-slate-500 max-w-sm mb-8">Comece criando seu primeiro campeonato para ativar a Central de Comando.</p>
-          <Link 
-            href="/admin/championships" 
-            className="h-12 px-8 bg-orange-500 hover:bg-orange-600 text-white rounded-xl font-bold flex items-center transition-all"
-          >
-            Criar Campeonato
-          </Link>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {championships.map((c) => (
+              <Link
+                key={c.id}
+                href={`/admin/dashboard?championshipId=${c.id}`}
+                className="group bg-[#0A0A0A] border border-white/5 hover:border-orange-500/30 rounded-3xl p-6 transition-all hover:bg-orange-500/[0.02]"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="w-10 h-10 rounded-2xl bg-orange-500/10 flex items-center justify-center">
+                    <Trophy className="w-5 h-5 text-orange-500" />
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${statusColor[c.status] || statusColor['DRAFT']}`}>
+                    {formatChampionshipStatus(c.status)}
+                  </span>
+                </div>
+                <h3 className="text-base font-black text-white group-hover:text-orange-400 transition-colors leading-tight mb-1">
+                  {c.name}
+                </h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  {c.categories.map(cat => cat.name).join(' · ') || 'Sem categorias'}
+                </p>
+                <div className="flex items-center gap-4 pt-4 border-t border-white/5">
+                  <div className="text-center">
+                    <p className="text-[9px] font-black text-slate-500 uppercase">Times</p>
+                    <p className="text-sm font-black text-white">{c._count.registrations}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[9px] font-black text-slate-500 uppercase">Jogos</p>
+                    <p className="text-sm font-black text-white">{c._count.games}</p>
+                  </div>
+                  <div className="flex-1 text-right">
+                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest group-hover:underline">
+                      Gerenciar →
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+
+            <Link
+              href="/admin/championships"
+              className="group bg-[#0A0A0A] border border-dashed border-white/10 hover:border-orange-500/30 rounded-3xl p-6 transition-all flex flex-col items-center justify-center gap-3 min-h-[180px]"
+            >
+              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-orange-500/10 transition-all">
+                <Trophy className="w-5 h-5 text-slate-500 group-hover:text-orange-500 transition-colors" />
+              </div>
+              <p className="text-xs font-black text-slate-500 group-hover:text-white uppercase tracking-widest transition-colors">
+                + Novo Campeonato
+              </p>
+            </Link>
+          </div>
         </div>
       )
     }

@@ -27,6 +27,7 @@ export default async function AdminStandingsPage({
     // 1. Fetch available championships for the selector
     const allChampionships = await prisma.championship.findMany({
       orderBy: { createdAt: 'desc' },
+      where: { status: { not: 'ARCHIVED' } },
       select: { id: true, name: true }
     })
 
