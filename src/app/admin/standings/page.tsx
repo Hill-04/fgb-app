@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { BarChart3, Shield, Trophy, Medal } from "lucide-react"
 import { Badge } from "@/components/Badge"
-import { ExportStandingsButtons } from "./ExportStandingsWrapper"
+import { ExportStandingsButtons } from "./ExportStandingsButtons"
 import { Brackets } from "@/components/Brackets"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -274,12 +274,11 @@ export default async function AdminStandingsPage({
       </div>
     )
   } catch (error: any) {
-    console.error('Standings error:', error)
+    console.error('[STANDINGS PAGE ERROR]', error?.message, error?.stack)
     return (
-      <div className="space-y-4 p-10 text-center">
-        <Trophy className="w-12 h-12 text-slate-800 mx-auto" />
-        <h2 className="text-xl font-black text-white">Erro ao carregar classificacão</h2>
-        <p className="text-slate-500 text-xs font-mono">{error.message}</p>
+      <div className="p-10 text-center">
+        <h2 className="text-xl font-black text-white mb-2">Erro ao carregar Classificação</h2>
+        <p className="text-slate-500 font-mono text-xs">{error?.message || 'Erro desconhecido'}</p>
       </div>
     )
   }
