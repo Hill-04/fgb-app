@@ -90,13 +90,12 @@ export default async function AdminStandingsPage({
           </div>
 
           <div className="flex items-center gap-3">
-             <form action="/admin/standings" method="GET">
+             <form action="/admin/standings" method="GET" className="flex items-center gap-2">
                <input type="hidden" name="categoryId" value={categoryId || ''} />
                <div className="relative group">
                  <select 
                    name="championshipId"
                    defaultValue={activeChampionshipId}
-                   onChange={(e) => e.target.form?.submit()}
                    className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500"
                  >
                    {allChampionships.map(c => (
@@ -104,6 +103,7 @@ export default async function AdminStandingsPage({
                    ))}
                  </select>
                </div>
+               <button type="submit" className="h-9 px-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/10">IR</button>
              </form>
           </div>
         </div>
