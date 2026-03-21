@@ -6,6 +6,7 @@ import { Trophy, Users, Calendar, BarChart3, ArrowRight, CheckCircle2, PlayCircl
 import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { formatChampionshipStatus } from '@/lib/utils'
 import { DeleteChampionship } from '@/components/DeleteChampionship'
 
 export const dynamic = 'force-dynamic'
@@ -166,7 +167,6 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
                  </select>
                  <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
                </div>
-               <button type="submit" className="h-9 px-4 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/10">IR</button>
              </form>
           </div>
         </div>
@@ -175,7 +175,7 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             label="Status Atual"
-            value={championship.status}
+            value={formatChampionshipStatus(championship.status)}
             sublabel="Situação do campeonato"
             accent="orange"
             icon={<Settings className="w-5 h-5" />}

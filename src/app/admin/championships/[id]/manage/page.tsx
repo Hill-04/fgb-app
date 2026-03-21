@@ -8,6 +8,7 @@ import { Trophy, AlertTriangle, CheckCircle2, Ghost, ArrowRight, Settings2 } fro
 import Link from 'next/link'
 import { ManualRegistrationModal } from '../ManualRegistrationModal'
 import { RegistrationActions } from '../RegistrationActions'
+import { formatChampionshipStatus } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -68,7 +69,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
             </Link>
             <ManualRegistrationModal championshipId={championship.id} categories={championship.categories} />
             <Badge variant="blue" className="px-6 h-12 flex items-center border-blue-500/20 text-[10px] uppercase font-black tracking-widest bg-blue-500/5">
-              Status: {championship.status}
+              Status: {formatChampionshipStatus(championship.status)}
             </Badge>
         </div>
       </div>

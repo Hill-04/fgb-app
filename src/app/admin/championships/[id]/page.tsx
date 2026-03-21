@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Calendar, MapPin, Users, Info, Zap } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { formatChampionshipStatus } from '@/lib/utils'
 
 import { ChampionshipAIPipeline } from './ChampionshipAIPipeline'
 
@@ -39,14 +40,6 @@ export default async function ChampionshipDetailsPage({
     notFound()
   }
 
-  const statusLabels: Record<string, string> = {
-    DRAFT: 'Rascunho',
-    REGISTRATION_OPEN: 'Inscrições Abertas',
-    SCHEDULED: 'Agendado',
-    IN_PROGRESS: 'Em Andamento',
-    FINISHED: 'Encerrado',
-  }
-
   // Map status to pipeline step
   const statusToStep: Record<string, number> = {
     DRAFT: 1,
@@ -63,7 +56,7 @@ export default async function ChampionshipDetailsPage({
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Badge variant="blue" className="bg-blue-500/10 text-blue-400 border-blue-500/20 px-3 font-black uppercase tracking-widest text-[9px]">
-              {statusLabels[championship.status] || championship.status}
+              {formatChampionshipStatus(championship.status)}
             </Badge>
             <div className="h-4 w-px bg-white/10" />
             <span className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em]">Painel de Controle IA</span>

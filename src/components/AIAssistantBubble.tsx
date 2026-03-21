@@ -33,17 +33,17 @@ export function AIAssistantBubble() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-16 h-16 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl hover:scale-110 active:scale-90 pointer-events-auto relative group overflow-hidden",
+          "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl hover:scale-110 active:scale-90 pointer-events-auto relative group overflow-hidden",
           isOpen ? "bg-white/10 rotate-90" : "bg-gradient-to-tr from-[#FF6B00] to-[#E66000]"
         )}
       >
         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />
         {isOpen ? (
-          <X className="w-7 h-7 text-white relative z-10" />
+          <X className="w-4 h-4 text-white relative z-10" />
         ) : (
           <div className="relative z-10">
-            <Sparkles className="w-8 h-8 text-white animate-pulse" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping" />
+            <Sparkles className="w-4 h-4 text-white animate-pulse" />
+            <div className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full animate-ping" />
           </div>
         )}
       </button>
