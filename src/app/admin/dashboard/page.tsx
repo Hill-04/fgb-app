@@ -139,35 +139,37 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
     return (
       <div className="space-y-8 pb-10">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Central de Comando</span>
-              <Badge variant="blue" size="sm" className="bg-blue-500/10 text-blue-500 border-blue-500/20">ADMIN</Badge>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Central de Comando</span>
+                <Badge variant="blue" size="sm" className="bg-blue-500/10 text-blue-500 border-blue-500/20">ADMIN</Badge>
+              </div>
+              <h1 className="text-3xl font-black text-white tracking-tight">{championship.name}</h1>
             </div>
-            <h1 className="text-3xl font-black text-white tracking-tight">{championship.name}</h1>
-          </div>
 
-          <div className="flex items-center gap-3">
-             <DeleteChampionship 
-               championshipId={activeChampionshipId} 
-               championshipName={championship.name} 
-             />
-             
-             <form action="/admin/dashboard" method="GET" className="flex items-center gap-2">
-               <div className="relative group">
-                 <select 
-                   name="championshipId"
-                   defaultValue={activeChampionshipId}
-                   className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                 >
-                   {allChampionships.map(c => (
-                     <option key={c.id} value={c.id}>{c.name}</option>
-                   ))}
-                 </select>
-                 <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
-               </div>
-             </form>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <form action="/admin/dashboard" method="GET">
+                <div className="relative">
+                  <select 
+                    name="championshipId"
+                    defaultValue={activeChampionshipId}
+                    className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20"
+                  >
+                    {allChampionships.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
+                </div>
+              </form>
+
+              <DeleteChampionship 
+                championshipId={activeChampionshipId} 
+                championshipName={championship.name} 
+              />
+            </div>
           </div>
         </div>
 
