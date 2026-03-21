@@ -512,49 +512,89 @@ export default function AdminChampionshipsPage() {
           <p className="text-slate-500 mb-8 max-w-md mx-auto">Crie o primeiro campeonato da temporada.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {championships.map((c) => (
-            <Card key={c.id} className="bg-[#121212] border-white/5 overflow-hidden group hover:border-[#FF6B00]/30 transition-all duration-300 rounded-3xl">
-              <CardContent className="p-8">
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                      <h3 className="text-2xl font-display font-black text-white uppercase tracking-tighter">{c.name}</h3>
-                      <Badge className={`px-3 py-1 text-[9px] font-black tracking-widest uppercase border ${STATUS_STYLES[c.status] || STATUS_STYLES.DRAFT}`}>{STATUS_LABELS[c.status] || c.status}</Badge>
-                      {c.isSimulation && (
-                        <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20">
-                          Simulação
-                        </Badge>
-                      )}
+        <div className="space-y-12">
+          {/* Active Championships */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {championships.filter(c => c.status !== 'ARCHIVED').map((c) => (
+              <Card key={c.id} className="bg-[#121212] border-white/5 overflow-hidden group hover:border-[#FF6B00]/30 transition-all duration-300 rounded-3xl">
+                <CardContent className="p-8">
+                  <div className="flex justify-between items-start mb-6">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h3 className="text-2xl font-display font-black text-white uppercase tracking-tighter">{c.name}</h3>
+                        <Badge className={`px-3 py-1 text-[9px] font-black tracking-widest uppercase border ${STATUS_STYLES[c.status] || STATUS_STYLES.DRAFT}`}>{STATUS_LABELS[c.status] || c.status}</Badge>
+                        {c.isSimulation && (
+                          <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-purple-500/10 text-purple-400 border-purple-500/20">
+                            Simulação
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                        <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-[#FF6B00]" /> {c.year}</span>
+                        <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-[#FF6B00]" /> {c._count?.registrations || 0} Inscrições</span>
+                        <span className="capitalize">{c.sex}</span>
+                      </div>
                     </div>
-                    <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
-                      <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-[#FF6B00]" /> {c.year}</span>
-                      <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-[#FF6B00]" /> {c._count?.registrations || 0} Inscrições</span>
-                      <span className="capitalize">{c.sex}</span>
+                    <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" size="icon" onClick={() => openEditDialog(c)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white"><Edit2 className="w-4 h-4" /></Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(c)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
                     </div>
                   </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" size="icon" onClick={() => openEditDialog(c)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white"><Edit2 className="w-4 h-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(c)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                  <div className="flex flex-wrap gap-2 mb-8">
+                    {c.categories.map(cat => <span key={cat.id} className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.05] rounded-lg text-[9px] font-black text-slate-400 uppercase">{cat.name}</span>)}
                   </div>
-                </div>
-                <div className="flex flex-wrap gap-2 mb-8">
-                  {c.categories.map(cat => <span key={cat.id} className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.05] rounded-lg text-[9px] font-black text-slate-400 uppercase">{cat.name}</span>)}
-                </div>
-                <div className="pt-6 border-t border-white/5 flex gap-3">
-                  <Link href={`/admin/championships/${c.id}/manage`} className="flex-1">
-                    <Button className="w-full bg-white/5 hover:bg-white/10 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest border border-white/10">Painel de Controle</Button>
-                  </Link>
-                  {c.status === 'DRAFT' && (
-                    <Button onClick={() => handleStatusChange(c.id, 'REGISTRATION_OPEN')} disabled={updatingId === c.id}
-                      className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest">
-                      Abrir Inscrições
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <div className="pt-6 border-t border-white/5 flex gap-3">
+                    <Link href={`/admin/championships/${c.id}`} className="flex-1">
+                      <Button className="w-full bg-white/5 hover:bg-white/10 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest border border-white/10">Painel de Controle</Button>
+                    </Link>
+                    {c.status === 'DRAFT' && (
+                      <Button onClick={() => handleStatusChange(c.id, 'REGISTRATION_OPEN')} disabled={updatingId === c.id}
+                        className="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold h-11 rounded-xl text-xs uppercase tracking-widest">
+                        Abrir Inscrições
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Archived Championships */}
+          {championships.filter(c => c.status === 'ARCHIVED').length > 0 && (
+            <div className="pt-8 border-t border-white/5">
+              <h2 className="text-xl font-display font-black text-white/50 uppercase tracking-tight flex items-center gap-3 mb-6">
+                <Trash2 className="w-5 h-5 text-white/30" />
+                Histórico Arquivado
+              </h2>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 opacity-50 hover:opacity-100 transition-opacity duration-500">
+                {championships.filter(c => c.status === 'ARCHIVED').map((c) => (
+                  <Card key={c.id} className="bg-[#121212] border-white/5 overflow-hidden group hover:border-[#FF6B00]/30 transition-all duration-300 rounded-3xl grayscale hover:grayscale-0">
+                    <CardContent className="p-8">
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="text-2xl font-display font-black text-white uppercase tracking-tighter">{c.name}</h3>
+                            <Badge className="px-3 py-1 text-[9px] font-black tracking-widest uppercase border bg-slate-500/10 text-slate-400 border-slate-500/20">Arquivado</Badge>
+                          </div>
+                          <div className="flex gap-4 text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                            <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {c.year}</span>
+                            <span className="capitalize">{c.sex}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                           <Button variant="ghost" size="icon" onClick={() => handleStatusChange(c.id, 'DRAFT')} className="h-9 w-9 rounded-xl hover:bg-orange-500/10 text-slate-500 hover:text-orange-500" title="Restaurar para Rascunho"><Calendar className="w-4 h-4" /></Button>
+                           <Button variant="ghost" size="icon" onClick={() => handleDeleteClick(c)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-500 hover:text-red-500"><Trash2 className="w-4 h-4" /></Button>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                         {c.categories.map(cat => <span key={cat.id} className="px-3 py-1.5 bg-white/[0.03] border border-white/[0.05] rounded-lg text-[9px] font-black text-slate-400 uppercase">{cat.name}</span>)}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 

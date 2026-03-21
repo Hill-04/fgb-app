@@ -2,134 +2,17 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, Calendar, BarChart3, ArrowRight, CheckCircle2, PlayCircle, Flag, Settings, Sparkles } from 'lucide-react'
-import { Brackets } from '@/components/Brackets'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { Trophy, Users, Calendar, Flag, Activity, TrendingUp, ShieldCheck } from 'lucide-react'
 import { formatChampionshipStatus } from '@/lib/utils'
-import { DeleteChampionship } from '@/components/DeleteChampionship'
 
 export const dynamic = 'force-dynamic'
 
-interface PageProps {
-  searchParams: Promise<{ championshipId?: string }>
-}
-
-export default async function AdminDashboardPage({ searchParams }: PageProps) {
-  const { championshipId } = await searchParams
-
+export default async function FederationDashboardPage() {
   try {
-    // 1. Fetch available championships for the selector
-    const allChampionships = await prisma.championship.findMany({
-      orderBy: { createdAt: 'desc' },
+    // 1. Fetch ALL non-archived championships for global metrics
+    const activeChampionships = await prisma.championship.findMany({
       where: { status: { not: 'ARCHIVED' } },
-      select: { id: true, name: true }
-    })
-
-    // 2. Determine active championship
-    const activeChampionshipId = championshipId || null
-
-    if (!activeChampionshipId) {
-      const championships = await prisma.championship.findMany({
-        orderBy: { createdAt: 'desc' },
-        where: { status: { not: 'ARCHIVED' } },
-        include: {
-          _count: {
-            select: {
-              registrations: { where: { status: 'CONFIRMED' } },
-              games: true,
-            }
-          },
-          categories: { select: { id: true, name: true } }
-        }
-      })
-
-      const statusColor: Record<string, string> = {
-        'DRAFT': 'text-slate-400 bg-slate-500/10 border-slate-500/20',
-        'REGISTRATION_OPEN': 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-        'REGISTRATION_CLOSED': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-        'ONGOING': 'text-green-400 bg-green-500/10 border-green-500/20',
-        'FINISHED': 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-      }
-
-      return (
-        <div className="space-y-8 pb-10">
-          <div>
-            <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">
-              Central de Comando
-            </span>
-            <h1 className="text-3xl font-black text-white tracking-tight mt-1">
-              Todos os Campeonatos
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              Selecione um campeonato para gerenciar
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {championships.map((c) => (
-              <Link
-                key={c.id}
-                href={`/admin/dashboard?championshipId=${c.id}`}
-                className="group bg-[#0A0A0A] border border-white/5 hover:border-orange-500/30 rounded-3xl p-6 transition-all hover:bg-orange-500/[0.02]"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-10 h-10 rounded-2xl bg-orange-500/10 flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-orange-500" />
-                  </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg border ${statusColor[c.status] || statusColor['DRAFT']}`}>
-                    {formatChampionshipStatus(c.status)}
-                  </span>
-                </div>
-                <h3 className="text-base font-black text-white group-hover:text-orange-400 transition-colors leading-tight mb-1">
-                  {c.name}
-                </h3>
-                <p className="text-xs text-slate-500 mb-4">
-                  {c.categories.map(cat => cat.name).join(' · ') || 'Sem categorias'}
-                </p>
-                <div className="flex items-center gap-4 pt-4 border-t border-white/5">
-                  <div className="text-center">
-                    <p className="text-[9px] font-black text-slate-500 uppercase">Times</p>
-                    <p className="text-sm font-black text-white">{c._count.registrations}</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-[9px] font-black text-slate-500 uppercase">Jogos</p>
-                    <p className="text-sm font-black text-white">{c._count.games}</p>
-                  </div>
-                  <div className="flex-1 text-right">
-                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest group-hover:underline">
-                      Gerenciar →
-                    </span>
-                  </div>
-                </div>
-              </Link>
-            ))}
-
-            <Link
-              href="/admin/championships"
-              className="group bg-[#0A0A0A] border border-dashed border-white/10 hover:border-orange-500/30 rounded-3xl p-6 transition-all flex flex-col items-center justify-center gap-3 min-h-[180px]"
-            >
-              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-orange-500/10 transition-all">
-                <Trophy className="w-5 h-5 text-slate-500 group-hover:text-orange-500 transition-colors" />
-              </div>
-              <p className="text-xs font-black text-slate-500 group-hover:text-white uppercase tracking-widest transition-colors">
-                + Novo Campeonato
-              </p>
-            </Link>
-          </div>
-        </div>
-      )
-    }
-
-    // 3. Fetch data for the selected championship
-    const championship = await prisma.championship.findUnique({
-      where: { id: activeChampionshipId },
       include: {
-        categories: {
-          include: {
-            _count: { select: { games: true } }
-          }
-        },
         _count: {
           select: {
             registrations: { where: { status: 'CONFIRMED' } },
@@ -139,337 +22,119 @@ export default async function AdminDashboardPage({ searchParams }: PageProps) {
       }
     })
 
-    if (!championship) return <div>Campeonato não encontrado</div>
+    const totalActive = activeChampionships.length
+    const totalTeams = activeChampionships.reduce((acc, curr) => acc + curr._count.registrations, 0)
+    const totalGames = activeChampionships.reduce((acc, curr) => acc + curr._count.games, 0)
 
-    const confirmedTeams = championship._count.registrations
-    const totalGames = championship._count.games
-    const completedGames = await prisma.game.count({
-      where: { championshipId: activeChampionshipId, status: 'FINISHED' }
-    })
-
-    const nextGame = await prisma.game.findFirst({
-      where: { 
-        championshipId: activeChampionshipId, 
-        status: 'SCHEDULED',
-        dateTime: { gt: new Date() }
-      },
-      orderBy: { dateTime: 'asc' },
-      include: { homeTeam: true, awayTeam: true, category: true }
-    })
-
-    const lastResults = await prisma.game.findMany({
-      where: { championshipId: activeChampionshipId, status: 'FINISHED' },
-      orderBy: { dateTime: 'desc' },
-      take: 5,
-      include: { homeTeam: true, awayTeam: true, category: true }
-    })
-
-    const upcomingGames = await prisma.game.findMany({
-      where: { championshipId: activeChampionshipId, status: 'SCHEDULED' },
-      orderBy: { dateTime: 'asc' },
-      take: 5,
-      include: { homeTeam: true, awayTeam: true, category: true }
-    })
-
-    // Fetch top 3 of first category
-    const firstCategory = championship.categories[0]
-    const topStandings = firstCategory ? await prisma.standing.findMany({
-      where: { categoryId: firstCategory.id },
-      orderBy: [
-        { points: 'desc' },
-        { wins: 'desc' }
-      ],
-      take: 3,
-      include: { team: true }
-    }) : []
-
-    // Fetch playoff preview for first category with playoffs
-    const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({
-      where: { 
-        championshipId: activeChampionshipId,
-        games: { some: { phase: { gt: 1 } } }
-      },
-      include: {
-        games: {
-          where: { phase: { gt: 1 } },
-          include: {
-            homeTeam: { select: { name: true, logoUrl: true } },
-            awayTeam: { select: { name: true, logoUrl: true } }
-          },
-          orderBy: { dateTime: 'asc' }
-        }
+    // Calculate finished games across ALL active championships
+    const finishedGames = await prisma.game.count({
+      where: {
+        championship: { status: { not: 'ARCHIVED' } },
+        status: 'FINISHED'
       }
-    }) : null
+    })
 
-    // Status / Pipeline mapping
-    const statusMap = {
-      'DRAFT': 1,
-      'REGISTRATION_OPEN': 2,
-      'REGISTRATION_CLOSED': 3,
-      'ONGOING': 4,
-      'FINISHED': 5
-    }
-    const currentStep = statusMap[championship.status as keyof typeof statusMap] || 1
+    const statusCounts = activeChampionships.reduce((acc, curr) => {
+      acc[curr.status] = (acc[curr.status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
 
     return (
       <div className="space-y-8 pb-10">
-        {/* Header Section */}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Central de Comando</span>
-                <Badge variant="blue" size="sm" className="bg-blue-500/10 text-blue-500 border-blue-500/20">ADMIN</Badge>
+                <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Visão Global</span>
+                <Badge variant="blue" size="sm" className="bg-orange-500/10 text-orange-500 border-orange-500/20">EXECUTIVA</Badge>
               </div>
-              <h1 className="text-3xl font-black text-white tracking-tight">{championship.name}</h1>
+              <h1 className="text-3xl font-black text-white tracking-tight">Painel da Federação</h1>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Métricas de todos os campeonatos ativos</p>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-              <form action="/admin/dashboard" method="GET">
-                <div className="relative">
-                  <select 
-                    name="championshipId"
-                    defaultValue={activeChampionshipId}
-                    className="appearance-none bg-[#111] border border-white/10 text-white text-xs font-bold py-2.5 pl-4 pr-10 rounded-xl cursor-pointer hover:border-orange-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-orange-500/20"
-                  >
-                    {allChampionships.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <ArrowRight className="w-3 h-3 text-slate-500 absolute right-4 top-1/2 -translate-y-1/2 rotate-90" />
-                </div>
-              </form>
-
-              <DeleteChampionship 
-                championshipId={activeChampionshipId} 
-                championshipName={championship.name} 
-              />
-            </div>
+            <Link href="/admin/championships" className="h-10 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center transition-all border border-white/10">
+              Acessar Campeonatos →
+            </Link>
           </div>
         </div>
 
-        {/* 4 Cards Stat Summary */}
+        {/* Global KPIs */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            label="Status Atual"
-            value={formatChampionshipStatus(championship.status)}
-            sublabel="Situação do campeonato"
+            label="Campeonatos Ativos"
+            value={totalActive}
+            sublabel="Em fase de planejamento ou execução"
             accent="orange"
-            icon={<Settings className="w-5 h-5" />}
+            icon={<Trophy className="w-5 h-5" />}
           />
           <StatCard
-            label="Equipes Escritas"
-            value={confirmedTeams}
-            sublabel="Times confirmados"
+            label="Equipes Envolvidas"
+            value={totalTeams}
+            sublabel="Total de Inscrições Confirmadas"
             accent="blue"
             icon={<Users className="w-5 h-5" />}
           />
           <StatCard
-            label="Progresso de Jogos"
-            value={`${completedGames}/${totalGames}`}
-            sublabel="Jogos realizados"
+            label="Volume de Jogos"
+            value={totalGames}
+            sublabel="Jogos previstos no calendário geral"
             accent="purple"
             icon={<Calendar className="w-5 h-5" />}
           />
           <StatCard
-            label="Próximo Jogo"
-            value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"}
-            sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo agendado"}
+            label="Jogos Realizados"
+            value={finishedGames}
+            sublabel="Súmulas já cadastradas no sistema"
             accent="green"
-            icon={<PlayCircle className="w-5 h-5" />}
+            icon={<Flag className="w-5 h-5" />}
           />
         </div>
 
-        {/* Visual Pipeline */}
-        <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-6">
-          <div className="flex justify-between items-center mb-8">
-            <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em]">Pipeline de Execução</h3>
-            <Badge variant="purple" size="sm" className="bg-purple-500/10 text-purple-500 border-purple-500/20">ESTÁVEL</Badge>
-          </div>
-          
-          <div className="flex flex-wrap md:flex-nowrap gap-2">
-            {[
-              { id: 1, label: "Criar", icon: Trophy },
-              { id: 2, label: "Inscrições", icon: Users },
-              { id: 3, label: "Organizar IA", icon: Sparkles },
-              { id: 4, label: "Em Andamento", icon: PlayCircle },
-              { id: 5, label: "Encerrar", icon: Flag }
-            ].map((step, idx, arr) => {
-              const isPast = currentStep > step.id
-              const isCurrent = currentStep === step.id
-              
-              return (
-                <div key={step.id} className="flex-1 min-w-[120px] flex items-center">
-                  <div className={`flex-1 p-4 rounded-2xl border transition-all ${
-                    isCurrent ? 'bg-orange-500/10 border-orange-500/30' : 
-                    isPast ? 'bg-green-500/5 border-green-500/20' : 'bg-white/[0.05] border-white/5'
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                        isCurrent ? 'bg-orange-500 text-white' :
-                        isPast ? 'bg-green-500/20 text-green-500' : 'bg-white/5 text-slate-500'
-                      }`}>
-                        {isPast ? <CheckCircle2 className="w-5 h-5" /> : <step.icon className="w-5 h-5" />}
-                      </div>
-                      <div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${
-                          isCurrent ? 'text-orange-500' : isPast ? 'text-green-500' : 'text-slate-500'
-                        }`}>{step.id}. {step.label}</p>
-                        <p className="text-[9px] text-slate-600 font-bold">{isPast ? 'CONCLUÍDO' : isCurrent ? 'ATIVO' : 'AGUARDANDO'}</p>
-                      </div>
-                    </div>
-                  </div>
-                  {idx < arr.length - 1 && (
-                    <ArrowRight className="w-4 h-4 text-slate-800 mx-1 hidden lg:block" />
-                  )}
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="mt-8 p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 flex items-center gap-4">
-             <div className="text-2xl">🏀</div>
-             <div className="flex-1">
-               <p className="text-sm font-black text-white">Status: {championship.status}</p>
-               <p className="text-xs text-slate-500 font-medium">
-                 {currentStep === 1 && "Complete as informações básicas para abrir as inscrições."}
-                 {currentStep === 2 && "Acompanhe as inscrições dos times e valide os documentos."}
-                 {currentStep === 3 && "Use nossa IA para gerar o calendário e organizar categorias."}
-                 {currentStep === 4 && "Registre os resultados dos jogos realizados para atualizar a classificação."}
-                 {currentStep === 5 && "O campeonato foi finalizado. Veja o relatório final."}
-               </p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Status Breakdown */}
+          <div className="lg:col-span-2 bg-[#0A0A0A] border border-white/5 rounded-3xl p-8">
+             <div className="flex items-center gap-3 mb-8">
+               <Activity className="w-5 h-5 text-orange-500" />
+               <h3 className="text-sm font-black text-white uppercase tracking-widest">Distribuição por Fase</h3>
              </div>
-             <Link 
-              href={currentStep === 4 ? "/admin/matches" : "/admin/championships"}
-              className="h-10 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center transition-all"
-             >
-               {currentStep === 4 ? "Registrar Resultados →" : "Gerenciar →"}
-             </Link>
+             
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { label: 'Rascunho', status: 'DRAFT', count: statusCounts['DRAFT'] || 0, color: 'text-slate-400', bg: 'bg-slate-500/10' },
+                  { label: 'Inscrições', status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+                  { label: 'Em Andamento', status: 'ONGOING', count: statusCounts['ONGOING'] || 0, color: 'text-green-400', bg: 'bg-green-500/10' },
+                  { label: 'Encerrados', status: 'FINISHED', count: statusCounts['FINISHED'] || 0, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+                ].map((item) => (
+                  <div key={item.status} className={`${item.bg} border border-white/5 rounded-2xl p-5 flex flex-col items-center justify-center text-center`}>
+                    <span className={`text-3xl font-black ${item.color} leading-none mb-2`}>{item.count}</span>
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{item.label}</span>
+                  </div>
+                ))}
+             </div>
+          </div>
+
+          <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
+             <ShieldCheck className="w-12 h-12 text-slate-800 mb-4" />
+             <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2">Sistema Operacional</h3>
+             <p className="text-xs font-bold text-slate-500 mt-1">Todos os serviços online.</p>
+             <div className="mt-6 flex items-center justify-center gap-2">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                </span>
+                <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Status: ON</span>
+             </div>
           </div>
         </div>
 
-        {/* 2 Column Grid for Games/Results */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Próximos Jogos */}
-          <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">Próximos Jogos</h3>
-              <Link href="/admin/matches" className="text-[10px] font-black text-blue-500 uppercase hover:underline">Ver Todos →</Link>
-            </div>
-            <div className="divide-y divide-white/5">
-              {upcomingGames.length > 0 ? upcomingGames.map((game) => (
-                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-all">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-black text-white">{game.homeTeam.name} vs {game.awayTeam.name}</span>
-                    <span className="text-[9px] font-bold text-slate-500">{format(game.dateTime, "dd MMM • HH:mm", { locale: ptBR })}</span>
-                  </div>
-                  <Badge variant="purple" size="sm">{game.category.name}</Badge>
-                </div>
-              )) : (
-                <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Nenhum jogo agendado.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Últimos Resultados */}
-          <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden">
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">Últimos Resultados</h3>
-              <Link href="/admin/matches" className="text-[10px] font-black text-green-500 uppercase hover:underline">Histórico →</Link>
-            </div>
-            <div className="divide-y divide-white/5">
-              {lastResults.length > 0 ? lastResults.map((game) => (
-                <div key={game.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.02] transition-all">
-                  <div className="flex items-center gap-4">
-                     <Badge variant="purple" size="sm" className="hidden sm:inline-flex">{game.category.name}</Badge>
-                     <div className="flex items-center gap-3">
-                       <span className="text-xs font-bold text-white leading-none">{game.homeTeam.name}</span>
-                       <span className="text-lg font-black text-orange-500 tabular-nums">{game.homeScore}-{game.awayScore}</span>
-                       <span className="text-xs font-bold text-white leading-none">{game.awayTeam.name}</span>
-                     </div>
-                  </div>
-                  <Badge variant="success" size="sm">ENCERRADO</Badge>
-                </div>
-              )) : (
-                <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Sem resultados recentes.</div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Grid: Standings + Brackets */}
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Quick Standings - 3 cols */}
-          <div className="lg:col-span-3 bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden h-fit">
-            <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">
-                Classificação — {firstCategory?.name || "Geral"}
-              </h3>
-              <Link href="/admin/standings" className="text-[10px] font-black text-orange-500 uppercase hover:underline">Ver Completa →</Link>
-            </div>
-            <div className="divide-y divide-white/5">
-              {topStandings.length > 0 ? topStandings.map((standing, idx) => (
-                <div key={standing.id} className="px-6 py-4 flex items-center justify-between animate-fade-in group" style={{ animationDelay: `${idx * 50}ms` }}>
-                  <div className="flex items-center gap-4">
-                    <span className={`text-xl font-black ${
-                      idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'
-                    }`}>{idx + 1}°</span>
-                    <span className="text-sm font-bold text-white group-hover:text-orange-500 transition-colors">{standing.team.name}</span>
-                  </div>
-                  <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">PTS</p>
-                      <p className="text-sm font-black text-white leading-none">{standing.points}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">V</p>
-                      <p className="text-sm font-black text-green-500 leading-none">{standing.wins}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">D</p>
-                      <p className="text-sm font-black text-red-500 leading-none">{standing.losses}</p>
-                    </div>
-                  </div>
-                </div>
-              )) : (
-                <div className="p-10 text-center text-xs text-slate-600 font-medium italic">Aguardando início dos jogos.</div>
-              )}
-            </div>
-          </div>
-
-          {/* Brackets Preview - 2 cols */}
-          <div className="lg:col-span-2 bg-[#0A0A0A] border border-white/5 rounded-3xl p-6 h-fit">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">Bracket Preview</h3>
-              <Badge variant="purple" size="sm">Playoffs</Badge>
-            </div>
-
-            {playoffCategory ? (
-              <div className="transform scale-90 origin-top">
-                <Brackets games={playoffCategory.games as any} />
-              </div>
-            ) : (
-              <div className="h-40 border border-dashed border-white/5 rounded-2xl flex flex-col items-center justify-center text-center p-6 bg-white/[0.01]">
-                <BarChart3 className="w-8 h-8 text-slate-700 mb-3" />
-                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Indisponível em fase regular</p>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
     )
   } catch (error: any) {
-    console.error("Dashboard Error:", error)
+    console.error("Dashboard Global Error:", error)
     return (
       <div className="bg-[#0A0A0A] border border-red-500/20 rounded-3xl p-20 text-center">
-        <h2 className="text-2xl font-black text-white mb-2">Erro ao carregar Dashboard</h2>
+        <h2 className="text-2xl font-black text-white mb-2">Erro ao carregar Dashboard Executivo</h2>
         <p className="text-slate-500 mb-6 font-mono text-xs">{error.message}</p>
-        <Link 
-          href="/admin/championships" 
-          className="h-10 px-8 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-xl text-xs font-black uppercase tracking-widest inline-flex items-center transition-all"
-        >
-          Tentar Recarregar
-        </Link>
       </div>
     )
   }

@@ -35,12 +35,10 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
 
   const adminSections: NavSection[] = [
     {
-      title: "CAMPEONATO",
+      title: "FEDERAÇÃO",
       items: [
         { label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { label: 'Campeonatos', href: '/admin/championships', icon: Trophy },
-        { label: 'Jogos e Resultados', href: '/admin/matches', icon: Calendar },
-        { label: 'Classificação', href: '/admin/standings', icon: BarChart3 },
       ]
     },
     {
