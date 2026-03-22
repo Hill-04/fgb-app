@@ -2,8 +2,9 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, Calendar, Flag, Activity, TrendingUp, ShieldCheck } from 'lucide-react'
+import { Trophy, Users, Calendar, Flag, Activity, ShieldCheck, Plus } from 'lucide-react'
 import { formatChampionshipStatus } from '@/lib/utils'
+import { ChampionshipCard } from '@/components/ChampionshipCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +39,21 @@ export default async function FederationDashboardPage() {
       acc[curr.status] = (acc[curr.status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
+
+    const featuredChampionships = await prisma.championship.findMany({
+      where: { status: { in: ['ONGOING', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED'] } },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+      include: {
+        categories: { select: { id: true, name: true } },
+        _count: {
+          select: {
+            registrations: { where: { status: 'CONFIRMED' } },
+            games: true,
+          }
+        }
+      }
+    })
 
     return (
       <div className="space-y-8 pb-10">
@@ -127,6 +143,36 @@ export default async function FederationDashboardPage() {
           </div>
         </div>
 
+        {/* Featured Championships */}
+        {featuredChampionships.length > 0 && (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-black text-white uppercase tracking-widest">Campeonatos em Destaque</h3>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ações rápidas para as competições principais</p>
+              </div>
+              <Link href="/admin/championships"
+                className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:text-[#E66000] px-4 py-2 bg-[#FF6B00]/5 rounded-lg border border-[#FF6B00]/10 transition-all">
+                Ver Todos →
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredChampionships.map((c) => (
+                <ChampionshipCard
+                  key={c.id}
+                  id={c.id}
+                  name={c.name}
+                  year={c.year}
+                  status={c.status}
+                  categories={c.categories}
+                  teamCount={c._count.registrations}
+                  gameCount={c._count.games}
+                  href={`/admin/championships/${c.id}`}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   } catch (error: any) {

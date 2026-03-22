@@ -1,762 +1,121 @@
-"use client"
-
-import { useState, useEffect, useCallback } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
+import { prisma } from '@/lib/db'
+import { Plus, Sparkles } from 'lucide-react'
 import Link from 'next/link'
-import { Trophy, Calendar, Users, Edit2, Trash2, Plus, ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react'
-import { SimulationModal } from '@/components/SimulationModal'
-import { formatChampionshipStatus } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { ChampionshipCard } from '@/components/ChampionshipCard'
+import { SimulationModalWrapper } from './SimulationModalWrapper'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Category = { id: string; name: string }
-type Championship = {
-  id: string; name: string; year: number; status: string; sex: string
-  minTeamsPerCat: number; categories: Category[]; _count?: { registrations: number; games: number }
-  isSimulation?: boolean
-}
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const CATEGORY_AGES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
-const SEXES = ['masculino', 'feminino', 'misto']
-
-const ALL_CATEGORIES = CATEGORY_AGES.flatMap(age => [
-  { code: `SUB${age}M`, label: `Sub ${age}`, sex: 'masculino' },
-  { code: `SUB${age}F`, label: `Sub ${age}`, sex: 'feminino' },
-])
-
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: 'Rascunho', REGISTRATION_OPEN: 'Inscrições Abertas',
-  REGISTRATION_CLOSED: 'Inscrições Encerradas', VALIDATING: 'Validando',
-  SCHEDULING: 'Agendamento', CONFIRMED: 'Confirmado', ONGOING: 'Em Andamento', COMPLETED: 'Finalizado',
-}
-const STATUS_STYLES: Record<string, string> = {
-  DRAFT: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-  REGISTRATION_OPEN: 'bg-[#FF6B00]/10 text-orange-400 border-[#FF6B00]/20',
-  REGISTRATION_CLOSED: 'bg-red-500/10 text-red-400 border-red-500/20',
-  CONFIRMED: 'bg-green-500/10 text-green-400 border-green-500/20',
-  ONGOING: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-}
-
-// ─── Default form state ────────────────────────────────────────────────────────
-
-const defaultForm = () => ({
-  name: '', year: new Date().getFullYear().toString(), sex: 'masculino',
-  minTeamsPerCat: '3', categories: [] as string[],
-  // Format
-  format: 'todos_contra_todos', turns: '1', phases: '1', fieldControl: 'alternado',
-  // Tiebreakers — ordered list toggles
-  tiebreakers: ['pontos', 'saldo', 'confronto_direto', 'pontos_marcados'],
-  // Relegation
-  hasRelegation: false, relegationDown: '0', promotionUp: '0',
-  // Playoff
-  hasPlayoffs: false, playoffTeams: '4', playoffFormat: 'melhor_de_1', hasThirdPlace: true,
-  // Blocks
-  hasBlocks: false,
-  // Dates
-  regDeadline: '', startDate: '', endDate: '',
-})
-
-type FormState = ReturnType<typeof defaultForm>
-
-// ─── Step definitions ─────────────────────────────────────────────────────────
-
-const STEPS = [
-  { title: 'Identificação', desc: 'Nome, ano e sexo' },
-  { title: 'Categorias', desc: 'Sub 8 → Sub 20' },
-  { title: 'Formato', desc: 'Estrutura e turnos' },
-  { title: 'Playoffs', desc: 'Fase eliminatória' },
-  { title: 'Datas', desc: 'Prazos e calendário' },
-]
-
-// ─── Small UI helpers ─────────────────────────────────────────────────────────
-
-function OptionButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button type="button" onClick={onClick}
-      className={`px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${active ? 'bg-[#FF6B00]/15 border-[#FF6B00]/50 text-[#FF6B00]' : 'bg-white/[0.02] border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
-      {children}
-    </button>
-  )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">{children}</p>
-}
-
-function Toggle({ checked, onCheckedChange, label }: { checked: boolean; onCheckedChange: (v: boolean) => void; label: string }) {
-  return (
-    <label className="flex items-center gap-3 cursor-pointer select-none">
-      <button type="button" onClick={() => onCheckedChange(!checked)}
-        className={`relative w-10 h-5 rounded-full border transition-all ${checked ? 'bg-[#FF6B00] border-[#FF6B00]' : 'bg-white/5 border-white/10'}`}>
-        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
-      </button>
-      <span className="text-sm text-slate-300 font-medium">{label}</span>
-    </label>
-  )
-}
-
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
-export default function AdminChampionshipsPage() {
-  const [championships, setChampionships] = useState<Championship[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showDialog, setShowDialog] = useState(false)
-  const [step, setStep] = useState(0)
-  const [submitLoading, setSubmitLoading] = useState(false)
-  const [updatingId, setUpdatingId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
-  const [formError, setFormError] = useState('')
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingChampionship, setDeletingChampionship] = useState<any>(null)
-  const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
-  const [showSimModal, setShowSimModal] = useState(false)
-  const [form, setForm] = useState<FormState>(defaultForm())
-
-  const setField = (key: keyof FormState, value: any) => setForm(f => ({ ...f, [key]: value }))
-
-  const fetchChampionships = useCallback(async () => {
-    try {
-      const res = await fetch('/api/championships')
-      if (res.ok) setChampionships(await res.json())
-    } catch { } finally { setLoading(false) }
-  }, [])
-
-  useEffect(() => { fetchChampionships() }, [fetchChampionships])
-
-  const openCreateDialog = () => {
-    setEditingId(null); setForm(defaultForm()); setStep(0); setFormError(''); setShowDialog(true)
-  }
-
-  const openEditDialog = (c: Championship) => {
-    setEditingId(c.id)
-    setForm({ ...defaultForm(), name: c.name, year: c.year.toString(), sex: c.sex, minTeamsPerCat: c.minTeamsPerCat.toString(), categories: c.categories.map(cat => { const m = ALL_CATEGORIES.find(a => a.label.replace(' ', '') === cat.name.replace(' ', '')); return m ? m.code : cat.name }) })
-    setStep(0); setFormError(''); setShowDialog(true)
-  }
-
-  const toggleCategory = (code: string) =>
-    setField('categories', form.categories.includes(code) ? form.categories.filter(c => c !== code) : [...form.categories, code])
-
-  const toggleTiebreaker = (key: string) => {
-    const list = form.tiebreakers
-    setField('tiebreakers', list.includes(key) ? list.filter(t => t !== key) : [...list, key])
-  }
-
-  const validateStep = () => {
-    if (step === 0 && !form.name.trim()) { setFormError('O nome do campeonato é obrigatório.'); return false }
-    if (step === 1 && form.categories.length === 0) { setFormError('Selecione ao menos uma categoria.'); return false }
-    setFormError(''); return true
-  }
-
-  const nextStep = () => { if (!validateStep()) return; setStep(s => Math.min(s + 1, STEPS.length - 1)) }
-  const prevStep = () => { setFormError(''); setStep(s => Math.max(s - 1, 0)) }
-
-  const handleSubmit = async () => {
-    if (!validateStep()) return
-    setSubmitLoading(true)
-    try {
-      const url = editingId ? `/api/championships/${editingId}` : '/api/championships'
-      const res = await fetch(url, {
-        method: editingId ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: form.name.trim(), year: Number(form.year), sex: form.sex,
-          minTeamsPerCat: Number(form.minTeamsPerCat), categories: form.categories,
-          format: form.format, turns: Number(form.turns), phases: Number(form.phases),
-          fieldControl: form.fieldControl, tiebreakers: form.tiebreakers.join(','),
-          hasRelegation: form.hasRelegation, relegationDown: Number(form.relegationDown), promotionUp: Number(form.promotionUp),
-          hasPlayoffs: form.hasPlayoffs, playoffTeams: Number(form.playoffTeams),
-          playoffFormat: form.playoffFormat, hasThirdPlace: form.hasThirdPlace,
-          hasBlocks: form.hasBlocks,
-          regDeadline: form.regDeadline || new Date().toISOString(),
-          startDate: form.startDate || null, endDate: form.endDate || null,
-        })
-      })
-      if (res.ok) { setShowDialog(false); fetchChampionships() }
-      else { const d = await res.json(); setFormError(d.error || 'Erro ao salvar') }
-    } catch { setFormError('Erro de conexão') } finally { setSubmitLoading(false) }
-  }
-
-  const handleDeleteClick = async (c: Championship) => {
-    try {
-      const res = await fetch(`/api/championships/${c.id}`)
-      if (res.ok) {
-        const data = await res.json()
-        setDeletingChampionship(data)
-        setDeleteConfirmationText('')
-        setShowDeleteConfirm(true)
+export default async function AdminChampionshipsPage() {
+  const activeChampionships = await prisma.championship.findMany({
+    where: { status: { not: 'ARCHIVED' } },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      categories: { select: { id: true, name: true } },
+      _count: {
+        select: {
+          registrations: { where: { status: 'CONFIRMED' } },
+          games: true,
+        }
       }
-    } catch (err) {
-      alert('Erro ao buscar dados do campeonato')
     }
-  }
+  })
 
-  const confirmDelete = async () => {
-    if (deleteConfirmationText !== deletingChampionship.name) return
-    setIsDeleting(true)
-    try {
-      const res = await fetch(`/api/championships/${deletingChampionship.id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setShowDeleteConfirm(false)
-        fetchChampionships()
-      } else {
-        const d = await res.json()
-        alert(d.error || 'Erro ao excluir')
+  const archivedChampionships = await prisma.championship.findMany({
+    where: { status: 'ARCHIVED' },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      categories: { select: { id: true, name: true } },
+      _count: {
+        select: {
+          registrations: { where: { status: 'CONFIRMED' } },
+          games: true,
+        }
       }
-    } catch {
-      alert('Erro de conexão')
-    } finally {
-      setIsDeleting(false)
     }
-  }
-
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    setUpdatingId(id)
-    await fetch(`/api/championships/${id}/status`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) })
-    fetchChampionships(); setUpdatingId(null)
-  }
-
-  // ─── Step renderers ──────────────────────────────────────────────────────────
-
-  const renderStep0 = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <SectionLabel>Nome da Competição</SectionLabel>
-        <Input value={form.name} onChange={e => setField('name', e.target.value)}
-          placeholder="Ex: Estadual 2026 Masculino"
-          className="bg-white/[0.03] border-white/10 h-13 rounded-xl focus:border-[#FF6B00] text-white text-base" />
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <SectionLabel>Ano da Temporada</SectionLabel>
-          <Input type="number" value={form.year} onChange={e => setField('year', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
-        </div>
-        <div className="space-y-2">
-          <SectionLabel>Mín. Equipes/Categoria</SectionLabel>
-          <Input type="number" min="1" value={form.minTeamsPerCat} onChange={e => setField('minTeamsPerCat', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
-        </div>
-      </div>
-      <div className="space-y-3">
-        <SectionLabel>Sexo da Competição</SectionLabel>
-        <div className="flex gap-3">
-          {SEXES.map(s => (
-            <OptionButton key={s} active={form.sex === s} onClick={() => setField('sex', s)}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </OptionButton>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderStep1 = () => {
-    const masc = ALL_CATEGORIES.filter(c => c.sex === 'masculino')
-    const fem = ALL_CATEGORIES.filter(c => c.sex === 'feminino')
-    const showBoth = form.sex === 'misto'
-    const showMasc = form.sex === 'masculino' || showBoth
-    const showFem = form.sex === 'feminino' || showBoth
-
-    const CatGrid = ({ cats, label }: { cats: typeof masc; label: string }) => (
-      <div>
-        <SectionLabel>{label}</SectionLabel>
-        <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
-          {cats.map(cat => {
-            const active = form.categories.includes(cat.code)
-            return (
-              <button type="button" key={cat.code} onClick={() => toggleCategory(cat.code)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${active ? 'bg-[#FF6B00]/15 border-[#FF6B00]/50 text-[#FF6B00]' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/15'}`}>
-                {active && <Check className="w-3 h-3" />}
-                <span className="text-[10px] font-black tracking-tight">{cat.label}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    )
-
-    return (
-      <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-1">
-        {showMasc && <CatGrid cats={masc} label="Masculino" />}
-        {showFem && <CatGrid cats={fem} label="Feminino" />}
-        <p className="text-[10px] text-slate-500 text-center">{form.categories.length} categorias selecionadas</p>
-      </div>
-    )
-  }
-
-  const renderStep2 = () => (
-    <div className="space-y-8 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-      <div className="space-y-4">
-        <SectionLabel>Formato da Competição</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            { value: 'todos_contra_todos', label: 'Pontos Corridos', desc: 'As equipes jogam entre si e a classificação é definida pela tabela geral.' },
-            { value: 'eliminatorio', label: 'Mata-Mata', desc: 'Séries eliminatórias desde o início. Quem perde está fora.' },
-            { value: 'grupos_eliminatorio', label: 'Grupos + Mata-Mata', desc: 'Fase inicial em grupos seguida por eliminatórias.' },
-            { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguidos por mata-mata final.' },
-          ].map(o => (
-            <button key={o.value} type="button" onClick={() => setField('format', o.value)}
-              className={`p-4 rounded-2xl border text-left transition-all ${form.format === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-black uppercase tracking-widest ${form.format === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
-                {form.format === o.value && <Check className="w-4 h-4 text-[#FF6B00]" />}
-              </div>
-              <p className="text-[10px] text-slate-500 font-medium leading-tight">{o.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div className="space-y-3">
-          <SectionLabel>Número de Turnos</SectionLabel>
-          <div className="flex gap-2">
-            {[['1', '1'], ['2', '2'], ['3', '3']].map(([v, l]) =>
-              <OptionButton key={v} active={form.turns === v} onClick={() => setField('turns', v)}>{l} {Number(v) === 1 ? 'Turno' : 'Turnos'}</OptionButton>
-            )}
-          </div>
-          <p className="text-[9px] text-slate-600 font-medium italic">Quantas vezes as mesmas equipes se enfrentam na fase regular.</p>
-        </div>
-
-        <div className="space-y-3">
-          <SectionLabel>Número de Fases</SectionLabel>
-          <div className="flex gap-1.5 flex-wrap">
-            {['0', '1', '2', '3', '4', '5', '6', '7', '8'].map(v =>
-              <button key={v} type="button" onClick={() => setField('phases', v)}
-                className={`w-9 h-9 rounded-lg border text-[11px] font-black transition-all ${form.phases === v ? 'bg-[#FF6B00] border-[#FF6B00] text-white shadow-lg shadow-orange-600/20' : 'bg-white/5 border-white/10 text-slate-400 hover:border-white/20'}`}>
-                {v}
-              </button>
-            )}
-          </div>
-          <p className="text-[9px] text-slate-600 font-medium italic">0 se for apenas fase única.</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <SectionLabel>Mando de Campo</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {[
-            { value: 'alternado', label: 'Alternado', desc: 'Cada equipe joga uma em casa.' },
-            { value: 'sede_fixa', label: 'Sede Fixa', desc: 'Todos os jogos em um único ginásio.' },
-            { value: 'sede_rotativa', label: 'Sede Rotativa', desc: 'Cada rodada em uma cidade diferente.' },
-          ].map(o => (
-            <button key={o.value} type="button" onClick={() => setField('fieldControl', o.value)}
-              className={`p-4 rounded-2xl border text-left transition-all ${form.fieldControl === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-              <span className={`block text-[10px] font-black uppercase tracking-widest mb-1 ${form.fieldControl === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
-              <p className="text-[9px] text-slate-500 font-medium leading-tight">{o.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <SectionLabel>Critérios de Desempate (em ordem)</SectionLabel>
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { key: 'pontos', label: 'Pontos' },
-            { key: 'saldo', label: 'Saldo de Pontos' },
-            { key: 'confronto_direto', label: 'Confronto Direto' },
-            { key: 'pontos_marcados', label: 'Pontos Marcados' },
-          ].map(({ key, label }) => {
-            const active = form.tiebreakers.includes(key)
-            const idx = form.tiebreakers.indexOf(key)
-            return (
-              <button type="button" key={key} onClick={() => toggleTiebreaker(key)}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-bold text-left transition-all ${active ? 'bg-[#FF6B00]/10 border-[#FF6B00]/40 text-[#FF6B00]' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/15'}`}>
-                {active && <span className="w-5 h-5 rounded-full bg-[#FF6B00] text-white text-[9px] flex items-center justify-center font-black flex-shrink-0">{idx + 1}</span>}
-                {!active && <span className="w-5 h-5 rounded-full border border-white/20 flex-shrink-0" />}
-                {label}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="space-y-3 p-4 bg-white/5 rounded-2xl border border-white/10">
-        <SectionLabel>Agrupamento de Categorias em Blocos</SectionLabel>
-        <Toggle checked={form.hasBlocks} onCheckedChange={v => setField('hasBlocks', v)}
-          label="Deixar a IA agrupar categorias por blocos de viagem" />
-        <p className="text-[9px] text-slate-500 font-medium ml-13">Agrupa Sub 12 e Sub 13 no mesmo ginásio para reduzir custos.</p>
-      </div>
-
-      <div className="space-y-4">
-        <SectionLabel>Rebaixamento / Promoção</SectionLabel>
-        <Toggle checked={form.hasRelegation} onCheckedChange={v => setField('hasRelegation', v)} label="Habilitar rebaixamento/promoção" />
-        {form.hasRelegation && (
-          <div className="grid grid-cols-2 gap-4 mt-3 animate-in fade-in slide-in-from-top-2">
-            <div><SectionLabel>Equipes que descem</SectionLabel>
-              <Input type="number" min="0" value={form.relegationDown} onChange={e => setField('relegationDown', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" /></div>
-            <div><SectionLabel>Equipes que sobem</SectionLabel>
-              <Input type="number" min="0" value={form.promotionUp} onChange={e => setField('promotionUp', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" /></div>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  const renderStep3 = () => (
-    <div className="space-y-6">
-      <Toggle checked={form.hasPlayoffs} onCheckedChange={v => setField('hasPlayoffs', v)} label="Este campeonato tem fase de playoffs (Mata-Mata Final)" />
-
-      {form.hasPlayoffs && (
-        <div className="space-y-6 bg-white/[0.02] border border-white/5 p-6 rounded-3xl animate-in zoom-in-95 duration-200">
-          <div className="space-y-3">
-            <SectionLabel>Equipes classificadas para Playoffs</SectionLabel>
-            <div className="flex gap-2 flex-wrap">
-              {['2', '4', '8', '16'].map(v => <OptionButton key={v} active={form.playoffTeams === v} onClick={() => setField('playoffTeams', v)}>Top {v}</OptionButton>)}
-            </div>
-          </div>
-          <div className="space-y-4">
-            <SectionLabel>Formato das séries</SectionLabel>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {[
-                { value: 'melhor_de_1', label: 'Melhor de 1', desc: 'Jogo único eliminatório.' },
-                { value: 'melhor_de_3', label: 'Melhor de 3', desc: 'Vence quem ganhar 2 jogos.' },
-                { value: 'melhor_de_5', label: 'Melhor de 5', desc: 'Vence quem ganhar 3 jogos.' },
-              ].map(o => (
-                <button key={o.value} type="button" onClick={() => setField('playoffFormat', o.value)}
-                  className={`p-4 rounded-2xl border text-left transition-all ${form.playoffFormat === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-                  <span className={`block text-[10px] font-black uppercase tracking-widest mb-1 ${form.playoffFormat === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
-                  <p className="text-[9px] text-slate-500 font-medium leading-tight">{o.desc}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="pt-4 border-t border-white/5">
-            <Toggle checked={form.hasThirdPlace} onCheckedChange={v => setField('hasThirdPlace', v)} label="Incluir disputa de 3º lugar" />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-
-  const renderStep4 = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <SectionLabel>Prazo de Inscrições</SectionLabel>
-          <Input type="date" value={form.regDeadline} onChange={e => setField('regDeadline', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
-        </div>
-        <div className="space-y-2">
-          <SectionLabel>Início do Campeonato</SectionLabel>
-          <Input type="date" value={form.startDate} onChange={e => setField('startDate', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
-        </div>
-        <div className="space-y-2">
-          <SectionLabel>Término Previsto</SectionLabel>
-          <Input type="date" value={form.endDate} onChange={e => setField('endDate', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
-        </div>
-      </div>
-
-      {/* Summary */}
-      <div className="bg-[#FF6B00]/5 border border-[#FF6B00]/20 rounded-[32px] p-8 space-y-3 text-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B00]/5 rounded-full blur-3xl -mr-16 -mt-16" />
-        <p className="text-[#FF6B00] font-black uppercase tracking-[0.2em] text-[10px] mb-4">Resumo da Configuração</p>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Nome:</span> {form.name || '—'}</p>
-          <p className="text-slate-300 capitalize"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Sexo:</span> {form.sex}</p>
-          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Categorias:</span> {form.categories.length}</p>
-          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Formato:</span> {form.format.replace(/_/g, ' ')}</p>
-          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Estrutura:</span> {form.turns} turno(s) · {form.phases} fase(s)</p>
-          <p className="text-slate-300 capitalize"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Mando:</span> {form.fieldControl.replace(/_/g, ' ')}</p>
-          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">Playoffs:</span> {form.hasPlayoffs ? `Top ${form.playoffTeams}` : 'Não'}</p>
-          <p className="text-slate-300"><span className="text-slate-500 font-bold uppercase text-[9px] tracking-widest mr-2">IA Blocos:</span> {form.hasBlocks ? 'Sim' : 'Não'}</p>
-        </div>
-      </div>
-    </div>
-  )
-
-  const stepContent = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4]
-
-  // ─── Page JSX ────────────────────────────────────────────────────────────────
+  })
 
   return (
-    <div className="space-y-8 max-w-[1200px] mx-auto pb-20">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="space-y-10 max-w-[1400px] mx-auto pb-20 px-4 animate-in fade-in duration-700">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">
+          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tighter leading-none mb-3">
             Campeonatos
           </h1>
-          <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">
             Gestão de Competições da Federação
           </p>
         </div>
         <div className="flex gap-3">
-          <Button onClick={() => setShowSimModal(true)} variant="outline" className="border-purple-500/30 bg-purple-500/5 hover:bg-purple-500/10 text-purple-400 font-bold px-6 h-12 rounded-xl transition-all hover:scale-105">
-            <Sparkles className="w-4 h-4 mr-2" /> Simular com IA
-          </Button>
-          <Button onClick={openCreateDialog} className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold px-8 h-12 rounded-xl shadow-lg shadow-orange-600/20 transition-all hover:scale-105">
-            <Plus className="w-5 h-5 mr-2" /> Novo Campeonato
-          </Button>
+          <SimulationModalWrapper />
+          <Link href="/admin/championships/new">
+            <Button className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black px-8 h-12 rounded-xl shadow-lg shadow-orange-600/20 transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest">
+              <Plus className="w-5 h-5 mr-2" /> Novo Campeonato
+            </Button>
+          </Link>
         </div>
       </div>
 
-      <SimulationModal 
-        isOpen={showSimModal} 
-        onClose={() => setShowSimModal(false)} 
-        onComplete={fetchChampionships}
-      />
+      {/* Grid Ativos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {activeChampionships.map((c) => (
+          <ChampionshipCard
+            key={c.id}
+            id={c.id}
+            name={c.name}
+            year={c.year}
+            status={c.status}
+            categories={c.categories}
+            teamCount={c._count.registrations}
+            gameCount={c._count.games}
+            href={`/admin/championships/${c.id}`}
+            buttonLabel="Ver Painel →"
+          />
+        ))}
 
-      {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
-          {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="h-64 bg-white/5 rounded-3xl" />)}
-        </div>
-      ) : championships.length === 0 ? (
-        <div className="bg-[#111] border border-white/5 rounded-3xl p-20 text-center">
-          <Trophy className="w-16 h-16 text-white/10 mx-auto mb-6" />
-          <h3 className="text-xl font-bold text-white mb-2">Nenhum campeonato ativo</h3>
-          <p className="text-slate-500 mb-8 max-w-md mx-auto">Crie o primeiro campeonato da temporada.</p>
-        </div>
-      ) : (
-        <div className="space-y-12">
-          {/* Active Championships */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* New Championship Card */}
-            <button
-              onClick={openCreateDialog}
-              className="group bg-[#121212] border border-dashed border-white/10 hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all flex flex-col items-center justify-center gap-4 min-h-[220px]"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FF6B00]/10 transition-all">
-                <Plus className="w-6 h-6 text-slate-500 group-hover:text-[#FF6B00] transition-colors" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-black text-slate-400 group-hover:text-white uppercase tracking-widest transition-colors">
-                  Novo Campeonato
-                </p>
-                <p className="text-[10px] text-slate-600 mt-1">Criar e configurar</p>
-              </div>
-            </button>
+        {/* Card Novo Campeonato */}
+        <Link
+          href="/admin/championships/new"
+          className="group block bg-[#141414] border border-dashed border-white/10 hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all flex flex-col items-center justify-center gap-4 min-h-[220px] hover:bg-[#FF6B00]/[0.02]"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FF6B00]/10 transition-all">
+            <Plus className="w-6 h-6 text-slate-600 group-hover:text-[#FF6B00] transition-colors" />
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-black italic uppercase text-slate-500 group-hover:text-white transition-colors tracking-tight">
+              Novo Campeonato
+            </p>
+            <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">
+              Criar e configurar
+            </p>
+          </div>
+        </Link>
+      </div>
 
-            {championships.filter(c => c.status !== 'ARCHIVED').map((c) => (
-              <div key={c.id} className="relative group">
-                <Link
-                  href={`/admin/championships/${c.id}`}
-                  className="bg-[#121212] border border-white/5 hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all hover:bg-[#FF6B00]/[0.02] block h-full min-h-[220px]"
-                >
-                  <div className="flex items-start justify-between mb-5">
-                    <div className="w-12 h-12 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center">
-                      <Trophy className="w-6 h-6 text-[#FF6B00]" />
-                    </div>
-                    <Badge className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border ${STATUS_STYLES[c.status] || STATUS_STYLES['DRAFT']}`}>
-                      {formatChampionshipStatus(c.status)}
-                    </Badge>
-                  </div>
-
-                  <h3 className="text-xl font-display font-black text-white uppercase tracking-tight group-hover:text-[#FF6B00] transition-colors leading-tight mb-1">
-                    {c.name}
-                  </h3>
-
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-5 line-clamp-1">
-                    {c.categories.map(cat => cat.name).join(' · ') || 'Sem categorias'}
-                  </p>
-
-                  <div className="flex items-center gap-6 pt-4 border-t border-white/5">
-                    <div>
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Times</p>
-                      <p className="text-lg font-black text-white leading-none">{c._count?.registrations || 0}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-0.5">Jogos</p>
-                      <p className="text-lg font-black text-white leading-none">{c._count?.games || 0}</p>
-                    </div>
-                    <div className="flex-1 text-right">
-                      <span className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                        Abrir Painel →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-                
-                <div className="absolute top-4 right-12 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                  <div className="pointer-events-auto">
-                     <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditDialog(c); }} className="h-8 w-8 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white"><Edit2 className="w-3.5 h-3.5" /></Button>
-                  </div>
-                  <div className="pointer-events-auto">
-                     <Button variant="ghost" size="icon" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteClick(c); }} className="h-8 w-8 rounded-lg hover:bg-red-500/5 text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></Button>
-                  </div>
-                </div>
-              </div>
+      {/* Seção de arquivados */}
+      {archivedChampionships.length > 0 && (
+        <div className="mt-16 pt-16 border-t border-white/5">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 mb-6 flex items-center gap-3">
+            Arquivados ({archivedChampionships.length})
+            <span className="h-px bg-white/5 flex-1" />
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 opacity-40 hover:opacity-100 transition-opacity duration-700">
+            {archivedChampionships.map((c) => (
+              <ChampionshipCard
+                key={c.id}
+                id={c.id}
+                name={c.name}
+                year={c.year}
+                status={c.status}
+                categories={c.categories}
+                teamCount={c._count.registrations}
+                href={`/admin/championships/${c.id}`}
+                buttonLabel="Ver Arquivo →"
+              />
             ))}
           </div>
-
-          {/* Archived Championships */}
-          {championships.filter(c => c.status === 'ARCHIVED').length > 0 && (
-            <div className="pt-8 border-t border-white/5">
-              <h2 className="text-xl font-display font-black text-white/50 uppercase tracking-tight flex items-center gap-3 mb-6">
-                <Trash2 className="w-5 h-5 text-white/30" />
-                Histórico Arquivado
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50 hover:opacity-100 transition-opacity duration-500">
-                {championships.filter(c => c.status === 'ARCHIVED').map((c) => (
-                  <div key={c.id} className="relative group grayscale hover:grayscale-0 transition-all">
-                    <Link
-                      href={`/admin/championships/${c.id}`}
-                      className="bg-[#121212] border border-white/5 hover:border-slate-500/30 rounded-3xl p-6 transition-all block h-full"
-                    >
-                      <div className="flex items-start justify-between mb-5">
-                        <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center">
-                          <Trophy className="w-6 h-6 text-slate-600" />
-                        </div>
-                        <Badge className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg border bg-slate-500/10 text-slate-400 border-slate-500/20">
-                          Arquivado
-                        </Badge>
-                      </div>
-
-                      <h3 className="text-xl font-display font-black text-white/70 uppercase tracking-tight leading-tight mb-1">
-                        {c.name}
-                      </h3>
-
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-5 line-clamp-1">
-                        {c.year} · {c.sex}
-                      </p>
-
-                      <div className="flex items-center gap-2 pt-4 border-t border-white/5">
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStatusChange(c.id, 'DRAFT'); }} className="h-8 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-orange-500">
-                          Restaurar
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteClick(c); }} className="h-8 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-red-500 ml-auto">
-                          Excluir
-                        </Button>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ─── Multi-step Modal ─── */}
-      {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 md:p-8 animate-in fade-in duration-200">
-          <Card className="w-full max-w-2xl bg-[#0A0A0A] border-white/10 text-white rounded-[32px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="flex border-b border-white/5 shrink-0">
-              {STEPS.map((s, i) => (
-                <div key={i} className={`flex-1 px-2 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[#FF6B00] bg-[#FF6B00]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
-                  <p className={`text-[8px] md:text-[9px] font-black uppercase tracking-widest ${i === step ? 'text-[#FF6B00]' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>{s.title}</p>
-                </div>
-              ))}
-            </div>
-
-            <div className="overflow-y-auto flex-1 custom-scrollbar">
-              <CardHeader className="px-6 md:px-10 pt-8 pb-4">
-                <CardTitle className="text-2xl md:text-3xl font-display font-black uppercase tracking-tight">
-                  {editingId ? 'Editar Campeonato' : STEPS[step].title}
-                </CardTitle>
-                <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{STEPS[step].desc}</CardDescription>
-              </CardHeader>
-
-              <CardContent className="px-6 md:px-10 pb-10">
-                {stepContent[step]()}
-
-                {formError && (
-                  <p className="mt-6 text-red-500 text-xs font-bold uppercase tracking-widest bg-red-500/10 p-4 rounded-2xl border border-red-500/20 animate-in shake-in">
-                    {formError}
-                  </p>
-                )}
-              </CardContent>
-            </div>
-
-            <div className="px-6 md:px-10 py-6 border-t border-white/5 bg-[#0D0D0D] shrink-0">
-              <div className="flex gap-4">
-                {step === 0 ? (
-                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">Cancelar</Button>
-                ) : (
-                  <Button variant="ghost" type="button" onClick={prevStep} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">
-                    <ChevronLeft className="w-5 h-5 mr-1" /> Voltar
-                  </Button>
-                )}
-                {step < STEPS.length - 1 ? (
-                  <Button type="button" onClick={nextStep} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    Próximo <ChevronRight className="w-5 h-5 ml-1" />
-                  </Button>
-                ) : (
-                  <Button type="button" onClick={handleSubmit} disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
-                    {submitLoading ? 'Processando...' : (editingId ? 'Confirmar Edição' : 'Criar Campeonato')}
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {showDeleteConfirm && deletingChampionship && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-lg bg-[#0A0A0A] border-red-500/20 text-white rounded-[32px] shadow-2xl overflow-hidden">
-            <CardHeader className="p-8 text-center">
-              <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-red-500/20">
-                <Trash2 className="w-8 h-8 text-red-500" />
-              </div>
-              <CardTitle className="text-2xl font-display font-black uppercase tracking-tight text-white">
-                Confirmar Exclusão
-              </CardTitle>
-              <CardDescription className="text-slate-400 mt-2">
-                Esta ação é irreversível e apagará todos os dados vinculados.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="px-8 pb-8 space-y-6">
-              <div className="bg-red-500/5 border border-red-500/10 rounded-2xl p-6 space-y-3">
-                <p className="text-[10px] font-black text-red-400 uppercase tracking-widest mb-1">Itens que serão removidos:</p>
-                <div className="grid grid-cols-2 gap-y-2 text-xs font-bold">
-                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.games || 0} Jogos</p>
-                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.registrations || 0} Inscrições</p>
-                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.categories || 0} Categorias</p>
-                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.standings || 0} Classificações</p>
-                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.documents || 0} Documentos</p>
-                  <p className="text-slate-300"><span className="text-red-400/70 mr-2">●</span> {deletingChampionship.deletionCounts?.blocks || 0} Blocos</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  Para confirmar, digite o nome do campeonato:
-                </Label>
-                <p className="text-xs font-black text-white bg-white/5 p-3 rounded-lg border border-white/5 text-center">
-                  {deletingChampionship.name}
-                </p>
-                <Input 
-                  value={deleteConfirmationText} 
-                  onChange={e => setDeleteConfirmationText(e.target.value)}
-                  placeholder="Digite o nome aqui..."
-                  className="bg-white/5 border-white/10 h-12 rounded-xl text-center font-bold text-white focus:border-red-500"
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 h-12 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-xl"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  disabled={isDeleting || deleteConfirmationText !== deletingChampionship.name}
-                  onClick={confirmDelete}
-                  className="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-widest rounded-xl shadow-lg shadow-red-900/20"
-                >
-                  {isDeleting ? 'Excluindo...' : 'Apagar Tudo'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
     </div>
   )
-}
-
-function Badge({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <span className={`inline-flex items-center rounded-lg px-2 py-0.5 text-xs font-semibold ${className}`}>{children}</span>
 }

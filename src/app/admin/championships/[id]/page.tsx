@@ -249,7 +249,7 @@ export default async function ChampionshipDetailsPage({
           <div className="mt-8 p-4 rounded-2xl bg-orange-500/5 border border-orange-500/10 flex items-center gap-4">
              <div className="text-2xl">🏀</div>
              <div className="flex-1">
-               <p className="text-sm font-black text-white">Status: {championship.status}</p>
+               <p className="text-sm font-black text-white">Status: {formatChampionshipStatus(championship.status)}</p>
                <p className="text-xs text-slate-500 font-medium">
                  {currentStep === 1 && "Complete as informações básicas para abrir as inscrições."}
                  {currentStep === 2 && "Acompanhe as inscrições dos times e valide os documentos."}
