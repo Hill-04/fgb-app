@@ -134,6 +134,20 @@ export default async function ChampionshipDetailsPage({
       }
     }) : null
 
+    const registrationsByCategory = await prisma.championshipCategory.findMany({
+      where: { championshipId: id },
+      include: {
+        registrations: {
+          include: {
+            registration: {
+              include: { team: { select: { id: true, name: true } } }
+            }
+          },
+          where: { registration: { status: 'CONFIRMED' } }
+        }
+      }
+    })
+
     const statusMap = {
       'DRAFT': 1,
       'REGISTRATION_OPEN': 2,
@@ -215,26 +229,104 @@ export default async function ChampionshipDetailsPage({
                     </div>
 
                     {isCurrent && pipelineChecklist[step.id] && (
-                      <div className="space-y-2 border-t border-white/5 pt-4">
-                        {pipelineChecklist[step.id].map((item, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 ${
-                              item.done ? 'bg-green-500' : 'bg-white/10'
-                            }`}>
-                              {item.done && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                      <div className="space-y-4 border-t border-white/5 pt-4">
+                        <div className="space-y-2">
+                          {pipelineChecklist[step.id].map((item, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                item.done ? 'bg-green-500' : 'bg-white/10'
+                              }`}>
+                                {item.done && <CheckCircle2 className="w-2.5 h-2.5 text-white" />}
+                              </div>
+                              <span className={`text-[9px] font-bold uppercase tracking-widest ${
+                                item.done ? 'text-green-400 line-through opacity-60' : 'text-slate-400'
+                              }`}>
+                                {item.task}
+                              </span>
                             </div>
-                            <span className={`text-[9px] font-bold uppercase tracking-widest ${
-                              item.done ? 'text-green-400 line-through opacity-60' : 'text-slate-400'
-                            }`}>
-                              {item.task}
-                            </span>
+                          ))}
+                        </div>
+
+                        {/* Equipes por Categoria (Apenas no Step 2) */}
+                        {isCurrent && currentStep === 2 && registrationsByCategory.length > 0 && (
+                          <div className="mt-4 space-y-3 pt-4 border-t border-white/5">
+                            <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">
+                              Equipes por Categoria
+                            </p>
+                            {registrationsByCategory.map(cat => (
+                              <div key={cat.id} className="bg-white/[0.03] rounded-xl p-3 border border-white/5">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00]">
+                                    {cat.name}
+                                  </span>
+                                  <span className="text-[9px] font-black text-slate-500">
+                                    {cat.registrations.length}/{minTeams}
+                                  </span>
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {cat.registrations.length > 0 ? (
+                                    cat.registrations.map(r => (
+                                      <span key={r.registration.id} className="text-[8px] font-bold uppercase bg-white/[0.05] border border-white/[0.08] px-2 py-0.5 rounded-lg text-slate-300">
+                                        {r.registration.team.name}
+                                      </span>
+                                    ))
+                                  ) : (
+                                    <span className="text-[8px] text-slate-600 italic font-medium">Nenhuma equipe ainda</span>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                        {teamsNeeded > 0 && currentStep === 2 && (
-                          <p className="text-[9px] font-black text-yellow-500 uppercase tracking-widest mt-3 flex items-center gap-1.5">
-                            <span className="animate-pulse">⚠️</span> Faltam {teamsNeeded} time(s) para liberar
-                          </p>
                         )}
+
+                        {/* CTA Automático */}
+                        {(() => {
+                          const currentChecklist = pipelineChecklist[currentStep] || []
+                          const allDone = currentChecklist.every(item => item.done)
+                          
+                          if (!allDone) {
+                             if (teamsNeeded > 0 && currentStep === 2) {
+                               return (
+                                 <p className="text-[9px] font-black text-yellow-500 uppercase tracking-widest mt-1 flex items-center gap-1.5 bg-yellow-500/5 p-2 rounded-lg border border-yellow-500/10">
+                                   <span className="animate-pulse">⚠️</span> Faltam {teamsNeeded} time(s)
+                                 </p>
+                               )
+                             }
+                             return null
+                          }
+
+                          return (
+                            <div className="mt-4 p-3 bg-green-500/10 border border-green-500/20 rounded-xl animate-in fade-in slide-in-from-top-2 duration-500">
+                              <p className="text-[9px] font-black uppercase tracking-widest text-green-400 mb-2 flex items-center gap-1.5">
+                                <CheckCircle2 className="w-3 h-3" /> Etapa Concluída!
+                              </p>
+                              {currentStep === 1 && (
+                                <Link
+                                  href={`/admin/championships/${id}/settings`}
+                                  className="w-full text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-2 rounded-lg hover:bg-[#E66000] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
+                                >
+                                  Abrir Inscrições →
+                                </Link>
+                              )}
+                              {currentStep === 2 && (
+                                <Link
+                                  href={`/admin/championships/${id}/matches`}
+                                  className="w-full text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-2 rounded-lg hover:bg-[#E66000] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
+                                >
+                                  Organizar Jogos →
+                                </Link>
+                              )}
+                              {currentStep === 4 && (
+                                <Link
+                                  href={`/admin/championships/${id}/standings`}
+                                  className="w-full text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-2 rounded-lg hover:bg-[#E66000] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
+                                >
+                                  Ver Classificação Final →
+                                </Link>
+                              )}
+                            </div>
+                          )
+                        })()}
                       </div>
                     )}
                   </div>

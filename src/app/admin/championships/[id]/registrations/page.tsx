@@ -2,67 +2,66 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/Badge'
-import { 
-  Users, 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit2, 
-  Trash2, 
-  CheckCircle2, 
-  XCircle, 
-  AlertCircle,
-  MoreVertical,
-  Loader2
-} from 'lucide-react'
+import { Plus, Edit2, Trash2, Shield, Loader2 } from 'lucide-react'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Category = { id: string; name: string }
+type Team = { id: string; name: string }
 
 type Registration = {
   id: string
   team: { id: string; name: string }
-  categories: { id: string; name: string }[]
-  status: string
-  createdAt: string
+  categories: Category[]
+  status: 'PENDING' | 'CONFIRMED'
 }
 
-type Team = { id: string; name: string }
-type Category = { id: string; name: string }
+type Championship = {
+  id: string
+  name: string
+  regDeadline: string | null
+  status: string
+}
 
 export default function RegistrationsPage() {
   const params = useParams()
   const id = params.id as string
 
+  // State
   const [registrations, setRegistrations] = useState<Registration[]>([])
-  const [teams, setTeams] = useState<Team[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
+  const [allTeams, setAllTeams] = useState<Team[]>([])
+  const [allCategories, setAllCategories] = useState<Category[]>([])
+  const [championship, setChampionship] = useState<Championship | null>(null)
+  
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [modalLoading, setModalLoading] = useState(false)
+  const [editingReg, setEditingReg] = useState<Registration | null>(null)
   
   // Form State
-  const [selectedTeam, setSelectedTeam] = useState('')
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [selectedStatus, setSelectedStatus] = useState('PENDING')
-  const [editingId, setEditingId] = useState<string | null>(null)
+  const [formTeamId, setFormTeamId] = useState('')
+  const [formCategoryIds, setFormCategoryIds] = useState<string[]>([])
+  const [formStatus, setFormStatus] = useState<'PENDING' | 'CONFIRMED'>('PENDING')
+  const [formError, setFormError] = useState('')
+  const [submitLoading, setSubmitLoading] = useState(false)
+
+  // ─── Fetch Data ─────────────────────────────────────────────────────────────
 
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [regRes, teamRes, catRes] = await Promise.all([
+      const [regRes, teamRes, champRes, catRes] = await Promise.all([
         fetch(`/api/championships/${id}/registrations`),
-        fetch('/api/teams'),
+        fetch('/api/admin/teams'),
+        fetch(`/api/championships/${id}`),
         fetch(`/api/championships/${id}/categories`)
       ])
       
       if (regRes.ok) setRegistrations(await regRes.json())
-      if (teamRes.ok) setTeams(await teamRes.json())
-      if (catRes.ok) setCategories(await catRes.json())
+      if (teamRes.ok) setAllTeams(await teamRes.json())
+      if (champRes.ok) setChampionship(await champRes.json())
+      if (catRes.ok) setAllCategories(await catRes.json())
     } catch (error) {
-      console.error('Error fetching registration data:', error)
+      console.error('Error fetching data:', error)
     } finally {
       setLoading(false)
     }
@@ -72,291 +71,301 @@ export default function RegistrationsPage() {
     fetchData()
   }, [fetchData])
 
-  const handleSave = async () => {
-    if (!selectedTeam || selectedCategories.length === 0) return
-    
-    setModalLoading(true)
-    try {
-      const url = editingId 
-        ? `/api/championships/${id}/registrations/${editingId}`
-        : `/api/championships/${id}/registrations`
-      
-      const res = await fetch(url, {
-        method: editingId ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teamId: selectedTeam,
-          categoryIds: selectedCategories,
-          status: selectedStatus
-        })
-      })
+  // ─── Actions ────────────────────────────────────────────────────────────────
 
-      if (res.ok) {
-        setShowModal(false)
-        fetchData()
-        resetForm()
-      }
-    } catch (error) {
-      console.error('Error saving registration:', error)
-    } finally {
-      setModalLoading(false)
-    }
+  const openEdit = (reg: Registration) => {
+    setEditingReg(reg)
+    setFormTeamId(reg.team.id)
+    setFormCategoryIds(reg.categories.map(c => c.id))
+    setFormStatus(reg.status)
+    setFormError('')
+    setShowModal(true)
+  }
+
+  const openNew = () => {
+    setEditingReg(null)
+    setFormTeamId('')
+    setFormCategoryIds([])
+    setFormStatus('PENDING')
+    setFormError('')
+    setShowModal(true)
   }
 
   const handleDelete = async (regId: string) => {
-    if (!confirm('Tem certeza que deseja excluir esta inscrição?')) return
+    if (!confirm('Deseja realmente excluir esta inscrição?')) return
     
     try {
       const res = await fetch(`/api/championships/${id}/registrations/${regId}`, {
         method: 'DELETE'
       })
       if (res.ok) fetchData()
+      else alert('Erro ao excluir inscrição')
     } catch (error) {
-      console.error('Error deleting registration:', error)
+      console.error('Delete error:', error)
     }
   }
 
-  const resetForm = () => {
-    setSelectedTeam('')
-    setSelectedCategories([])
-    setSelectedStatus('PENDING')
-    setEditingId(null)
+  const handleSubmit = async () => {
+    if (!formTeamId) { setFormError('Selecione uma equipe'); return }
+    if (formCategoryIds.length === 0) { setFormError('Selecione ao menos uma categoria'); return }
+    
+    setSubmitLoading(true)
+    setFormError('')
+    
+    try {
+      const url = editingReg 
+        ? `/api/championships/${id}/registrations/${editingReg.id}`
+        : `/api/championships/${id}/registrations`
+      
+      const res = await fetch(url, {
+        method: editingReg ? 'PATCH' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          teamId: formTeamId,
+          categoryIds: formCategoryIds,
+          status: formStatus
+        })
+      })
+
+      if (res.ok) {
+        setShowModal(false)
+        fetchData()
+      } else {
+        const d = await res.json()
+        setFormError(d.error || 'Erro ao salvar inscrição')
+      }
+    } catch (error) {
+      setFormError('Erro de conexão')
+    } finally {
+      setSubmitLoading(false)
+    }
   }
 
-  const openEdit = (reg: Registration) => {
-    setEditingId(reg.id)
-    setSelectedTeam(reg.team.id)
-    setSelectedCategories(reg.categories.map(c => c.id))
-    setSelectedStatus(reg.status)
-    setShowModal(true)
-  }
+  // ─── Render Helpers ────────────────────────────────────────────────────────
 
-  const toggleCategory = (catId: string) => {
-    setSelectedCategories(prev => 
-      prev.includes(catId) ? prev.filter(i => i !== catId) : [...prev, catId]
+  if (loading || !championship) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin" />
+        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Carregando inscrições...</p>
+      </div>
     )
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'CONFIRMED': return <Badge variant="success" size="sm" className="bg-green-500/10 text-green-500 border-green-500/20">CONFIRMADA</Badge>
-      case 'PENDING': return <Badge variant="orange" size="sm" className="bg-orange-500/10 text-orange-500 border-orange-500/20">PENDENTE</Badge>
-      case 'CANCELED': return <Badge variant="error" size="sm" className="bg-red-500/10 text-red-500 border-red-500/20">CANCELADA</Badge>
-      default: return <Badge variant="default" size="sm">{status}</Badge>
-    }
-  }
+  const today = new Date()
+  const regStatus = championship.regDeadline
+    ? new Date(championship.regDeadline) > today
+      ? { label: 'Inscrições Abertas', color: 'text-green-400 bg-green-500/10 border-green-500/20' }
+      : { label: 'Inscrições Encerradas', color: 'text-red-400 bg-red-500/10 border-red-500/20' }
+    : { label: 'Prazo não definido', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' }
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Header & Stats */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-display font-black text-white uppercase tracking-tight">Inscrições</h2>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">Gestão de Equipes e Categorias</p>
+          <h2 className="text-4xl font-black italic uppercase text-white tracking-tight">
+            Inscrições
+          </h2>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-1">
+            {registrations.length} equipe(s) inscrita(s)
+          </p>
         </div>
-        <div className="flex gap-3">
-          <Button 
-            onClick={() => { resetForm(); setShowModal(true); }}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black px-6 h-12 rounded-xl shadow-lg shadow-orange-600/20 transition-all hover:scale-105"
+        <div className="flex items-center gap-3">
+          <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${regStatus.color}`}>
+            {regStatus.label}
+          </span>
+          <button
+            onClick={openNew}
+            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-5 h-10 rounded-xl flex items-center gap-2 transition-all"
           >
-            <Plus className="w-5 h-5 mr-2" /> Adicionar Inscrição
-          </Button>
+            <Plus className="w-4 h-4" />
+            Adicionar Inscrição
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#121212] border border-white/5 rounded-3xl p-6">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total de Inscrições</p>
-          <p className="text-3xl font-black text-white">{registrations.length}</p>
-        </div>
-        <div className="bg-[#121212] border border-white/5 rounded-3xl p-6">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Confirmadas</p>
-          <p className="text-3xl font-black text-green-500">{registrations.filter(r => r.status === 'CONFIRMED').length}</p>
-        </div>
-        <div className="bg-[#121212] border border-white/5 rounded-3xl p-6">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Pendentes</p>
-          <p className="text-3xl font-black text-orange-500">{registrations.filter(r => r.status === 'PENDING').length}</p>
-        </div>
+      {/* Table */}
+      <div className="bg-[#141414] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl">
+        <table className="w-full">
+          <thead className="bg-white/[0.02]">
+            <tr className="border-b border-white/5">
+              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left px-6 py-4">Equipe</th>
+              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left px-6 py-4">Categorias</th>
+              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left px-6 py-4">Status</th>
+              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-right px-6 py-4">Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {registrations.map((reg) => (
+              <tr key={reg.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#FF6B00]/10 flex items-center justify-center">
+                      <Shield className="w-4 h-4 text-[#FF6B00]" />
+                    </div>
+                    <span className="text-sm font-black uppercase text-white group-hover:text-[#FF6B00] transition-colors">{reg.team.name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex flex-wrap gap-1">
+                    {reg.categories.map(c => (
+                      <span key={c.id} className="text-[8px] font-black uppercase tracking-widest bg-white/[0.04] border border-white/[0.08] px-2 py-1 rounded-lg text-slate-300">
+                        {c.name}
+                      </span>
+                    ))}
+                  </div>
+                </td>
+                <td className="px-6 py-4">
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                    reg.status === 'CONFIRMED'
+                      ? 'text-green-400 bg-green-500/10 border-green-500/20'
+                      : 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
+                  }`}>
+                    {reg.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
+                  </span>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={() => openEdit(reg)}
+                      className="w-8 h-8 rounded-xl hover:bg-[#FF6B00]/10 flex items-center justify-center text-slate-400 hover:text-[#FF6B00] transition-all"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(reg.id)}
+                      className="w-8 h-8 rounded-xl hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {registrations.length === 0 && (
+          <div className="p-16 text-center">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+              Nenhuma inscrição ainda
+            </p>
+          </div>
+        )}
       </div>
 
-      {/* Table Card */}
-      <Card className="bg-[#0A0A0A] border-white/5 rounded-[32px] overflow-hidden">
-        <div className="px-8 py-6 border-b border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/[0.01]">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-            <Input 
-              placeholder="Buscar por equipe..." 
-              className="pl-11 bg-white/[0.03] border-white/10 h-11 rounded-xl text-sm focus:border-[#FF6B00]"
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="border-white/10 bg-white/[0.03] hover:bg-white/5 rounded-xl h-11 text-[10px] font-black uppercase tracking-widest">
-              <Filter className="w-4 h-4 mr-2" /> Filtrar
-            </Button>
-          </div>
-        </div>
-
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
-              <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin" />
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Carregando inscrições...</p>
-            </div>
-          ) : registrations.length === 0 ? (
-            <div className="py-20 text-center">
-              <Users className="w-16 h-16 text-white/5 mx-auto mb-4" />
-              <h3 className="text-lg font-bold text-white mb-1">Nenhuma inscrição encontrada</h3>
-              <p className="text-xs text-slate-500">Comece adicionando uma equipe ao campeonato.</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-white/5">
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Equipe</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">Categorias</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widesttext-center">Status</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {registrations.map((reg) => (
-                    <tr key={reg.id} className="group hover:bg-white/[0.02] transition-colors">
-                      <td className="px-8 py-5">
-                        <span className="text-sm font-bold text-white group-hover:text-[#FF6B00] transition-colors">{reg.team.name}</span>
-                      </td>
-                      <td className="px-8 py-5">
-                        <div className="flex flex-wrap gap-1.5">
-                          {reg.categories.map(cat => (
-                            <Badge key={cat.id} variant="purple" size="sm" className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-[9px] font-black">
-                              {cat.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-8 py-5">
-                        {getStatusBadge(reg.status)}
-                      </td>
-                      <td className="px-8 py-5 text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => openEdit(reg)}
-                            className="h-9 w-9 rounded-xl hover:bg-[#FF6B00]/10 hover:text-[#FF6B00] text-slate-500 transition-all"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDelete(reg.id)}
-                            className="h-9 w-9 rounded-xl hover:bg-red-500/10 hover:text-red-500 text-slate-500 transition-all"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* CRUD Modal */}
+      {/* Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-          <Card className="w-full max-w-xl bg-[#0A0A0A] border-white/10 rounded-[40px] shadow-2xl overflow-hidden animate-in zoom-in-95">
-            <CardHeader className="p-10 border-b border-white/5">
-              <div className="flex items-center gap-4 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
-                  <Plus className="w-6 h-6 text-[#FF6B00]" />
-                </div>
-                <div>
-                  <CardTitle className="text-3xl font-display font-black uppercase tracking-tight text-white">
-                    {editingId ? 'Editar Inscrição' : 'Nova Inscrição'}
-                  </CardTitle>
-                  <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                    Selecione a equipe e as categorias
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            
-            <CardContent className="p-10 space-y-8">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Equipe Representante</Label>
-                <select 
-                  value={selectedTeam}
-                  onChange={(e) => setSelectedTeam(e.target.value)}
-                  className="w-full h-13 bg-white/[0.03] border border-white/10 rounded-2xl px-5 text-sm font-bold text-white focus:border-[#FF6B00] outline-none appearance-none"
+          <div className="w-full max-w-lg bg-[#0A0A0A] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95">
+            <div className="p-8 border-b border-white/5 bg-white/[0.01]">
+              <h3 className="text-2xl font-black italic uppercase text-white tracking-tight">
+                {editingReg ? 'Editar Inscrição' : 'Nova Inscrição'}
+              </h3>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+                Dados da inscrição manual
+              </p>
+            </div>
+            <div className="p-8 space-y-6">
+              {/* Select Equipe */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Equipe
+                </label>
+                <select
+                  disabled={!!editingReg}
+                  value={formTeamId}
+                  onChange={e => setFormTeamId(e.target.value)}
+                  className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm text-white focus:outline-none focus:border-[#FF6B00] disabled:opacity-50 appearance-none font-bold"
                 >
-                  <option value="" className="bg-[#0A0A0A]">Selecione uma equipe...</option>
-                  {teams.map(t => (
+                  <option value="" className="bg-[#0A0A0A]">Selecionar equipe...</option>
+                  {allTeams.map(t => (
                     <option key={t.id} value={t.id} className="bg-[#0A0A0A]">{t.name}</option>
                   ))}
                 </select>
               </div>
 
-              <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Categorias Inscritas</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {categories.map(cat => (
-                    <button
+              {/* Categorias */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Categorias
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {allCategories.map(cat => (
+                    <label
                       key={cat.id}
-                      onClick={() => toggleCategory(cat.id)}
-                      className={`px-4 py-3 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
-                        selectedCategories.includes(cat.id)
-                        ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50 text-[#FF6B00]'
-                        : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/20'
+                      className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
+                        formCategoryIds.includes(cat.id)
+                          ? 'bg-[#FF6B00]/10 border-[#FF6B00]/30 text-[#FF6B00]'
+                          : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:border-white/20'
                       }`}
                     >
-                      {cat.name}
-                    </button>
+                      <input
+                        type="checkbox"
+                        className="hidden"
+                        checked={formCategoryIds.includes(cat.id)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setFormCategoryIds(prev => [...prev, cat.id])
+                          } else {
+                            setFormCategoryIds(prev => prev.filter(id => id !== cat.id))
+                          }
+                        }}
+                      />
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        {cat.name}
+                      </span>
+                    </label>
                   ))}
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Status da Inscrição</Label>
+              {/* Status */}
+              <div className="space-y-2">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Status
+                </label>
                 <div className="flex gap-2">
-                  {['PENDING', 'CONFIRMED', 'CANCELED'].map(s => (
+                  {(['PENDING', 'CONFIRMED'] as const).map(s => (
                     <button
                       key={s}
-                      onClick={() => setSelectedStatus(s)}
-                      className={`flex-1 px-4 py-3 rounded-xl border text-[9px] font-black uppercase tracking-widest transition-all ${
-                        selectedStatus === s
-                        ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50 text-[#FF6B00]'
-                        : 'bg-white/[0.02] border-white/5 text-slate-500 hover:border-white/20'
+                      type="button"
+                      onClick={() => setFormStatus(s)}
+                      className={`flex-1 h-11 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                        formStatus === s
+                          ? 'bg-[#FF6B00]/10 border-[#FF6B00]/30 text-[#FF6B00]'
+                          : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20'
                       }`}
                     >
-                      {s === 'PENDING' ? 'Pendente' : s === 'CONFIRMED' ? 'Confirmada' : 'Cancelada'}
+                      {s === 'PENDING' ? 'Pendente' : 'Confirmado'}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <Button 
-                  variant="ghost" 
+              {formError && (
+                <p className="text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-500/10 p-4 rounded-xl border border-red-500/20">
+                  {formError}
+                </p>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl"
+                  className="flex-1 h-12 font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-white transition-all rounded-xl"
                 >
                   Cancelar
-                </Button>
-                <Button 
-                  onClick={handleSave}
-                  disabled={modalLoading || !selectedTeam || selectedCategories.length === 0}
-                  className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20"
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitLoading}
+                  className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
                 >
-                  {modalLoading ? 'Salvando...' : editingId ? 'Salvar Edição' : 'Confirmar Inscrição'}
-                </Button>
+                  {submitLoading ? 'Salvando...' : 'Salvar Inscrição'}
+                </button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </div>
