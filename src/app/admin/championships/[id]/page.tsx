@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Flag, Sparkles } from 'lucide-react'
+import { Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Sparkles } from 'lucide-react'
 import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -48,7 +48,6 @@ export default async function ChampionshipDetailsPage({
     })
     const categoryCount = championship.categories.length
     const minTeams = championship.minTeamsPerCat || 3
-
     const firstCategory = championship.categories[0]
     const activeChampionshipId = id
 
@@ -82,11 +81,7 @@ export default async function ChampionshipDetailsPage({
     }) : []
 
     const nextGame = await prisma.game.findFirst({
-      where: {
-        championshipId: id,
-        status: 'SCHEDULED',
-        dateTime: { gt: new Date() }
-      },
+      where: { championshipId: id, status: 'SCHEDULED', dateTime: { gt: new Date() } },
       orderBy: { dateTime: 'asc' },
       include: { homeTeam: true, awayTeam: true, category: true }
     })
@@ -106,10 +101,7 @@ export default async function ChampionshipDetailsPage({
     })
 
     const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({
-      where: {
-        championshipId: id,
-        games: { some: { phase: { gt: 1 } } }
-      },
+      where: { championshipId: id, games: { some: { phase: { gt: 1 } } } },
       include: {
         games: {
           where: { phase: { gt: 1 } },
@@ -132,83 +124,131 @@ export default async function ChampionshipDetailsPage({
     const currentStep = statusMap[championship.status as keyof typeof statusMap] || 1
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6 pb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 pb-10">
 
         {/* ─── COLUNA ESQUERDA — Pipeline Vertical ─── */}
-        <div className="lg:sticky lg:top-6 h-fit bg-[#141414] border border-white/[0.08] rounded-3xl p-5">
-          <div className="flex items-center justify-between mb-5">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">Pipeline</p>
-            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-slate-500">
+        <div className="lg:sticky lg:top-6 h-fit bg-[#141414] border border-white/[0.08] rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
+              Pipeline de Execução
+            </p>
+            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+              championship.status === 'ONGOING' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
+              championship.status === 'REGISTRATION_OPEN' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+              championship.status === 'FINISHED' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
+              'text-slate-400 bg-white/[0.04] border-white/[0.08]'
+            }`}>
               {formatChampionshipStatus(championship.status)}
             </span>
           </div>
 
-          <div className="flex flex-col">
+          <div className="space-y-0">
 
-            {/* STEP 1 — Criação */}
-            <div className="flex gap-3">
+            {/* ── STEP 1: CRIAÇÃO ── */}
+            <div className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-9 h-9 rounded-xl bg-green-500/15 flex items-center justify-center flex-shrink-0">
                   <CheckCircle2 className="w-4 h-4 text-green-500" />
                 </div>
-                <div className="w-px flex-1 bg-white/[0.06] my-1 min-h-[16px]" />
+                <div className="w-px flex-1 bg-white/[0.06] my-2 min-h-[24px]" />
               </div>
-              <div className="pb-4 flex-1 min-w-0">
-                <p className="text-xs font-black uppercase text-white tracking-tight">Criação</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">Campeonato configurado</p>
+              <div className="pb-5 flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs font-black uppercase text-green-400 tracking-tight">Criação</p>
+                  <span className="text-[8px] font-black uppercase text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">Concluído</span>
+                </div>
+                <p className="text-[10px] text-slate-500">Campeonato configurado e categorias definidas</p>
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {championship.categories?.slice(0, 4).map((cat: any) => (
+                    <span key={cat.id} className="text-[8px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-500">
+                      {cat.name}
+                    </span>
+                  ))}
+                  {championship.categories?.length > 4 && (
+                    <span className="text-[8px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-600">
+                      +{championship.categories.length - 4}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* STEP 2 — Inscrições */}
-            <div className="flex gap-3">
+            {/* ── STEP 2: INSCRIÇÕES ── */}
+            <div className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black ${
-                  currentStep > 2 ? 'bg-green-500/20 text-green-500' :
-                  currentStep === 2 ? 'bg-[#FF6B00] text-white' :
-                  'bg-white/[0.05] border border-white/[0.08] text-slate-600'
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black ${
+                  currentStep > 2 ? 'bg-green-500/15' :
+                  currentStep === 2 ? 'bg-[#FF6B00]' :
+                  'bg-white/[0.04] border border-white/[0.08]'
                 }`}>
-                  {currentStep > 2 ? <CheckCircle2 className="w-4 h-4" /> : '2'}
+                  {currentStep > 2
+                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    : <span className={currentStep === 2 ? 'text-white' : 'text-slate-600'}>2</span>
+                  }
                 </div>
-                <div className="w-px flex-1 bg-white/[0.06] my-1 min-h-[16px]" />
+                <div className="w-px flex-1 bg-white/[0.06] my-2 min-h-[24px]" />
               </div>
-              <div className="pb-4 flex-1 min-w-0">
-                <p className={`text-xs font-black uppercase tracking-tight ${currentStep >= 2 ? 'text-white' : 'text-slate-600'}`}>
-                  Inscrições
-                </p>
+              <div className="pb-5 flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep >= 2 ? 'text-white' : 'text-slate-600'}`}>
+                    Inscrições
+                  </p>
+                  {currentStep === 2 && (
+                    <span className="text-[8px] font-black uppercase text-[#FF6B00] bg-[#FF6B00]/10 px-1.5 py-0.5 rounded-full">Ativo</span>
+                  )}
+                  {currentStep > 2 && (
+                    <span className="text-[8px] font-black uppercase text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">Concluído</span>
+                  )}
+                </div>
+
                 {championship.regDeadline && (
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="text-[10px] text-slate-500 mb-2">
                     Prazo: {new Date(championship.regDeadline).toLocaleDateString('pt-BR')}
+                    {new Date(championship.regDeadline) < new Date() ? ' (encerrado)' : ''}
                   </p>
                 )}
+
                 {currentStep === 2 && (
-                  <div className="mt-2 bg-black/30 border border-white/[0.06] rounded-xl p-3 space-y-2">
+                  <div className="bg-black/20 border border-white/[0.06] rounded-2xl p-4 space-y-3">
                     {/* Checklist */}
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${championship.regDeadline ? 'bg-green-500/40' : 'bg-white/[0.08]'}`} />
-                      <span className={`text-[9px] font-bold uppercase tracking-widest ${championship.regDeadline ? 'line-through text-slate-600' : 'text-slate-400'}`}>
-                        Prazo definido
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full flex-shrink-0 ${allCategoriesReady ? 'bg-green-500/40' : 'bg-white/[0.08]'}`} />
-                      <span className={`text-[9px] font-bold uppercase tracking-widest ${allCategoriesReady ? 'line-through text-slate-600' : 'text-slate-400'}`}>
-                        Mínimo de times ({minTeams}/cat)
-                      </span>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center ${championship.regDeadline ? 'bg-green-500/30' : 'bg-white/[0.08]'}`}>
+                          {championship.regDeadline && <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />}
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${championship.regDeadline ? 'line-through text-slate-600' : 'text-slate-300'}`}>
+                          Prazo de inscrições definido
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center ${allCategoriesReady ? 'bg-green-500/30' : 'bg-white/[0.08]'}`}>
+                          {allCategoriesReady && <CheckCircle2 className="w-2.5 h-2.5 text-green-400" />}
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${allCategoriesReady ? 'line-through text-slate-600' : 'text-slate-300'}`}>
+                          Mínimo de {minTeams} times por categoria
+                        </span>
+                      </div>
                     </div>
 
+                    <div className="border-t border-white/[0.05]" />
+
                     {/* Progresso por categoria */}
-                    <div className="pt-1 space-y-2">
+                    <div className="space-y-2.5">
+                      <p className="text-[9px] font-black uppercase tracking-widest text-slate-600">
+                        Progresso por categoria
+                      </p>
                       {missingPerCategory.map((cat, i) => (
                         <div key={i}>
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-[9px] text-slate-500 truncate max-w-[140px]">{cat.name}</span>
-                            <span className={`text-[9px] font-black flex-shrink-0 ml-1 ${cat.missing === 0 ? 'text-green-400' : 'text-[#FF6B00]'}`}>
+                            <span className="text-[10px] text-slate-400 truncate max-w-[160px]">{cat.name}</span>
+                            <span className={`text-[10px] font-black flex-shrink-0 ml-2 ${cat.missing === 0 ? 'text-green-400' : 'text-[#FF6B00]'}`}>
                               {cat.confirmed}/{minTeams}
+                              {cat.missing > 0 && ` (falta ${cat.missing})`}
                             </span>
                           </div>
-                          <div className="h-1 bg-white/[0.05] rounded-full overflow-hidden">
+                          <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all duration-700 ${cat.missing === 0 ? 'bg-green-500' : 'bg-[#FF6B00]'}`}
+                              className={`h-full rounded-full transition-all ${cat.missing === 0 ? 'bg-green-500' : 'bg-[#FF6B00]'}`}
                               style={{ width: `${Math.min(100, Math.round((cat.confirmed / minTeams) * 100))}%` }}
                             />
                           </div>
@@ -216,145 +256,227 @@ export default async function ChampionshipDetailsPage({
                       ))}
                     </div>
 
+                    <div className="border-t border-white/[0.05]" />
+
+                    <div className="flex items-center justify-between">
+                      <div>
+                        {totalMissing > 0 ? (
+                          <p className="text-[10px] text-yellow-400 font-black">Faltam {totalMissing} equipe(s)</p>
+                        ) : (
+                          <p className="text-[10px] text-green-400 font-black">✓ Todas as categorias completas</p>
+                        )}
+                        <p className="text-[9px] text-slate-600 mt-0.5">{confirmedTeams} equipe(s) inscrita(s)</p>
+                      </div>
+                      <Link
+                        href={`/admin/championships/${activeChampionshipId}/registrations`}
+                        className="text-[9px] font-black uppercase tracking-widest text-white bg-white/[0.08] border border-white/[0.1] px-3 py-1.5 rounded-lg hover:bg-[#FF6B00] hover:border-[#FF6B00] transition-all flex-shrink-0"
+                      >
+                        Gerenciar →
+                      </Link>
+                    </div>
+                  </div>
+                )}
+
+                {currentStep > 2 && (
+                  <p className="text-[10px] text-slate-500">{confirmedTeams} equipes confirmadas</p>
+                )}
+              </div>
+            </div>
+
+            {/* ── STEP 3: ORGANIZAÇÃO ── */}
+            <div className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black ${
+                  currentStep > 3 ? 'bg-green-500/15' :
+                  currentStep === 3 ? 'bg-[#FF6B00]' :
+                  allCategoriesReady && currentStep === 2 ? 'bg-[#FF6B00]/20 border border-[#FF6B00]/30' :
+                  'bg-white/[0.04] border border-white/[0.08]'
+                }`}>
+                  {currentStep > 3
+                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    : <span className={
+                        currentStep === 3 ? 'text-white' :
+                        allCategoriesReady ? 'text-[#FF6B00]' :
+                        'text-slate-600'
+                      }>3</span>
+                  }
+                </div>
+                <div className="w-px flex-1 bg-white/[0.06] my-2 min-h-[24px]" />
+              </div>
+              <div className="pb-5 flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className={`text-xs font-black uppercase tracking-tight ${
+                    currentStep >= 3 || allCategoriesReady ? 'text-white' : 'text-slate-600'
+                  }`}>
+                    Organização
+                  </p>
+                  {currentStep === 3 && (
+                    <span className="text-[8px] font-black uppercase text-[#FF6B00] bg-[#FF6B00]/10 px-1.5 py-0.5 rounded-full">Ativo</span>
+                  )}
+                  {currentStep > 3 && (
+                    <span className="text-[8px] font-black uppercase text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">Concluído</span>
+                  )}
+                </div>
+
+                {(currentStep === 3 || (allCategoriesReady && currentStep === 2)) && (
+                  <div className="bg-black/20 border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                    <p className="text-[10px] text-slate-400">
+                      Gere o calendário completo de jogos, confrontos e datas usando a IA.
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center p-2 bg-white/[0.03] rounded-xl">
+                        <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Categorias</p>
+                        <p className="text-sm font-black text-white">{categoryCount}</p>
+                      </div>
+                      <div className="text-center p-2 bg-white/[0.03] rounded-xl">
+                        <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Equipes</p>
+                        <p className="text-sm font-black text-white">{confirmedTeams}</p>
+                      </div>
+                      <div className="text-center p-2 bg-white/[0.03] rounded-xl">
+                        <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Mín./Cat.</p>
+                        <p className="text-sm font-black text-white">{minTeams}</p>
+                      </div>
+                    </div>
                     <Link
-                      href={`/admin/championships/${activeChampionshipId}/registrations`}
-                      className="inline-block pt-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-[#FF6B00] transition-colors"
+                      href={`/admin/championships/${activeChampionshipId}/organization`}
+                      className="flex items-center justify-center gap-2 w-full text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] h-10 rounded-xl transition-all"
                     >
-                      Gerenciar inscrições →
+                      <Sparkles className="w-3.5 h-3.5" />
+                      Organizar com IA
                     </Link>
                   </div>
                 )}
-              </div>
-            </div>
 
-            {/* STEP 3 — Organização */}
-            <div className="flex gap-3">
-              <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black ${
-                  currentStep > 3 ? 'bg-green-500/20 text-green-500' :
-                  currentStep === 3 ? 'bg-[#FF6B00] text-white' :
-                  allCategoriesReady ? 'bg-[#FF6B00]/20 border border-[#FF6B00]/30 text-[#FF6B00]' :
-                  'bg-white/[0.05] border border-white/[0.08] text-slate-600'
-                }`}>
-                  {currentStep > 3 ? <CheckCircle2 className="w-4 h-4" /> : '3'}
-                </div>
-                <div className="w-px flex-1 bg-white/[0.06] my-1 min-h-[16px]" />
-              </div>
-              <div className="pb-4 flex-1 min-w-0">
-                <p className={`text-xs font-black uppercase tracking-tight ${currentStep >= 3 || allCategoriesReady ? 'text-white' : 'text-slate-600'}`}>
-                  Organização
-                </p>
+                {currentStep > 3 && (
+                  <p className="text-[10px] text-slate-500">Calendário gerado e aplicado</p>
+                )}
                 {currentStep < 3 && !allCategoriesReady && (
-                  <p className="text-[10px] text-slate-600 mt-0.5">Aguardando inscrições</p>
-                )}
-                {(currentStep === 3 || allCategoriesReady) && (
-                  <Link
-                    href={`/admin/championships/${activeChampionshipId}/organization`}
-                    className="inline-flex items-center gap-1.5 mt-2 text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-1.5 rounded-lg hover:bg-[#E66000] transition-all"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    {currentStep === 3 ? 'Organizar com IA →' : 'Pronto — Organizar →'}
-                  </Link>
+                  <p className="text-[10px] text-slate-600">Aguardando inscrições completas</p>
                 )}
               </div>
             </div>
 
-            {/* STEP 4 — Em Andamento */}
-            <div className="flex gap-3">
+            {/* ── STEP 4: EM ANDAMENTO ── */}
+            <div className="flex gap-4">
               <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black ${
-                  currentStep > 4 ? 'bg-green-500/20 text-green-500' :
-                  currentStep === 4 ? 'bg-[#FF6B00] text-white' :
-                  'bg-white/[0.05] border border-white/[0.08] text-slate-600'
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black ${
+                  currentStep > 4 ? 'bg-green-500/15' :
+                  currentStep === 4 ? 'bg-[#FF6B00]' :
+                  'bg-white/[0.04] border border-white/[0.08]'
                 }`}>
-                  {currentStep > 4 ? <CheckCircle2 className="w-4 h-4" /> : '4'}
+                  {currentStep > 4
+                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    : <span className={currentStep === 4 ? 'text-white' : 'text-slate-600'}>4</span>
+                  }
                 </div>
-                <div className="w-px flex-1 bg-white/[0.06] my-1 min-h-[16px]" />
+                <div className="w-px flex-1 bg-white/[0.06] my-2 min-h-[24px]" />
               </div>
-              <div className="pb-4 flex-1 min-w-0">
-                <p className={`text-xs font-black uppercase tracking-tight ${currentStep >= 4 ? 'text-white' : 'text-slate-600'}`}>
-                  Em andamento
+              <div className="pb-5 flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep >= 4 ? 'text-white' : 'text-slate-600'}`}>
+                    Em Andamento
+                  </p>
+                  {currentStep === 4 && (
+                    <span className="text-[8px] font-black uppercase text-[#FF6B00] bg-[#FF6B00]/10 px-1.5 py-0.5 rounded-full">Ativo</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-500 mb-2">
+                  Registre resultados e acompanhe a classificação em tempo real
                 </p>
-                <p className="text-[10px] text-slate-500 mt-0.5">Jogos + classificação em tempo real</p>
+
                 {currentStep === 4 && (
-                  <div className="flex gap-3 mt-2">
-                    <Link href={`/admin/championships/${activeChampionshipId}/matches`}
-                      className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline">
-                      Jogos →
-                    </Link>
-                    <Link href={`/admin/championships/${activeChampionshipId}/standings`}
-                      className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-[#FF6B00] transition-colors">
-                      Classificação →
-                    </Link>
+                  <div className="bg-black/20 border border-white/[0.06] rounded-2xl p-4 space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2 bg-white/[0.03] rounded-xl">
+                        <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Realizados</p>
+                        <p className="text-lg font-black text-white">{completedGames}</p>
+                      </div>
+                      <div className="p-2 bg-white/[0.03] rounded-xl">
+                        <p className="text-[8px] font-black uppercase text-slate-600 mb-1">Pendentes</p>
+                        <p className="text-lg font-black text-[#FF6B00]">{totalGames - completedGames}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex justify-between mb-1">
+                        <span className="text-[9px] text-slate-500">Progresso geral</span>
+                        <span className="text-[9px] font-black text-white">
+                          {totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-[#FF6B00] rounded-full transition-all"
+                          style={{ width: `${totalGames > 0 ? Math.round((completedGames / totalGames) * 100) : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Link
+                        href={`/admin/championships/${activeChampionshipId}/matches`}
+                        className="flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] h-9 rounded-xl transition-all"
+                      >
+                        Registrar resultado
+                      </Link>
+                      <Link
+                        href={`/admin/championships/${activeChampionshipId}/standings`}
+                        className="flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-slate-300 bg-white/[0.06] border border-white/[0.08] hover:border-white/20 h-9 rounded-xl transition-all"
+                      >
+                        Classificação
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* STEP 5 — Encerramento */}
-            <div className="flex gap-3">
-              <div className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-black ${
-                  currentStep === 5 ? 'bg-green-500/20 text-green-500' :
-                  'bg-white/[0.05] border border-white/[0.08] text-slate-600'
+            {/* ── STEP 5: ENCERRAMENTO ── */}
+            <div className="flex gap-4">
+              <div className="flex items-start">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black ${
+                  currentStep === 5 ? 'bg-green-500/15' : 'bg-white/[0.04] border border-white/[0.08]'
                 }`}>
-                  {currentStep === 5 ? <CheckCircle2 className="w-4 h-4" /> : '5'}
+                  {currentStep === 5
+                    ? <CheckCircle2 className="w-4 h-4 text-green-500" />
+                    : <span className="text-slate-600">5</span>
+                  }
                 </div>
               </div>
-              <div className="flex-1 min-w-0 flex items-center">
-                <div>
-                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep === 5 ? 'text-white' : 'text-slate-600'}`}>
+              <div className="flex-1 min-w-0 pl-4">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep === 5 ? 'text-green-400' : 'text-slate-600'}`}>
                     Encerramento
                   </p>
-                  <p className="text-[10px] text-slate-600 mt-0.5">Todos os jogos finalizados</p>
+                  {currentStep === 5 && (
+                    <span className="text-[8px] font-black uppercase text-green-600 bg-green-500/10 px-1.5 py-0.5 rounded-full">Finalizado</span>
+                  )}
                 </div>
+                <p className="text-[10px] text-slate-600">
+                  {currentStep === 5
+                    ? 'Campeonato encerrado com sucesso'
+                    : `Disponível quando todos os ${totalGames} jogos forem realizados`
+                  }
+                </p>
               </div>
             </div>
 
           </div>
-
-          {/* Alerta abaixo dos steps */}
-          {totalMissing > 0 && currentStep <= 2 && (
-            <div className="mt-5 bg-yellow-500/5 border border-yellow-500/15 rounded-xl p-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400 mb-1">
-                Faltam {totalMissing} equipe(s)
-              </p>
-              <p className="text-[9px] text-slate-500 leading-relaxed">
-                {missingPerCategory.filter(c => c.missing > 0).map(c => `${c.name}: falta ${c.missing}`).join(' · ')}
-              </p>
-              <Link
-                href={`/admin/championships/${activeChampionshipId}/registrations`}
-                className="inline-block mt-2 text-[9px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline"
-              >
-                Adicionar inscrição →
-              </Link>
-            </div>
-          )}
-
-          {allCategoriesReady && currentStep <= 2 && (
-            <div className="mt-5 bg-green-500/5 border border-green-500/15 rounded-xl p-3">
-              <p className="text-[9px] font-black uppercase tracking-widest text-green-400 mb-2">
-                ✓ Inscrições completas
-              </p>
-              <Link
-                href={`/admin/championships/${activeChampionshipId}/organization`}
-                className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-1.5 rounded-lg hover:bg-[#E66000] transition-all"
-              >
-                <Sparkles className="w-3 h-3" /> Organizar agora →
-              </Link>
-            </div>
-          )}
         </div>
 
         {/* ─── COLUNA DIREITA — Stats + Jogos + Resultados ─── */}
-        <div className="space-y-5">
+        <div className="space-y-6">
 
           {/* Stat Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
             <StatCard label="Categorias" value={categoryCount} sublabel="categorias ativas" accent="blue" icon={<BarChart3 className="w-5 h-5" />} />
             <StatCard label="Equipes Inscritas" value={confirmedTeams} sublabel="Times confirmados" accent="blue" icon={<Users className="w-5 h-5" />} />
             <StatCard label="Progresso de Jogos" value={`${completedGames}/${totalGames}`} sublabel="Jogos realizados" accent="purple" icon={<Calendar className="w-5 h-5" />} />
-            <StatCard label="Próximo Jogo" value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"} sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo"} accent="green" icon={<PlayCircle className="w-5 h-5" />} />
+            <StatCard
+              label="Próximo Jogo"
+              value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"}
+              sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo agendado"}
+              accent="green"
+              icon={<PlayCircle className="w-5 h-5" />}
+            />
           </div>
 
           {/* Próximos Jogos + Últimos Resultados */}
@@ -388,9 +510,9 @@ export default async function ChampionshipDetailsPage({
                 {lastResults.length > 0 ? lastResults.map((game) => (
                   <div key={game.id} className="px-6 py-3.5 flex items-center justify-between hover:bg-white/[0.02] transition-all">
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-xs font-bold text-white truncate max-w-[80px] hidden sm:block">{game.homeTeam.name}</span>
+                      <span className="text-xs font-bold text-white truncate max-w-[90px]">{game.homeTeam.name}</span>
                       <span className="text-base font-black text-orange-500 tabular-nums flex-shrink-0">{game.homeScore}-{game.awayScore}</span>
-                      <span className="text-xs font-bold text-white truncate max-w-[80px] hidden sm:block">{game.awayTeam.name}</span>
+                      <span className="text-xs font-bold text-white truncate max-w-[90px]">{game.awayTeam.name}</span>
                     </div>
                     <Badge variant="success" size="sm" className="flex-shrink-0">FIM</Badge>
                   </div>
@@ -401,7 +523,7 @@ export default async function ChampionshipDetailsPage({
             </div>
           </div>
 
-          {/* Classificação + Bracket */}
+          {/* Classificação rápida + Bracket */}
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-5">
             <div className="xl:col-span-3 bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden">
               <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center">
