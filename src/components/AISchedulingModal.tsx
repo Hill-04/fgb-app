@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Sparkles, X, CheckCircle2, AlertCircle, Loader2, Calendar, MapPin, Info, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 type AISchedulingModalProps = {
   championshipId: string
@@ -11,8 +12,8 @@ type AISchedulingModalProps = {
 }
 
 type SimulationResult = {
-  viableCategories: { id: string; title: string; teamsCount: number }[]
-  blocks: {
+  viableCategories?: { id: string; title: string; teamsCount: number }[]
+  blocks?: {
     id: string
     title: string
     reason: string
@@ -25,10 +26,10 @@ type SimulationResult = {
       matches: { homeTeamId: string; awayTeamId: string; categoryId: string; phase: number }[]
     }[]
   }[]
-  summary: {
+  summary?: {
     totalMatches: number
     totalTravelSaved: string
-    costSavingsTips: string[]
+    costSavingsTips?: string[]
   }
 }
 
@@ -73,8 +74,8 @@ export function AISchedulingModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           championshipId, 
-          blocks: simulation.blocks, 
-          viableCategories: simulation.viableCategories 
+          blocks: simulation.blocks ?? [], 
+          viableCategories: simulation.viableCategories ?? []
         })
       })
       if (!res.ok) {
@@ -82,10 +83,6 @@ export function AISchedulingModal({
         throw new Error(data.error || 'Erro ao aplicar o calendário')
       }
       setStep('done')
-      setTimeout(() => {
-        onApplied()
-        onClose()
-      }, 2000)
     } catch (err: any) {
       setErrorMsg(err.message)
       setStep('error')
@@ -186,72 +183,90 @@ export function AISchedulingModal({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Total de Jogos</p>
-                    <p className="text-3xl font-black italic text-[#FF6B00]">{simulation.summary.totalMatches}</p>
+                    <p className="text-3xl font-black italic text-[#FF6B00]">{simulation.summary?.totalMatches ?? 0}</p>
                  </div>
                  <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-6 md:col-span-2">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 font-mono">Insight Logístico</p>
-                    <p className="text-sm font-bold text-white leading-relaxed">{simulation.summary.totalTravelSaved}</p>
+                    <p className="text-sm font-bold text-white leading-relaxed">{simulation.summary?.totalTravelSaved ?? 'Análise concluída'}</p>
                  </div>
               </div>
 
-              {/* Tips Section */}
-              <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-6 flex items-start gap-4">
-                 <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                 <div className="space-y-2">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões de Economia</p>
-                    <ul className="space-y-1.5">
-                       {simulation.summary.costSavingsTips.map((tip, i) => (
-                         <li key={i} className="text-xs text-slate-400 flex items-center gap-2">
-                            <span className="w-1 h-1 rounded-full bg-blue-500/50" /> {tip}
-                         </li>
-                       ))}
-                    </ul>
-                 </div>
-              </div>
+              {/* Tips Section — only if there are tips */}
+              {(simulation.summary?.costSavingsTips?.length ?? 0) > 0 && (
+                <div className="bg-blue-500/5 border border-blue-500/10 rounded-3xl p-6 flex items-start gap-4">
+                   <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                   <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões de Economia</p>
+                      <ul className="space-y-1.5">
+                         {simulation.summary!.costSavingsTips!.map((tip, i) => (
+                           <li key={i} className="text-xs text-slate-400 flex items-center gap-2">
+                              <span className="w-1 h-1 rounded-full bg-blue-500/50" /> {tip}
+                           </li>
+                         ))}
+                      </ul>
+                   </div>
+                </div>
+              )}
+
+              {/* Viable Categories */}
+              {(simulation.viableCategories?.length ?? 0) > 0 && (
+                <div className="bg-green-500/5 border border-green-500/10 rounded-2xl p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-3">Categorias Viáveis</p>
+                  <div className="flex flex-wrap gap-2">
+                    {simulation.viableCategories!.map(cat => (
+                      <span key={cat.id} className="text-[9px] font-black uppercase tracking-widest bg-green-500/10 border border-green-500/20 text-green-300 px-3 py-1 rounded-lg">
+                        {cat.title} — {cat.teamsCount} times
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Blocks & Matches Detail */}
-              <div className="space-y-4">
-                <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Distribuição por Blocos</h5>
+              {(simulation.blocks?.length ?? 0) > 0 && (
                 <div className="space-y-4">
-                  {simulation.blocks.map((block) => (
-                    <div key={block.id} className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden">
-                      <div className="bg-white/[0.03] px-6 py-4 flex justify-between items-center border-b border-white/5">
-                        <div className="flex items-center gap-3">
-                           <span className="text-[10px] font-black bg-[#FF6B00] text-white px-2 py-0.5 rounded-lg uppercase">{block.id}</span>
-                           <h6 className="text-xs font-black uppercase text-white tracking-widest">{block.title}</h6>
+                  <h5 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 ml-2">Distribuição por Blocos</h5>
+                  <div className="space-y-4">
+                    {simulation.blocks!.map((block) => (
+                      <div key={block.id} className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden">
+                        <div className="bg-white/[0.03] px-6 py-4 flex justify-between items-center border-b border-white/5">
+                          <div className="flex items-center gap-3">
+                             <span className="text-[10px] font-black bg-[#FF6B00] text-white px-2 py-0.5 rounded-lg uppercase">{block.id}</span>
+                             <h6 className="text-xs font-black uppercase text-white tracking-widest">{block.title}</h6>
+                          </div>
+                          <span className="text-[9px] font-bold text-slate-500 uppercase max-w-[200px] text-right truncate">{block.reason}</span>
                         </div>
-                        <span className="text-[9px] font-bold text-slate-500 uppercase">{block.reason}</span>
-                      </div>
-                      <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                         {block.phases.map((phase, pi) => (
-                           <div key={pi} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
-                              <div className="flex justify-between items-start">
-                                 <div>
-                                    <p className="text-xs font-black text-white uppercase">{phase.name}</p>
-                                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{phase.city} • {phase.location}</p>
-                                 </div>
-                                 <span className="text-[9px] font-black text-[#FF6B00]">{phase.matches.length} JOGOS</span>
-                              </div>
-                              <div className="space-y-1.5 border-t border-white/5 pt-3">
-                                 {phase.matches.slice(0, 3).map((m, mi) => (
-                                   <div key={mi} className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
-                                      <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                                      Equipe {mi + 1} vs Equipe {mi + 2}
+                        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                           {(block.phases ?? []).map((phase, pi) => (
+                             <div key={pi} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
+                                <div className="flex justify-between items-start">
+                                   <div>
+                                      <p className="text-xs font-black text-white uppercase">{phase.name}</p>
+                                      <p className="text-[9px] text-slate-500 font-bold uppercase mt-1">{phase.city} • {phase.location}</p>
                                    </div>
-                                 ))}
-                                 {phase.matches.length > 3 && (
-                                   <p className="text-[9px] text-slate-600 italic font-bold ml-3">+ {phase.matches.length - 3} partidas neste bloco</p>
-                                 )}
-                              </div>
-                           </div>
-                         ))}
+                                   <span className="text-[9px] font-black text-[#FF6B00]">{(phase.matches ?? []).length} JOGOS</span>
+                                </div>
+                                <div className="space-y-1.5 border-t border-white/5 pt-3">
+                                   {(phase.matches ?? []).slice(0, 3).map((m, mi) => (
+                                     <div key={mi} className="flex items-center gap-2 text-[10px] text-slate-400 font-medium">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                                        Confronto {mi + 1}
+                                     </div>
+                                   ))}
+                                   {(phase.matches ?? []).length > 3 && (
+                                     <p className="text-[9px] text-slate-600 italic font-bold ml-3">+ {phase.matches.length - 3} partidas neste bloco</p>
+                                   )}
+                                </div>
+                             </div>
+                           ))}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Botões de Ação */}
+              {/* Action Buttons */}
               <div className="flex gap-4 pt-6 border-t border-white/5 sticky bottom-0 bg-[#0F0F0F] pb-2">
                 <button
                   onClick={() => setStep('idle')}
@@ -282,13 +297,27 @@ export function AISchedulingModal({
 
           {/* DONE: Success */}
           {step === 'done' && (
-            <div className="text-center space-y-6 py-20 animate-in zoom-in-95 duration-500">
-              <div className="w-24 h-24 rounded-[40px] bg-green-500/20 border border-green-500/20 flex items-center justify-center mx-auto shadow-2xl shadow-green-500/10">
-                 <CheckCircle2 className="w-12 h-12 text-green-500" />
+            <div className="space-y-6 py-10 animate-in zoom-in-95 duration-500">
+              <div className="text-center">
+                <div className="w-24 h-24 rounded-[40px] bg-green-500/20 border border-green-500/20 flex items-center justify-center mx-auto shadow-2xl shadow-green-500/10 mb-6">
+                   <CheckCircle2 className="w-12 h-12 text-green-500" />
+                </div>
+                <p className="text-2xl font-black italic uppercase text-white tracking-tight">Calendário Aplicado!</p>
+                <p className="text-sm text-slate-400 font-medium mt-2">Os jogos foram criados com sucesso no banco de dados.</p>
               </div>
-              <div className="space-y-2">
-                 <p className="text-2xl font-black italic uppercase text-white tracking-tight">Competição Organizada!</p>
-                 <p className="text-sm text-slate-400 font-medium">Os jogos foram criados com sucesso. Redirecionando para o painel principal...</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={onClose}
+                  className="flex-1 h-12 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
+                >
+                  Fechar
+                </button>
+                <button
+                  onClick={() => { onApplied(); onClose() }}
+                  className="flex-1 h-12 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all flex items-center justify-center gap-2"
+                >
+                  Ver Jogos <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           )}

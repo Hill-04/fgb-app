@@ -3,8 +3,9 @@ import { authOptions } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/db"
 import { Badge } from "@/components/Badge"
-import { Trophy, TrendingUp, Users, Shield } from "lucide-react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { StandingsSelector } from './StandingsSelector'
+import { Trophy, TrendingUp, Users } from "lucide-react"
+import { Table } from "@/components/ui/table"
 import { Brackets } from "@/components/Brackets"
 
 export default async function teamStandingsPage({
@@ -18,10 +19,8 @@ export default async function teamStandingsPage({
   }
 
   const { categoryId } = await searchParams
-
   const teamId = (session.user as any).teamId
 
-  // Fetch championships the team is registered in
   const registrations = await prisma.registration.findMany({
     where: { teamId },
     include: {
@@ -54,11 +53,10 @@ export default async function teamStandingsPage({
     }
   })
 
-  // Get all unique categories for the filter
   const allTeamCategories = await prisma.championshipCategory.findMany({
     where: {
       registrations: {
-        some: { 
+        some: {
           registration: { teamId }
         }
       }
@@ -78,29 +76,10 @@ export default async function teamStandingsPage({
         </div>
         <h1 className="text-4xl font-display font-black text-white tracking-tight">Classificação Geral</h1>
         <p className="text-slate-400 mt-2 font-medium">Acompanhe o desempenho da sua equipe e adversários em tempo real.</p>
-        
-        {/* Category Filter */}
+
+        {/* Category Filter — Client Component */}
         <div className="mt-8">
-          <form action="/team/standings" className="flex items-center gap-4">
-            <div className="flex-1 max-w-xs">
-              <select
-                name="categoryId"
-                className="w-full bg-white/[0.03] border-white/10 border h-11 rounded-xl px-4 text-xs text-white focus:outline-none focus:border-[#FF6B00]/50 transition-all font-bold"
-                defaultValue={categoryId ?? ''}
-                onChange={(e) => (e.target.form as any).submit()}
-              >
-                <option value="" className="bg-[#0A0A0A]">Todas as Categorias</option>
-                {allTeamCategories.map((cat: any) => (
-                  <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.name}</option>
-                ))}
-              </select>
-            </div>
-            {categoryId && (
-              <a href="/team/standings" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
-                Limpar Filtro
-              </a>
-            )}
-          </form>
+          <StandingsSelector allTeamCategories={allTeamCategories} categoryId={categoryId} />
         </div>
       </div>
 
@@ -112,7 +91,7 @@ export default async function teamStandingsPage({
         </div>
       ) : (
         <div className="space-y-16">
-          {registrations.map((reg) => (
+          {registrations.map((reg: any) => (
             <div key={reg.id} className="animate-fade-up space-y-8">
               <div className="flex items-center justify-between">
                 <div>
@@ -123,7 +102,7 @@ export default async function teamStandingsPage({
               </div>
 
               <div className="grid gap-10">
-                {reg.championship.categories.map((cat) => {
+                {reg.championship.categories.map((cat: any) => {
                   const standings = cat.standings
                   return (
                     <div key={cat.id} className="bg-[#111] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
@@ -135,9 +114,42 @@ export default async function teamStandingsPage({
                         <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{standings.length} Equipes</span>
                       </div>
 
-                      <Table>
-                        {/* Table content remains same... */}
-                      </Table>
+                      {standings.length > 0 ? (
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="border-b border-white/5 text-[10px] font-black text-slate-600 uppercase tracking-widest">
+                              <th className="px-6 py-4">#</th>
+                              <th className="px-4 py-4">Equipe</th>
+                              <th className="px-4 py-4 text-center">PTS</th>
+                              <th className="px-4 py-4 text-center">V</th>
+                              <th className="px-4 py-4 text-center">D</th>
+                              <th className="px-4 py-4 text-center">SP</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/[0.03]">
+                            {standings.map((s: any, i: number) => (
+                              <tr key={s.id} className={`text-xs transition-all ${s.team.id === teamId ? 'bg-[#FF6B00]/5' : 'hover:bg-white/[0.01]'}`}>
+                                <td className="px-6 py-4">
+                                  <span className={`text-sm font-black ${i === 0 ? 'text-amber-400' : i === 1 ? 'text-slate-400' : i === 2 ? 'text-amber-700' : 'text-slate-600'}`}>
+                                    {i + 1}°
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4">
+                                  <span className={`font-bold ${s.team.id === teamId ? 'text-[#FF6B00]' : 'text-white'}`}>
+                                    {s.team.name} {s.team.id === teamId && <span className="text-[9px] ml-1 opacity-60">(Sua equipe)</span>}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-4 text-center font-black text-white">{s.points}</td>
+                                <td className="px-4 py-4 text-center font-bold text-green-400">{s.wins}</td>
+                                <td className="px-4 py-4 text-center font-bold text-red-400">{s.losses}</td>
+                                <td className="px-4 py-4 text-center font-bold text-slate-400">{(s.pointsFor ?? 0) - (s.pointsAgainst ?? 0)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <div className="p-16 text-center text-xs text-slate-600 italic">Nenhum resultado registrado ainda.</div>
+                      )}
 
                       {reg.championship.hasPlayoffs && cat.games.length > 0 && (
                         <div className="border-t border-white/5 mt-8 pt-8">

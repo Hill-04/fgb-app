@@ -2,12 +2,11 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Trophy, Users, Calendar, BarChart3, ArrowRight, CheckCircle2, PlayCircle, Flag, Settings, Sparkles } from 'lucide-react'
+import { Trophy, Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Flag, Sparkles } from 'lucide-react'
 import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { formatChampionshipStatus } from '@/lib/utils'
-import { AISchedulingButton } from './AISchedulingButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -48,19 +47,13 @@ export default async function ChampionshipDetailsPage({
       where: { championshipId: id, status: 'CONFIRMED' }
     })
     const categoryCount = championship.categories.length
-    const scheduledGames = await prisma.game.count({
-      where: { championshipId: id, status: 'SCHEDULED' }
-    })
-    const hasGamesScheduled = scheduledGames > 0
     const minTeams = championship.minTeamsPerCat || 3
-    const teamsNeeded = Math.max(0, (minTeams * categoryCount) - registrationCount)
 
     const firstCategory = championship.categories[0]
-    
-    // Novas métricas para o Pipeline Vertical (Fase 11)
-    const activeChampionshipId = id
+
+    // Métricas para o Pipeline
     const categoriesWithTeams = await prisma.championshipCategory.findMany({
-      where: { championshipId: activeChampionshipId },
+      where: { championshipId: id },
       include: {
         _count: {
           select: {
@@ -82,43 +75,14 @@ export default async function ChampionshipDetailsPage({
 
     const topStandings = firstCategory ? await prisma.standing.findMany({
       where: { categoryId: firstCategory.id },
-      orderBy: [
-        { points: 'desc' },
-        { wins: 'desc' }
-      ],
+      orderBy: [{ points: 'desc' }, { wins: 'desc' }],
       take: 3,
       include: { team: true }
     }) : []
 
-    const pipelineChecklist: Record<number, { task: string; done: boolean }[]> = {
-      1: [ // DRAFT
-        { task: 'Nome e ano definidos', done: !!championship.name },
-        { task: 'Categorias configuradas', done: categoryCount > 0 },
-        { task: 'Data de início definida', done: !!championship.startDate },
-      ],
-      2: [ // REGISTRATION_OPEN
-        { task: `Mínimo de times por categoria (${minTeams})`, done: teamsNeeded === 0 },
-        { task: 'Prazo de inscrições definido', done: !!championship.regDeadline },
-        { task: `Times inscritos: ${registrationCount}`, done: registrationCount > 0 },
-      ],
-      3: [ // REGISTRATION_CLOSED
-        { task: 'Inscrições encerradas', done: true },
-        { task: 'Times confirmados nas categorias', done: registrationCount >= (minTeams * categoryCount) },
-      ],
-      4: [ // ONGOING
-        { task: 'Calendário de jogos gerado', done: hasGamesScheduled },
-        { task: 'Chaveamento definido', done: hasGamesScheduled },
-        { task: 'Resultados sendo registrados', done: completedGames > 0 },
-      ],
-      5: [ // FINISHED
-        { task: 'Todos os jogos realizados', done: completedGames === totalGames && totalGames > 0 },
-        { task: 'Classificação final registrada', done: topStandings.length > 0 },
-      ],
-    }
-
     const nextGame = await prisma.game.findFirst({
-      where: { 
-        championshipId: id, 
+      where: {
+        championshipId: id,
         status: 'SCHEDULED',
         dateTime: { gt: new Date() }
       },
@@ -140,10 +104,8 @@ export default async function ChampionshipDetailsPage({
       include: { homeTeam: true, awayTeam: true, category: true }
     })
 
-
-
     const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({
-      where: { 
+      where: {
         championshipId: id,
         games: { some: { phase: { gt: 1 } } }
       },
@@ -159,20 +121,6 @@ export default async function ChampionshipDetailsPage({
       }
     }) : null
 
-    const registrationsByCategory = await prisma.championshipCategory.findMany({
-      where: { championshipId: id },
-      include: {
-        registrations: {
-          include: {
-            registration: {
-              include: { team: { select: { id: true, name: true } } }
-            }
-          },
-          where: { registration: { status: 'CONFIRMED' } }
-        }
-      }
-    })
-
     const statusMap = {
       'DRAFT': 1,
       'REGISTRATION_OPEN': 2,
@@ -182,242 +130,155 @@ export default async function ChampionshipDetailsPage({
     }
     const currentStep = statusMap[championship.status as keyof typeof statusMap] || 1
 
+    const pipelineSteps = [
+      { id: 1, label: 'Criação', icon: Trophy },
+      { id: 2, label: 'Inscrições', icon: Users },
+      { id: 3, label: 'Organização', icon: Sparkles },
+      { id: 4, label: 'Em Andamento', icon: PlayCircle },
+      { id: 5, label: 'Encerrar', icon: Flag },
+    ]
+
     return (
-      <div className="space-y-8 pb-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            label="Categorias"
-            value={categoryCount}
-            sublabel="categorias ativas"
-            accent="blue"
-            icon={<BarChart3 className="w-5 h-5" />}
-          />
-          <StatCard
-            label="Equipes Escritas"
-            value={confirmedTeams}
-            sublabel="Times confirmados"
-            accent="blue"
-            icon={<Users className="w-5 h-5" />}
-          />
-          <StatCard
-            label="Progresso de Jogos"
-            value={`${completedGames}/${totalGames}`}
-            sublabel="Jogos realizados"
-            accent="purple"
-            icon={<Calendar className="w-5 h-5" />}
-          />
-          <StatCard
-            label="Próximo Jogo"
-            value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"}
-            sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo agendado"}
-            accent="green"
-            icon={<PlayCircle className="w-5 h-5" />}
-          />
-        </div>
+      <div className="space-y-6 pb-10">
 
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
-          {/* COLUNA ESQUERDA — Pipeline Vertical */}
-          <div className="bg-[#0A0A0A] border border-white/5 rounded-[32px] p-6 h-fit sticky top-6">
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 mb-6 flex items-center gap-2">
-              <div className="w-1 h-1 rounded-full bg-orange-500" /> Pipeline de Evolução
+        {/* 1. PIPELINE — ELEMENTO PRINCIPAL, LARGURA TOTAL */}
+        <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-5">
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600 flex items-center gap-2">
+              <span className="w-1 h-1 rounded-full bg-[#FF6B00] inline-block" /> Pipeline de Execução
             </p>
-            <div className="flex flex-col">
-              {/* STEP 1 — Criação */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 border border-green-500/10">
-                    <CheckCircle2 className="w-4 h-4 text-green-500" />
-                  </div>
-                  <div className="w-px flex-1 bg-white/[0.05] my-2 min-h-[24px]" />
-                </div>
-                <div className="pb-6 flex-1">
-                  <p className="text-[10px] font-black uppercase text-white tracking-widest leading-none">Criação</p>
-                  <p className="text-[9px] font-bold text-slate-600 mt-1 uppercase tracking-tight">Setup finalizado</p>
-                </div>
-              </div>
+            <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.08] text-slate-500">
+              {formatChampionshipStatus(championship.status)}
+            </span>
+          </div>
 
-              {/* STEP 2 — Inscrições */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                    currentStep > 2 ? 'bg-green-500/20 border border-green-500/10' :
-                    currentStep === 2 ? 'bg-[#FF6B00] shadow-[0_0_15px_rgba(255,107,0,0.3)]' : 'bg-white/[0.03] border border-white/5'
-                  }`}>
-                    {currentStep > 2
-                      ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      : <span className="text-[10px] font-black text-white">2</span>
-                    }
+          {/* Steps horizontais */}
+          <div className="grid grid-cols-5 gap-3">
+            {pipelineSteps.map((step) => {
+              const isPast = currentStep > step.id
+              const isCurrent = currentStep === step.id
+
+              return (
+                <div key={step.id} className={`rounded-2xl p-4 border transition-all duration-300 ${
+                  isCurrent
+                    ? 'bg-[#FF6B00]/10 border-[#FF6B00]/30 shadow-[0_0_20px_rgba(255,107,0,0.05)]'
+                    : isPast
+                    ? 'bg-green-500/5 border-green-500/15'
+                    : 'bg-white/[0.02] border-white/[0.06] opacity-60'
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                      isPast ? 'bg-green-500/20' :
+                      isCurrent ? 'bg-[#FF6B00]' :
+                      'bg-white/[0.05]'
+                    }`}>
+                      {isPast
+                        ? <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                        : <step.icon className={`w-3.5 h-3.5 ${isCurrent ? 'text-white' : 'text-slate-600'}`} />
+                      }
+                    </div>
+                    <div>
+                      <p className={`text-[9px] font-black uppercase tracking-widest leading-none ${
+                        isCurrent ? 'text-[#FF6B00]' : isPast ? 'text-green-400' : 'text-slate-600'
+                      }`}>
+                        {step.label}
+                      </p>
+                      <p className="text-[8px] text-slate-700 uppercase tracking-widest mt-0.5">
+                        {isPast ? 'Concluído' : isCurrent ? 'Ativo' : 'Aguardando'}
+                      </p>
+                    </div>
                   </div>
-                  <div className="w-px flex-1 bg-white/[0.05] my-2 min-h-[24px]" />
-                </div>
-                <div className="pb-6 flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${
-                    currentStep >= 2 ? 'text-white' : 'text-slate-600'
-                  }`}>Inscrições</p>
-                  
-                  {currentStep === 2 && (
-                    <div className="mt-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-4">
-                      {/* Progresso por categoria */}
+
+                  {/* Info contextual para o step ativo */}
+                  {isCurrent && step.id === 2 && (
+                    <div className="space-y-1.5 mt-1">
                       {missingPerCategory.map((cat, i) => (
                         <div key={i}>
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[8px] text-slate-500 uppercase font-black truncate max-w-[100px]">
-                              {cat.name}
-                            </span>
+                          <div className="flex justify-between mb-0.5">
+                            <span className="text-[8px] text-slate-600 truncate max-w-[80px]">{cat.name}</span>
                             <span className={`text-[8px] font-black ${cat.missing === 0 ? 'text-green-400' : 'text-[#FF6B00]'}`}>
                               {cat.confirmed}/{minTeams}
                             </span>
                           </div>
-                          <div className="h-1 bg-white/[0.04] rounded-full overflow-hidden">
+                          <div className="h-0.5 bg-white/[0.06] rounded-full overflow-hidden">
                             <div
-                              className={`h-full rounded-full transition-all duration-1000 ${cat.missing === 0 ? 'bg-green-500' : 'bg-[#FF6B00]'}`}
+                              className={`h-full rounded-full transition-all duration-700 ${cat.missing === 0 ? 'bg-green-500' : 'bg-[#FF6B00]'}`}
                               style={{ width: `${Math.min(100, Math.round((cat.confirmed / minTeams) * 100))}%` }}
                             />
                           </div>
                         </div>
                       ))}
-
-                      <Link
-                        href={`/admin/championships/${id}/registrations`}
-                        className="flex items-center justify-center gap-1.5 h-8 bg-white/5 hover:bg-[#FF6B00]/10 text-[8px] font-black uppercase tracking-widest text-slate-400 hover:text-[#FF6B00] rounded-lg transition-all border border-white/5 hover:border-[#FF6B00]/20"
-                      >
-                        Gerenciar Inscrições <ArrowRight className="w-2.5 h-2.5" />
+                      <Link href={`/admin/championships/${id}/registrations`}
+                        className="inline-block mt-1.5 text-[8px] font-black uppercase tracking-widest text-slate-500 hover:text-[#FF6B00] transition-colors">
+                        Gerenciar →
                       </Link>
                     </div>
                   )}
-                </div>
-              </div>
 
-              {/* STEP 3 — Organização */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                    currentStep > 3 ? 'bg-green-500/20 border border-green-500/10' :
-                    currentStep === 3 ? 'bg-[#FF6B00] shadow-[0_0_15px_rgba(255,107,0,0.3)]' : 'bg-white/[0.03] border border-white/5'
-                  }`}>
-                    {currentStep > 3
-                      ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      : <span className="text-[10px] font-black text-white">3</span>
-                    }
-                  </div>
-                  <div className="w-px flex-1 bg-white/[0.05] my-2 min-h-[24px]" />
-                </div>
-                <div className="pb-6 flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${
-                    currentStep >= 3 ? 'text-white' : 'text-slate-600'
-                  }`}>Organização</p>
-                  
-                  {currentStep === 3 && (
-                    <div className="mt-3">
-                      <Link
-                        href={`/admin/championships/${id}/organization`}
-                        className="flex items-center gap-2 h-9 bg-[#FF6B00] hover:bg-[#E66000] text-white text-[9px] font-black uppercase tracking-widest px-4 rounded-xl transition-all shadow-lg shadow-orange-600/20"
-                      >
-                        <Sparkles className="w-3.5 h-3.5" /> Gerar Jogos IA
-                      </Link>
-                    </div>
+                  {isCurrent && step.id === 3 && (
+                    <Link href={`/admin/championships/${id}/organization`}
+                      className="inline-flex items-center gap-1 mt-1 text-[8px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline">
+                      <Sparkles className="w-2.5 h-2.5" /> Organizar →
+                    </Link>
                   )}
-                  {currentStep < 3 && allCategoriesReady && (
-                    <div className="mt-2 bg-green-500/5 border border-green-500/10 rounded-xl p-3">
-                      <p className="text-[8px] text-green-400 uppercase font-black tracking-widest leading-none">
-                        ✓ Inscrições Completas
-                      </p>
-                      <Link
-                        href={`/admin/championships/${id}/organization`}
-                        className="flex items-center gap-2 h-8 bg-white/5 hover:bg-white/10 text-white text-[8px] font-black uppercase tracking-widest px-3 rounded-lg mt-2 transition-all"
-                      >
-                        <Sparkles className="w-3 h-3 text-[#FF6B00]" /> Organizar Agora
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </div>
 
-              {/* STEP 4 — Em Andamento */}
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                    currentStep > 4 ? 'bg-green-500/20 border border-green-500/10' :
-                    currentStep === 4 ? 'bg-[#FF6B00] shadow-[0_0_15px_rgba(255,107,0,0.3)]' : 'bg-white/[0.03] border border-white/5'
-                  }`}>
-                    {currentStep > 4
-                      ? <CheckCircle2 className="w-4 h-4 text-green-500" />
-                      : <span className="text-[10px] font-black text-white">4</span>
-                    }
-                  </div>
-                  <div className="w-px flex-1 bg-white/[0.05] my-2 min-h-[24px]" />
-                </div>
-                <div className="pb-6 flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${
-                    currentStep >= 4 ? 'text-white' : 'text-slate-600'
-                  }`}>Em Andamento</p>
-                  
-                  {currentStep === 4 && (
-                    <div className="mt-3 flex gap-2">
+                  {isCurrent && step.id === 4 && (
+                    <div className="flex flex-col gap-1 mt-1">
                       <Link href={`/admin/championships/${id}/matches`}
-                        className="text-[8px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline bg-[#FF6B00]/5 px-3 py-1.5 rounded-lg border border-[#FF6B00]/10">
-                        Resultados
+                        className="text-[8px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline">
+                        Jogos →
                       </Link>
                       <Link href={`/admin/championships/${id}/standings`}
-                        className="text-[8px] font-black uppercase tracking-widest text-slate-500 hover:text-white px-3 py-1.5 rounded-lg bg-white/5">
-                        Tabela
+                        className="text-[8px] font-black uppercase tracking-widest text-slate-500 hover:text-[#FF6B00] transition-colors">
+                        Classificação →
                       </Link>
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* STEP 5 — Encerramento */}
-              <div className="flex gap-4">
-                <div className="flex items-center justify-center">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500 ${
-                    currentStep === 5 ? 'bg-green-500 border border-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]' : 'bg-white/[0.03] border border-white/5'
-                  }`}>
-                    {currentStep === 5
-                      ? <CheckCircle2 className="w-4 h-4 text-white" />
-                      : <span className={`text-[10px] font-black ${currentStep === 5 ? 'text-white' : 'text-slate-700'}`}>5</span>
-                    }
-                  </div>
-                </div>
-                <div className="flex-1">
-                  <p className={`text-[10px] font-black uppercase tracking-widest leading-none ${
-                    currentStep === 5 ? 'text-white' : 'text-slate-600'
-                  }`}>Finalizado</p>
-                </div>
-              </div>
-            </div>
+              )
+            })}
           </div>
 
-          {/* COLUNA DIREITA — Conteúdo principal */}
-          <div className="space-y-6">
-            {/* Alerta Inteligente */}
-            {totalMissing > 0 && currentStep <= 2 && (
-              <div className="bg-[#FF6B00]/5 border border-[#FF6B00]/10 rounded-[28px] p-6 flex items-center justify-between animate-in fade-in slide-in-from-top-4 duration-500 group overflow-hidden relative">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-[#FF6B00]/5 rounded-full -mr-16 -mt-16 blur-3xl" />
-                <div className="flex items-center gap-6 relative z-10">
-                  <div className="w-14 h-14 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center border border-[#FF6B00]/20 group-hover:scale-110 transition-transform">
-                     <Users className="w-6 h-6 text-[#FF6B00]" />
-                  </div>
-                  <div>
-                    <h4 className="text-xl font-black italic uppercase text-white tracking-tight">Faltam {totalMissing} Equipes</h4>
-                    <p className="text-sm text-slate-500 mt-1 font-medium">
-                      {missingPerCategory
-                        .filter(c => c.missing > 0)
-                        .map(c => `${c.name}: falta ${c.missing}`)
-                        .join(' · ')
-                      }
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href={`/admin/championships/${id}/registrations`}
-                  className="px-6 h-11 bg-white/5 hover:bg-[#FF6B00] text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 relative z-10 hover:shadow-lg hover:shadow-orange-600/20"
-                >
-                  Adicionar Inscrição <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
+          {/* Alerta inteligente abaixo do pipeline */}
+          {totalMissing > 0 && currentStep <= 2 && (
+            <div className="mt-4 bg-yellow-500/5 border border-yellow-500/15 rounded-xl p-3 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400 mb-1">
+                  Faltam {totalMissing} equipe(s) para liberar a organização
+                </p>
+                <p className="text-[9px] text-slate-500">
+                  {missingPerCategory.filter(c => c.missing > 0).map(c => `${c.name}: falta ${c.missing}`).join(' · ')}
+                </p>
               </div>
-            )}
+              <Link href={`/admin/championships/${id}/registrations`}
+                className="flex-shrink-0 text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-1.5 rounded-lg hover:bg-[#E66000] transition-all">
+                Adicionar →
+              </Link>
+            </div>
+          )}
 
+          {allCategoriesReady && currentStep <= 2 && (
+            <div className="mt-4 bg-green-500/5 border border-green-500/15 rounded-xl p-3 flex items-center justify-between">
+              <p className="text-[9px] font-black uppercase tracking-widest text-green-400">
+                ✓ Inscrições completas — pronto para organizar
+              </p>
+              <Link href={`/admin/championships/${id}/organization`}
+                className="flex-shrink-0 text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-1.5 rounded-lg hover:bg-[#E66000] transition-all inline-flex items-center gap-1">
+                <Sparkles className="w-3 h-3" /> Organizar →
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* 2. STAT CARDS */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard label="Categorias" value={categoryCount} sublabel="categorias ativas" accent="blue" icon={<BarChart3 className="w-5 h-5" />} />
+          <StatCard label="Equipes Inscritas" value={confirmedTeams} sublabel="Times confirmados" accent="blue" icon={<Users className="w-5 h-5" />} />
+          <StatCard label="Progresso de Jogos" value={`${completedGames}/${totalGames}`} sublabel="Jogos realizados" accent="purple" icon={<Calendar className="w-5 h-5" />} />
+          <StatCard label="Próximo Jogo" value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"} sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo"} accent="green" icon={<PlayCircle className="w-5 h-5" />} />
+        </div>
+
+        {/* 3. JOGOS + RESULTADOS */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden">
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
@@ -464,36 +325,24 @@ export default async function ChampionshipDetailsPage({
           </div>
         </div>
 
+        {/* 4. CLASSIFICAÇÃO + BRACKETS */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3 bg-[#0A0A0A] border border-white/5 rounded-3xl overflow-hidden h-fit">
             <div className="px-6 py-5 border-b border-white/5 flex justify-between items-center">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">
-                Classificação — {firstCategory?.name || "Geral"}
-              </h3>
+              <h3 className="text-sm font-black text-white uppercase tracking-widest">Classificação — {firstCategory?.name || "Geral"}</h3>
               <Link href={`/admin/championships/${id}/standings`} className="text-[10px] font-black text-orange-500 uppercase hover:underline">Ver Completa →</Link>
             </div>
             <div className="divide-y divide-white/5">
               {topStandings.length > 0 ? topStandings.map((standing, idx) => (
-                <div key={standing.id} className="px-6 py-4 flex items-center justify-between animate-fade-in group" style={{ animationDelay: `${idx * 50}ms` }}>
+                <div key={standing.id} className="px-6 py-4 flex items-center justify-between hover:bg-white/[0.01] transition-all group">
                   <div className="flex items-center gap-4">
-                    <span className={`text-xl font-black ${
-                      idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'
-                    }`}>{idx + 1}°</span>
+                    <span className={`text-xl font-black ${idx === 0 ? 'text-amber-500' : idx === 1 ? 'text-slate-400' : 'text-amber-700'}`}>{idx + 1}°</span>
                     <span className="text-sm font-bold text-white group-hover:text-orange-500 transition-colors">{standing.team.name}</span>
                   </div>
                   <div className="flex items-center gap-6">
-                    <div className="text-center">
-                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">PTS</p>
-                      <p className="text-sm font-black text-white leading-none">{standing.points}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">V</p>
-                      <p className="text-sm font-black text-green-500 leading-none">{standing.wins}</p>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">D</p>
-                      <p className="text-sm font-black text-red-500 leading-none">{standing.losses}</p>
-                    </div>
+                    <div className="text-center"><p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">PTS</p><p className="text-sm font-black text-white leading-none">{standing.points}</p></div>
+                    <div className="text-center"><p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">V</p><p className="text-sm font-black text-green-500 leading-none">{standing.wins}</p></div>
+                    <div className="text-center"><p className="text-[8px] font-black text-slate-500 uppercase mb-0.5">D</p><p className="text-sm font-black text-red-500 leading-none">{standing.losses}</p></div>
                   </div>
                 </div>
               )) : (
@@ -507,7 +356,6 @@ export default async function ChampionshipDetailsPage({
               <h3 className="text-sm font-black text-white uppercase tracking-widest">Bracket Preview</h3>
               <Badge variant="purple" size="sm">Playoffs</Badge>
             </div>
-
             {playoffCategory ? (
               <div className="transform scale-90 origin-top">
                 <Brackets games={playoffCategory.games as any} />
@@ -520,11 +368,10 @@ export default async function ChampionshipDetailsPage({
             )}
           </div>
         </div>
+
       </div>
-    </div>
-  </div>
-)
-} catch (error: any) {
+    )
+  } catch (error: any) {
     console.error("Dashboard Error:", error)
     return (
       <div className="bg-[#0A0A0A] border border-red-500/20 rounded-3xl p-20 text-center">
