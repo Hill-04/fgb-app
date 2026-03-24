@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+import { generateChampionshipSchedule } from '@/lib/scheduling/roundRobin'
+import { optimizeSchedule } from '@/lib/scheduling/aiOptimizer'
 
 export async function POST(request: Request) {
   try {
@@ -14,160 +13,65 @@ export async function POST(request: Request) {
     }
 
     const { championshipId } = await request.json()
+
     if (!championshipId) {
-      return NextResponse.json({ error: 'championshipId é obrigatório' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'championshipId é obrigatório' },
+        { status: 400 }
+      )
     }
 
-    // 1. Coletar dados do campeonato específico
+    // 1. Gerar calendário base com round-robin (sempre funciona)
+    const schedule = await generateChampionshipSchedule(championshipId)
+
+    if (!schedule.success || schedule.totalGames === 0) {
+      return NextResponse.json(
+        { error: 'Não foi possível gerar o calendário. Verifique se há equipes confirmadas em todas as categorias.' },
+        { status: 400 }
+      )
+    }
+
+    // 2. Tentar otimizar com IA (fallback automático entre provedores)
     const championship = await prisma.championship.findUnique({
       where: { id: championshipId },
-      include: {
-        categories: {
-          include: {
-            registrations: {
-              include: {
-                registration: {
-                  include: {
-                    team: { include: { gym: true } },
-                    blockedDates: true
-                  }
-                }
-              }
-            }
-          }
-        }
+      select: { name: true, startDate: true }
+    })
+
+    const aiResult = await optimizeSchedule({
+      name: championship?.name || '',
+      categories: schedule.categories.map(c => ({
+        name: c.name,
+        teams: c.teams,
+        games: c.gamesCount
+      })),
+      totalGames: schedule.totalGames,
+      startDate: championship?.startDate?.toLocaleDateString('pt-BR') || 'A definir'
+    })
+
+    return NextResponse.json({
+      success: true,
+      totalGames: schedule.totalGames,
+      summary: schedule.summary,
+      categories: schedule.categories.map(c => ({
+        id: c.id,
+        name: c.name,
+        teams: c.teams,
+        gamesCount: c.gamesCount
+      })),
+      games: schedule.games,
+      aiOptimization: {
+        available: aiResult.optimized,
+        provider: aiResult.provider,
+        suggestion: aiResult.suggestion,
+        error: aiResult.error
       }
-    }) as any
+    })
 
-    if (!championship) {
-      return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
-    }
-
-    // 2. Preparar dados para a IA
-    const promptData = {
-      championship: {
-        name: championship.name,
-        format: championship.format,
-        phases: championship.phases,
-        turns: championship.turns,
-        fieldControl: championship.fieldControl,
-        startDate: championship.startDate,
-        endDate: championship.endDate,
-        minTeamsPerCat: championship.minTeamsPerCat
-      },
-      categories: championship.categories.map((cat: any) => ({
-        id: cat.id,
-        name: cat.name,
-        teams: cat.registrations.map((regMatch: any) => {
-          const reg = regMatch.registration
-          return {
-            id: reg.team.id,
-            name: reg.team.name,
-            city: reg.team.city,
-            gym: reg.team.gym?.name || 'Não informado',
-            blockedDates: reg.blockedDates.map((bd: any) => ({
-              startDate: bd.startDate,
-              endDate: bd.endDate,
-              reason: bd.reason
-            }))
-          }
-        })
-      }))
-    }
-
-    const prompt = `
-Você é um especialista em logística de basquete. Sua tarefa é criar um cronograma otimizado para o campeonato "${championship.name}".
-
-REGRAS DO CAMPEONATO:
-- Formato: ${championship.format}
-- Turnos: ${championship.turns}
-- Fases: ${championship.phases}
-- Controle de Campo: ${championship.fieldControl}
-- Período: ${championship.startDate?.toISOString() || 'Não definido'} até ${championship.endDate?.toISOString() || 'Não definido'}
-
-OBJETIVOS:
-1. Validar viabilidade: Apenas categorias com pelo menos ${championship.minTeamsPerCat} equipes são viáveis.
-2. Agrupamento (Blocks): Agrupe categorias que possuam as mesmas equipes ou cidades próximas para reduzir viagens.
-3. Sedes: Sugira ginásios baseados nas equipes locais.
-4. Datas: Evite os "blockedDates" informados pelas equipes.
-
-RETORNE APENAS UM JSON VÁLIDO (em Português):
-{
-  "viableCategories": [
-    { "id": "uuid", "title": "Nome da Categoria", "teamsCount": 5 }
-  ],
-  "blocks": [
-    {
-      "id": "B1",
-      "title": "Bloco 1 (Ex: Sub 15 e Sub 17)",
-      "reason": "Explicação logistica aqui",
-      "categories": ["Nome Cat 1", "Nome Cat 2"],
-      "phases": [
-        {
-          "name": "Fase 1 - Sede X",
-          "date": "ISO_DATE_STRING",
-          "location": "Nome do Ginásio",
-          "city": "Cidade",
-          "matches": [
-            { "homeTeamId": "uuid", "awayTeamId": "uuid", "categoryId": "uuid", "phase": 1 }
-          ]
-        }
-      ]
-    }
-  ],
-  "summary": {
-    "totalMatches": 20,
-    "totalTravelSaved": "Explicação curta",
-    "costSavingsTips": [
-      "Agrupar jogos de categorias diferentes no mesmo ginásio economiza 30% em arbitragem",
-      "Utilizar a sede da Equipe X reduz custos de deslocamento em R$ 500"
-    ]
-  }
-}
-
-DADOS DAS CATEGORIAS E EQUIPES:
-${JSON.stringify(promptData.categories, null, 2)}
-`
-
-    if (!process.env.GEMINI_API_KEY) {
-      // Retorna Mock se offline
-      return NextResponse.json({
-        viableCategories: (championship.categories as any[]).map((c: any) => ({
-          id: c.id,
-          title: c.name,
-          teamsCount: c.registrations.length
-        })),
-        blocks: [
-          {
-            id: 'mock-b1',
-            title: 'Bloco Simulado (IA Offline)',
-            reason: 'Chave API Gemini não configurada.',
-            categories: (championship.categories as any[]).slice(0, 2).map((c: any) => c.name),
-            phases: [
-              {
-                name: 'Eliminatória - Sede POA',
-                date: new Date().toISOString(),
-                location: 'Ginásio Teste',
-                city: 'Porto Alegre',
-                matches: []
-              }
-            ]
-          }
-        ],
-        summary: { totalMatches: 0, totalTravelSaved: "N/A" }
-      })
-    }
-
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
-    
-    const cleanedJSON = text.replace(/```json/g, '').replace(/```/g, '').trim()
-    
-    return NextResponse.json(JSON.parse(cleanedJSON))
-  } catch (error) {
-    console.error('AI Scheduling Error:', error)
-    return NextResponse.json({ error: 'Erro ao gerar agendamento IA' }, { status: 500 })
+  } catch (error: any) {
+    console.error('[Scheduling Simulate Error]', error)
+    return NextResponse.json(
+      { error: error.message || 'Erro interno ao gerar calendário' },
+      { status: 500 }
+    )
   }
 }
