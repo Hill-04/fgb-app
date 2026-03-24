@@ -201,6 +201,23 @@ export default async function ChampionshipDetailsPage({
                   )}
                 </div>
 
+                {currentStep === 2 && !allCategoriesReady && (
+                  <div className="flex items-center gap-1.5 mt-1 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-yellow-400">
+                      Inscrições em andamento
+                    </span>
+                  </div>
+                )}
+                {currentStep === 2 && allCategoriesReady && (
+                  <div className="flex items-center gap-1.5 mt-1 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-green-400">
+                      Pronto para organizar
+                    </span>
+                  </div>
+                )}
+
                 {championship.regDeadline && (
                   <p className="text-[10px] text-slate-500 mb-2">
                     Prazo: {new Date(championship.regDeadline).toLocaleDateString('pt-BR')}
@@ -318,6 +335,15 @@ export default async function ChampionshipDetailsPage({
                   )}
                 </div>
 
+                {(currentStep === 3 || allCategoriesReady) && currentStep < 4 && (
+                  <div className="flex items-center gap-1.5 mt-1 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00]">
+                      Organização disponível
+                    </span>
+                  </div>
+                )}
+
                 {(currentStep === 3 || (allCategoriesReady && currentStep === 2)) && (
                   <div className="bg-black/20 border border-white/[0.06] rounded-2xl p-4 space-y-3">
                     <p className="text-[10px] text-slate-400">
@@ -380,6 +406,16 @@ export default async function ChampionshipDetailsPage({
                     <span className="text-[8px] font-black uppercase text-[#FF6B00] bg-[#FF6B00]/10 px-1.5 py-0.5 rounded-full">Ativo</span>
                   )}
                 </div>
+
+                {currentStep === 4 && (
+                  <div className="flex items-center gap-1.5 mt-1 mb-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] animate-pulse" />
+                    <span className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00]">
+                      Em andamento
+                    </span>
+                  </div>
+                )}
+
                 <p className="text-[10px] text-slate-500 mb-2">
                   Registre resultados e acompanhe a classificação em tempo real
                 </p>
