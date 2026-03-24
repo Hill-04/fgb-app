@@ -18,11 +18,13 @@ import {
   Filter,
   Users,
   Clock,
-  ChevronDown
+  ChevronDown,
+  X
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { AISchedulingButton } from '../AISchedulingButton'
 
 type Game = {
   id: string
@@ -82,6 +84,18 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
   const [formDate, setFormDate] = useState('')
   const [formLocation, setFormLocation] = useState('')
 
+  // Create Form
+  const [showCreateDialog, setShowCreateDialog] = useState(false)
+  const [createCategoryId, setCreateCategoryId] = useState('')
+  const [createHomeTeamId, setCreateHomeTeamId] = useState('')
+  const [createAwayTeamId, setCreateAwayTeamId] = useState('')
+  const [createDate, setCreateDate] = useState('')
+  const [createLocation, setCreateLocation] = useState('')
+  const [createCity, setCreateCity] = useState('')
+  const [createPhase, setCreatePhase] = useState('1')
+  const [categoryTeams, setCategoryTeams] = useState<{id: string, name: string}[]>([])
+  const [createLoading, setCreateLoading] = useState(false)
+
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
@@ -106,6 +120,24 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  // Fetch teams for the specific category being used in create modal
+  useEffect(() => {
+    if (!createCategoryId) {
+      setCategoryTeams([])
+      return
+    }
+
+    const fetchTeams = async () => {
+      try {
+        const res = await fetch(`/api/championships/${id}/categories/${createCategoryId}/teams`)
+        if (res.ok) setCategoryTeams(await res.json())
+      } catch (err) {
+        console.error('Erro ao buscar times da categoria:', err)
+      }
+    }
+    fetchTeams()
+  }, [id, createCategoryId])
 
   const filteredGames = games.filter(g => 
     g.homeTeam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -157,6 +189,55 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
     } catch (err) { console.error(err) }
   }
 
+  const handleCreateSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!createCategoryId || !createHomeTeamId || !createAwayTeamId || !createDate) {
+      alert('Preencha os campos obrigatórios: Categoria, Times e Data.')
+      return
+    }
+
+    setCreateLoading(true)
+    try {
+      const res = await fetch('/api/admin/games', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          championshipId: id,
+          categoryId: createCategoryId,
+          homeTeamId: createHomeTeamId,
+          awayTeamId: createAwayTeamId,
+          dateTime: createDate,
+          location: createLocation,
+          city: createCity,
+          phase: parseInt(createPhase)
+        })
+      })
+
+      if (res.ok) {
+        setShowCreateDialog(false)
+        resetCreateForm()
+        fetchData()
+      } else {
+        const data = await res.json()
+        alert(data.error || 'Erro ao criar partida.')
+      }
+    } catch (err) {
+      alert('Erro de conexão ao criar partida.')
+    } finally {
+      setCreateLoading(false)
+    }
+  }
+
+  const resetCreateForm = () => {
+    setCreateCategoryId('')
+    setCreateHomeTeamId('')
+    setCreateAwayTeamId('')
+    setCreateDate('')
+    setCreateLocation('')
+    setCreateCity('')
+    setCreatePhase('1')
+  }
+
   return (
     <div className="space-y-8 pb-20">
       {/* Header */}
@@ -166,29 +247,36 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
           <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Gestão de placares e calendário</p>
         </div>
 
-        <div className="flex items-center gap-2 bg-[#111] p-1 rounded-xl border border-white/5">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setViewMode('CARD')}
-            className={cn(
-              "h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-              viewMode === 'CARD' ? "bg-orange-500 text-white shadow-lg" : "text-slate-500 hover:text-white"
-            )}
-          >
-            <LayoutGrid className="w-3.5 h-3.5 mr-2" /> Cards
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setViewMode('TABLE')}
-            className={cn(
-              "h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-              viewMode === 'TABLE' ? "bg-orange-500 text-white shadow-lg" : "text-slate-500 hover:text-white"
-            )}
-          >
-            <List className="w-3.5 h-3.5 mr-2" /> Tabela
-          </Button>
+        <div className="flex items-center gap-3">
+          <AISchedulingButton 
+            championshipId={id} 
+            championshipName={championships.find(c => c.id === id)?.name || ''} 
+            variant="outline"
+          />
+          <div className="flex items-center gap-2 bg-[#111] p-1 rounded-xl border border-white/5">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode('CARD')}
+              className={cn(
+                "h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                viewMode === 'CARD' ? "bg-orange-500 text-white shadow-lg" : "text-slate-500 hover:text-white"
+              )}
+            >
+              <LayoutGrid className="w-3.5 h-3.5 mr-2" /> Cards
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setViewMode('TABLE')}
+              className={cn(
+                "h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                viewMode === 'TABLE' ? "bg-orange-500 text-white shadow-lg" : "text-slate-500 hover:text-white"
+              )}
+            >
+              <List className="w-3.5 h-3.5 mr-2" /> Tabela
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -401,6 +489,132 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
            </div>
         </div>
       )}
+
+      {/* Create Game Modal */}
+      {showCreateDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-fade-in">
+           <div className="w-full max-w-2xl bg-[#0F0F0F] border border-white/10 rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col max-h-[90vh]">
+              <div className="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                 <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-2xl bg-green-500/20 flex items-center justify-center">
+                       <Calendar className="w-5 h-5 text-green-500" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-black text-white uppercase tracking-tight">Nova Partida Manual</h2>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Crie um confronto pontual no calendário</p>
+                    </div>
+                 </div>
+                 <button onClick={() => setShowCreateDialog(false)} className="w-8 h-8 rounded-xl hover:bg-white/5 flex items-center justify-center text-slate-500">
+                    <X className="w-4 h-4" />
+                 </button>
+              </div>
+              
+              <form onSubmit={handleCreateSubmit} className="p-8 space-y-6 overflow-y-auto">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria *</Label>
+                       <select 
+                        required
+                        value={createCategoryId} 
+                        onChange={e => setCreateCategoryId(e.target.value)}
+                        className="w-full h-12 bg-white/[0.03] border-white/10 border rounded-2xl px-4 text-xs font-bold text-white focus:outline-none focus:border-orange-500"
+                       >
+                          <option value="" className="bg-[#0A0A0A]">Selecione a Categoria</option>
+                          {championships.find(c => c.id === id)?.categories.map(cat => (
+                            <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.name}</option>
+                          ))}
+                       </select>
+                    </div>
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Fase (Round)</Label>
+                       <Input 
+                        type="number"
+                        min="1"
+                        value={createPhase} 
+                        onChange={e => setCreatePhase(e.target.value)}
+                        className="h-12 bg-white/[0.03] border-white/10 rounded-2xl px-4 text-xs font-bold"
+                       />
+                    </div>
+                 </div>
+
+                 <div className="bg-white/5 p-8 rounded-[32px] border border-white/5 space-y-6 shadow-inner">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                       <div className="space-y-2 text-center">
+                          <Label className="text-[10px] font-black text-[#FF6B00] uppercase block">Equipe da Casa *</Label>
+                          <select 
+                            required
+                            disabled={!createCategoryId}
+                            value={createHomeTeamId} 
+                            onChange={e => setCreateHomeTeamId(e.target.value)}
+                            className="w-full h-12 bg-black/40 border-white/10 border rounded-2xl px-4 text-xs font-bold text-white focus:outline-none text-center"
+                          >
+                             <option value="" className="bg-[#0F0F0F]">Selecione o Time</option>
+                             {categoryTeams.map(t => (
+                               <option key={t.id} value={t.id} className="bg-[#0F0F0F]" disabled={t.id === createAwayTeamId}>{t.name}</option>
+                             ))}
+                          </select>
+                       </div>
+                       <div className="space-y-2 text-center">
+                          <Label className="text-[10px] font-black text-[#FF6B00] uppercase block">Equipe Visitante *</Label>
+                          <select 
+                            required
+                            disabled={!createCategoryId}
+                            value={createAwayTeamId} 
+                            onChange={e => setCreateAwayTeamId(e.target.value)}
+                            className="w-full h-12 bg-black/40 border-white/10 border rounded-2xl px-4 text-xs font-bold text-white focus:outline-none text-center"
+                          >
+                             <option value="" className="bg-[#0F0F0F]">Selecione o Time</option>
+                             {categoryTeams.map(t => (
+                               <option key={t.id} value={t.id} className="bg-[#0F0F0F]" disabled={t.id === createHomeTeamId}>{t.name}</option>
+                             ))}
+                          </select>
+                       </div>
+                    </div>
+                 </div>
+
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Data e Hora *</Label>
+                       <Input 
+                        required
+                        type="datetime-local" 
+                        value={createDate} 
+                        onChange={e => setCreateDate(e.target.value)}
+                        className="h-12 bg-white/[0.03] border-white/10 rounded-2xl px-4 text-xs font-bold"
+                       />
+                    </div>
+                    <div className="space-y-2">
+                       <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Cidade</Label>
+                       <Input 
+                        placeholder="Ex: Porto Alegre"
+                        value={createCity} 
+                        onChange={e => setCreateCity(e.target.value)}
+                        className="h-12 bg-white/[0.03] border-white/10 rounded-2xl px-4 text-xs font-bold"
+                       />
+                    </div>
+                 </div>
+
+                 <div className="space-y-2">
+                    <Label className="text-[10px] font-black text-slate-400 uppercase ml-1">Local / Ginásio</Label>
+                    <Input 
+                      placeholder="Ex: Ginásio Tesourinha"
+                      value={createLocation} 
+                      onChange={e => setCreateLocation(e.target.value)}
+                      className="h-12 bg-white/[0.03] border-white/10 rounded-2xl px-4 text-xs font-bold"
+                    />
+                 </div>
+
+                 <div className="flex gap-4 pt-4 sticky bottom-0 bg-[#0F0F0F] pb-2">
+                    <Button type="button" onClick={() => setShowCreateDialog(false)} variant="ghost" className="flex-1 h-12 font-black uppercase text-xs tracking-widest text-slate-500">Cancelar</Button>
+                    <Button disabled={createLoading} className="flex-1 h-12 bg-green-600 hover:bg-green-700 text-white font-black uppercase text-xs tracking-widest rounded-xl shadow-lg shadow-green-900/10">
+                       {createLoading ? "Criando..." : "Agendar Partida"}
+                    </Button>
+                 </div>
+              </form>
+           </div>
+        </div>
+      )}
     </div>
   )
 }
+

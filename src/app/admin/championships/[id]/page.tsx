@@ -7,6 +7,7 @@ import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { formatChampionshipStatus } from '@/lib/utils'
+import { AISchedulingButton } from './AISchedulingButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -309,12 +310,18 @@ export default async function ChampionshipDetailsPage({
                                 </Link>
                               )}
                               {currentStep === 2 && (
-                                <Link
-                                  href={`/admin/championships/${id}/matches`}
-                                  className="w-full text-[9px] font-black uppercase tracking-widest text-white bg-[#FF6B00] px-3 py-2 rounded-lg hover:bg-[#E66000] transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
-                                >
-                                  Organizar Jogos →
-                                </Link>
+                                <div className="space-y-2">
+                                  <AISchedulingButton 
+                                    championshipId={id} 
+                                    championshipName={championship.name} 
+                                  />
+                                  <Link
+                                    href={`/admin/championships/${id}/matches`}
+                                    className="w-full text-[9px] font-black uppercase tracking-widest text-slate-500 bg-white/5 px-3 py-2 rounded-lg hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+                                  >
+                                    Ver Jogos Atuais →
+                                  </Link>
+                                </div>
                               )}
                               {currentStep === 4 && (
                                 <Link
