@@ -30,6 +30,7 @@ type SimulationResult = {
   success: boolean
   totalGames: number
   summary: string
+  totalBlockedDates?: number
   categories: CategoryResult[]
   games: GameEntry[]
   aiOptimization?: {

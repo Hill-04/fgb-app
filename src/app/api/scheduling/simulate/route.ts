@@ -34,7 +34,14 @@ export async function POST(request: Request) {
     // 2. Tentar otimizar com IA (fallback automático entre provedores)
     const championship = await prisma.championship.findUnique({
       where: { id: championshipId },
-      select: { name: true, startDate: true }
+      select: { 
+        name: true, 
+        startDate: true, 
+        endDate: true, 
+        turns: true, 
+        format: true, 
+        hasPlayoffs: true 
+      }
     })
 
     const aiResult = await optimizeSchedule({
@@ -45,13 +52,19 @@ export async function POST(request: Request) {
         games: c.gamesCount
       })),
       totalGames: schedule.totalGames,
-      startDate: championship?.startDate?.toLocaleDateString('pt-BR') || 'A definir'
+      startDate: championship?.startDate?.toLocaleDateString('pt-BR') || 'A definir',
+      endDate: championship?.endDate?.toLocaleDateString('pt-BR') || undefined,
+      turns: championship?.turns || 1,
+      format: championship?.format || undefined,
+      hasPlayoffs: championship?.hasPlayoffs || false,
+      totalBlockedDates: schedule.totalBlockedDates || 0
     })
 
     return NextResponse.json({
       success: true,
       totalGames: schedule.totalGames,
       summary: schedule.summary,
+      totalBlockedDates: schedule.totalBlockedDates,
       categories: schedule.categories.map(c => ({
         id: c.id,
         name: c.name,

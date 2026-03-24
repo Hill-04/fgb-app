@@ -19,40 +19,54 @@ export async function POST(request: Request) {
       )
     }
 
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Limpar dados antigos de agendamento
-      await tx.game.deleteMany({ where: { championshipId } })
-      await tx.block.deleteMany({ where: { championshipId } })
+    // 1. Deletar dados antigos de agendamento (sem transação para evitar timeout)
+    await prisma.game.deleteMany({ where: { championshipId } })
+    await prisma.block.deleteMany({ where: { championshipId } })
 
-      // 2. Criar todos os jogos do calendário round-robin
-      let createdCount = 0
-      for (const game of games) {
-        await tx.game.create({
-          data: {
-            championshipId,
-            categoryId: game.categoryId,
-            homeTeamId: game.homeTeamId,
-            awayTeamId: game.awayTeamId,
-            phase: game.phase || 1,
-            dateTime: new Date(game.dateTime),
-            location: 'A definir',
-            city: 'A definir',
-            status: 'SCHEDULED'
-          }
-        })
-        createdCount++
+    // 2. Criar jogos em lotes de 5 para evitar timeout no Turso
+    const BATCH_SIZE = 5
+    let createdCount = 0
+
+    for (let i = 0; i < games.length; i += BATCH_SIZE) {
+      const batch = games.slice(i, i + BATCH_SIZE)
+      await Promise.all(
+        batch.map(game =>
+          prisma.game.create({
+            data: {
+              championshipId,
+              categoryId: game.categoryId,
+              homeTeamId: game.homeTeamId,
+              awayTeamId: game.awayTeamId,
+              phase: game.phase || 1,
+              round: game.round || 1,
+              dateTime: new Date(game.dateTime),
+              location: 'A definir',
+              city: 'A definir',
+              status: 'SCHEDULED',
+              homeScore: 0,
+              awayScore: 0,
+            }
+          })
+        )
+      )
+      createdCount += batch.length
+
+      // Pequeno delay entre lotes para não sobrecarregar
+      if (i + BATCH_SIZE < games.length) {
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
+    }
 
-      // 3. Atualizar status do campeonato para ONGOING
-      await tx.championship.update({
-        where: { id: championshipId },
-        data: { status: 'ONGOING' }
-      })
-
-      return { gamesCount: createdCount }
+    // 3. Atualizar status do campeonato para ONGOING
+    await prisma.championship.update({
+      where: { id: championshipId },
+      data: { status: 'ONGOING' }
     })
 
-    return NextResponse.json({ success: true, ...result })
+    return NextResponse.json({ 
+      success: true, 
+      gamesCount: createdCount 
+    })
   } catch (error: any) {
     console.error('[Apply Schedule Error]', error)
     return NextResponse.json(

@@ -159,6 +159,7 @@ model Game {
   homeTeamId     String
   awayTeamId     String
   phase          Int
+  round          Int?                 @default(1)
   dateTime       DateTime
   altDateTime    DateTime?
   location       String

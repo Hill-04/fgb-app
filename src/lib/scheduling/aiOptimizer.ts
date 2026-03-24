@@ -126,17 +126,33 @@ export async function optimizeSchedule(data: {
   categories: { name: string; teams: number; games: number }[]
   totalGames: number
   startDate: string
+  endDate?: string
+  turns?: number
+  format?: string
+  hasPlayoffs?: boolean
+  totalBlockedDates?: number
 }): Promise<OptimizationResult> {
-  const prompt = `Você é especialista em organização de campeonatos de basquete.
-Analise este calendário e forneça sugestões de otimização logística em 2-3 frases diretas:
+  const prompt = `Você é especialista em organização de campeonatos de basquete juvenil no Brasil.
 
-Campeonato: ${data.name}
-Total de jogos: ${data.totalGames}
-Início: ${data.startDate}
-Categorias:
-${data.categories.map(c => `- ${c.name}: ${c.teams} equipes, ${c.games} jogos`).join('\n')}
+Analise este calendário gerado automaticamente e forneça sugestões práticas de otimização:
 
-Foque em: distribuição de datas, viagens das equipes e organização por blocos.`
+CAMPEONATO: ${data.name}
+PERÍODO: ${data.startDate}${data.endDate ? ` até ${data.endDate}` : ''}
+FORMATO: ${data.format || 'Liga (todos contra todos)'}${data.turns ? ` — ${data.turns} turno(s)` : ''}
+PLAYOFFS: ${data.hasPlayoffs ? 'Sim' : 'Não'}
+TOTAL DE JOGOS: ${data.totalGames}
+RESTRIÇÕES DE DATAS: ${data.totalBlockedDates || 0} bloqueios registrados pelas equipes
+
+CATEGORIAS:
+${data.categories.map(c => `• ${c.name}: ${c.teams} equipes → ${c.games} jogos`).join('\n')}
+
+Com base nessas informações, forneça em 3-4 frases:
+1. Avaliação da distribuição de jogos por categoria
+2. Sugestão de organização por blocos/rodadas
+3. Alerta sobre possíveis conflitos de agenda
+4. Recomendação de dias da semana para os jogos
+
+Seja direto, prático e específico para basquete juvenil gaúcho.`
 
   const providers: [string, (p: string) => Promise<string | null>][] = [
     ['groq', tryGroq],

@@ -49,18 +49,47 @@ export function generateRoundRobin(
 export function distributeGameDates(
   games: { homeTeamId: string; awayTeamId: string; round: number }[],
   startDate: Date,
-  gamesPerDay: number = 4
+  endDate: Date | null,
+  gamesPerDay: number = 4,
+  blockedDatesByTeam: Map<string, Date[]> = new Map()
 ): { homeTeamId: string; awayTeamId: string; round: number; dateTime: Date }[] {
   const result = []
   let currentDate = new Date(startDate)
   let gamesOnCurrentDay = 0
 
+  // Função auxiliar: verificar se uma data está bloqueada para um jogo
+  function isDateBlocked(date: Date, homeTeamId: string, awayTeamId: string): boolean {
+    const dateStr = date.toISOString().split('T')[0]
+    const homeDates = blockedDatesByTeam.get(homeTeamId) || []
+    const awayDates = blockedDatesByTeam.get(awayTeamId) || []
+    const allBlocked = [...homeDates, ...awayDates]
+    return allBlocked.some(d => d.toISOString().split('T')[0] === dateStr)
+  }
+
+  // Função auxiliar: avançar para próximo sábado disponível (mantendo o intervalo semanal)
+  function nextAvailableDate(date: Date): Date {
+    const next = new Date(date)
+    next.setDate(next.getDate() + 7)
+    return next
+  }
+
   for (const game of games) {
+    // Verificar se a data atual está bloqueada para este jogo específico (ou time do jogo)
+    let attempts = 0
+    while (
+      isDateBlocked(currentDate, game.homeTeamId, game.awayTeamId) &&
+      attempts < 52 // máximo 52 semanas de tentativas
+    ) {
+      currentDate = nextAvailableDate(currentDate)
+      gamesOnCurrentDay = 0 // Reiniciar contador de jogos no dia ao mudar de data
+      attempts++
+    }
+
     if (gamesOnCurrentDay >= gamesPerDay) {
-      currentDate = new Date(currentDate)
-      currentDate.setDate(currentDate.getDate() + 7)
+      currentDate = nextAvailableDate(currentDate)
       gamesOnCurrentDay = 0
     }
+
     result.push({ ...game, dateTime: new Date(currentDate) })
     gamesOnCurrentDay++
   }
@@ -85,9 +114,25 @@ export async function generateChampionshipSchedule(championshipId: string) {
 
   if (!championship) throw new Error('Campeonato não encontrado')
 
-  const startDate = (championship as any).startDate
+  // 1. Buscar datas bloqueadas de todas as equipes inscritas e confirmadas
+  const registrations = await prisma.registration.findMany({
+    where: { championshipId, status: 'CONFIRMED' },
+    include: {
+      blockedDates: true
+    }
+  })
+
+  // Mapear datas bloqueadas por teamId
+  const blockedDatesByTeam = new Map<string, Date[]>()
+  for (const reg of registrations) {
+    // No schema BlockedDate tem startDate. Usaremos como a data do bloqueio.
+    const dates = reg.blockedDates.map(b => new Date(b.startDate))
+    blockedDatesByTeam.set(reg.teamId, dates)
+  }
+
+  const startDate = championship.startDate
     || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  const turns = (championship as any).turns || 1
+  const turns = championship.turns || 1
   const allGames: GeneratedGame[] = []
   const categoryResults = []
 
@@ -100,7 +145,13 @@ export async function generateChampionshipSchedule(championshipId: string) {
     if (teams.length < 2) continue
 
     const rrGames = generateRoundRobin(teams, turns)
-    const gamesWithDates = distributeGameDates(rrGames, startDate)
+    const gamesWithDates = distributeGameDates(
+      rrGames,
+      startDate,
+      championship.endDate || null,
+      4,
+      blockedDatesByTeam
+    )
 
     const categoryGames: GeneratedGame[] = gamesWithDates.map(g => ({
       categoryId: category.id,
@@ -125,11 +176,17 @@ export async function generateChampionshipSchedule(championshipId: string) {
     ? Math.max(...allGames.map(g => g.round))
     : 0
 
+  const totalBlockedDates = Array.from(blockedDatesByTeam.values())
+    .reduce((acc, dates) => acc + dates.length, 0)
+
+  const summary = `${allGames.length} jogos gerados para ${categoryResults.length} categorias em ${totalRounds} rodadas${totalBlockedDates > 0 ? ` · ${totalBlockedDates} restrições de datas consideradas` : ''}`
+
   return {
     success: true,
     totalGames: allGames.length,
+    totalBlockedDates,
     categories: categoryResults,
     games: allGames,
-    summary: `${allGames.length} jogos gerados para ${categoryResults.length} categorias em ${totalRounds} rodadas`
+    summary
   }
 }
