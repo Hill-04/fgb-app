@@ -1,6 +1,7 @@
 "use client"
 
 import { use, useState, useEffect, useCallback, Suspense } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/Badge'
@@ -19,7 +20,8 @@ import {
   Users,
   Clock,
   ChevronDown,
-  X
+  X,
+  Sparkles
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -248,11 +250,12 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
 
         <div className="flex items-center gap-3">
-          <AISchedulingButton 
-            championshipId={id} 
-            championshipName={championships.find(c => c.id === id)?.name || ''} 
-            variant="outline"
-          />
+          <Button 
+            onClick={() => setShowCreateDialog(true)}
+            className="h-11 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase text-[10px] tracking-widest px-6 rounded-xl shadow-lg shadow-orange-600/20 transition-all border-none"
+          >
+            <Trophy className="w-3.5 h-3.5 mr-2" /> Novo Jogo
+          </Button>
           <div className="flex items-center gap-2 bg-[#111] p-1 rounded-xl border border-white/5">
             <Button
               variant="ghost"
@@ -327,8 +330,17 @@ function AdminMatchesContent({ params }: { params: Promise<{ id: string }> }) {
         </div>
       ) : filteredGames.length === 0 ? (
         <div className="py-24 text-center bg-[#0A0A0A] border border-white/5 border-dashed rounded-[32px]">
-          <Trophy className="w-12 h-12 text-slate-800 mx-auto mb-4" />
-          <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest">Nenhuma partida encontrada</h3>
+          <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mx-auto mb-6">
+            <Trophy className="w-8 h-8 text-slate-800" />
+          </div>
+          <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2">Nenhuma partida encontrada</h3>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-8">O calendário ainda não foi gerado para este campeonato</p>
+          <Link 
+            href={`/admin/championships/${id}/organization`} 
+            className="inline-flex items-center gap-2 h-11 px-8 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/10"
+          >
+            <Sparkles className="w-4 h-4 text-[#FF6B00]" /> Organizar agora com IA →
+          </Link>
         </div>
       ) : viewMode === 'CARD' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
