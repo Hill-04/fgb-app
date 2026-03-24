@@ -26,11 +26,26 @@ type GameEntry = {
   dateTime: string
 }
 
+type Step = 'idle' | 'simulating' | 'preview' | 'review' | 'applying' | 'done' | 'error'
+
 type SimulationResult = {
   success: boolean
   totalGames: number
   summary: string
   totalBlockedDates?: number
+  totalDays?: number
+  schedulePreview?: {
+    date: string
+    dayOfWeek: string
+    gamesCount: number
+    timeSlots: {
+      time: string
+      categoryId: string
+      homeTeamId: string
+      awayTeamId: string
+      round: number
+    }[]
+  }[]
   categories: CategoryResult[]
   games: GameEntry[]
   aiOptimization?: {
@@ -47,7 +62,7 @@ export function AISchedulingModal({
   onClose,
   onApplied,
 }: AISchedulingModalProps) {
-  const [step, setStep] = useState<'idle' | 'simulating' | 'preview' | 'applying' | 'done' | 'error'>('idle')
+  const [step, setStep] = useState<Step>('idle')
   const [simulation, setSimulation] = useState<SimulationResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -140,14 +155,14 @@ export function AISchedulingModal({
                   Geração Automática
                 </h4>
                 <p className="text-sm text-slate-400 font-medium">
-                  O sistema vai gerar todas as rodadas via Round-Robin e tentar otimizar o calendário com IA.
+                  O sistema vai gerar todas as rodadas via Round-Robin, respeitando datas bloqueadas e janelas de final de semana (75min por jogo).
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
                 {[
                   { icon: Calendar, text: 'Round-Robin Nativo' },
                   { icon: Sparkles, text: 'Otimização IA' },
-                  { icon: MapPin, text: 'Distribuição de Datas' }
+                  { icon: MapPin, text: 'Sábados/Domingos' }
                 ].map((item, i) => (
                   <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/5">
                     <item.icon className="w-5 h-5 text-[#FF6B00] mx-auto mb-2" />
@@ -176,7 +191,7 @@ export function AISchedulingModal({
                   Gerando calendário...
                 </p>
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">
-                  Round-Robin + tentativa de otimização IA
+                  Calculando slots de 75min e janelas preferenciais
                 </p>
               </div>
             </div>
@@ -189,7 +204,7 @@ export function AISchedulingModal({
               {/* Resultado principal */}
               <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-1">
-                  Calendário gerado com sucesso
+                  Calendário planejado com sucesso
                 </p>
                 <p className="text-2xl font-black text-white">{simulation.totalGames} jogos</p>
                 <p className="text-xs text-slate-400 mt-1">{simulation.summary}</p>
@@ -223,14 +238,6 @@ export function AISchedulingModal({
                 </div>
               )}
 
-              {!simulation.aiOptimization?.available && (
-                <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-3">
-                  <p className="text-[9px] text-slate-500 uppercase tracking-widest">
-                    Round-robin padrão · sem otimização IA disponível
-                  </p>
-                </div>
-              )}
-
               {/* Botões */}
               <div className="flex gap-3 pt-2">
                 <button
@@ -240,11 +247,98 @@ export function AISchedulingModal({
                   Regerar
                 </button>
                 <button
-                  onClick={handleApply}
+                  onClick={() => setStep('review')}
                   className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all"
                 >
-                  Aplicar Calendário →
+                  Revisar Calendário →
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* REVIEW */}
+          {step === 'review' && simulation && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-black italic uppercase text-white tracking-tight">
+                    Revisar Calendário
+                  </p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">
+                    {simulation.totalGames} jogos em {simulation.totalDays} dias
+                    {simulation.totalBlockedDates && simulation.totalBlockedDates > 0 && ` · ${simulation.totalBlockedDates} restrições consideradas`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setStep('preview')}
+                  className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
+                >
+                  ← Voltar
+                </button>
+              </div>
+
+              {/* Lista de dias com jogos */}
+              <div className="max-h-80 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                {simulation.schedulePreview?.map((day, i) => (
+                  <div key={i} className="bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden">
+                    {/* Header do dia */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                          {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', {
+                            weekday: 'long', day: '2-digit', month: 'long'
+                          })}
+                        </p>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 bg-white/[0.04] px-2 py-1 rounded-full">
+                        {day.gamesCount} jogos
+                      </span>
+                    </div>
+
+                    {/* Jogos do dia */}
+                    <div className="divide-y divide-white/[0.04]">
+                      {day.timeSlots?.map((slot, j) => {
+                        const categoryData = simulation.categories?.find(c => c.id === slot.categoryId)
+                        return (
+                          <div key={j} className="px-4 py-3 flex items-center gap-4 hover:bg-white/[0.02] transition-colors group">
+                            <span className="text-[11px] font-black text-[#FF6B00] w-12 flex-shrink-0 group-hover:scale-110 transition-transform">
+                              {slot.time}
+                            </span>
+                            <div className="flex-1 flex items-center gap-3 min-w-0">
+                              <span className="text-[8px] font-bold text-slate-600 bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.05] uppercase tracking-widest flex-shrink-0">
+                                {categoryData?.name || 'Cat.'}
+                              </span>
+                              <p className="text-[10px] font-bold text-white uppercase tracking-tight truncate">
+                                Rodada {slot.round}
+                              </p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Ações de aprovação */}
+              <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-2xl p-4 mt-2">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-3 text-center">
+                  Ao aprovar, os jogos serão criados e ficarão disponíveis para as equipes
+                </p>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep('preview')}
+                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
+                  >
+                    Regerar
+                  </button>
+                  <button
+                    onClick={handleApply}
+                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2"
+                  >
+                    ✓ Aprovar e Aplicar
+                  </button>
+                </div>
               </div>
             </div>
           )}

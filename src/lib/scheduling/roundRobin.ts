@@ -11,6 +11,31 @@ type GeneratedGame = {
   dateTime: Date
 }
 
+// CONSTANTES DE AGENDAMENTO
+const GAME_DURATION_MINUTES = 75
+const DAY_START_HOUR = 8  // 08:00
+const DAY_END_HOUR = 18   // 18:00
+const MAX_GAMES_PER_DAY = Math.floor((DAY_END_HOUR - DAY_START_HOUR) * 60 / GAME_DURATION_MINUTES) // = 8
+const PREFERRED_DAYS = [5, 6, 0] // Sexta=5, Sábado=6, Domingo=0
+
+function isPreferredDay(date: Date): boolean {
+  return PREFERRED_DAYS.includes(date.getDay())
+}
+
+function nextPreferredDay(date: Date): Date {
+  const next = new Date(date)
+  next.setDate(next.getDate() + 1)
+  while (!isPreferredDay(next)) {
+    next.setDate(next.getDate() + 1)
+  }
+  next.setHours(DAY_START_HOUR, 0, 0, 0)
+  return next
+}
+
+function addMinutes(date: Date, minutes: number): Date {
+  return new Date(date.getTime() + minutes * 60 * 1000)
+}
+
 export function generateRoundRobin(
   teams: Team[],
   turns: number = 1
@@ -49,48 +74,51 @@ export function generateRoundRobin(
 export function distributeGameDates(
   games: { homeTeamId: string; awayTeamId: string; round: number }[],
   startDate: Date,
-  endDate: Date | null,
-  gamesPerDay: number = 4,
+  endDate: Date | null = null,
   blockedDatesByTeam: Map<string, Date[]> = new Map()
 ): { homeTeamId: string; awayTeamId: string; round: number; dateTime: Date }[] {
   const result = []
+
+  // Encontrar primeiro dia preferencial a partir da startDate
   let currentDate = new Date(startDate)
+  currentDate.setHours(DAY_START_HOUR, 0, 0, 0)
+
+  // Se startDate não é dia preferencial, avança
+  if (!isPreferredDay(currentDate)) {
+    currentDate = nextPreferredDay(currentDate)
+  }
+
+  let currentTime = new Date(currentDate)
   let gamesOnCurrentDay = 0
 
-  // Função auxiliar: verificar se uma data está bloqueada para um jogo
-  function isDateBlocked(date: Date, homeTeamId: string, awayTeamId: string): boolean {
+  function isDateBlockedForGame(date: Date, homeTeamId: string, awayTeamId: string): boolean {
     const dateStr = date.toISOString().split('T')[0]
     const homeDates = blockedDatesByTeam.get(homeTeamId) || []
     const awayDates = blockedDatesByTeam.get(awayTeamId) || []
-    const allBlocked = [...homeDates, ...awayDates]
-    return allBlocked.some(d => d.toISOString().split('T')[0] === dateStr)
-  }
-
-  // Função auxiliar: avançar para próximo sábado disponível (mantendo o intervalo semanal)
-  function nextAvailableDate(date: Date): Date {
-    const next = new Date(date)
-    next.setDate(next.getDate() + 7)
-    return next
+    return [...homeDates, ...awayDates].some(
+      d => d.toISOString().split('T')[0] === dateStr
+    )
   }
 
   for (const game of games) {
-    // Verificar se a data atual está bloqueada para este jogo específico (ou time do jogo)
+    // Se atingiu máximo do dia ou data bloqueada, avança para próximo dia preferencial
     let attempts = 0
     while (
-      isDateBlocked(currentDate, game.homeTeamId, game.awayTeamId) &&
-      attempts < 52 // máximo 52 semanas de tentativas
+      (gamesOnCurrentDay >= MAX_GAMES_PER_DAY ||
+       isDateBlockedForGame(currentTime, game.homeTeamId, game.awayTeamId)) &&
+      attempts < 365
     ) {
-      currentDate = nextAvailableDate(currentDate)
-      gamesOnCurrentDay = 0 // Reiniciar contador de jogos no dia ao mudar de data
+      currentDate = nextPreferredDay(currentDate)
+      currentTime = new Date(currentDate)
+      currentTime.setHours(DAY_START_HOUR, 0, 0, 0)
+      gamesOnCurrentDay = 0
       attempts++
     }
 
-    if (gamesOnCurrentDay >= gamesPerDay) {
-      currentDate = nextAvailableDate(currentDate)
-      gamesOnCurrentDay = 0
-    }
+    result.push({ ...game, dateTime: new Date(currentTime) })
 
-    result.push({ ...game, dateTime: new Date(currentDate) })
+    // Avançar horário para o próximo jogo do mesmo dia
+    currentTime = addMinutes(currentTime, GAME_DURATION_MINUTES)
     gamesOnCurrentDay++
   }
 
@@ -125,7 +153,6 @@ export async function generateChampionshipSchedule(championshipId: string) {
   // Mapear datas bloqueadas por teamId
   const blockedDatesByTeam = new Map<string, Date[]>()
   for (const reg of registrations) {
-    // No schema BlockedDate tem startDate. Usaremos como a data do bloqueio.
     const dates = reg.blockedDates.map(b => new Date(b.startDate))
     blockedDatesByTeam.set(reg.teamId, dates)
   }
@@ -149,7 +176,6 @@ export async function generateChampionshipSchedule(championshipId: string) {
       rrGames,
       startDate,
       championship.endDate || null,
-      4,
       blockedDatesByTeam
     )
 
@@ -172,21 +198,40 @@ export async function generateChampionshipSchedule(championshipId: string) {
     })
   }
 
-  const totalRounds = allGames.length > 0
-    ? Math.max(...allGames.map(g => g.round))
-    : 0
+  // Agrupar jogos por data para preview
+  const gamesByDate = new Map<string, typeof allGames>()
+  for (const game of allGames) {
+    const dateKey = game.dateTime.toISOString().split('T')[0]
+    if (!gamesByDate.has(dateKey)) gamesByDate.set(dateKey, [])
+    gamesByDate.get(dateKey)!.push(game)
+  }
+
+  const schedulePreview = Array.from(gamesByDate.entries())
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([date, games]) => ({
+      date,
+      dayOfWeek: new Date(date).toLocaleDateString('pt-BR', { weekday: 'long' }),
+      gamesCount: games.length,
+      timeSlots: games.map(g => ({
+        time: g.dateTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        categoryId: g.categoryId,
+        homeTeamId: g.homeTeamId,
+        awayTeamId: g.awayTeamId,
+        round: g.round
+      }))
+    }))
 
   const totalBlockedDates = Array.from(blockedDatesByTeam.values())
     .reduce((acc, dates) => acc + dates.length, 0)
-
-  const summary = `${allGames.length} jogos gerados para ${categoryResults.length} categorias em ${totalRounds} rodadas${totalBlockedDates > 0 ? ` · ${totalBlockedDates} restrições de datas consideradas` : ''}`
 
   return {
     success: true,
     totalGames: allGames.length,
     totalBlockedDates,
+    totalDays: gamesByDate.size,
+    schedulePreview,
     categories: categoryResults,
     games: allGames,
-    summary
+    summary: `${allGames.length} jogos em ${gamesByDate.size} dias (${categoryResults.length} categorias, ${turns} turno(s))`
   }
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Trophy, Calendar, BarChart3, Users, Settings, Sparkles } from 'lucide-react'
+import { Trophy, Calendar, BarChart3, Users, Settings, Sparkles, GitBranch } from 'lucide-react'
 
 interface Tab {
   label: string
@@ -18,6 +18,7 @@ export function ChampionshipTabs({ id }: { id: string }) {
     { label: 'Inscrições', href: `/admin/championships/${id}/registrations`, icon: Users },
     { label: 'Organização', href: `/admin/championships/${id}/organization`, icon: Sparkles },
     { label: 'Jogos', href: `/admin/championships/${id}/matches`, icon: Calendar },
+    { label: 'Chaveamento', href: `/admin/championships/${id}/bracket`, icon: GitBranch },
     { label: 'Classificação', href: `/admin/championships/${id}/standings`, icon: BarChart3 },
     { label: 'Configurações', href: `/admin/championships/${id}/settings`, icon: Settings },
   ]
