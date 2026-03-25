@@ -151,8 +151,9 @@ function generateKnockout(
 }
 
 // ═══════════════════════════════════════════
-// DISTRIBUIÇÃO GLOBAL DE DATAS
-// (intercala categorias, respeita máx/dia e bloqueios)
+// DISTRIBUIÇÃO POR BLOCOS DE RODADA
+// Cada rodada = 1 fim de semana isolado
+// Jogos concentrados: sáb e dom quando necessário
 // ═══════════════════════════════════════════
 function distributeAllGames(
   games: PendingGame[],
@@ -162,50 +163,110 @@ function distributeAllGames(
 ): ScheduledGame[] {
   const result: ScheduledGame[] = []
 
-  // Iniciar no primeiro dia preferencial a partir de startDate
-  let currentDay = new Date(startDate)
-  currentDay.setHours(DAY_START_HOUR, 0, 0, 0)
-  if (!isPreferredDay(currentDay)) {
-    currentDay = nextPreferredDay(currentDay)
+  // Agrupar jogos por rodada para criar blocos
+  const gamesByRound = new Map<number, PendingGame[]>()
+  for (const game of games) {
+    if (!gamesByRound.has(game.round)) {
+      gamesByRound.set(game.round, [])
+    }
+    gamesByRound.get(game.round)!.push(game)
   }
 
-  let currentTime = new Date(currentDay)
-  let gamesToday = 0
+  // Iniciar no primeiro fim de semana disponível
+  let currentWeekStart = new Date(startDate)
+  currentWeekStart.setHours(DAY_START_HOUR, 0, 0, 0)
 
-  for (const game of games) {
-    // Avançar dia se: (1) atingiu máximo do dia, (2) data bloqueada
-    let safety = 0
-    while (safety < 365) {
-      const overMax = gamesToday >= MAX_GAMES_PER_DAY
-      const blocked = isBlocked(currentTime, game.homeTeamId, game.awayTeamId, blockedMap)
-      
-      if (!overMax && !blocked) break
+  // Avançar para primeiro sábado (dia 6) disponível
+  while (currentWeekStart.getDay() !== 6) {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 1)
+  }
+  currentWeekStart.setHours(DAY_START_HOUR, 0, 0, 0)
 
-      if (overMax || blocked) {
-        currentDay = nextPreferredDay(currentDay)
-        currentTime = new Date(currentDay)
-        gamesToday = 0
+  const maxRound = Math.max(...Array.from(gamesByRound.keys()), 0)
+
+  for (let round = 1; round <= maxRound; round++) {
+    const roundGames = gamesByRound.get(round) || []
+    if (roundGames.length === 0) continue
+
+    // Cada rodada começa no sábado do fim de semana atual
+    let currentDay = new Date(currentWeekStart)
+    let currentTime = new Date(currentDay)
+    currentTime.setHours(DAY_START_HOUR, 0, 0, 0)
+    let gamesToday = 0
+
+    for (const game of roundGames) {
+      // Verificar se precisa avançar de dia
+      let safety = 0
+      while (safety < 365) {
+        const overMax = gamesToday >= MAX_GAMES_PER_DAY
+        const blocked = isBlocked(currentTime, game.homeTeamId, game.awayTeamId, blockedMap)
+
+        if (!overMax && !blocked) break
+
+        if (overMax || blocked) {
+          // Tentar o domingo do mesmo fim de semana
+          const nextDay = new Date(currentDay)
+          nextDay.setDate(nextDay.getDate() + 1)
+          nextDay.setHours(DAY_START_HOUR, 0, 0, 0)
+
+          const daysDiff = Math.round((nextDay.getTime() - currentWeekStart.getTime()) / 86400000)
+
+          if (isPreferredDay(nextDay) && daysDiff <= 1) {
+            // Usar o domingo do mesmo fim de semana
+            currentDay = nextDay
+            currentTime = new Date(currentDay)
+            currentTime.setHours(DAY_START_HOUR, 0, 0, 0)
+            gamesToday = 0
+          } else {
+            // Sem espaço neste fim de semana, usar próximo
+            // (será corrigido no bloco de avanço de semana abaixo)
+            currentDay = nextDay
+            currentTime = new Date(currentDay)
+            currentTime.setHours(DAY_START_HOUR, 0, 0, 0)
+            gamesToday = 0
+          }
+        }
+        safety++
       }
 
-      safety++
+      result.push({ ...game, dateTime: new Date(currentTime) })
+
+      // Avançar horário
+      currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
+      gamesToday++
+
+      // Se passou das 18h, tentar o domingo
+      if (currentTime.getHours() >= DAY_END_HOUR) {
+        const nextDay = new Date(currentDay)
+        nextDay.setDate(nextDay.getDate() + 1)
+        nextDay.setHours(DAY_START_HOUR, 0, 0, 0)
+
+        const daysDiff = Math.round((nextDay.getTime() - currentWeekStart.getTime()) / 86400000)
+
+        if (isPreferredDay(nextDay) && daysDiff <= 1) {
+          currentDay = nextDay
+          currentTime = new Date(currentDay)
+          currentTime.setHours(DAY_START_HOUR, 0, 0, 0)
+          gamesToday = 0
+        } else {
+          // Estouro: anotar mas deixar o próximo bloco avançar
+          currentDay = nextDay
+          currentTime = new Date(currentDay)
+          gamesToday = 0
+        }
+      }
     }
 
-    result.push({ ...game, dateTime: new Date(currentTime) })
-
-    // Avançar horário
-    currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
-    gamesToday++
-
-    // Se passou das 18h, avança para próximo dia preferencial
-    if (currentTime.getHours() >= DAY_END_HOUR) {
-      currentDay = nextPreferredDay(currentDay)
-      currentTime = new Date(currentDay)
-      gamesToday = 0
-    }
+    // Avançar para o próximo fim de semana (sábado seguinte)
+    const nextSaturday = new Date(currentWeekStart)
+    nextSaturday.setDate(nextSaturday.getDate() + 7)
+    nextSaturday.setHours(DAY_START_HOUR, 0, 0, 0)
+    currentWeekStart = nextSaturday
   }
 
   return result
 }
+
 
 // ═══════════════════════════════════════════
 // FUNÇÃO PRINCIPAL

@@ -1,7 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Sparkles, X, CheckCircle2, AlertCircle, Loader2, Calendar, MapPin, Info, ArrowRight } from 'lucide-react'
+import {
+  Sparkles, X, CheckCircle2, AlertCircle, Loader2,
+  ArrowRight, TriangleAlert
+} from 'lucide-react'
 
 type AISchedulingModalProps = {
   championshipId: string
@@ -26,7 +29,31 @@ type GameEntry = {
   dateTime: string
 }
 
-type Step = 'idle' | 'simulating' | 'preview' | 'review' | 'applying' | 'done' | 'error'
+type ValidationIssue = {
+  type: 'error' | 'warning' | 'info'
+  field: string
+  message: string
+  suggestion: string
+}
+
+type ValidationResult = {
+  viable: boolean
+  issues: ValidationIssue[]
+  summary: {
+    totalTeams: number
+    totalCategories: number
+    totalGames: number
+    estimatedDays: number
+    periodDays: number
+    gamesPerDay: number
+    turns: number
+    format: string
+    hasPlayoffs: boolean
+  }
+  aiMessage: string
+}
+
+type Step = 'idle' | 'validating' | 'diagnosis' | 'simulating' | 'preview' | 'review' | 'applying' | 'done' | 'error'
 
 type SimulationResult = {
   success: boolean
@@ -64,9 +91,31 @@ export function AISchedulingModal({
   onApplied,
 }: AISchedulingModalProps) {
   const [step, setStep] = useState<Step>('idle')
+  const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [simulation, setSimulation] = useState<SimulationResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
 
+  // Step 1: Validar configurações
+  const handleStart = async () => {
+    setStep('validating')
+    setErrorMsg('')
+    try {
+      const res = await fetch('/api/scheduling/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ championshipId })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao validar configurações')
+      setValidation(data)
+      setStep('diagnosis')
+    } catch (err: any) {
+      setErrorMsg(err.message)
+      setStep('error')
+    }
+  }
+
+  // Step 2: Simular calendário (só chamado após diagnóstico positivo)
   const handleSimulate = async () => {
     setStep('simulating')
     setErrorMsg('')
@@ -89,6 +138,7 @@ export function AISchedulingModal({
     }
   }
 
+  // Step 3: Aplicar calendário
   const handleApply = async () => {
     if (!simulation) return
     setStep('applying')
@@ -112,12 +162,18 @@ export function AISchedulingModal({
     }
   }
 
+  const issueColors = {
+    error: { bg: 'bg-red-500/5', border: 'border-red-500/20', text: 'text-red-400', label: '✗ Erro' },
+    warning: { bg: 'bg-yellow-500/5', border: 'border-yellow-500/20', text: 'text-yellow-400', label: '⚠ Atenção' },
+    info: { bg: 'bg-blue-500/5', border: 'border-blue-500/20', text: 'text-blue-400', label: 'ℹ Info' },
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
       <div className="w-full max-w-2xl bg-[#0F0F0F] border border-white/10 rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
 
         {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/[0.02]">
+        <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-2xl bg-[#FF6B00]/20 flex items-center justify-center border border-[#FF6B00]/20 shadow-lg shadow-orange-600/10">
               <Sparkles className="w-6 h-6 text-[#FF6B00]" />
@@ -131,6 +187,16 @@ export function AISchedulingModal({
               </p>
             </div>
           </div>
+          {/* Step indicator */}
+          <div className="flex items-center gap-2 mr-4">
+            {(['diagnosis', 'preview', 'review'] as Step[]).map((s, i) => (
+              <div key={s} className={`w-1.5 h-1.5 rounded-full transition-all ${
+                step === s ? 'bg-[#FF6B00] w-3' :
+                ['preview', 'review', 'applying', 'done'].includes(step) && i < (['diagnosis', 'preview', 'review']).indexOf(step) ? 'bg-[#FF6B00]/50' :
+                'bg-white/10'
+              }`} />
+            ))}
+          </div>
           <button
             onClick={onClose}
             className="w-10 h-10 rounded-2xl hover:bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-all border border-transparent hover:border-white/10"
@@ -142,77 +208,176 @@ export function AISchedulingModal({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-8">
 
-          {/* IDLE */}
+          {/* ——— IDLE ——— */}
           {step === 'idle' && (
-            <div className="text-center py-8 space-y-8 animate-in zoom-in-95 duration-500">
+            <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
               <div className="relative inline-block">
                 <div className="absolute inset-0 bg-[#FF6B00] blur-[40px] opacity-20 animate-pulse" />
-                <div className="relative w-24 h-24 rounded-[32px] bg-gradient-to-br from-[#FF6B00] to-[#E66000] flex items-center justify-center mx-auto shadow-2xl">
-                  <Sparkles className="w-12 h-12 text-white" />
+                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B00] to-[#E66000] flex items-center justify-center mx-auto shadow-2xl">
+                  <Sparkles className="w-10 h-10 text-white" />
                 </div>
               </div>
-              <div className="max-w-md mx-auto space-y-3">
-                <h4 className="text-2xl font-black italic uppercase text-white tracking-tight">
-                  Geração Automática
-                </h4>
-                <p className="text-sm text-slate-400 font-medium">
-                  O sistema vai gerar todas as rodadas via Round-Robin, respeitando datas bloqueadas e janelas de final de semana (75min por jogo).
+              <div>
+                <p className="text-white font-black italic uppercase text-xl tracking-tight mb-2">
+                  Organizar com IA
+                </p>
+                <p className="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
+                  A IA vai analisar as configurações, verificar a viabilidade e gerar o calendário com jogos nos fins de semana.
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+              <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
                 {[
-                  { icon: Calendar, text: 'Round-Robin Nativo' },
-                  { icon: Sparkles, text: 'Otimização IA' },
-                  { icon: MapPin, text: 'Sábados/Domingos' }
+                  { icon: '📋', label: 'Analisa configs' },
+                  { icon: '⚠️', label: 'Detecta problemas' },
+                  { icon: '📅', label: 'Gera calendário' },
                 ].map((item, i) => (
-                  <div key={i} className="bg-white/5 rounded-2xl p-4 border border-white/5">
-                    <item.icon className="w-5 h-5 text-[#FF6B00] mx-auto mb-2" />
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">{item.text}</p>
+                  <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+                    <p className="text-xl mb-1">{item.icon}</p>
+                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{item.label}</p>
                   </div>
                 ))}
               </div>
               <button
-                onClick={handleSimulate}
-                className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-xs uppercase tracking-[0.2em] px-12 h-14 rounded-2xl transition-all shadow-xl shadow-orange-600/20 active:scale-95"
+                onClick={handleStart}
+                className="w-full max-w-xs mx-auto block bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-95"
               >
-                Gerar Calendário →
+                Iniciar Análise →
               </button>
             </div>
           )}
 
-          {/* SIMULATING */}
+          {/* ——— VALIDATING ——— */}
+          {step === 'validating' && (
+            <div className="text-center space-y-4 py-16 animate-in fade-in duration-300">
+              <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin mx-auto" />
+              <p className="text-sm font-black italic uppercase text-white tracking-tight">
+                Analisando configurações...
+              </p>
+              <p className="text-xs text-slate-500">Verificando viabilidade do campeonato</p>
+            </div>
+          )}
+
+          {/* ——— DIAGNOSIS ——— */}
+          {step === 'diagnosis' && validation && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+              {/* Mensagem principal */}
+              <div className={`rounded-2xl p-4 ${validation.viable
+                ? 'bg-green-500/10 border border-green-500/20'
+                : 'bg-red-500/10 border border-red-500/20'}`}>
+                <div className="flex items-start gap-3">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
+                    validation.viable ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
+                    {validation.viable
+                      ? <CheckCircle2 className="w-4 h-4 text-green-400" />
+                      : <AlertCircle className="w-4 h-4 text-red-400" />}
+                  </div>
+                  <div>
+                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+                      validation.viable ? 'text-green-400' : 'text-red-400'}`}>
+                      {validation.viable ? 'Campeonato Viável' : 'Problemas Encontrados'}
+                    </p>
+                    <p className="text-xs text-slate-300 leading-relaxed">{validation.aiMessage}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Resumo do campeonato */}
+              <div className="grid grid-cols-3 gap-2">
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-1">Jogos</p>
+                  <p className="text-xl font-black text-white">{validation.summary.totalGames}</p>
+                </div>
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-1">Dias Est.</p>
+                  <p className="text-xl font-black text-white">{validation.summary.estimatedDays || '—'}</p>
+                </div>
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-1">Categorias</p>
+                  <p className="text-xl font-black text-white">{validation.summary.totalCategories}</p>
+                </div>
+              </div>
+
+              {/* Lista de issues */}
+              {validation.issues.length > 0 && (
+                <div className="space-y-2 max-h-52 overflow-y-auto custom-scrollbar pr-1">
+                  {validation.issues.map((issue, i) => {
+                    const colors = issueColors[issue.type]
+                    return (
+                      <div key={i} className={`rounded-xl p-3 border ${colors.bg} ${colors.border}`}>
+                        <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${colors.text}`}>
+                          {colors.label}
+                        </p>
+                        <p className="text-[11px] text-slate-300 mb-1 leading-snug">{issue.message}</p>
+                        <p className="text-[10px] text-slate-500 italic">💡 {issue.suggestion}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Ações */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={onClose}
+                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
+                >
+                  {validation.viable ? 'Cancelar' : 'Ir para Configurações'}
+                </button>
+
+                {validation.viable ? (
+                  <button
+                    onClick={handleSimulate}
+                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 active:scale-95"
+                  >
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Gerar Calendário →
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setStep('idle')}
+                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
+                  >
+                    ← Recomeçar
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ——— SIMULATING ——— */}
           {step === 'simulating' && (
-            <div className="text-center space-y-8 py-20">
-              <div className="relative w-20 h-20 mx-auto">
-                <Loader2 className="w-20 h-20 text-[#FF6B00] animate-spin" />
-                <Sparkles className="w-8 h-8 text-[#FF6B00] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="text-center space-y-6 py-16 animate-in fade-in duration-300">
+              <div className="relative w-16 h-16 mx-auto">
+                <Loader2 className="w-16 h-16 text-[#FF6B00] animate-spin" />
+                <Sparkles className="w-6 h-6 text-[#FF6B00] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
               <div className="space-y-2">
-                <p className="text-xl font-black italic uppercase text-white tracking-tight animate-pulse">
+                <p className="text-lg font-black italic uppercase text-white tracking-tight animate-pulse">
                   Gerando calendário...
                 </p>
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">
-                  Calculando slots de 75min e janelas preferenciais
+                  Distribuindo jogos em blocos de fins de semana
                 </p>
               </div>
             </div>
           )}
 
-          {/* PREVIEW */}
+          {/* ——— PREVIEW ——— */}
           {step === 'preview' && simulation && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-500">
 
               {/* Resultado principal */}
               <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-1">
-                  Calendário planejado com sucesso
+                  Calendário gerado com sucesso
                 </p>
                 <p className="text-2xl font-black text-white">{simulation.totalGames} jogos</p>
                 <p className="text-xs text-slate-400 mt-1">{simulation.summary}</p>
               </div>
 
               {/* Cards por categoria */}
-              <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto custom-scrollbar">
                 {simulation.categories?.map((cat) => (
                   <div key={cat.id} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
                     <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-1 truncate">
@@ -242,10 +407,10 @@ export function AISchedulingModal({
               {/* Botões */}
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => setStep('idle')}
+                  onClick={() => setStep('diagnosis')}
                   className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
                 >
-                  Regerar
+                  ← Voltar
                 </button>
                 <button
                   onClick={() => setStep('review')}
@@ -257,9 +422,9 @@ export function AISchedulingModal({
             </div>
           )}
 
-          {/* REVIEW */}
+          {/* ——— REVIEW ——— */}
           {step === 'review' && simulation && (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in duration-300">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-black italic uppercase text-white tracking-tight">
@@ -267,7 +432,9 @@ export function AISchedulingModal({
                   </p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
                     {simulation.totalGames} jogos em {simulation.totalDays} dias
-                    {simulation.totalBlockedDates && simulation.totalBlockedDates > 0 && ` · ${simulation.totalBlockedDates} restrições consideradas`}
+                    {simulation.totalBlockedDates && simulation.totalBlockedDates > 0
+                      ? ` · ${simulation.totalBlockedDates} restrições consideradas`
+                      : ''}
                   </p>
                 </div>
                 <button
@@ -282,27 +449,22 @@ export function AISchedulingModal({
               <div className="max-h-80 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
                 {simulation.schedulePreview?.map((day, i) => (
                   <div key={i} className="bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden">
-                    {/* Header do dia */}
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white">
-                          {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', {
-                            weekday: 'long', day: '2-digit', month: 'long'
-                          })}
-                        </p>
-                      </div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                        {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', {
+                          weekday: 'long', day: '2-digit', month: 'long'
+                        })}
+                      </p>
                       <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 bg-white/[0.04] px-2 py-1 rounded-full">
                         {day.gamesCount} jogos
                       </span>
                     </div>
-
-                    {/* Jogos do dia */}
                     <div className="divide-y divide-white/[0.04]">
                       {day.timeSlots?.map((slot, j) => {
                         const categoryData = simulation.categories?.find(c => c.id === slot.categoryId)
                         return (
-                          <div key={j} className="px-4 py-3 flex items-center gap-4 hover:bg-white/[0.02] transition-colors group">
-                            <span className="text-[11px] font-black text-[#FF6B00] w-12 flex-shrink-0 group-hover:scale-110 transition-transform">
+                          <div key={j} className="px-4 py-2.5 flex items-center gap-4 hover:bg-white/[0.02] transition-colors group">
+                            <span className="text-[11px] font-black text-[#FF6B00] w-12 flex-shrink-0">
                               {slot.time}
                             </span>
                             <div className="flex-1 flex items-center gap-3 min-w-0">
@@ -322,9 +484,9 @@ export function AISchedulingModal({
               </div>
 
               {/* Ações de aprovação */}
-              <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-2xl p-4 mt-2">
+              <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-2xl p-4">
                 <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-3 text-center">
-                  Ao aprovar, os jogos serão criados e ficarão disponíveis para as equipes
+                  Ao aprovar, os jogos serão criados e disponibilizados para as equipes
                 </p>
                 <div className="flex gap-3">
                   <button
@@ -335,7 +497,7 @@ export function AISchedulingModal({
                   </button>
                   <button
                     onClick={handleApply}
-                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2"
+                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
                   >
                     ✓ Aprovar e Aplicar
                   </button>
@@ -344,18 +506,18 @@ export function AISchedulingModal({
             </div>
           )}
 
-          {/* APPLYING */}
+          {/* ——— APPLYING ——— */}
           {step === 'applying' && (
-            <div className="text-center space-y-8 py-20">
-              <Loader2 className="w-16 h-16 text-[#FF6B00] animate-spin mx-auto" />
+            <div className="text-center space-y-6 py-16">
+              <Loader2 className="w-14 h-14 text-[#FF6B00] animate-spin mx-auto" />
               <div className="space-y-2">
-                <p className="text-xl font-black italic uppercase text-white tracking-tight">Efetivando Calendário...</p>
+                <p className="text-lg font-black italic uppercase text-white tracking-tight">Efetivando...</p>
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Gravando jogos no banco de dados</p>
               </div>
             </div>
           )}
 
-          {/* DONE */}
+          {/* ——— DONE ——— */}
           {step === 'done' && (
             <div className="space-y-6 py-10 animate-in zoom-in-95 duration-500">
               <div className="text-center">
@@ -382,7 +544,7 @@ export function AISchedulingModal({
             </div>
           )}
 
-          {/* ERROR */}
+          {/* ——— ERROR ——— */}
           {step === 'error' && (
             <div className="py-10 space-y-6 animate-in fade-in duration-300">
               <div className="bg-red-500/5 border border-red-500/20 rounded-[32px] p-10 flex flex-col items-center gap-6 text-center">
@@ -391,7 +553,7 @@ export function AISchedulingModal({
                 </div>
                 <div>
                   <h4 className="text-xl font-black italic uppercase text-red-500 tracking-tight mb-2">
-                    Falha na Geração
+                    Falha na Operação
                   </h4>
                   <p className="text-sm text-slate-400 max-w-sm font-medium">{errorMsg}</p>
                 </div>
