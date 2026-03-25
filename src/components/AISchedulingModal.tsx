@@ -41,6 +41,7 @@ type SimulationResult = {
     timeSlots: {
       time: string
       categoryId: string
+      categoryName?: string
       homeTeamId: string
       awayTeamId: string
       round: number
@@ -306,7 +307,7 @@ export function AISchedulingModal({
                             </span>
                             <div className="flex-1 flex items-center gap-3 min-w-0">
                               <span className="text-[8px] font-bold text-slate-600 bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.05] uppercase tracking-widest flex-shrink-0">
-                                {categoryData?.name || 'Cat.'}
+                                {slot.categoryName || categoryData?.name || 'Cat.'}
                               </span>
                               <p className="text-[10px] font-bold text-white uppercase tracking-tight truncate">
                                 Rodada {slot.round}
