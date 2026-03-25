@@ -71,7 +71,8 @@ export async function POST(request: Request) {
         id: c.id,
         name: c.name,
         teams: c.teams,
-        gamesCount: c.gamesCount
+        gamesCount: c.gamesCount,
+        games: c.games
       })),
       games: schedule.games,
       aiOptimization: {

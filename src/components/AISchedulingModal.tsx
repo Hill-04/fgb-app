@@ -94,6 +94,10 @@ export function AISchedulingModal({
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [simulation, setSimulation] = useState<SimulationResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
+  const [previewTab, setPreviewTab] = useState<'date' | 'category' | 'round'>('date')
+  const [chatInput, setChatInput] = useState('')
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
+  const [chatLoading, setChatLoading] = useState(false)
 
   // Step 1: Validar configurações
   const handleStart = async () => {
@@ -159,6 +163,55 @@ export function AISchedulingModal({
     } catch (err: any) {
       setErrorMsg(err.message)
       setStep('error')
+    }
+  }
+
+  const handleChat = async () => {
+    if (!chatInput.trim() || chatLoading) return
+  
+    const userMsg = chatInput.trim()
+    setChatInput('')
+    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }])
+    setChatLoading(true)
+  
+    try {
+      // Montar contexto do calendário atual para a IA
+      const context = `Calendário atual: ${simulation?.totalGames} jogos em ${simulation?.totalDays} dias.
+  Categorias: ${simulation?.categories?.map((c: any) => `${c.name} (${c.gamesCount} jogos)`).join(', ')}.
+  ${simulation?.summary}
+  
+  Pergunta do administrador: ${userMsg}
+  
+  Responda de forma prática e direta sobre como otimizar este calendário de basquete.
+  Se sugerir uma mudança, explique exatamente o que deve ser ajustado nas configurações ou no calendário.`
+  
+      let aiResponse = ''
+  
+      const res = await fetch('/api/scheduling/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          context,
+          championshipId
+        })
+      })
+  
+      if (res.ok) {
+        const data = await res.json()
+        aiResponse = data.response
+      } else {
+        aiResponse = 'Não consegui processar sua solicitação. Tente reformular.'
+      }
+  
+      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }])
+    } catch (err) {
+      setChatMessages(prev => [...prev, {
+        role: 'ai',
+        content: 'Erro ao conectar com a IA. Verifique sua conexão.'
+      }])
+    } finally {
+      setChatLoading(false)
     }
   }
 
@@ -367,18 +420,33 @@ export function AISchedulingModal({
           {step === 'preview' && simulation && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-500">
 
-              {/* Resultado principal */}
+              {/* Resumo principal */}
               <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
                 <p className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-1">
                   Calendário gerado com sucesso
                 </p>
-                <p className="text-2xl font-black text-white">{simulation.totalGames} jogos</p>
+                <p className="text-xl font-black text-white">{simulation.totalGames} jogos</p>
                 <p className="text-xs text-slate-400 mt-1">{simulation.summary}</p>
               </div>
 
+              {/* Mini stats */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: 'Jogos', value: simulation.totalGames },
+                  { label: 'Dias', value: simulation.totalDays },
+                  { label: 'Categorias', value: simulation.categories?.length },
+                  { label: 'Jogos/Dia', value: (simulation as unknown as any).maxGamesPerDay || '—' },
+                ].map((s, i) => (
+                  <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2 text-center">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-0.5">{s.label}</p>
+                    <p className="text-sm font-black text-white">{s.value}</p>
+                  </div>
+                ))}
+              </div>
+
               {/* Cards por categoria */}
-              <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto custom-scrollbar">
-                {simulation.categories?.map((cat) => (
+              <div className="grid grid-cols-2 gap-2">
+                {simulation.categories?.map((cat: any) => (
                   <div key={cat.id} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
                     <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-1 truncate">
                       {cat.name}
@@ -404,19 +472,19 @@ export function AISchedulingModal({
                 </div>
               )}
 
-              {/* Botões */}
+              {/* Ações */}
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setStep('diagnosis')}
                   className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
                 >
-                  ← Voltar
+                  Regerar
                 </button>
                 <button
                   onClick={() => setStep('review')}
                   className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all"
                 >
-                  Revisar Calendário →
+                  Ver Calendário Completo →
                 </button>
               </div>
             </div>
@@ -424,17 +492,16 @@ export function AISchedulingModal({
 
           {/* ——— REVIEW ——— */}
           {step === 'review' && simulation && (
-            <div className="space-y-4 animate-in fade-in duration-300">
+            <div className="space-y-3 animate-in fade-in duration-300">
+              {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                    Revisar Calendário
+                    Calendário Completo
                   </p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    {simulation.totalGames} jogos em {simulation.totalDays} dias
-                    {simulation.totalBlockedDates && simulation.totalBlockedDates > 0
-                      ? ` · ${simulation.totalBlockedDates} restrições consideradas`
-                      : ''}
+                    {simulation.totalGames} jogos · {simulation.totalDays} dias
+                    {(simulation.totalBlockedDates || 0) > 0 && ` · ${simulation.totalBlockedDates} restrições`}
                   </p>
                 </div>
                 <button
@@ -445,63 +512,213 @@ export function AISchedulingModal({
                 </button>
               </div>
 
-              {/* Lista de dias com jogos */}
-              <div className="max-h-80 overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                {simulation.schedulePreview?.map((day, i) => (
-                  <div key={i} className="bg-white/[0.02] border border-white/[0.08] rounded-2xl overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06] bg-white/[0.02]">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white">
-                        {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', {
-                          weekday: 'long', day: '2-digit', month: 'long'
-                        })}
-                      </p>
-                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-500 bg-white/[0.04] px-2 py-1 rounded-full">
+              {/* Abas de visualização */}
+              <div className="flex gap-1 bg-white/[0.03] border border-white/[0.06] rounded-xl p-1">
+                {[
+                  { key: 'date', label: '📅 Por Data' },
+                  { key: 'category', label: '🏆 Por Categoria' },
+                  { key: 'round', label: '🔄 Por Rodada' },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setPreviewTab(tab.key as any)}
+                    className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                      previewTab === tab.key
+                        ? 'bg-[#FF6B00] text-white'
+                        : 'text-slate-500 hover:text-white'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Conteúdo da aba */}
+              <div className="max-h-64 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+
+                {/* ABA: POR DATA */}
+                {previewTab === 'date' && simulation.schedulePreview?.map((day: any, i: number) => (
+                  <div key={i} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                          {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', {
+                            weekday: 'long', day: '2-digit', month: 'long'
+                          })}
+                        </p>
+                      </div>
+                      <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
                         {day.gamesCount} jogos
                       </span>
                     </div>
                     <div className="divide-y divide-white/[0.04]">
-                      {day.timeSlots?.map((slot, j) => {
-                        const categoryData = simulation.categories?.find(c => c.id === slot.categoryId)
-                        return (
-                          <div key={j} className="px-4 py-2.5 flex items-center gap-4 hover:bg-white/[0.02] transition-colors group">
-                            <span className="text-[11px] font-black text-[#FF6B00] w-12 flex-shrink-0">
-                              {slot.time}
-                            </span>
-                            <div className="flex-1 flex items-center gap-3 min-w-0">
-                              <span className="text-[8px] font-bold text-slate-600 bg-white/[0.05] px-1.5 py-0.5 rounded border border-white/[0.05] uppercase tracking-widest flex-shrink-0">
-                                {slot.categoryName || categoryData?.name || 'Cat.'}
-                              </span>
-                              <p className="text-[10px] font-bold text-white uppercase tracking-tight truncate">
-                                Rodada {slot.round}
-                              </p>
-                            </div>
-                          </div>
-                        )
-                      })}
+                      {day.timeSlots?.map((slot: any, j: number) => (
+                        <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
+                          <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
+                            {slot.time}
+                          </span>
+                          <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400 flex-shrink-0">
+                            {slot.categoryName}
+                          </span>
+                          <span className="text-[9px] text-slate-500 flex-shrink-0">Rod. {slot.round}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))}
+
+                {/* ABA: POR CATEGORIA */}
+                {previewTab === 'category' && simulation.categories?.map((cat: any) => (
+                  <div key={cat.id} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00]">
+                        {cat.name}
+                      </p>
+                      <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
+                        {cat.gamesCount} jogos · {cat.teams} equipes
+                      </span>
+                    </div>
+                    <div className="divide-y divide-white/[0.04]">
+                      {cat.games?.map((game: any, j: number) => (
+                        <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
+                          <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
+                            {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit', minute: '2-digit'
+                            })}
+                          </span>
+                          <span className="text-[9px] text-slate-400 flex-shrink-0">
+                            {new Date(game.dateTime).toLocaleDateString('pt-BR', {
+                              weekday: 'short', day: '2-digit', month: 'short'
+                            })}
+                          </span>
+                          <span className="text-[9px] text-slate-500 flex-shrink-0">Rod. {game.round}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {/* ABA: POR RODADA */}
+                {previewTab === 'round' && (() => {
+                  const gamesByRound = new Map<number, any[]>()
+                  simulation.games?.forEach((g: any) => {
+                    if (!gamesByRound.has(g.round)) gamesByRound.set(g.round, [])
+                    gamesByRound.get(g.round)!.push(g)
+                  })
+                  return Array.from(gamesByRound.entries())
+                    .sort(([a], [b]) => a - b)
+                    .map(([round, games]) => (
+                      <div key={round} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
+                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                            Rodada {round}
+                          </p>
+                          <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
+                            {games.length} jogos
+                          </span>
+                        </div>
+                        {/* Data do bloco */}
+                        <div className="px-4 py-2 bg-[#FF6B00]/5 border-b border-white/[0.04]">
+                          <p className="text-[9px] text-[#FF6B00] font-black uppercase tracking-widest">
+                            📅 {new Date(games[0].dateTime).toLocaleDateString('pt-BR', {
+                              weekday: 'long', day: '2-digit', month: 'long'
+                            })}
+                          </p>
+                        </div>
+                        <div className="divide-y divide-white/[0.04]">
+                          {games.map((game: any, j: number) => {
+                            const cat = simulation.categories?.find((c: any) => c.id === game.categoryId)
+                            return (
+                              <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
+                                <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
+                                  {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
+                                    hour: '2-digit', minute: '2-digit'
+                                  })}
+                                </span>
+                                <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400 flex-shrink-0">
+                                  {cat?.name || ''}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))
+                })()}
+
               </div>
 
-              {/* Ações de aprovação */}
-              <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/20 rounded-2xl p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-3 text-center">
-                  Ao aprovar, os jogos serão criados e disponibilizados para as equipes
-                </p>
-                <div className="flex gap-3">
+              {/* Chat com IA para otimização */}
+              <div className="bg-[#141414] border border-white/[0.08] rounded-2xl p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-3.5 h-3.5 text-[#FF6B00]" />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00]">
+                    Otimizar com IA
+                  </p>
+                </div>
+
+                {/* Histórico de mensagens */}
+                {chatMessages.length > 0 && (
+                  <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                    {chatMessages.map((msg: any, i: number) => (
+                      <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[85%] rounded-xl px-3 py-2 text-[10px] leading-relaxed ${
+                          msg.role === 'user'
+                            ? 'bg-[#FF6B00]/20 text-white'
+                            : 'bg-white/[0.05] text-slate-300'
+                        }`}>
+                          {msg.content}
+                        </div>
+                      </div>
+                    ))}
+                    {chatLoading && (
+                      <div className="flex gap-2 justify-start">
+                        <div className="bg-white/[0.05] rounded-xl px-3 py-2 text-[10px] text-slate-400">
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Input de chat */}
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={e => setChatInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && !chatLoading && handleChat()}
+                    placeholder="Ex: junte Sub 12 e Sub 13 no mesmo dia..."
+                    className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#FF6B00]/30"
+                  />
                   <button
-                    onClick={() => setStep('preview')}
-                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
+                    onClick={handleChat}
+                    disabled={chatLoading || !chatInput.trim()}
+                    className="w-10 h-10 bg-[#FF6B00] hover:bg-[#E66000] rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40"
                   >
-                    Regerar
-                  </button>
-                  <button
-                    onClick={handleApply}
-                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
-                  >
-                    ✓ Aprovar e Aplicar
+                    <ArrowRight className="w-4 h-4 text-white" />
                   </button>
                 </div>
+
+                <p className="text-[9px] text-slate-600">
+                  Sugestões: "combine categorias próximas" · "separe masculino e feminino"
+                </p>
+              </div>
+
+              {/* Ações finais */}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={() => setStep('idle')}
+                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
+                >
+                  Regerar
+                </button>
+                <button
+                  onClick={handleApply}
+                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
+                >
+                  ✓ Aprovar e Aplicar
+                </button>
               </div>
             </div>
           )}
