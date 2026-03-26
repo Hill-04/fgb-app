@@ -1,4 +1,4 @@
-﻿-- CreateTable
+-- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
@@ -189,6 +189,7 @@ CREATE TABLE "TeamMembership" (
     "userId" TEXT NOT NULL,
     "teamId" TEXT NOT NULL,
     "role" TEXT NOT NULL,
+    "number" INTEGER,
     "status" TEXT NOT NULL DEFAULT 'PENDING',
     "requestedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "approvedAt" DATETIME,
