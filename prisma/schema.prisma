@@ -236,6 +236,7 @@ model TeamMembership {
   userId      String    @unique
   teamId      String
   role        String
+  number      Int?
   status      String    @default("PENDING")
   requestedAt DateTime  @default(now())
   approvedAt  DateTime?

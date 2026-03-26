@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { RegisterResultButton } from './RegisterResultButton'
+import { GenerateSumulaButton } from './GenerateSumulaButton'
 
 export default async function MatchesPage({ 
   params 
@@ -135,11 +136,17 @@ export default async function MatchesPage({
                         {game.category.name}
                       </span>
                       {game.status === 'FINISHED' ? (
-                        <span className="text-[8px] font-black uppercase tracking-widest text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="w-2 h-2" /> Encerrado
-                        </span>
+                        <div className="flex flex-col gap-2">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-full flex items-center gap-1">
+                            <CheckCircle2 className="w-2 h-2" /> Encerrado
+                          </span>
+                          <GenerateSumulaButton gameId={game.id} />
+                        </div>
                       ) : (
-                        <RegisterResultButton gameId={game.id} />
+                        <div className="flex flex-col gap-2">
+                          <RegisterResultButton gameId={game.id} />
+                          <GenerateSumulaButton gameId={game.id} />
+                        </div>
                       )}
                     </div>
                   </div>
