@@ -53,16 +53,23 @@ async function main() {
   // 1. Criar admin
   console.log('👤 Criando administrador...')
   const adminPassword = await bcrypt.hash('admin123', 10)
-  const admin = await prisma.user.create({
-    data: {
-      name: 'Brayan Alex Guarnieri',
-      email: 'brayanalexguarnieri@gmail.com',
-      password: adminPassword,
-      defaultRole: 'ADMIN',
-      isAdmin: true,
-    }
-  })
-  console.log('✅ Admin criado:', admin.email)
+  
+  const adminsToCreate = [
+    { name: 'Brayan Alex Guarnieri', email: 'brayanalexguarnieri@gmail.com' },
+    { name: 'Pedro Santos', email: 'richmond@fgb.com.br' }
+  ]
+
+  for (const adminData of adminsToCreate) {
+    const admin = await prisma.user.create({
+      data: {
+        ...adminData,
+        password: adminPassword,
+        defaultRole: 'ADMIN',
+        isAdmin: true,
+      }
+    })
+    console.log('✅ Admin criado:', admin.email)
+  }
 
   // 2. Criar equipes reais do basquete gaúcho (masculino)
   console.log('🏀 Criando equipes...')
@@ -193,7 +200,7 @@ async function main() {
   console.log('🎉 Seed concluído com sucesso!')
   console.log('')
   console.log('📊 Dados criados:')
-  console.log(`   - 1 administrador (${admin.email} / senha: admin123)`)
+  console.log(`   - ${adminsToCreate.length} administradores (senha: admin123)`)
   console.log(`   - ${teams.length} equipes (senha padrão: senha123)`)
   console.log(`   - ${holidays.length} feriados`)
   console.log(`   - 1 campeonato com ${categories.length} categorias`)

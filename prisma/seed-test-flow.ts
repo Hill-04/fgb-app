@@ -43,16 +43,25 @@ async function main() {
 
   const defaultPassword = await bcrypt.hash('senha123', 10)
 
-  // 2. Criar Admin
-  const admin = await prisma.user.create({
-    data: {
-      name: 'Admin FGB',
-      email: 'admin@fgb.com.br',
-      password: await bcrypt.hash('admin123', 10),
-      defaultRole: 'ADMIN',
-      isAdmin: true,
-    }
-  })
+  // 2. Criar Admins
+  const adminPassword = await bcrypt.hash('admin123', 10)
+  const adminsToCreate = [
+    { name: 'Admin FGB', email: 'admin@fgb.com.br' },
+    { name: 'Pedro Santos', email: 'richmond@fgb.com.br' },
+    { name: 'Brayan Alex Guarnieri', email: 'brayanalexguarnieri@gmail.com' }
+  ]
+
+  for (const adminData of adminsToCreate) {
+    await prisma.user.create({
+      data: {
+        ...adminData,
+        password: adminPassword,
+        defaultRole: 'ADMIN',
+        isAdmin: true,
+      }
+    })
+  }
+  console.log('✅ Admins criados correlatos.')
 
   // 3. Criar Equipes (12 equipes)
   const teamNames = [
