@@ -19,11 +19,19 @@ async function main() {
   const result = await client.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
   const tables = result.rows.map(r => r.name as string)
 
+  // SEGURANÇA: Verificar se o reset é permitido
+  const allowReset = process.env.ALLOW_RESET === 'true'
+
   // Dropar tabelas se existirem em ordem segura (ou forçar desligamento de FK)
   if (tables.length > 0) {
-    console.log(`Dropping ${tables.length} tables in safe order...`)
-    
-    // Ordem de deleção (das folhas para as raízes)
+    if (!allowReset) {
+      console.log('⚠️  AVISO: Tabelas existentes encontradas, mas ALLOW_RESET não está como "true".')
+      console.log('⚠️  Pulando o DROP das tabelas para proteger os dados de produção.')
+      console.log('💡 Para resetar o banco, use: ALLOW_RESET=true npx tsx scripts/push-turso.ts')
+    } else {
+      console.log(`🧨 RESET ATIVADO: Dropping ${tables.length} tables in safe order...`)
+      
+      // Ordem de deleção (das folhas para as raízes)
     const safeOrder = [
       'RegistrationCategory', 'BlockedDate', 'Game', 'Standing', 'Document',
       'Notification', 'Message', 'Block', 'RegistrationCategory', 'Registration', 
