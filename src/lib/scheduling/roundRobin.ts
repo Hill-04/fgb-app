@@ -3,12 +3,14 @@ import { prisma } from '@/lib/db'
 // ═══════════════════════════════════════════
 // CONSTANTES
 // ═══════════════════════════════════════════
-const GAME_DURATION_MIN = 75
-const DAY_START_HOUR = 11    // 08:00 BRT = 11:00 UTC
-const DAY_END_HOUR = 21      // 18:00 BRT = 21:00 UTC
-const MAX_GAMES_PER_DAY = 8
-const LUNCH_BREAK_MIN = 120  // 2h de intervalo entre manhã e tarde
-const AFTERNOON_START_UTC = 17  // 14:00 BRT = 17:00 UTC
+const GAME_DURATION_MIN   = 75
+const DAY_START_HOUR      = 11   // 08:00 BRT = 11:00 UTC
+const DAY_END_HOUR        = 21   // 18:00 BRT = 21:00 UTC
+const LAST_GAME_START_UTC = 19   // 16:45 BRT = 19:45 UTC (último início)
+const MAX_GAMES_PER_DAY   = 8
+const LUNCH_BREAK_MIN     = 120  // intervalo almoço
+const AFTERNOON_START_UTC = 17   // 14:00 BRT = 17:00 UTC
+const MAX_CATS_PER_DAY    = 2    // ABSOLUTO
 
 // Sexta=5, Sábado=6, Domingo=0
 const PREFERRED_WEEKDAYS = [5, 6, 0]
@@ -273,7 +275,7 @@ function distributeAllGames(
 // ═══════════════════════════════════════════
 export async function generateChampionshipSchedule(championshipId: string) {
 
-  // ── PASSO 1: Buscar campeonato e configurações ──────────────
+  // PASSO 1: Buscar campeonato
   const championship = await prisma.championship.findUnique({
     where: { id: championshipId },
     include: {
@@ -289,20 +291,22 @@ export async function generateChampionshipSchedule(championshipId: string) {
   })
   if (!championship) throw new Error('Campeonato não encontrado')
 
-  const format      = championship.format      || 'todos_contra_todos'
-  const turns       = championship.turns       || 1
-  const phases      = championship.phases      || 1
-  const hasPlayoffs = championship.hasPlayoffs || false
+  const format       = championship.format       || 'todos_contra_todos'
+  const turns        = championship.turns        || 1
+  const phases       = championship.phases       || 1
+  const hasPlayoffs  = championship.hasPlayoffs  || false
   const playoffTeams = championship.playoffTeams || 4
   const fieldControl = championship.fieldControl || 'alternado'
 
-  // startDate vazio = data de criação + 21 dias
+  // startDate vazio = hoje + 21 dias
   const startDate = championship.startDate
     ? new Date(championship.startDate)
     : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000)
-  const endDate = championship.endDate ? new Date(championship.endDate) : null
+  const endDate = championship.endDate
+    ? new Date(championship.endDate)
+    : null
 
-  // ── PASSO 2: Buscar datas bloqueadas das equipes ────────────
+  // PASSO 2: Datas bloqueadas
   const registrations = await prisma.registration.findMany({
     where: { championshipId, status: 'CONFIRMED' },
     include: { blockedDates: true }
@@ -315,61 +319,54 @@ export async function generateChampionshipSchedule(championshipId: string) {
     if (dates.length > 0) blockedMap.set(reg.teamId, dates)
   }
 
-  // ── PASSO 3: Gerar categorias válidas com equipes ───────────
+  // PASSO 3: Categorias válidas com número de idade
   type Team = { id: string; name: string }
   type CategoryInfo = {
     id: string
     name: string
-    ageGroup: number  // extraído do nome (Sub12 → 12)
+    ageGroup: number
     teams: Team[]
   }
 
-  const categories: CategoryInfo[] = []
+  const validCategories: CategoryInfo[] = []
   for (const cat of championship.categories) {
     const teams: Team[] = cat.registrations.map((r: any) => ({
       id: r.registration.teamId,
       name: r.registration.team.name
     }))
     if (teams.length < 2) continue
-
-    // Extrair número da idade da categoria (Sub12 → 12, Sub 13 → 13)
     const ageMatch = cat.name.match(/\d+/)
     const ageGroup = ageMatch ? parseInt(ageMatch[0]) : 0
-
-    categories.push({ id: cat.id, name: cat.name, ageGroup, teams })
+    validCategories.push({ id: cat.id, name: cat.name, ageGroup, teams })
   }
 
-  if (categories.length === 0) {
-    throw new Error('Nenhuma categoria com equipes suficientes confirmadas')
+  if (validCategories.length === 0) {
+    throw new Error('Nenhuma categoria com equipes suficientes')
   }
 
-  // ── PASSO 4: Agrupar categorias (máx 2, sem consecutivas) ──
-  // Ordenar por idade
-  const sorted = [...categories].sort((a, b) => a.ageGroup - b.ageGroup)
+  // PASSO 4: Agrupar categorias (máx 2, sem consecutivas)
+  // Ordenar por idade crescente
+  const sorted = [...validCategories].sort((a, b) => a.ageGroup - b.ageGroup)
 
-  // Algoritmo de agrupamento: distribuir evitando consecutivas
-  // Estratégia: parear categoria mais nova com a mais velha possível
+  // Parear primeira metade com segunda metade
   // Ex: [12,13,14,15,16,17] → [12+15, 13+16, 14+17]
   const groups: CategoryInfo[][] = []
   const used = new Set<string>()
-
-  // Primeiro: tentar parear com distância máxima de idade
   const half = Math.ceil(sorted.length / 2)
+
   for (let i = 0; i < half; i++) {
     const cat1 = sorted[i]
     const cat2 = sorted[i + half]
-    if (cat1 && !used.has(cat1.id)) {
-      const group: CategoryInfo[] = [cat1]
-      used.add(cat1.id)
-      if (cat2 && !used.has(cat2.id)) {
-        group.push(cat2)
-        used.add(cat2.id)
-      }
-      groups.push(group)
+    if (!cat1 || used.has(cat1.id)) continue
+    const group: CategoryInfo[] = [cat1]
+    used.add(cat1.id)
+    if (cat2 && !used.has(cat2.id)) {
+      group.push(cat2)
+      used.add(cat2.id)
     }
+    groups.push(group)
   }
-
-  // Categorias restantes (se número ímpar)
+  // Categorias restantes
   for (const cat of sorted) {
     if (!used.has(cat.id)) {
       groups.push([cat])
@@ -377,7 +374,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
   }
 
-  // ── PASSO 5: Gerar pares únicos por categoria ───────────────
+  // PASSO 5: Gerar pares únicos por categoria
   type UniquePair = {
     homeTeamId: string
     awayTeamId: string
@@ -386,31 +383,31 @@ export async function generateChampionshipSchedule(championshipId: string) {
   }
 
   const pairsByCat = new Map<string, UniquePair[]>()
-  let maxPairsAcrossCategories = 0
+  let maxPairs = 0
 
-  for (const cat of categories) {
+  for (const cat of validCategories) {
     const pairs: UniquePair[] = []
     let idx = 0
 
     if (format === 'eliminatoria') {
-      for (let i = 0; i < cat.teams.length - 1; i += 2) {
+      for (let i = 0; i + 1 < cat.teams.length; i += 2) {
         pairs.push({
           homeTeamId: cat.teams[i].id,
-          awayTeamId: (cat.teams[i+1] || cat.teams[i]).id,
+          awayTeamId: cat.teams[i + 1].id,
           pairIndex: idx++,
           categoryId: cat.id
         })
       }
     } else {
-      // Todos contra todos: pares únicos
+      // Todos contra todos
       for (let i = 0; i < cat.teams.length; i++) {
         for (let j = i + 1; j < cat.teams.length; j++) {
-          let home = cat.teams[i]
-          let away = cat.teams[j]
-          if (fieldControl === 'fixo') {
-            home = cat.teams[0]
-            away = cat.teams[i].id === cat.teams[0].id ? cat.teams[j] : cat.teams[i]
-          }
+          const home = fieldControl === 'fixo'
+            ? cat.teams[0]
+            : cat.teams[i]
+          const away = fieldControl === 'fixo'
+            ? (cat.teams[i].id === cat.teams[0].id ? cat.teams[j] : cat.teams[i])
+            : cat.teams[j]
           pairs.push({
             homeTeamId: home.id,
             awayTeamId: away.id,
@@ -422,15 +419,13 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
 
     pairsByCat.set(cat.id, pairs)
-    if (pairs.length > maxPairsAcrossCategories) {
-      maxPairsAcrossCategories = pairs.length
-    }
+    if (pairs.length > maxPairs) maxPairs = pairs.length
   }
 
-  // ── PASSO 6: Dividir pares em fases ────────────────────────
-  const pairsPerPhase = Math.ceil(maxPairsAcrossCategories / phases)
+  // PASSO 6: Calcular capacidade real de jogos por dia por grupo
+  const pairsPerPhase = Math.ceil(maxPairs / phases)
 
-  // ── PASSO 7: Calcular fins de semana disponíveis ────────────
+  // PASSO 7: Calcular datas das fases para cada grupo
   function nextSaturday(from: Date): Date {
     const d = new Date(from)
     while (d.getDay() !== 6) d.setDate(d.getDate() + 1)
@@ -438,59 +433,46 @@ export async function generateChampionshipSchedule(championshipId: string) {
     return d
   }
 
-  function isDateBlocked(date: Date, teamId: string): boolean {
-    const dateStr = date.toISOString().split('T')[0]
-    return (blockedMap.get(teamId) || []).some(
-      d => d.toISOString().split('T')[0] === dateStr
-    )
-  }
-
-  // Reservar fins de semana para playoffs
-  let regularEndDate = endDate ? new Date(endDate) : null
+  // Reservar fins de semana de playoff no final
+  let regularEnd = endDate ? new Date(endDate) : null
   const playoffDates: Date[] = []
-  if (hasPlayoffs && regularEndDate) {
+  if (hasPlayoffs && regularEnd) {
     const lastSat = nextSaturday(
-      new Date(regularEndDate.getTime() - 14 * 24 * 60 * 60 * 1000)
+      new Date(regularEnd.getTime() - 14 * 24 * 60 * 60 * 1000)
     )
     playoffDates.push(lastSat)
-    regularEndDate = new Date(lastSat.getTime() - 7 * 24 * 60 * 60 * 1000)
+    regularEnd = new Date(lastSat.getTime() - 7 * 24 * 60 * 60 * 1000)
   }
 
-  // Calcular data de início de cada fase por grupo
-  // Distribuindo igualmente no período disponível
+  // Calcular data de início de cada fase distribuída
   const firstSat = nextSaturday(startDate)
-  const periodMs = regularEndDate
-    ? regularEndDate.getTime() - firstSat.getTime()
-    : phases * 21 * 24 * 60 * 60 * 1000
+  const totalPeriodMs = regularEnd
+    ? regularEnd.getTime() - firstSat.getTime()
+    : phases * 28 * 24 * 60 * 60 * 1000
 
-  // Para cada grupo, calcular as datas das fases
-  const groupPhaseStarts: Date[][] = groups.map((_, groupIdx) => {
-    const groupDates: Date[] = []
-    // Offset inicial do grupo (spread entre sáb e dom)
-    const dayOffset = groupIdx % 2  // 0=sáb, 1=dom, 2=sáb...
-
+  const groupPhaseStarts: Date[][] = groups.map((_, gIdx) => {
+    const phaseDates: Date[] = []
     for (let p = 0; p < phases; p++) {
-      const offset = Math.round((p / phases) * periodMs)
+      const offset = Math.round((p / phases) * totalPeriodMs)
       const candidate = new Date(firstSat.getTime() + offset)
       const sat = nextSaturday(candidate)
-
-      // Aplicar offset de dia do grupo
       const phaseDate = new Date(sat)
-      phaseDate.setDate(phaseDate.getDate() + dayOffset)
-      // Garantir que não é dia de playoff
+      if (gIdx % 2 === 1) {
+        phaseDate.setDate(phaseDate.getDate() + 1)
+      } else if (gIdx >= 2) {
+        phaseDate.setDate(phaseDate.getDate() + 7 * Math.floor(gIdx / 2))
+      }
       const isPlayoff = playoffDates.some(pd =>
         Math.abs(pd.getTime() - phaseDate.getTime()) < 7 * 24 * 60 * 60 * 1000
       )
-      if (isPlayoff) {
-        phaseDate.setDate(phaseDate.getDate() + 7)
-      }
+      if (isPlayoff) phaseDate.setDate(phaseDate.getDate() + 7)
       phaseDate.setUTCHours(DAY_START_HOUR, 0, 0, 0)
-      groupDates.push(phaseDate)
+      phaseDates.push(phaseDate)
     }
-    return groupDates
+    return phaseDates
   })
 
-  // ── PASSO 8: Gerar jogos com horários para cada fase ────────
+  // PASSO 8: Gerar jogos com horários
   type ScheduledGame = {
     categoryId: string
     homeTeamId: string
@@ -503,98 +485,95 @@ export async function generateChampionshipSchedule(championshipId: string) {
 
   const allScheduled: ScheduledGame[] = []
   let globalRound = 0
-  const AFTERNOON_START_UTC = DAY_START_HOUR + 6  // 14:00 BRT = 17:00 UTC
 
   for (let phaseNum = 1; phaseNum <= phases; phaseNum++) {
     globalRound++
 
-    for (let groupIdx = 0; groupIdx < groups.length; groupIdx++) {
-      const group = groups[groupIdx]
-      const phaseDate = groupPhaseStarts[groupIdx][phaseNum - 1]
+    for (let gIdx = 0; gIdx < groups.length; gIdx++) {
+      const group = groups[gIdx]
+      const phaseDate = groupPhaseStarts[gIdx][phaseNum - 1]
       if (!phaseDate) continue
 
-      // Pares desta fase para este grupo
-      const phaseStartIdx = (phaseNum - 1) * pairsPerPhase
-      const phaseEndIdx = Math.min(phaseStartIdx + pairsPerPhase, maxPairsAcrossCategories)
-
-      // Construir lista de jogos intercalados para o dia
-      // Lógica: para cada pairIndex desta fase, intercalar categorias do grupo
-      // Depois: se turns=2, adicionar voltas (tarde) na mesma intercalação
+      const startPairIdx = (phaseNum - 1) * pairsPerPhase
+      const endPairIdx   = Math.min(startPairIdx + pairsPerPhase, maxPairs)
 
       type Slot = {
         categoryId: string
         homeTeamId: string
         awayTeamId: string
         isReturn: boolean
-        pairIndex: number
       }
 
       const morningSlots: Slot[] = []
       const afternoonSlots: Slot[] = []
 
-      for (let pi = phaseStartIdx; pi < phaseEndIdx; pi++) {
+      for (let pi = startPairIdx; pi < endPairIdx; pi++) {
         for (const cat of group) {
-          const pairs = pairsByCat.get(cat.id) || []
-          const pair = pairs.find(p => p.pairIndex === pi)
+          const pair = pairsByCat.get(cat.id)?.find(p => p.pairIndex === pi)
           if (!pair) continue
-
           morningSlots.push({
             categoryId: cat.id,
             homeTeamId: pair.homeTeamId,
             awayTeamId: pair.awayTeamId,
-            isReturn: false,
-            pairIndex: pi
+            isReturn: false
           })
-
           if (turns >= 2) {
             afternoonSlots.push({
               categoryId: cat.id,
               homeTeamId: pair.awayTeamId,
               awayTeamId: pair.homeTeamId,
-              isReturn: true,
-              pairIndex: pi
+              isReturn: true
             })
           }
         }
       }
 
-      // Calcular quantos dias são necessários
-      const morningMinutes = morningSlots.length * GAME_DURATION_MIN
-      const afternoonMinutes = afternoonSlots.length * GAME_DURATION_MIN
-      const totalMinutes = morningMinutes + (turns >= 2 ? LUNCH_BREAK_MIN + afternoonMinutes : 0)
-      const availableMinutes = (DAY_END_HOUR - DAY_START_HOUR) * 60  // 600min = 10h
+      const slotsPerDay = Math.floor(
+        (LAST_GAME_START_UTC - DAY_START_HOUR) * 60 / GAME_DURATION_MIN
+      )
 
-      // Construir array de dias disponíveis para esta fase/grupo
-      const phaseDays: Date[] = [new Date(phaseDate)]
-      if (totalMinutes > availableMinutes) {
-        // Adicionar domingo
-        const sunday = new Date(phaseDate)
-        sunday.setDate(sunday.getDate() + (phaseDate.getDay() === 6 ? 1 : 1))
-        sunday.setUTCHours(DAY_START_HOUR, 0, 0, 0)
-        phaseDays.push(sunday)
+      const morningDays = Math.ceil(morningSlots.length / slotsPerDay)
+      const afternoonDays = turns >= 2
+        ? Math.ceil(afternoonSlots.length / slotsPerDay)
+        : 0
+
+      const allFitsOneDay = (
+        morningSlots.length <= slotsPerDay &&
+        afternoonSlots.length <= slotsPerDay
+      )
+      const totalDaysNeeded = allFitsOneDay
+        ? 1
+        : Math.max(morningDays, afternoonDays) + (turns >= 2 ? 1 : 0)
+
+      const phaseDays: Date[] = []
+      const baseSat = new Date(phaseDate)
+      while (baseSat.getDay() !== 6) baseSat.setDate(baseSat.getDate() - 1)
+
+      if (totalDaysNeeded >= 3) {
+        const fri = new Date(baseSat)
+        fri.setDate(fri.getDate() - 1)
+        fri.setUTCHours(DAY_START_HOUR, 0, 0, 0)
+        phaseDays.push(fri)
       }
-      if (totalMinutes > availableMinutes * 2) {
-        // Adicionar sexta (antes do sábado)
-        const friday = new Date(phaseDate)
-        friday.setDate(friday.getDate() - 1)
-        friday.setUTCHours(DAY_START_HOUR, 0, 0, 0)
-        phaseDays.unshift(friday)
+      baseSat.setUTCHours(DAY_START_HOUR, 0, 0, 0)
+      phaseDays.push(new Date(baseSat))
+      if (totalDaysNeeded >= 2) {
+        const sun = new Date(baseSat)
+        sun.setDate(sun.getDate() + 1)
+        sun.setUTCHours(DAY_START_HOUR, 0, 0, 0)
+        phaseDays.push(sun)
       }
 
-      // Distribuir slots nos dias disponíveis
       let dayIdx = 0
       let currentTime = new Date(phaseDays[0])
-      let currentMinutesUsed = 0
+      let slotsToday = 0
 
-      // Primeiro: manhã
       for (const slot of morningSlots) {
-        // Verificar se passou das 18h ou excedeu o dia
-        if (currentMinutesUsed + GAME_DURATION_MIN > availableMinutes) {
-          if (dayIdx < phaseDays.length - 1) {
-            dayIdx++
-            currentTime = new Date(phaseDays[dayIdx])
-            currentMinutesUsed = 0
-          }
+        if (slotsToday >= slotsPerDay && dayIdx < phaseDays.length - 1) {
+          dayIdx++
+          currentTime = new Date(phaseDays[dayIdx])
+          currentTime.setUTCHours(DAY_START_HOUR, 0, 0, 0)
+          slotsToday = 0
         }
 
         allScheduled.push({
@@ -606,27 +585,25 @@ export async function generateChampionshipSchedule(championshipId: string) {
           isReturn: false,
           dateTime: new Date(currentTime)
         })
-
         currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
-        currentMinutesUsed += GAME_DURATION_MIN
+        slotsToday++
       }
 
-      // Depois: tarde (com intervalo de almoço)
       if (turns >= 2 && afternoonSlots.length > 0) {
-        // Calcular início da tarde = após almoço
-        // Mínimo: 14:00 BRT = 17:00 UTC
-        const afternoonUTC = new Date(phaseDays[dayIdx])
-        afternoonUTC.setUTCHours(AFTERNOON_START_UTC, 0, 0, 0)
-        currentTime = afternoonUTC
-        currentMinutesUsed = (AFTERNOON_START_UTC - DAY_START_HOUR) * 60
+        const afternoonBase = new Date(phaseDays[dayIdx])
+        afternoonBase.setUTCHours(AFTERNOON_START_UTC, 0, 0, 0)
+        if (currentTime < afternoonBase) {
+          currentTime = afternoonBase
+        }
+        slotsToday = 0
 
         for (const slot of afternoonSlots) {
-          if (currentMinutesUsed + GAME_DURATION_MIN > availableMinutes) {
+          if (slotsToday >= slotsPerDay || currentTime.getUTCHours() > LAST_GAME_START_UTC) {
             if (dayIdx < phaseDays.length - 1) {
               dayIdx++
               currentTime = new Date(phaseDays[dayIdx])
               currentTime.setUTCHours(AFTERNOON_START_UTC, 0, 0, 0)
-              currentMinutesUsed = (AFTERNOON_START_UTC - DAY_START_HOUR) * 60
+              slotsToday = 0
             }
           }
 
@@ -639,16 +616,15 @@ export async function generateChampionshipSchedule(championshipId: string) {
             isReturn: true,
             dateTime: new Date(currentTime)
           })
-
           currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
-          currentMinutesUsed += GAME_DURATION_MIN
+          slotsToday++
         }
       }
     }
   }
 
-  // ── PASSO 9: Montar resultados ──────────────────────────────
-  const categoryResults = categories.map(cat => ({
+  // PASSO 9: Montar resultados
+  const categoryResults = validCategories.map(cat => ({
     id: cat.id,
     name: cat.name,
     teams: cat.teams.length,
@@ -663,42 +639,46 @@ export async function generateChampionshipSchedule(championshipId: string) {
     gamesByDate.get(key)!.push(game)
   }
 
-  const catNameMap = new Map(categories.map(c => [c.id, c.name]))
+  const catNameMap = new Map(validCategories.map(c => [c.id, c.name]))
 
   const schedulePreview = Array.from(gamesByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, games]) => ({
-      date,
-      phase: games[0]?.phase || 1,
-      dayOfWeek: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', {
-        weekday: 'long'
-      }),
-      gamesCount: games.length,
-      categories: [...new Set(games.map(g => catNameMap.get(g.categoryId) || ''))],
-      timeSlots: games
-        .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
-        .map(g => ({
-          time: g.dateTime.toLocaleTimeString('pt-BR', {
-            hour: '2-digit', minute: '2-digit',
-            timeZone: 'America/Sao_Paulo'
-          }),
-          categoryId: g.categoryId,
-          categoryName: catNameMap.get(g.categoryId) || '',
-          homeTeamId: g.homeTeamId,
-          awayTeamId: g.awayTeamId,
-          round: g.round,
-          phase: g.phase,
-          isReturn: g.isReturn,
-          period: g.isReturn ? 'tarde' : 'manhã'
-        }))
-    }))
+    .map(([date, games]) => {
+      const lateGames = games.filter(g => g.dateTime.getUTCHours() > LAST_GAME_START_UTC)
+      if (lateGames.length > 0) {
+        console.warn(`[Scheduling] ALERTA: ${lateGames.length} jogo(s) após 16:45 em ${date}`)
+      }
+      return {
+        date,
+        phase: games[0]?.phase || 1,
+        dayOfWeek: new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', {
+          weekday: 'long'
+        }),
+        gamesCount: games.length,
+        categories: [...new Set(games.map(g => catNameMap.get(g.categoryId) || ''))],
+        timeSlots: games
+          .sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime())
+          .map(g => ({
+            time: g.dateTime.toLocaleTimeString('pt-BR', {
+              hour: '2-digit', minute: '2-digit',
+              timeZone: 'America/Sao_Paulo'
+            }),
+            categoryId: g.categoryId,
+            categoryName: catNameMap.get(g.categoryId) || '',
+            homeTeamId: g.homeTeamId,
+            awayTeamId: g.awayTeamId,
+            round: g.round,
+            phase: g.phase,
+            isReturn: g.isReturn,
+            period: g.isReturn ? 'tarde' : 'manhã'
+          }))
+      }
+    })
 
   const totalBlockedDates = Array.from(blockedMap.values())
     .reduce((acc, arr) => acc + arr.length, 0)
 
-  const groupsDescription = groups.map(g =>
-    g.map(c => c.name).join(' + ')
-  ).join(', ')
+  const groupsDesc = groups.map(g => g.map(c => c.name).join(' + ')).join(', ')
 
   return {
     success: true,
@@ -706,13 +686,9 @@ export async function generateChampionshipSchedule(championshipId: string) {
     totalBlockedDates,
     totalDays: gamesByDate.size,
     totalPhases: phases,
-    maxGamesPerDay: Math.max(
-      ...Array.from(gamesByDate.values()).map(g => g.length), 0
-    ),
+    maxGamesPerDay: Math.max(...Array.from(gamesByDate.values()).map(g => g.length), 0),
     groups: groups.map(g => g.map(c => ({ id: c.id, name: c.name }))),
-    format,
-    turns,
-    hasPlayoffs,
+    format, turns, hasPlayoffs,
     playoffWeekends: playoffDates.map(d => d.toISOString()),
     schedulePreview,
     categories: categoryResults,
@@ -721,10 +697,9 @@ export async function generateChampionshipSchedule(championshipId: string) {
       `${allScheduled.length} jogos`,
       `${phases} fase(s)/viagem(ns)`,
       `${gamesByDate.size} dias`,
-      `${categories.length} categorias`,
-      `${groups.length} grupos (${groupsDescription})`,
+      `${validCategories.length} categorias`,
+      `Grupos: ${groupsDesc}`,
       turns === 2 ? 'Manhã (ida) + Tarde (volta)' : '1 turno',
-      format === 'eliminatoria' ? 'Eliminatória' : 'Liga',
       hasPlayoffs ? `+ Playoffs (top ${playoffTeams})` : '',
       totalBlockedDates > 0 ? `${totalBlockedDates} restrições de data` : ''
     ].filter(Boolean).join(' · ')

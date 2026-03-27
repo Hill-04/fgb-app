@@ -81,6 +81,25 @@ export async function POST(request: Request) {
       totalGames += gamesPerTurn * (championship.turns || 1)
     }
 
+    // Verificar viabilidade de cada grupo por fase
+    const maxTeamsInAnyCat = Math.max(...championship.categories.map(c => c.registrations.length), 0)
+    const maxPairsForAnyCat = (maxTeamsInAnyCat * (maxTeamsInAnyCat - 1)) / 2
+    const pairsPerPhaseCalc = Math.ceil(maxPairsForAnyCat / (championship.phases || 1))
+
+    // Calcular jogos por dia máximo para 2 cats (limite FGB)
+    const MAX_SLOTS_PER_DAY = 6  // 6 jogos de 75min cabem das 08:00 às 16:45
+    const jogsPerGroupPerFase = pairsPerPhaseCalc * 2 * (championship.turns || 1)
+    const diasNecessariosPorGrupoFase = Math.ceil(jogsPerGroupPerFase / MAX_SLOTS_PER_DAY)
+
+    if (diasNecessariosPorGrupoFase > 3) {
+      issues.push({
+        type: 'error',
+        field: 'phases',
+        message: `Cada fase precisaria de ${diasNecessariosPorGrupoFase} dias para os jogos do grupo, mas o máximo permitido é 3 (sex+sáb+dom).`,
+        suggestion: `Aumente o número de fases para ${Math.ceil((championship.phases || 1) * diasNecessariosPorGrupoFase / 3)} ou reduza o número de equipes por categoria.`
+      })
+    }
+
     // -- Verificar data de início
     if (!championship.startDate) {
       issues.push({
