@@ -17,16 +17,36 @@ async function main() {
   // Obter todas as tabelas
   console.log('Fetching existing tables...')
   const result = await client.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
-  const tables = result.rows.map(r => r.name)
+  const tables = result.rows.map(r => r.name as string)
 
-  // Dropar tabelas se existirem (com FK checks desabilitados)
+  // Dropar tabelas se existirem em ordem segura (ou forçar desligamento de FK)
   if (tables.length > 0) {
-    console.log(`Dropping ${tables.length} tables...`)
-    await client.execute('PRAGMA foreign_keys = OFF;')
-    for (const table of tables) {
-      await client.execute(`DROP TABLE IF EXISTS "${table}"`)
+    console.log(`Dropping ${tables.length} tables in safe order...`)
+    
+    // Ordem de deleção (das folhas para as raízes)
+    const safeOrder = [
+      'RegistrationCategory', 'BlockedDate', 'Game', 'Standing', 'Document',
+      'Notification', 'Message', 'Block', 'RegistrationCategory', 'Registration', 
+      'ChampionshipCategory', 'Championship', 'Gym', 'TeamMembership', 'Team', 'User', 'Holiday'
+    ]
+
+    // Primeiro tentamos via Batch com PRAGMA OFF
+    try {
+      const dropStatements = [
+        'PRAGMA foreign_keys = OFF;',
+        ...safeOrder.map(t => `DROP TABLE IF EXISTS "${t}";`),
+        ...tables.filter(t => !safeOrder.includes(t)).map(t => `DROP TABLE IF EXISTS "${t}";`),
+        'PRAGMA foreign_keys = ON;'
+      ]
+      
+      console.log('Executing batch drop...')
+      await client.batch(dropStatements, 'write')
+    } catch (e: any) {
+      console.warn('Batch drop failed, trying individual drops...', e.message)
+      for (const table of safeOrder) {
+        try { await client.execute(`DROP TABLE IF EXISTS "${table}"`) } catch (inner) {}
+      }
     }
-    await client.execute('PRAGMA foreign_keys = ON;')
   }
 
   // Ler e executar schema.sql

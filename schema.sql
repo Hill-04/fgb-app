@@ -40,17 +40,30 @@ CREATE TABLE "Gym" (
 CREATE TABLE "Championship" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
+    "year" INTEGER NOT NULL DEFAULT 2026,
     "description" TEXT,
-    "sex" TEXT NOT NULL,
+    "sex" TEXT NOT NULL DEFAULT 'masculino',
     "format" TEXT NOT NULL DEFAULT 'todos_contra_todos',
-    "phases" INTEGER NOT NULL DEFAULT 3,
+    "turns" INTEGER NOT NULL DEFAULT 1,
+    "phases" INTEGER NOT NULL DEFAULT 1,
+    "fieldControl" TEXT NOT NULL DEFAULT 'alternado',
+    "tiebreakers" TEXT NOT NULL DEFAULT 'pontos,saldo,confronto_direto,pontos_marcados',
+    "hasRelegation" BOOLEAN NOT NULL DEFAULT false,
+    "relegationDown" INTEGER NOT NULL DEFAULT 0,
+    "promotionUp" INTEGER NOT NULL DEFAULT 0,
+    "hasPlayoffs" BOOLEAN NOT NULL DEFAULT false,
+    "playoffTeams" INTEGER NOT NULL DEFAULT 4,
+    "playoffFormat" TEXT NOT NULL DEFAULT 'melhor_de_1',
+    "hasThirdPlace" BOOLEAN NOT NULL DEFAULT true,
+    "hasBlocks" BOOLEAN NOT NULL DEFAULT false,
     "minTeamsPerCat" INTEGER NOT NULL DEFAULT 3,
     "startDate" DATETIME,
     "endDate" DATETIME,
-    "regDeadline" DATETIME NOT NULL,
+    "regDeadline" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "status" TEXT NOT NULL DEFAULT 'DRAFT',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "updatedAt" DATETIME NOT NULL,
+    "isSimulation" BOOLEAN NOT NULL DEFAULT false
 );
 
 -- CreateTable
@@ -71,6 +84,11 @@ CREATE TABLE "Registration" (
     "observations" TEXT,
     "registeredAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
+    "canHost" BOOLEAN NOT NULL DEFAULT false,
+    "gymName" TEXT,
+    "gymAddress" TEXT,
+    "gymCity" TEXT,
+    "gymMapsLink" TEXT,
     CONSTRAINT "Registration_championshipId_fkey" FOREIGN KEY ("championshipId") REFERENCES "Championship" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Registration_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -88,7 +106,8 @@ CREATE TABLE "RegistrationCategory" (
 CREATE TABLE "BlockedDate" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "registrationId" TEXT NOT NULL,
-    "date" DATETIME NOT NULL,
+    "startDate" DATETIME NOT NULL,
+    "endDate" DATETIME,
     "reason" TEXT,
     CONSTRAINT "BlockedDate_registrationId_fkey" FOREIGN KEY ("registrationId") REFERENCES "Registration" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -111,6 +130,7 @@ CREATE TABLE "Game" (
     "homeTeamId" TEXT NOT NULL,
     "awayTeamId" TEXT NOT NULL,
     "phase" INTEGER NOT NULL,
+    "round" INTEGER DEFAULT 1,
     "dateTime" DATETIME NOT NULL,
     "altDateTime" DATETIME,
     "location" TEXT NOT NULL,
@@ -119,8 +139,8 @@ CREATE TABLE "Game" (
     "homeScore" INTEGER,
     "awayScore" INTEGER,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Game_championshipId_fkey" FOREIGN KEY ("championshipId") REFERENCES "Championship" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Game_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ChampionshipCategory" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Game_championshipId_fkey" FOREIGN KEY ("championshipId") REFERENCES "Championship" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Game_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ChampionshipCategory" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Game_blockId_fkey" FOREIGN KEY ("blockId") REFERENCES "Block" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Game_homeTeamId_fkey" FOREIGN KEY ("homeTeamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Game_awayTeamId_fkey" FOREIGN KEY ("awayTeamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -138,7 +158,7 @@ CREATE TABLE "Standing" (
     "pointsFor" INTEGER NOT NULL DEFAULT 0,
     "pointsAg" INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT "Standing_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "Team" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Standing_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ChampionshipCategory" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Standing_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ChampionshipCategory" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -150,7 +170,7 @@ CREATE TABLE "Document" (
     "url" TEXT,
     "championshipId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Document_championshipId_fkey" FOREIGN KEY ("championshipId") REFERENCES "Championship" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Document_championshipId_fkey" FOREIGN KEY ("championshipId") REFERENCES "Championship" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -180,7 +200,9 @@ CREATE TABLE "Holiday" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "date" DATETIME NOT NULL,
     "name" TEXT NOT NULL,
-    "year" INTEGER NOT NULL
+    "year" INTEGER NOT NULL,
+    "reason" TEXT,
+    "isFamilyHoliday" BOOLEAN NOT NULL DEFAULT false
 );
 
 -- CreateTable
@@ -221,4 +243,3 @@ CREATE UNIQUE INDEX "Standing_teamId_categoryId_key" ON "Standing"("teamId", "ca
 
 -- CreateIndex
 CREATE UNIQUE INDEX "TeamMembership_userId_key" ON "TeamMembership"("userId");
-
