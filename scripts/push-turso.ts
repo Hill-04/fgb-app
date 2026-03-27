@@ -56,6 +56,7 @@ async function main() {
       }
     }
   }
+}
 
   // Ler e executar schema.sql
   console.log('Applying new schema...')
