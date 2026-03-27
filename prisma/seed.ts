@@ -31,24 +31,19 @@ async function main() {
 
   console.log('🌱 Iniciando seed do banco de dados...')
 
-  // Limpar dados existentes
-  console.log('🗑️  Limpando dados existentes...')
-  await prisma.message.deleteMany()
-  await prisma.notification.deleteMany()
-  await prisma.document.deleteMany()
-  await prisma.standing.deleteMany()
-  await prisma.game.deleteMany()
-  await prisma.block.deleteMany()
-  await prisma.blockedDate.deleteMany()
-  await prisma.registrationCategory.deleteMany()
-  await prisma.registration.deleteMany()
-  await prisma.championshipCategory.deleteMany()
-  await prisma.championship.deleteMany()
-  await prisma.gym.deleteMany()
-  await prisma.teamMembership.deleteMany()
-  await prisma.team.deleteMany()
-  await prisma.user.deleteMany()
-  await prisma.holiday.deleteMany()
+  // Limpar dados existentes de forma agressiva usando o cliente nativo para garantir
+  console.log('🗑️  Limpando dados existentes (Native LibSQL)...')
+  const tables = [
+    'Message', 'Notification', 'Document', 'Standing', 'Game', 'Block',
+    'BlockedDate', 'RegistrationCategory', 'Registration', 'ChampionshipCategory',
+    'Championship', 'Gym', 'TeamMembership', 'Team', 'User', 'Holiday'
+  ]
+
+  await libsql.execute('PRAGMA foreign_keys = OFF;')
+  for (const table of tables) {
+    await libsql.execute(`DELETE FROM "${table}";`)
+  }
+  await libsql.execute('PRAGMA foreign_keys = ON;')
 
   // 1. Criar admin
   console.log('👤 Criando administrador...')
