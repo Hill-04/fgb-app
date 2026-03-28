@@ -2,6 +2,7 @@ import { prisma } from '@/lib/db'
 import { countDistinctDateBlocks } from '@/lib/calendar/summary'
 import { optimizeGameDistribution } from '@/lib/calendar/distribution'
 import { assignPhasesToGroups } from '@/lib/calendar/grouping'
+import { assignCourts } from '@/lib/calendar/courts'
 
 // ═══════════════════════════════════════════
 // CONSTANTES
@@ -538,18 +539,34 @@ export async function generateChampionshipSchedule(championshipId: string) {
       for (let dayOffset = 0; dayOffset < distribution.length; dayOffset++) {
         const date = phaseDays[dayOffset] || phaseDays[phaseDays.length - 1]
         let currentTime = new Date(date)
-        const gamesToday = distribution[dayOffset]
+        let gamesScheduledToday = 0
+        const maxGamesToday = distribution[dayOffset]
 
-        for (let i = 0; i < gamesToday; i++) {
-          const slot = allSlots[slotIdx++]
-          if (!slot) break
+        while (gamesScheduledToday < maxGamesToday && slotIdx < allSlots.length) {
+          // Tentar agendar jogos em paralelo se houver mais de um jogo restando para hoje
+          // e o grupo tiver múltiplas categorias
+          const canParallel = (group.length > 1) && (maxGamesToday - gamesScheduledToday >= 2)
+          const numSimultaneous = canParallel ? 2 : 1
 
-          allScheduled.push({
-            ...slot,
-            round: globalRound,
-            phase: phaseNum,
-            dateTime: new Date(currentTime)
-          })
+          const simultaneousSlots: any[] = []
+          for (let s = 0; s < numSimultaneous; s++) {
+            const slot = allSlots[slotIdx++]
+            if (!slot) break
+            
+            const game = {
+              ...slot,
+              round: globalRound,
+              phase: phaseNum,
+              dateTime: new Date(currentTime)
+            }
+            simultaneousSlots.push(game)
+            gamesScheduledToday++
+          }
+
+          // Atribuir quadras (Quadra A, B ou Quadra Única)
+          const withCourts = assignCourts(simultaneousSlots)
+          allScheduled.push(...withCourts)
+
           currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
         }
       }

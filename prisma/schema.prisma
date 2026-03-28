@@ -164,6 +164,7 @@ model Game {
   altDateTime    DateTime?
   location       String
   city           String
+  court          String?
   status         String               @default("SCHEDULED")
   homeScore      Int?
   awayScore      Int?
