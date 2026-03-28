@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { validateCategoryTeams } from '@/lib/calendar/validation'
 
 type ValidationIssue = {
   type: 'error' | 'warning' | 'info'
@@ -66,14 +67,22 @@ export async function POST(request: Request) {
       const n = cat.registrations.length
       teamsPerCategory.push({ name: cat.name, count: n })
 
-      if (n < 2) {
+      const validation = validateCategoryTeams(n)
+      if (!validation.isValid) {
         issues.push({
           type: 'error',
           field: `categoria.${cat.name}`,
           message: `A categoria "${cat.name}" tem apenas ${n} equipe(s) confirmada(s).`,
-          suggestion: `Mínimo necessário: 2. Adicione mais equipes ou desative esta categoria.`
+          suggestion: validation.error || 'Adicione mais equipes ou desative esta categoria.'
         })
         continue
+      } else if (validation.warning) {
+        issues.push({
+          type: 'warning',
+          field: `categoria.${cat.name}`,
+          message: `A categoria "${cat.name}" tem ${n} equipe(s).`,
+          suggestion: validation.warning
+        })
       }
 
       // Round-robin: n*(n-1)/2 jogos por turno

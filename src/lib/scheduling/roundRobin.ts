@@ -334,7 +334,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
       id: r.registration.teamId,
       name: r.registration.team.name
     }))
-    if (teams.length < 2) continue
+    if (teams.length < 3) continue
     const ageMatch = cat.name.match(/\d+/)
     const ageGroup = ageMatch ? parseInt(ageMatch[0]) : 0
     validCategories.push({ id: cat.id, name: cat.name, ageGroup, teams })
