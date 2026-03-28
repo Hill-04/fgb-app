@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { pluralizeJogos, pluralizeDias } from '@/utils/pluralize'
 import { calculateCalendarSummary } from '@/lib/calendar/summary'
+import { formatGameSlot } from '@/lib/calendar/display'
 import {
   Sparkles, X, CheckCircle2, AlertCircle, Loader2,
   ArrowRight, TriangleAlert
@@ -73,8 +74,11 @@ type SimulationResult = {
       categoryId: string
       categoryName?: string
       homeTeamId: string
+      homeTeamName: string
       awayTeamId: string
+      awayTeamName: string
       round: number
+      court?: string
     }[]
   }[]
   categories: CategoryResult[]
@@ -567,10 +571,21 @@ export function AISchedulingModal({
                           <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
                             {slot.time}
                           </span>
-                          <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400 flex-shrink-0">
-                            {slot.categoryName}
-                          </span>
-                          <span className="text-[9px] text-slate-500 flex-shrink-0">Rod. {slot.round}</span>
+                          <div className="flex-1">
+                            <p className="text-[11px] font-medium text-white">
+                              {slot.homeTeamName} × {slot.awayTeamName}
+                            </p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400">
+                                {slot.categoryName} · Rod. {slot.round}
+                              </span>
+                              {slot.court && (
+                                <span className="text-[9px] text-slate-500 italic">
+                                  {slot.court}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -593,15 +608,22 @@ export function AISchedulingModal({
                         <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
                           <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
                             {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit', minute: '2-digit'
+                              hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
                             })}
                           </span>
-                          <span className="text-[9px] text-slate-400 flex-shrink-0">
-                            {new Date(game.dateTime).toLocaleDateString('pt-BR', {
-                              weekday: 'short', day: '2-digit', month: 'short'
-                            })}
-                          </span>
-                          <span className="text-[9px] text-slate-500 flex-shrink-0">Rod. {game.round}</span>
+                          <div className="flex-1">
+                             <p className="text-[11px] font-medium text-white">
+                               {game.homeTeamName} × {game.awayTeamName}
+                             </p>
+                             <div className="flex items-center gap-2 mt-0.5">
+                               <span className="text-[9px] text-slate-500">Rod. {game.round}</span>
+                               <span className="text-[9px] text-slate-400 italic">
+                                 {new Date(game.dateTime).toLocaleDateString('pt-BR', {
+                                   weekday: 'short', day: '2-digit', month: 'short'
+                                 })}
+                               </span>
+                             </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -642,12 +664,17 @@ export function AISchedulingModal({
                               <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
                                 <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
                                   {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
-                                    hour: '2-digit', minute: '2-digit'
+                                    hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
                                   })}
                                 </span>
-                                <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400 flex-shrink-0">
-                                  {cat?.name || ''}
-                                </span>
+                                <div className="flex-1">
+                                  <p className="text-[11px] font-medium text-white">
+                                    {game.homeTeamName} × {game.awayTeamName}
+                                  </p>
+                                  <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400 flex-shrink-0">
+                                    {cat?.name || ''}
+                                  </span>
+                                </div>
                               </div>
                             )
                           })}

@@ -623,23 +623,31 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
   }
 
-  // PASSO 9: Montar resultados
+  const catNameMap = new Map(validCategories.map(c => [c.id, c.name]))
+  const teamNameMap = new Map(validCategories.flatMap(c => c.teams).map(t => [t.id, t.name]))
+
+  // PASSO 9: Montar resultados com nomes
+  const gamesWithNames = allScheduled.map(g => ({
+    ...g,
+    categoryName: catNameMap.get(g.categoryId) || '',
+    homeTeamName: teamNameMap.get(g.homeTeamId) || 'Time A',
+    awayTeamName: teamNameMap.get(g.awayTeamId) || 'Time B'
+  }))
+
   const categoryResults = validCategories.map(cat => ({
     id: cat.id,
     name: cat.name,
     teams: cat.teams.length,
-    gamesCount: allScheduled.filter(g => g.categoryId === cat.id).length,
-    games: allScheduled.filter(g => g.categoryId === cat.id)
+    gamesCount: gamesWithNames.filter(g => g.categoryId === cat.id).length,
+    games: gamesWithNames.filter(g => g.categoryId === cat.id)
   }))
 
-  const gamesByDate = new Map<string, ScheduledGame[]>()
-  for (const game of allScheduled) {
+  const gamesByDate = new Map<string, any[]>()
+  for (const game of gamesWithNames) {
     const key = game.dateTime.toISOString().split('T')[0]
     if (!gamesByDate.has(key)) gamesByDate.set(key, [])
     gamesByDate.get(key)!.push(game)
   }
-
-  const catNameMap = new Map(validCategories.map(c => [c.id, c.name]))
 
   const schedulePreview = Array.from(gamesByDate.entries())
     .sort(([a], [b]) => a.localeCompare(b))
@@ -664,13 +672,16 @@ export async function generateChampionshipSchedule(championshipId: string) {
               timeZone: 'America/Sao_Paulo'
             }),
             categoryId: g.categoryId,
-            categoryName: catNameMap.get(g.categoryId) || '',
+            categoryName: g.categoryName,
             homeTeamId: g.homeTeamId,
+            homeTeamName: g.homeTeamName,
             awayTeamId: g.awayTeamId,
+            awayTeamName: g.awayTeamName,
             round: g.round,
             phase: g.phase,
             isReturn: g.isReturn,
-            period: g.isReturn ? 'tarde' : 'manhã'
+            period: g.isReturn ? 'tarde' : 'manhã',
+            court: (g as any).court // Placeholder for Task 8
           }))
       }
     })
