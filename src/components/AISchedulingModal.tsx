@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { pluralizeJogos, pluralizeDias } from '@/utils/pluralize'
+import { calculateCalendarSummary } from '@/lib/calendar/summary'
 import {
   Sparkles, X, CheckCircle2, AlertCircle, Loader2,
   ArrowRight, TriangleAlert
@@ -61,7 +62,8 @@ type SimulationResult = {
   totalGames: number
   summary: string
   totalBlockedDates?: number
-  totalDays?: number
+  totalDays: number
+  maxGamesPerDay: number
   schedulePreview?: {
     date: string
     dayOfWeek: string
@@ -436,7 +438,13 @@ export function AISchedulingModal({
                   { label: 'Jogos', value: simulation.totalGames },
                   { label: 'Dias', value: simulation.totalDays },
                   { label: 'Categorias', value: simulation.categories?.length },
-                  { label: 'Jogos/Dia', value: (simulation as unknown as any).maxGamesPerDay || '—' },
+                  { 
+                    label: 'Jogos/Dia', 
+                    value: calculateCalendarSummary({
+                      totalGames: simulation.totalGames,
+                      totalDays: simulation.totalDays
+                    }).gamesPerDayDisplay 
+                  },
                 ].map((s, i) => (
                   <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2 text-center">
                     <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-0.5">{s.label}</p>

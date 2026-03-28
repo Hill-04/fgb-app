@@ -66,6 +66,7 @@ export async function POST(request: Request) {
       summary: schedule.summary,
       totalBlockedDates: schedule.totalBlockedDates,
       totalDays: schedule.totalDays,
+      maxGamesPerDay: schedule.maxGamesPerDay,
       schedulePreview: schedule.schedulePreview,
       categories: schedule.categories.map(c => ({
         id: c.id,
