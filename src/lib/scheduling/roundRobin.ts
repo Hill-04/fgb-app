@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { countDistinctDateBlocks } from '@/lib/calendar/summary'
 
 // ═══════════════════════════════════════════
 // CONSTANTES
@@ -696,7 +697,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     totalGames: allScheduled.length,
     totalBlockedDates,
     totalDays: gamesByDate.size,
-    totalPhases: phases,
+    totalPhases: countDistinctDateBlocks(Array.from(gamesByDate.keys()).map(d => new Date(d))),
     maxGamesPerDay: Math.max(...Array.from(gamesByDate.values()).map(g => g.length), 0),
     groups: groups.map(g => g.map(c => ({ id: c.id, name: c.name }))),
     format, turns, hasPlayoffs,
@@ -706,7 +707,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     games: allScheduled,
     summary: [
       `${allScheduled.length} jogos`,
-      `${phases} fase(s)/viagem(ns)`,
+      `${countDistinctDateBlocks(Array.from(gamesByDate.keys()).map(d => new Date(d)))} fase(s)/viagem(ns)`,
       `${gamesByDate.size} dias`,
       `${validCategories.length} categorias`,
       `Grupos: ${groupsDesc}`,
