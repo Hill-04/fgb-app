@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { countDistinctDateBlocks } from '@/lib/calendar/summary'
 import { optimizeGameDistribution } from '@/lib/calendar/distribution'
+import { assignPhasesToGroups } from '@/lib/calendar/grouping'
 
 // ═══════════════════════════════════════════
 // CONSTANTES
@@ -446,33 +447,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
     regularEnd = new Date(lastSat.getTime() - 7 * 24 * 60 * 60 * 1000)
   }
 
-  // Calcular data de início de cada fase distribuída
-  const firstSat = nextSaturday(startDate)
-  const totalPeriodMs = regularEnd
-    ? regularEnd.getTime() - firstSat.getTime()
-    : phases * 28 * 24 * 60 * 60 * 1000
-
-  const groupPhaseStarts: Date[][] = groups.map((_, gIdx) => {
-    const phaseDates: Date[] = []
-    for (let p = 0; p < phases; p++) {
-      const offset = Math.round((p / phases) * totalPeriodMs)
-      const candidate = new Date(firstSat.getTime() + offset)
-      const sat = nextSaturday(candidate)
-      const phaseDate = new Date(sat)
-      if (gIdx % 2 === 1) {
-        phaseDate.setDate(phaseDate.getDate() + 1)
-      } else if (gIdx >= 2) {
-        phaseDate.setDate(phaseDate.getDate() + 7 * Math.floor(gIdx / 2))
-      }
-      const isPlayoff = playoffDates.some(pd =>
-        Math.abs(pd.getTime() - phaseDate.getTime()) < 7 * 24 * 60 * 60 * 1000
-      )
-      if (isPlayoff) phaseDate.setDate(phaseDate.getDate() + 7)
-      phaseDate.setUTCHours(DAY_START_HOUR, 0, 0, 0)
-      phaseDates.push(phaseDate)
-    }
-    return phaseDates
-  })
+  // Calcular data de início de cada fase distribuída de forma exclusiva por grupo
+  const groupPhaseStarts: Date[][] = assignPhasesToGroups(groups, phases, startDate)
 
   // PASSO 8: Gerar jogos com horários
   type ScheduledGame = {
