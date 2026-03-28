@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { pluralizeJogos, pluralizeDias } from '@/utils/pluralize'
 import {
   Sparkles, X, CheckCircle2, AlertCircle, Loader2,
   ArrowRight, TriangleAlert
@@ -425,7 +426,7 @@ export function AISchedulingModal({
                 <p className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-1">
                   Calendário gerado com sucesso
                 </p>
-                <p className="text-xl font-black text-white">{simulation.totalGames} jogos</p>
+                <p className="text-xl font-black text-white">{pluralizeJogos(simulation.totalGames)}</p>
                 <p className="text-xs text-slate-400 mt-1">{simulation.summary}</p>
               </div>
 
@@ -451,7 +452,8 @@ export function AISchedulingModal({
                     <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-1 truncate">
                       {cat.name}
                     </p>
-                    <p className="text-sm font-black text-white">{cat.gamesCount} jogos</p>
+                    <p className="text-sm font-black text-white">{pluralizeJogos(cat.gamesCount)}</p>
+
                     <p className="text-[9px] text-slate-500">{cat.teams} equipes</p>
                   </div>
                 ))}
@@ -500,7 +502,7 @@ export function AISchedulingModal({
                     Calendário Completo
                   </p>
                   <p className="text-[10px] text-slate-500 mt-0.5">
-                    {simulation.totalGames} jogos · {simulation.totalDays} dias
+                    {pluralizeJogos(simulation.totalGames)} · {pluralizeDias(simulation.totalDays)}
                     {(simulation.totalBlockedDates || 0) > 0 && ` · ${simulation.totalBlockedDates} restrições`}
                   </p>
                 </div>
@@ -548,7 +550,7 @@ export function AISchedulingModal({
                         </p>
                       </div>
                       <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
-                        {day.gamesCount} jogos
+                        {pluralizeJogos(day.gamesCount)}
                       </span>
                     </div>
                     <div className="divide-y divide-white/[0.04]">
@@ -575,7 +577,7 @@ export function AISchedulingModal({
                         {cat.name}
                       </p>
                       <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
-                        {cat.gamesCount} jogos · {cat.teams} equipes
+                        {pluralizeJogos(cat.gamesCount)} · {cat.teams} equipes
                       </span>
                     </div>
                     <div className="divide-y divide-white/[0.04]">
@@ -614,7 +616,7 @@ export function AISchedulingModal({
                             Rodada {round}
                           </p>
                           <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
-                            {games.length} jogos
+                            {pluralizeJogos(games.length)}
                           </span>
                         </div>
                         {/* Data do bloco */}
