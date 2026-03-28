@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { countDistinctDateBlocks } from '@/lib/calendar/summary'
+import { optimizeGameDistribution } from '@/lib/calendar/distribution'
 
 // ═══════════════════════════════════════════
 // CONSTANTES
@@ -533,18 +534,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
         (LAST_GAME_START_UTC - DAY_START_HOUR) * 60 / GAME_DURATION_MIN
       )
 
-      const morningDays = Math.ceil(morningSlots.length / slotsPerDay)
-      const afternoonDays = turns >= 2
-        ? Math.ceil(afternoonSlots.length / slotsPerDay)
-        : 0
-
-      const allFitsOneDay = (
-        morningSlots.length <= slotsPerDay &&
-        afternoonSlots.length <= slotsPerDay
-      )
-      const totalDaysNeeded = allFitsOneDay
-        ? 1
-        : Math.max(morningDays, afternoonDays) + (turns >= 2 ? 1 : 0)
+      const distribution = optimizeGameDistribution([...morningSlots, ...afternoonSlots], slotsPerDay)
+      const totalDaysNeeded = distribution.length
 
       const phaseDays: Date[] = []
       const baseSat = new Date(phaseDate)
@@ -565,60 +556,25 @@ export async function generateChampionshipSchedule(championshipId: string) {
         phaseDays.push(sun)
       }
 
-      let dayIdx = 0
-      let currentTime = new Date(phaseDays[0])
-      let slotsToday = 0
+      let slotIdx = 0
+      const allSlots = [...morningSlots, ...afternoonSlots]
 
-      for (const slot of morningSlots) {
-        if (slotsToday >= slotsPerDay && dayIdx < phaseDays.length - 1) {
-          dayIdx++
-          currentTime = new Date(phaseDays[dayIdx])
-          currentTime.setUTCHours(DAY_START_HOUR, 0, 0, 0)
-          slotsToday = 0
-        }
+      for (let dayOffset = 0; dayOffset < distribution.length; dayOffset++) {
+        const date = phaseDays[dayOffset] || phaseDays[phaseDays.length - 1]
+        let currentTime = new Date(date)
+        const gamesToday = distribution[dayOffset]
 
-        allScheduled.push({
-          categoryId: slot.categoryId,
-          homeTeamId: slot.homeTeamId,
-          awayTeamId: slot.awayTeamId,
-          round: globalRound,
-          phase: phaseNum,
-          isReturn: false,
-          dateTime: new Date(currentTime)
-        })
-        currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
-        slotsToday++
-      }
-
-      if (turns >= 2 && afternoonSlots.length > 0) {
-        const afternoonBase = new Date(phaseDays[dayIdx])
-        afternoonBase.setUTCHours(AFTERNOON_START_UTC, 0, 0, 0)
-        if (currentTime < afternoonBase) {
-          currentTime = afternoonBase
-        }
-        slotsToday = 0
-
-        for (const slot of afternoonSlots) {
-          if (slotsToday >= slotsPerDay || currentTime.getUTCHours() > LAST_GAME_START_UTC) {
-            if (dayIdx < phaseDays.length - 1) {
-              dayIdx++
-              currentTime = new Date(phaseDays[dayIdx])
-              currentTime.setUTCHours(AFTERNOON_START_UTC, 0, 0, 0)
-              slotsToday = 0
-            }
-          }
+        for (let i = 0; i < gamesToday; i++) {
+          const slot = allSlots[slotIdx++]
+          if (!slot) break
 
           allScheduled.push({
-            categoryId: slot.categoryId,
-            homeTeamId: slot.homeTeamId,
-            awayTeamId: slot.awayTeamId,
+            ...slot,
             round: globalRound,
             phase: phaseNum,
-            isReturn: true,
             dateTime: new Date(currentTime)
           })
           currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
-          slotsToday++
         }
       }
     }
