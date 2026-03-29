@@ -79,7 +79,12 @@ model Championship {
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
   numberOfCourts              Int                    @default(1)
-  maxGamesPerDelegationPerDay Int                    @default(2)
+  dayStartTime                String                 @default("08:00")
+  regularDayEndTime           String                 @default("19:00")
+  extendedDayEndTime          String                 @default("20:30")
+  slotDurationMinutes         Int                    @default(75)
+  minRestSlotsPerTeam         Int                    @default(1)
+  blockFormat                 String                 @default("SAT_SUN")
   isSimulation                Boolean                @default(false)
   blocks         Block[]
   categories     ChampionshipCategory[]

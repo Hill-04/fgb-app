@@ -62,7 +62,8 @@ export async function PATCH(
       hasRelegation, relegationDown, promotionUp,
       hasPlayoffs, playoffTeams, playoffFormat, hasThirdPlace,
       hasBlocks, regDeadline, startDate, endDate,
-      numberOfCourts, maxGamesPerDelegationPerDay,
+      numberOfCourts, dayStartTime, regularDayEndTime, extendedDayEndTime,
+      slotDurationMinutes, minRestSlotsPerTeam, blockFormat,
     } = body
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -90,7 +91,12 @@ export async function PATCH(
           ...(startDate && { startDate: new Date(startDate) }),
           ...(endDate && { endDate: new Date(endDate) }),
           ...(numberOfCourts !== undefined && { numberOfCourts: Number(numberOfCourts) }),
-          ...(maxGamesPerDelegationPerDay !== undefined && { maxGamesPerDelegationPerDay: Number(maxGamesPerDelegationPerDay) }),
+          ...(dayStartTime && { dayStartTime }),
+          ...(regularDayEndTime && { regularDayEndTime }),
+          ...(extendedDayEndTime && { extendedDayEndTime }),
+          ...(slotDurationMinutes !== undefined && { slotDurationMinutes: Number(slotDurationMinutes) }),
+          ...(minRestSlotsPerTeam !== undefined && { minRestSlotsPerTeam: Number(minRestSlotsPerTeam) }),
+          ...(blockFormat && { blockFormat }),
         },
       })
 

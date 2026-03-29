@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, use } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Settings, Shield, Loader2, AlertTriangle, CheckCircle2, X } from 'lucide-react'
 import { CourtsField } from '@/components/championship/CourtsField'
-import { MaxDelegationLoadField } from '@/components/championship/MaxDelegationLoadField'
+import { TimeWindowField } from '@/components/championship/TimeWindowField'
+import { BlockFormat } from '@/lib/championship/time-window'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,7 +34,12 @@ type Championship = {
   regDeadline: string
   status: string
   numberOfCourts: number
-  maxGamesPerDelegationPerDay: number
+  dayStartTime: string
+  regularDayEndTime: string
+  extendedDayEndTime: string
+  slotDurationMinutes: number
+  minRestSlotsPerTeam: number
+  blockFormat: BlockFormat
 }
 
 type Toast = { msg: string; type: 'success' | 'error' } | null
@@ -132,7 +138,12 @@ export default function ChampionshipSettingsPage({
         minTeamsPerCat: Number(form.minTeamsPerCat),
         fieldControl: form.fieldControl,
         numberOfCourts: Number(form.numberOfCourts),
-        maxGamesPerDelegationPerDay: Number(form.maxGamesPerDelegationPerDay)
+        dayStartTime: form.dayStartTime,
+        regularDayEndTime: form.regularDayEndTime,
+        extendedDayEndTime: form.extendedDayEndTime,
+        slotDurationMinutes: Number(form.slotDurationMinutes),
+        minRestSlotsPerTeam: Number(form.minRestSlotsPerTeam),
+        blockFormat: form.blockFormat
       }
     } else if (section === 'playoffs') {
       payload = { 
@@ -371,14 +382,24 @@ export default function ChampionshipSettingsPage({
           </FieldGroup>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-          <CourtsField 
-            value={form.numberOfCourts ?? 1} 
-            onChange={(val) => setForm(p => p ? ({...p, numberOfCourts: val}) : null)}
-          />
-          <MaxDelegationLoadField 
-            value={form.maxGamesPerDelegationPerDay ?? 2} 
-            onChange={(val) => setForm(p => p ? ({...p, maxGamesPerDelegationPerDay: val}) : null)}
+        <div className="pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <CourtsField 
+              value={form.numberOfCourts ?? 1} 
+              onChange={(val) => setForm(p => p ? ({...p, numberOfCourts: val}) : null)}
+            />
+          </div>
+          
+          <TimeWindowField 
+            value={{
+              dayStartTime: form.dayStartTime,
+              regularDayEndTime: form.regularDayEndTime,
+              extendedDayEndTime: form.extendedDayEndTime,
+              slotDurationMinutes: form.slotDurationMinutes,
+              minRestSlotsPerTeam: form.minRestSlotsPerTeam,
+              blockFormat: form.blockFormat as BlockFormat
+            }} 
+            onChange={(val) => setForm(p => p ? ({...p, ...val}) : null)}
           />
         </div>
       </div>
