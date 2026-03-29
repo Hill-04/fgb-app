@@ -40,7 +40,9 @@ async function runPatch() {
     "ALTER TABLE Registration ADD COLUMN gymCity TEXT;",
     "ALTER TABLE Registration ADD COLUMN gymMapsLink TEXT;",
     
-    // Championship Table
+    // Championship Table - Novas Restrições
+    "ALTER TABLE Championship ADD COLUMN numberOfCourts INTEGER DEFAULT 1;",
+    "ALTER TABLE Championship ADD COLUMN maxGamesPerDelegationPerDay INTEGER DEFAULT 2;",
     "ALTER TABLE Championship ADD COLUMN minTeamsPerCat INTEGER DEFAULT 3;",
     "ALTER TABLE Championship ADD COLUMN isSimulation INTEGER DEFAULT 0;",
     "ALTER TABLE Championship ADD COLUMN relegationDown INTEGER DEFAULT 0;",

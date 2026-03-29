@@ -3,6 +3,8 @@
 import { useState, useEffect, useCallback, use } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Settings, Shield, Loader2, AlertTriangle, CheckCircle2, X } from 'lucide-react'
+import { CourtsField } from '@/components/championship/CourtsField'
+import { MaxDelegationLoadField } from '@/components/championship/MaxDelegationLoadField'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -30,6 +32,8 @@ type Championship = {
   endDate: string | null
   regDeadline: string
   status: string
+  numberOfCourts: number
+  maxGamesPerDelegationPerDay: number
 }
 
 type Toast = { msg: string; type: 'success' | 'error' } | null
@@ -126,7 +130,9 @@ export default function ChampionshipSettingsPage({
         turns: Number(form.turns), 
         phases: Number(form.phases), 
         minTeamsPerCat: Number(form.minTeamsPerCat),
-        fieldControl: form.fieldControl
+        fieldControl: form.fieldControl,
+        numberOfCourts: Number(form.numberOfCourts),
+        maxGamesPerDelegationPerDay: Number(form.maxGamesPerDelegationPerDay)
       }
     } else if (section === 'playoffs') {
       payload = { 
@@ -363,6 +369,17 @@ export default function ChampionshipSettingsPage({
               <option value="neutro" className="bg-[#0A0A0A]">Neutro / Aleatório</option>
             </select>
           </FieldGroup>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+          <CourtsField 
+            value={form.numberOfCourts ?? 1} 
+            onChange={(val) => setForm(p => p ? ({...p, numberOfCourts: val}) : null)}
+          />
+          <MaxDelegationLoadField 
+            value={form.maxGamesPerDelegationPerDay ?? 2} 
+            onChange={(val) => setForm(p => p ? ({...p, maxGamesPerDelegationPerDay: val}) : null)}
+          />
         </div>
       </div>
 

@@ -4,7 +4,10 @@ interface GameSlot {
   court?: string
 }
 
-export function assignCourts<T extends { dateTime: Date; court?: string }>(slots: T[]): T[] {
+export function assignCourts<T extends { dateTime: Date; court?: string }>(
+  slots: T[],
+  numberOfCourts: number = 1
+): T[] {
   const result = [...slots]
   const slotsByTime = new Map<number, T[]>()
   
@@ -14,12 +17,14 @@ export function assignCourts<T extends { dateTime: Date; court?: string }>(slots
     slotsByTime.get(time)!.push(slot)
   }
   
-  for (const [time, games] of slotsByTime.entries()) {
-    if (games.length === 1) {
+  for (const [, games] of slotsByTime.entries()) {
+    if (numberOfCourts <= 1) {
       games[0].court = 'Quadra Única'
     } else {
       games.forEach((game, i) => {
-        game.court = `Quadra ${String.fromCharCode(65 + i)}` // A, B, C...
+        // Se temos múltiplas quadras, marcamos A, B... mesmo que só um jogo ocorra naquele slot
+        // Mas o distribuidores deve garantir que não passe de numberOfCourts
+        game.court = `Quadra ${String.fromCharCode(65 + i)}`
       })
     }
   }

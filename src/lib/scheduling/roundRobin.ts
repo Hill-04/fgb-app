@@ -3,6 +3,7 @@ import { countDistinctDateBlocks } from '@/lib/calendar/summary'
 import { optimizeGameDistribution } from '@/lib/calendar/distribution'
 import { assignPhasesToGroups } from '@/lib/calendar/grouping'
 import { assignCourts } from '@/lib/calendar/courts'
+import { redistributeOverloadedGames } from '@/lib/scheduling/delegation'
 
 // ═══════════════════════════════════════════
 // CONSTANTES
@@ -304,7 +305,9 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const phases       = championship.phases       || 1
   const hasPlayoffs  = championship.hasPlayoffs  || false
   const playoffTeams = championship.playoffTeams || 4
-  const fieldControl = championship.fieldControl || 'alternado'
+  const fieldControl                = championship.fieldControl                || 'alternado'
+  const numberOfCourts              = championship.numberOfCourts              || 1
+  const maxGamesPerDelegationPerDay = championship.maxGamesPerDelegationPerDay || 2
 
   // startDate vazio = hoje + 21 dias
   const startDate = championship.startDate
@@ -338,9 +341,10 @@ export async function generateChampionshipSchedule(championshipId: string) {
 
   const validCategories: CategoryInfo[] = []
   for (const cat of championship.categories) {
-    const teams: Team[] = cat.registrations.map((r: any) => ({
+    const teams: (Team & { city: string | null })[] = cat.registrations.map((r: any) => ({
       id: r.registration.teamId,
-      name: r.registration.team.name
+      name: r.registration.team.name,
+      city: r.registration.team.city
     }))
     if (teams.length < 3) continue
     const ageMatch = cat.name.match(/\d+/)
@@ -537,10 +541,17 @@ export async function generateChampionshipSchedule(championshipId: string) {
         const maxGamesToday = distribution[dayOffset]
 
         while (gamesScheduledToday < maxGamesToday && slotIdx < allSlots.length) {
-          // Tentar agendar jogos em paralelo se houver mais de um jogo restando para hoje
-          // e o grupo tiver múltiplas categorias
-          const canParallel = (group.length > 1) && (maxGamesToday - gamesScheduledToday >= 2)
-          const numSimultaneous = canParallel ? 2 : 1
+          // Determinar quantos jogos podemos colocar em paralelo
+          // Depende do número de categorias no grupo (group.length) 
+          // do número de quadras (numberOfCourts)
+          // e de quantos slots ainda cabem hoje (maxGamesToday - gamesScheduledToday)
+          const remainingSlotsToday = maxGamesToday - gamesScheduledToday
+          const numSimultaneous = Math.min(
+            group.length, 
+            numberOfCourts, 
+            remainingSlotsToday,
+            allSlots.length - slotIdx
+          )
 
           const simultaneousSlots: ScheduledGame[] = []
           for (let s = 0; s < numSimultaneous; s++) {
@@ -560,8 +571,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
             gamesScheduledToday++
           }
 
-          // Atribuir quadras (Quadra A, B ou Quadra Única)
-          const withCourts = assignCourts(simultaneousSlots)
+          // Atribuir quadras (Quadra A, B... ou Quadra Única)
+          const withCourts = assignCourts(simultaneousSlots, numberOfCourts)
           allScheduled.push(...withCourts)
 
           currentTime = addMinutes(currentTime, GAME_DURATION_MIN)
@@ -570,11 +581,21 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
   }
 
+  // PASSO 8: Aplicar Regras de Carga por Delegação (Task 2.4)
+  const allTeams = validCategories.flatMap(c => c.teams as (Team & { city: string | null })[])
+  const uniqueTeams = Array.from(new Map(allTeams.map(t => [t.id, t])).values())
+  
+  const finalScheduled = redistributeOverloadedGames(
+    allScheduled,
+    uniqueTeams,
+    maxGamesPerDelegationPerDay
+  )
+
   const catNameMap = new Map(validCategories.map(c => [c.id, c.name]))
   const teamNameMap = new Map(validCategories.flatMap(c => c.teams).map(t => [t.id, t.name]))
 
   // PASSO 9: Montar resultados com nomes
-  const gamesWithNames = allScheduled.map(g => ({
+  const gamesWithNames = finalScheduled.map(g => ({
     ...g,
     categoryName: catNameMap.get(g.categoryId) || '',
     homeTeamName: teamNameMap.get(g.homeTeamId) || 'Time A',
