@@ -24,15 +24,20 @@ export async function GET(
         include: { categories: true }
       })
 
+      const safeCount = async (model: any, where: any) => {
+        try { return await model.count({ where }) } 
+        catch (e) { return 0 }
+      }
+
       return [
         champ,
         {
-          games: await tx.game.count({ where: { championshipId: id } }),
-          registrations: await tx.registration.count({ where: { championshipId: id } }),
-          categories: await tx.championshipCategory.count({ where: { championshipId: id } }),
-          standings: await tx.standing.count({ where: { categoryId: { in: cIds } } }),
-          documents: await tx.document.count({ where: { championshipId: id } }),
-          blocks: await tx.block.count({ where: { championshipId: id } }),
+          games: await safeCount(tx.game, { championshipId: id }),
+          registrations: await safeCount(tx.registration, { championshipId: id }),
+          categories: await safeCount(tx.championshipCategory, { championshipId: id }),
+          standings: await safeCount(tx.standing, { categoryId: { in: cIds } }),
+          documents: await safeCount(tx.document, { championshipId: id }),
+          blocks: await safeCount(tx.block, { championshipId: id }),
         }
       ] as const
     })
