@@ -68,7 +68,16 @@ export async function POST(
 
     return NextResponse.json(formatted)
   } catch (error: any) {
-    console.error('API Error:', error)
-    return NextResponse.json({ error: 'Failed to create registration' }, { status: 500 })
+    console.error('API Error (Registration Create):', error)
+    
+    if (error.code === 'P2002') {
+      return NextResponse.json({ 
+        error: 'Esta equipe já está inscrita neste campeonato.' 
+      }, { status: 400 })
+    }
+
+    return NextResponse.json({ 
+      error: error.message || 'Erro ao criar inscrição. Verifique os dados e tente novamente.' 
+    }, { status: 500 })
   }
 }

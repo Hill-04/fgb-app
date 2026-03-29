@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Sparkles } from 'lucide-react'
+import { Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Sparkles, Settings } from 'lucide-react'
 import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -132,14 +132,23 @@ export default async function ChampionshipDetailsPage({
             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-600">
               Pipeline de Execução
             </p>
-            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
-              championship.status === 'ONGOING' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
-              championship.status === 'REGISTRATION_OPEN' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
-              championship.status === 'FINISHED' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
-              'text-slate-400 bg-white/[0.04] border-white/[0.08]'
-            }`}>
-              {formatChampionshipStatus(championship.status)}
-            </span>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/admin/championships/${id}/settings`}
+                className="w-7 h-7 rounded-lg bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-500 hover:text-white hover:border-white/20 transition-all"
+                title="Configurações"
+              >
+                <Settings className="w-4 h-4" />
+              </Link>
+              <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                championship.status === 'ONGOING' ? 'text-green-400 bg-green-500/10 border-green-500/20' :
+                championship.status === 'REGISTRATION_OPEN' ? 'text-blue-400 bg-blue-500/10 border-blue-500/20' :
+                championship.status === 'FINISHED' ? 'text-purple-400 bg-purple-500/10 border-purple-500/20' :
+                'text-slate-400 bg-white/[0.04] border-white/[0.08]'
+              }`}>
+                {formatChampionshipStatus(championship.status)}
+              </span>
+            </div>
           </div>
 
           <div className="space-y-0">
