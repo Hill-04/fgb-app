@@ -70,10 +70,10 @@ export async function POST(request: Request) {
       const validation = validateCategoryTeams(n)
       if (!validation.isValid) {
         issues.push({
-          type: 'error',
+          type: 'warning',
           field: `categoria.${cat.name}`,
-          message: `A categoria "${cat.name}" tem apenas ${n} equipe(s) confirmada(s).`,
-          suggestion: validation.error || 'Adicione mais equipes ou desative esta categoria.'
+          message: `A categoria "${cat.name}" tem apenas ${n} equipe(s) confirmada(s) e será IGNORADA no agendamento.`,
+          suggestion: validation.error || 'Adicione mais equipes se desejar incluir esta categoria.'
         })
         continue
       } else if (validation.warning) {

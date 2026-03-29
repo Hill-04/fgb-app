@@ -42,24 +42,54 @@ export async function POST(
   const { teamId, categoryIds, status } = await request.json()
   
   try {
-    const registration = await prisma.registration.create({
-      data: {
-        championshipId: id,
-        teamId,
-        status: status || 'PENDING',
-        categories: {
-          create: categoryIds.map((cid: string) => ({ categoryId: cid }))
+    // Check if registration already exists
+    const existingRegistration = await prisma.registration.findUnique({
+      where: {
+        championshipId_teamId: {
+          championshipId: id,
+          teamId
         }
       },
-      include: {
-        team: true,
-        categories: {
-          include: {
-            category: true
-          }
-        }
-      }
+      include: { categories: true }
     })
+
+    let registration
+
+    if (existingRegistration) {
+      // Update existing registration status and add NEW categories only
+      const existingCatIds = existingRegistration.categories.map(c => c.categoryId)
+      const newCatIds = categoryIds.filter((cid: string) => !existingCatIds.includes(cid))
+
+      registration = await prisma.registration.update({
+        where: { id: existingRegistration.id },
+        data: {
+          status: status || existingRegistration.status,
+          categories: {
+            create: newCatIds.map((cid: string) => ({ categoryId: cid }))
+          }
+        },
+        include: {
+          team: true,
+          categories: { include: { category: true } }
+        }
+      })
+    } else {
+      // Create new registration
+      registration = await prisma.registration.create({
+        data: {
+          championshipId: id,
+          teamId,
+          status: status || 'PENDING',
+          categories: {
+            create: categoryIds.map((cid: string) => ({ categoryId: cid }))
+          }
+        },
+        include: {
+          team: true,
+          categories: { include: { category: true } }
+        }
+      })
+    }
 
     const formatted = {
       ...registration,

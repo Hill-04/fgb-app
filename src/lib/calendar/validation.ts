@@ -14,8 +14,8 @@ export function validateCategoryTeams(count: number): ValidationResult {
 
   if (count === 2) {
     return {
-      isValid: false,
-      error: 'A FGB exige no mínimo 3 equipes por categoria para viabilizar a logística de viagens e turnos.',
+      isValid: true,
+      warning: 'A FGB recomenda no mínimo 3 equipes por categoria. Com apenas 2 equipes, o agendamento seguirá com um único confronto direto.',
     }
   }
 
