@@ -7,6 +7,7 @@ import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { formatChampionshipStatus } from '@/lib/utils'
+import { DashboardErrorActions } from '@/components/DashboardErrorActions'
 
 export const dynamic = 'force-dynamic'
 
@@ -629,9 +630,26 @@ export default async function ChampionshipDetailsPage({
   } catch (error: any) {
     console.error("Dashboard Error:", error)
     return (
-      <div className="bg-[#0A0A0A] border border-red-500/20 rounded-3xl p-20 text-center">
-        <h2 className="text-2xl font-black text-white mb-2">Erro ao carregar Dashboard</h2>
-        <p className="text-slate-500 mb-6 font-mono text-xs">{error.message}</p>
+      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 pb-10">
+        <div className="lg:sticky lg:top-6 h-fit bg-[#141414] border border-white/[0.08] rounded-3xl p-6">
+          <div className="space-y-4">
+            <h2 className="text-xl font-black text-white italic uppercase tracking-tight">Status do Painel</h2>
+            <p className="text-[10px] font-bold text-red-500 uppercase tracking-widest bg-red-500/10 p-4 border border-red-500/20 rounded-2xl">
+              Erro Crítico: {error.message}
+            </p>
+            <DashboardErrorActions championshipId={id} />
+          </div>
+        </div>
+
+        <div className="bg-[#0A0A0A] border border-red-500/10 rounded-3xl p-20 flex flex-col items-center justify-center text-center shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-red-500/5 blur-[120px]" />
+          <div className="relative z-10">
+            <h2 className="text-4xl font-black text-white italic uppercase mb-4 tracking-tighter">Erro ao carregar Dashboard</h2>
+            <p className="text-slate-500 mb-8 max-w-md mx-auto text-sm leading-relaxed">
+              Detectamos uma inconsistência no banco de dados. Isso geralmente acontece após atualizações no sistema. Use o botão ao lado para tentar a auto-correção.
+            </p>
+          </div>
+        </div>
       </div>
     )
   }
