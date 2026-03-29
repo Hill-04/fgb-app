@@ -19,7 +19,11 @@ export async function POST() {
     "ALTER TABLE Championship ADD COLUMN minTeamsPerCat INTEGER DEFAULT 3;",
     "ALTER TABLE Championship ADD COLUMN isSimulation INTEGER DEFAULT 0;",
     "ALTER TABLE Championship ADD COLUMN relegationDown INTEGER DEFAULT 0;",
-    "ALTER TABLE Championship ADD COLUMN promotionUp INTEGER DEFAULT 0;"
+    "ALTER TABLE Championship ADD COLUMN promotionUp INTEGER DEFAULT 0;",
+    "ALTER TABLE Championship ADD COLUMN hasRelegation INTEGER DEFAULT 0;",
+    
+    // Category Table
+    "ALTER TABLE ChampionshipCategory ADD COLUMN isViable INTEGER DEFAULT 0;"
   ]
 
   const results = []
