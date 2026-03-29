@@ -32,7 +32,11 @@ type PendingGame = {
   phase: number
 }
 
-type ScheduledGame = PendingGame & { dateTime: Date }
+type ScheduledGame = PendingGame & { 
+  dateTime: Date
+  isReturn?: boolean
+  court?: string
+}
 
 type CategoryResult = {
   id: string
@@ -451,16 +455,6 @@ export async function generateChampionshipSchedule(championshipId: string) {
   // Calcular data de início de cada fase distribuída de forma exclusiva por grupo
   const groupPhaseStarts: Date[][] = assignPhasesToGroups(groups, phases, startDate)
 
-  // PASSO 8: Gerar jogos com horários
-  type ScheduledGame = {
-    categoryId: string
-    homeTeamId: string
-    awayTeamId: string
-    round: number
-    phase: number
-    isReturn: boolean
-    dateTime: Date
-  }
 
   const allScheduled: ScheduledGame[] = []
   let globalRound = 0
@@ -548,16 +542,19 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const canParallel = (group.length > 1) && (maxGamesToday - gamesScheduledToday >= 2)
           const numSimultaneous = canParallel ? 2 : 1
 
-          const simultaneousSlots: any[] = []
+          const simultaneousSlots: ScheduledGame[] = []
           for (let s = 0; s < numSimultaneous; s++) {
             const slot = allSlots[slotIdx++]
             if (!slot) break
             
-            const game = {
-              ...slot,
+            const game: ScheduledGame = {
+              categoryId: slot.categoryId,
+              homeTeamId: slot.homeTeamId,
+              awayTeamId: slot.awayTeamId,
               round: globalRound,
               phase: phaseNum,
-              dateTime: new Date(currentTime)
+              dateTime: new Date(currentTime),
+              isReturn: slot.isReturn
             }
             simultaneousSlots.push(game)
             gamesScheduledToday++

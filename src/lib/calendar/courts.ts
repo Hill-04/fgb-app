@@ -4,9 +4,9 @@ interface GameSlot {
   court?: string
 }
 
-export function assignCourts(slots: GameSlot[]): GameSlot[] {
+export function assignCourts<T extends { dateTime: Date; court?: string }>(slots: T[]): T[] {
   const result = [...slots]
-  const slotsByTime = new Map<number, GameSlot[]>()
+  const slotsByTime = new Map<number, T[]>()
   
   for (const slot of result) {
     const time = slot.dateTime.getTime()
