@@ -8,143 +8,86 @@ export const metadata: Metadata = {
 }
 
 const niveisFormacao = [
-  {
-    nivel: 'Nível 1',
-    titulo: 'Árbitro Iniciante',
-    desc: 'Formação básica para árbitros iniciantes. Regras fundamentais, mecânica básica e posicionamento em quadra.',
-    icon: '🎓',
-    cor: 'border-slate-500/20',
-  },
-  {
-    nivel: 'Nível 2',
-    titulo: 'Árbitro Estadual',
-    desc: 'Habilitação para apitar campeonatos estaduais organizados pela FGB. Mecânica avançada e gestão de jogo.',
-    icon: '⚖️',
-    cor: 'border-blue-500/20',
-  },
-  {
-    nivel: 'Nível 3',
-    titulo: 'Árbitro Nacional',
-    desc: 'Preparação para competições nacionais sob gestão da CBB. Exige aprovação em curso específico.',
-    icon: '🏅',
-    cor: 'border-[#FF6B00]/20',
-  },
+  { nivel: 'Nível 1', titulo: 'Árbitro Iniciante', desc: 'Formação básica para iniciar as atividades no basquete.', icon: '🎓', color: 'admin-card-verde' },
+  { nivel: 'Nível 2', titulo: 'Árbitro Estadual', desc: 'Apto a apitar campeonatos estaduais organizados pela FGB.', icon: '⚖️', color: 'admin-card-yellow' },
+  { nivel: 'Nível 3', titulo: 'Árbitro Nacional', desc: 'Habilitado para competições nacionais sob chancela da CBB.', icon: '🏅', color: 'admin-card-red' },
 ]
 
 export default function ArbitragemPage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div>
       <PublicHeader />
 
-      <main className="max-w-5xl mx-auto px-6 py-16">
-        {/* Breadcrumb */}
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-8">
-          Início · FGB · Arbitragem
-        </p>
-
-        {/* Header */}
-        <div className="mb-14">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF6B00] mb-4">
-            Departamento de Arbitragem
-          </p>
-          <h1 className="text-4xl md:text-6xl font-black italic uppercase text-white tracking-tight mb-6 leading-[0.95]" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-            Arbitragem<br />
-            <span className="text-[#FF6B00]">Gaúcha</span>
-          </h1>
-          <p className="text-slate-400 text-base leading-relaxed max-w-3xl">
+      <div className="fgb-page-header">
+        <div className="fgb-page-header-bg" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative text-center">
+          <div className="fgb-page-header-eyebrow">Departamento FGB</div>
+          <h1 className="fgb-page-header-title">Arbitragem</h1>
+          <p className="fgb-page-header-sub mx-auto">
             O Departamento de Arbitragem da FGB é responsável pela formação, habilitação
-            e supervisão dos árbitros de basquete do Rio Grande do Sul, garantindo
-            a qualidade e a integridade das competições.
+            e supervisão dos árbitros de basquete do Rio Grande do Sul.
           </p>
         </div>
+      </div>
 
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-14">
         {/* Formação */}
-        <div className="mb-14">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-6">
-            Programa de Formação
-          </h2>
+        <section className="mb-14">
+          <div className="fgb-section-header">
+            <div>
+              <div className="fgb-accent fgb-accent-verde" />
+              <h2 className="fgb-section-title">Programa de <span className="verde">Formação</span></h2>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {niveisFormacao.map((nivel, i) => (
-              <div
-                key={i}
-                className={`bg-[#141414] border ${nivel.cor} rounded-3xl p-6`}
-              >
+              <div key={i} className={`fgb-card p-6 ${nivel.color}`}>
                 <div className="text-3xl mb-4">{nivel.icon}</div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] mb-2">
-                  {nivel.nivel}
-                </div>
-                <h3 className="text-base font-black italic uppercase text-white mb-3" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                  {nivel.titulo}
-                </h3>
-                <p className="text-xs text-slate-500 leading-relaxed">{nivel.desc}</p>
+                <div className="fgb-badge fgb-badge-outline mb-2">{nivel.nivel}</div>
+                <h3 className="fgb-display text-[16px] text-[var(--black)] mb-2">{nivel.titulo}</h3>
+                <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>{nivel.desc}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
-        {/* Regras e Desafio */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
-          <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-6">
+        {/* Links Relevantes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-14">
+          <div className="fgb-card p-6 border border-[var(--border)]">
             <div className="text-3xl mb-4">📖</div>
-            <h3 className="text-base font-black italic uppercase text-white mb-3" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-              Regras Oficiais FIBA
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-5">
-              O Departamento de Arbitragem da CBB mantém as regras oficiais,
-              interpretações e atualizações alinhadas com a FIBA atualizadas
-              e disponíveis para todos os árbitros gaúchos.
+            <h3 className="fgb-display text-[18px] text-[var(--black)] mb-2">Regras Oficiais FIBA</h3>
+            <p className="fgb-label mb-4 text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+              Regras oficiais, interpretações e atualizações alinhadas com a FIBA disponíveis.
             </p>
-            <a
-              href="https://basquetegaucho.com.br/arbitragem/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline"
-            >
-              Acessar regras →
+            <a href="https://basquetegaucho.com.br/arbitragem/" target="_blank" rel="noopener noreferrer" className="fgb-label text-[var(--verde)] hover:text-[var(--verde-dark)] transition-colors">
+              Acessar Regras →
             </a>
           </div>
-
-          <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-6">
+          <div className="fgb-card p-6 border border-[var(--border)] admin-card-red">
             <div className="text-3xl mb-4">🔴</div>
-            <h3 className="text-base font-black italic uppercase text-white mb-3" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-              Desafio do Técnico
-            </h3>
-            <p className="text-xs text-slate-500 leading-relaxed mb-5">
-              Documentação e procedimentos oficiais sobre o Desafio do Técnico,
-              recurso permitido em determinadas categorias e competições conforme
-              regras FIBA vigentes.
+            <h3 className="fgb-display text-[18px] text-[var(--black)] mb-2">Desafio do Técnico</h3>
+            <p className="fgb-label mb-4 text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+              Documentação sobre o Desafio do Técnico, recurso permitido conforme regras FIBA vigentes.
             </p>
-            <a
-              href="https://basquetegaucho.com.br/arbitragem/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline"
-            >
-              Ver procedimentos →
+            <a href="https://basquetegaucho.com.br/arbitragem/" target="_blank" rel="noopener noreferrer" className="fgb-label text-[var(--red)] hover:text-[var(--red-dark)] transition-colors">
+              Ver Procedimentos →
             </a>
           </div>
         </div>
 
-        {/* Contato do Departamento */}
-        <div className="bg-[#141414] border border-[#FF6B00]/15 rounded-3xl p-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF6B00] mb-3">
-            Departamento de Arbitragem
-          </p>
-          <h2 className="text-xl font-black italic uppercase text-white mb-4" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-            Quero ser árbitro
-          </h2>
-          <p className="text-xs text-slate-400 leading-relaxed mb-6 max-w-xl">
-            Interessado em se tornar árbitro de basquete no Rio Grande do Sul?
-            Entre em contato com o Departamento de Arbitragem da FGB para
-            informações sobre cursos, habilitação e oportunidades.
-          </p>
-          <a
-            href="mailto:fgb@basquetegaucho.com.br?subject=Interesse em Arbitragem FGB"
-            className="inline-block bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-6 py-3 rounded-xl transition-all"
-          >
-            Entrar em contato →
+        {/* CTA */}
+        <section className="fgb-section-verde border border-[var(--border)] rounded-xl p-8 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div>
+            <h2 className="fgb-display text-[22px] text-[var(--black)] mb-2">Quero ser árbitro</h2>
+            <p className="fgb-label text-[var(--gray)] max-w-lg" style={{ textTransform: 'none', letterSpacing: 0 }}>
+              Quer se tornar árbitro de basquete no RS? Entre em contato com o Departamento 
+              para informações sobre cursos e habilitação.
+            </p>
+          </div>
+          <a href="mailto:fgb@basquetegaucho.com.br?subject=Interesse em Arbitragem FGB" className="fgb-btn-primary flex-shrink-0">
+            Acessar Secretaria FGB
           </a>
-        </div>
+        </section>
       </main>
 
       <PublicFooter />

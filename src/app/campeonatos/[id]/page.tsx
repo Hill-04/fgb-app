@@ -33,11 +33,11 @@ function getStatusLabel(status: string) {
   return map[status] ?? status
 }
 
-function getStatusStyle(status: string) {
-  if (status === 'ONGOING') return 'text-[#FF6B00] bg-[#FF6B00]/10 border-[#FF6B00]/20'
-  if (status === 'REGISTRATION_OPEN') return 'text-green-400 bg-green-500/10 border-green-500/20'
-  if (status === 'FINISHED') return 'text-slate-400 bg-white/[0.05] border-white/[0.08]'
-  return 'text-slate-500 bg-white/[0.03] border-white/[0.05]'
+function getStatusBadge(status: string) {
+  if (status === 'ONGOING') return 'fgb-badge-red'
+  if (status === 'REGISTRATION_OPEN') return 'fgb-badge-verde'
+  if (status === 'FINISHED') return 'fgb-badge-outline'
+  return 'fgb-badge-outline'
 }
 
 export default async function CampeonatoPublicPage({ params }: Props) {
@@ -55,19 +55,14 @@ export default async function CampeonatoPublicPage({ params }: Props) {
           },
           games: {
             where: { status: { in: ['SCHEDULED', 'FINISHED'] } },
-            include: {
-              homeTeam: { select: { name: true } },
-              awayTeam: { select: { name: true } },
-            },
-            orderBy: { dateTime: 'asc' },
-            take: 8,
+            include: { homeTeam: { select: { name: true } }, awayTeam: { select: { name: true } } },
+            orderBy: { dateTime: 'asc' }, take: 8,
           },
         },
       },
       registrations: {
         where: { status: 'CONFIRMED' },
-        include: { team: { select: { name: true, city: true } } },
-        take: 20,
+        include: { team: { select: { name: true, city: true } } }, take: 20,
       },
       _count: { select: { registrations: true, games: true } },
     },
@@ -75,60 +70,46 @@ export default async function CampeonatoPublicPage({ params }: Props) {
 
   if (!championship) notFound()
 
-  const upcomingGames = championship.categories.flatMap((cat) =>
-    cat.games.filter((g) => g.status === 'SCHEDULED')
-  )
-  const recentGames = championship.categories.flatMap((cat) =>
-    cat.games.filter((g) => g.status === 'FINISHED')
-  ).slice(0, 6)
+  const upcomingGames = championship.categories.flatMap(cat => cat.games.filter(g => g.status === 'SCHEDULED'))
+  const recentGames = championship.categories.flatMap(cat => cat.games.filter(g => g.status === 'FINISHED')).slice(0, 6)
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div>
       <PublicHeader />
 
-      <main className="max-w-6xl mx-auto px-6 py-16">
-        {/* Breadcrumb */}
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-8">
-          <Link href="/" className="hover:text-slate-400 transition-colors">Início</Link>
-          {' · '}
-          <Link href="/campeonatos" className="hover:text-slate-400 transition-colors">Campeonatos</Link>
-          {' · '}
-          {championship.name}
-        </p>
-
-        {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-center gap-3 mb-5">
-            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-full border ${getStatusStyle(championship.status)}`}>
+      <div className="fgb-page-header">
+        <div className="fgb-page-header-bg" />
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 relative text-center">
+          <div className="fgb-page-header-eyebrow">
+            <Link href="/" className="hover:text-white transition-colors">Início</Link> · 
+            <Link href="/campeonatos" className="hover:text-white transition-colors"> Campeonatos</Link>
+          </div>
+          <div className="flex justify-center items-center gap-3 mb-4">
+            <span className={`fgb-badge ${getStatusBadge(championship.status)} border-0 text-[10px] px-3 py-1.5`}>
               {getStatusLabel(championship.status)}
             </span>
-            <span className="text-[10px] text-slate-500 uppercase tracking-widest">
+            <span className="fgb-badge fgb-badge-outline text-[white] border-[rgba(255,255,255,0.2)]">
               {championship.sex}
             </span>
           </div>
-          <h1 className="text-4xl md:text-6xl font-black italic uppercase text-white tracking-tight mb-6 leading-[0.95]" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
+          <h1 className="fgb-page-header-title" style={{ fontSize: 'clamp(28px, 4vw, 52px)' }}>
             {championship.name}
           </h1>
-          {championship.description && (
-            <p className="text-slate-400 text-base leading-relaxed max-w-3xl">
-              {championship.description}
-            </p>
-          )}
         </div>
+      </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-14">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
+        {/* Stats Strip */}
+        <div className="fgb-stats-strip rounded overflow-hidden mb-14 shadow-sm" style={{ border: '1px solid var(--border)' }}>
           {[
             { value: championship._count.registrations, label: 'Equipes' },
             { value: championship._count.games, label: 'Jogos' },
             { value: championship.categories.length, label: 'Categorias' },
             { value: championship.year, label: 'Temporada' },
           ].map((s, i) => (
-            <div key={i} className="bg-[#141414] border border-white/[0.08] rounded-2xl p-5 text-center">
-              <p className="text-3xl font-black italic uppercase text-[#FF6B00]" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                {s.value}
-              </p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">{s.label}</p>
+            <div key={i} className="fgb-stats-strip-item" style={{ padding: '20px', background: '#fff' }}>
+              <div className="fgb-stats-num" style={{ fontSize: 32, color: 'var(--verde)' }}>{s.value}</div>
+              <div className="fgb-stats-label text-[var(--gray)]">{s.label}</div>
             </div>
           ))}
         </div>
@@ -136,55 +117,39 @@ export default async function CampeonatoPublicPage({ params }: Props) {
         {/* Categorias e Classificação */}
         {championship.categories.map((cat) => (
           <section key={cat.id} className="mb-14">
-            <div className="flex items-center gap-4 mb-7">
-              <h2 className="text-lg font-black italic uppercase text-white" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                {cat.name}
-              </h2>
-              <div className="flex-1 h-px bg-white/[0.05]" />
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-verde" />
+                <h2 className="fgb-section-title">Categoria <span className="verde">{cat.name}</span></h2>
+              </div>
             </div>
 
             {cat.standings.length > 0 && (
-              <div className="bg-[#141414] border border-white/[0.08] rounded-3xl overflow-hidden mb-6">
-                <div className="px-6 py-4 border-b border-white/[0.05]">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                    Classificação
-                  </p>
-                </div>
+              <div className="bg-white border border-[var(--border)] rounded overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full text-left">
                     <thead>
-                      <tr className="text-[9px] font-black uppercase tracking-widest text-slate-600 border-b border-white/[0.04]">
-                        <th className="text-left px-6 py-3">Pos</th>
-                        <th className="text-left px-6 py-3">Equipe</th>
-                        <th className="text-center px-3 py-3">J</th>
-                        <th className="text-center px-3 py-3">V</th>
-                        <th className="text-center px-3 py-3">D</th>
-                        <th className="text-center px-3 py-3">Pts</th>
+                      <tr className="bg-[var(--gray-l)] border-b border-[var(--border)]">
+                        <th className="px-4 py-3 fgb-label text-[10px] text-[var(--gray)]">Pos</th>
+                        <th className="px-4 py-3 fgb-label text-[10px] text-[var(--gray)]">Equipe</th>
+                        <th className="px-3 py-3 fgb-label text-[10px] text-[var(--gray)] text-center">J</th>
+                        <th className="px-3 py-3 fgb-label text-[10px] text-[var(--gray)] text-center">V</th>
+                        <th className="px-3 py-3 fgb-label text-[10px] text-[var(--gray)] text-center">D</th>
+                        <th className="px-3 py-3 fgb-label text-[10px] text-[var(--verde)] text-center">Pts</th>
                       </tr>
                     </thead>
                     <tbody>
                       {cat.standings.map((s, i) => (
-                        <tr
-                          key={s.id}
-                          className={`border-b border-white/[0.04] last:border-0 transition-colors hover:bg-white/[0.02] ${i === 0 ? 'bg-[#FF6B00]/[0.03]' : ''}`}
-                        >
-                          <td className="px-6 py-3.5">
-                            <span className={`text-xs font-black ${i === 0 ? 'text-[#FF6B00]' : 'text-slate-500'}`}>
-                              {i + 1}º
-                            </span>
+                        <tr key={s.id} className={`border-b border-[var(--border)] last:border-0 hover:bg-[var(--verde-light)] transition-colors ${i === 0 ? 'bg-[var(--yellow-light)]' : ''}`}>
+                          <td className={`px-4 py-3 fgb-display text-[14px] ${i === 0 ? 'text-[var(--orange)]' : 'text-[var(--gray)]'}`}>{i + 1}º</td>
+                          <td className="px-4 py-3">
+                            <p className="fgb-display text-[13px] text-[var(--black)]">{s.team.name}</p>
+                            {s.team.city && <p className="fgb-label text-[10px] text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>{s.team.city}</p>}
                           </td>
-                          <td className="px-6 py-3.5">
-                            <p className="text-xs font-black text-white uppercase">
-                              {s.team.name}
-                            </p>
-                            {s.team.city && (
-                              <p className="text-[10px] text-slate-600">{s.team.city}</p>
-                            )}
-                          </td>
-                          <td className="text-center px-3 py-3.5 text-xs text-slate-400">{s.played}</td>
-                          <td className="text-center px-3 py-3.5 text-xs text-green-400">{s.wins}</td>
-                          <td className="text-center px-3 py-3.5 text-xs text-red-400">{s.losses}</td>
-                          <td className="text-center px-3 py-3.5 text-xs font-black text-white">{s.points}</td>
+                          <td className="px-3 py-3 text-center fgb-display text-[13px] text-[var(--gray)]">{s.played}</td>
+                          <td className="px-3 py-3 text-center fgb-display text-[13px] text-[var(--verde)]">{s.wins}</td>
+                          <td className="px-3 py-3 text-center fgb-display text-[13px] text-[var(--red)]">{s.losses}</td>
+                          <td className="px-3 py-3 text-center fgb-display text-[14px] text-[var(--black)]">{s.points}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -195,105 +160,56 @@ export default async function CampeonatoPublicPage({ params }: Props) {
           </section>
         ))}
 
-        {/* Próximos jogos */}
-        {upcomingGames.length > 0 && (
-          <section className="mb-14">
-            <div className="flex items-center gap-4 mb-7">
-              <h2 className="text-lg font-black italic uppercase text-white" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                Próximos Jogos
-              </h2>
-              <div className="flex-1 h-px bg-white/[0.05]" />
-            </div>
-            <div className="bg-[#141414] border border-white/[0.08] rounded-3xl overflow-hidden">
-              {upcomingGames.slice(0, 8).map((game) => (
-                <div
-                  key={game.id}
-                  className="px-6 py-4 flex items-center justify-between border-b border-white/[0.05] last:border-0 hover:bg-white/[0.02] transition-all"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <span className="text-xs font-black uppercase text-white truncate flex-1 text-right">
-                      {game.homeTeam.name}
-                    </span>
-                    <span className="text-xs font-bold text-slate-500 flex-shrink-0 px-3">vs</span>
-                    <span className="text-xs font-black uppercase text-white truncate flex-1">
-                      {game.awayTeam.name}
-                    </span>
-                  </div>
-                  <div className="text-right flex-shrink-0 ml-4">
-                    <p className="text-[10px] text-slate-400">
-                      {new Date(game.dateTime).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                    <p className="text-[10px] text-slate-600 truncate max-w-[120px]">{game.location}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
         {/* Últimos Resultados */}
         {recentGames.length > 0 && (
           <section className="mb-14">
-            <div className="flex items-center gap-4 mb-7">
-              <h2 className="text-lg font-black italic uppercase text-white" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                Últimos Resultados
-              </h2>
-              <div className="flex-1 h-px bg-white/[0.05]" />
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-red" />
+                <h2 className="fgb-section-title">Últimos <span className="red">Resultados</span></h2>
+              </div>
             </div>
-            <div className="bg-[#141414] border border-white/[0.08] rounded-3xl overflow-hidden">
-              {recentGames.map((game) => (
-                <div
-                  key={game.id}
-                  className="px-6 py-4 flex items-center justify-between border-b border-white/[0.05] last:border-0 hover:bg-white/[0.02] transition-all"
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <span className="text-xs font-black uppercase text-white truncate flex-1 text-right">
-                      {game.homeTeam.name}
-                    </span>
-                    <span className="text-lg font-black text-[#FF6B00] flex-shrink-0 px-3 tabular-nums">
-                      {game.homeScore ?? '—'} × {game.awayScore ?? '—'}
-                    </span>
-                    <span className="text-xs font-black uppercase text-white truncate flex-1">
-                      {game.awayTeam.name}
-                    </span>
-                  </div>
-                  <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.05] border border-white/[0.06] px-2.5 py-1 rounded-full flex-shrink-0 ml-4">
-                    Encerrado
-                  </span>
-                </div>
+            <div className="bg-white border border-[var(--border)] rounded overflow-hidden shadow-sm">
+              {recentGames.map((game, idx) => (
+               <div key={game.id} style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', borderBottom: idx < recentGames.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                 <div className="flex items-center gap-3 flex-1 justify-center">
+                   <span className="fgb-display flex-1 text-right truncate" style={{ fontSize: 13, color: 'var(--black)' }}>{game.homeTeam.name}</span>
+                   <div className="flex items-center gap-2 flex-shrink-0">
+                     <span className="fgb-score-num">{game.homeScore ?? '—'}</span>
+                     <span className="fgb-label" style={{ color: 'var(--gray)' }}>×</span>
+                     <span className="fgb-score-num">{game.awayScore ?? '—'}</span>
+                   </div>
+                   <span className="fgb-display flex-1 truncate" style={{ fontSize: 13, color: 'var(--black)' }}>{game.awayTeam.name}</span>
+                 </div>
+                 <span className="fgb-badge fgb-badge-outline flex-shrink-0 hide-mobile bg-[var(--gray-l)] ml-4">Encerrado</span>
+               </div>
               ))}
             </div>
           </section>
         )}
 
-        {/* Equipes Inscritas */}
-        {championship.registrations.length > 0 && (
+        {/* Próximos jogos */}
+        {upcomingGames.length > 0 && (
           <section className="mb-14">
-            <div className="flex items-center gap-4 mb-7">
-              <h2 className="text-lg font-black italic uppercase text-white" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                Equipes Participantes
-              </h2>
-              <div className="flex-1 h-px bg-white/[0.05]" />
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-yellow" />
+                <h2 className="fgb-section-title">Próximos <span className="yellow">Jogos</span></h2>
+              </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {championship.registrations.map((reg) => (
-                <div
-                  key={reg.id}
-                  className="bg-[#141414] border border-white/[0.08] rounded-2xl p-4 flex items-center gap-3"
-                >
-                  <div className="w-8 h-8 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center text-sm flex-shrink-0">
-                    🏀
+            <div className="bg-white border border-[var(--border)] rounded overflow-hidden shadow-sm">
+              {upcomingGames.slice(0, 8).map((game, idx) => (
+                <div key={game.id} className="px-6 py-4 flex items-center justify-between border-b border-[var(--border)] last:border-0 hover:bg-[var(--gray-l)] transition-all">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="fgb-display text-[13px] text-[var(--black)] truncate flex-1 text-right">{game.homeTeam.name}</span>
+                    <span className="fgb-label text-[10px] text-[var(--gray)] flex-shrink-0 px-2">VS</span>
+                    <span className="fgb-display text-[13px] text-[var(--black)] truncate flex-1">{game.awayTeam.name}</span>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-black uppercase text-white truncate">{reg.team.name}</p>
-                    {reg.team.city && (
-                      <p className="text-[10px] text-slate-600 truncate">{reg.team.city}</p>
-                    )}
+                  <div className="text-right flex-shrink-0 ml-4 border-l border-[var(--border)] pl-4">
+                    <p className="fgb-label text-[10px] text-[var(--verde)]">
+                      {new Date(game.dateTime).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                    <p className="fgb-label text-[9px] text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>{game.location}</p>
                   </div>
                 </div>
               ))}
@@ -301,12 +217,9 @@ export default async function CampeonatoPublicPage({ params }: Props) {
           </section>
         )}
 
-        <div className="mt-8">
-          <Link
-            href="/campeonatos"
-            className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline"
-          >
-            ← Voltar para campeonatos
+        <div className="text-center mt-12">
+          <Link href="/campeonatos" className="fgb-btn-secondary" style={{ borderColor: 'var(--border)', color: 'var(--black)', background: 'var(--gray-l)' }}>
+            Voltar para Campeonatos
           </Link>
         </div>
       </main>

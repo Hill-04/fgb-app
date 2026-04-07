@@ -4,187 +4,89 @@ import { PublicFooter } from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
   title: 'Seleção Gaúcha — FGB',
-  description: 'Seleções gaúchas de basketball - convocações, resultados e informações das categorias Sub 13, Sub 15, Sub 17 e Adulto.',
+  description: 'Seleções gaúchas de basketball - convocações, resultados e informações das categorias de base e adulto.',
 }
 
 const selecoes = [
-  {
-    categoria: 'Sub 13',
-    genero: 'Masculino',
-    icon: '♂️',
-    cor: 'border-blue-500/20 from-blue-500/8 to-blue-500/3',
-    badge: 'text-blue-400 bg-blue-500/10',
-    desc: 'Seleção Gaúcha Sub 13 Masculino representa o RS nas competições nacionais de base.',
-  },
-  {
-    categoria: 'Sub 13',
-    genero: 'Feminino',
-    icon: '♀️',
-    cor: 'border-pink-500/20 from-pink-500/8 to-pink-500/3',
-    badge: 'text-pink-400 bg-pink-500/10',
-    desc: 'Seleção Gaúcha Sub 13 Feminino compete no Campeonato Brasileiro de Seleções.',
-  },
-  {
-    categoria: 'Sub 15',
-    genero: 'Masculino',
-    icon: '♂️',
-    cor: 'border-blue-500/20 from-blue-500/8 to-blue-500/3',
-    badge: 'text-blue-400 bg-blue-500/10',
-    desc: 'Uma das principais equipes jovens do basquete gaúcho em âmbito nacional.',
-  },
-  {
-    categoria: 'Sub 15',
-    genero: 'Feminino',
-    icon: '♀️',
-    cor: 'border-pink-500/20 from-pink-500/8 to-pink-500/3',
-    badge: 'text-pink-400 bg-pink-500/10',
-    desc: 'Formando as futuras representantes do basquete feminino gaúcho.',
-  },
-  {
-    categoria: 'Sub 17',
-    genero: 'Masculino',
-    icon: '♂️',
-    cor: 'border-blue-500/20 from-blue-500/8 to-blue-500/3',
-    badge: 'text-blue-400 bg-blue-500/10',
-    desc: 'Seleção Gaúcha Sub 17 Masculino — categoria de projeção para athletas de elite.',
-  },
-  {
-    categoria: 'Sub 17',
-    genero: 'Feminino',
-    icon: '♀️',
-    cor: 'border-pink-500/20 from-pink-500/8 to-pink-500/3',
-    badge: 'text-pink-400 bg-pink-500/10',
-    desc: 'Atletas gaúchas destaques do basquete feminino nacional concentradas aqui.',
-  },
-  {
-    categoria: 'Adulto',
-    genero: 'Masculino',
-    icon: '♂️',
-    cor: 'border-[#FF6B00]/30 from-[#FF6B00]/8 to-[#FF6B00]/3',
-    badge: 'text-[#FF6B00] bg-[#FF6B00]/10',
-    desc: 'A principal seleção masculina do Rio Grande do Sul. Orgulho do basquete gaúcho.',
-  },
-  {
-    categoria: 'Adulto',
-    genero: 'Feminino',
-    icon: '♀️',
-    cor: 'border-pink-500/30 from-pink-500/8 to-pink-500/3',
-    badge: 'text-pink-400 bg-pink-500/10',
-    desc: 'A principal seleção feminina gaúcha, representando o estado nas competições adultas.',
-  },
+  { cat: 'Sub 13', gen: 'Masculino', icon: '♂️', badge: 'fgb-badge-verde', desc: 'Representa o RS nas competições nacionais de base.' },
+  { cat: 'Sub 13', gen: 'Feminino', icon: '♀️', badge: 'fgb-badge-yellow', desc: 'Compete no Campeonato Brasileiro de Seleções.' },
+  { cat: 'Sub 15', gen: 'Masculino', icon: '♂️', badge: 'fgb-badge-verde', desc: 'Uma das principais equipes jovens do basquete gaúcho.' },
+  { cat: 'Sub 15', gen: 'Feminino', icon: '♀️', badge: 'fgb-badge-yellow', desc: 'Formando as futuras representantes do basquete feminino.' },
+  { cat: 'Sub 17', gen: 'Masculino', icon: '♂️', badge: 'fgb-badge-verde', desc: 'Categoria de projeção para atletas de elite.' },
+  { cat: 'Sub 17', gen: 'Feminino', icon: '♀️', badge: 'fgb-badge-yellow', desc: 'Atletas gaúchas destaques do cenário nacional.' },
+  { cat: 'Adulto', gen: 'Masculino', icon: '♂️', badge: 'fgb-badge-red', desc: 'Principal seleção masculina do Rio Grande do Sul.' },
+  { cat: 'Adulto', gen: 'Feminino', icon: '♀️', badge: 'fgb-badge-red', desc: 'Principal seleção feminina nas competições adultas.' },
 ]
 
 export default function SelecaoGauchaPage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div>
       <PublicHeader />
 
-      <main className="max-w-6xl mx-auto px-6 py-16">
-        {/* Breadcrumb */}
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-8">
-          Início · Seleção Gaúcha
-        </p>
-
-        {/* Header */}
-        <div className="mb-14">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF6B00] mb-4">
-            Rio Grande do Sul
-          </p>
-          <h1 className="text-4xl md:text-6xl font-black italic uppercase text-white tracking-tight mb-6 leading-[0.95]" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-            Seleção<br />
-            <span className="text-[#FF6B00]">Gaúcha</span>
-          </h1>
-          <p className="text-slate-400 text-base leading-relaxed max-w-3xl">
+      <div className="fgb-page-header">
+        <div className="fgb-page-header-bg" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative text-center">
+          <div className="fgb-page-header-eyebrow">Rio Grande do Sul</div>
+          <h1 className="fgb-page-header-title">Seleção Gaúcha</h1>
+          <p className="fgb-page-header-sub mx-auto">
             O Rio Grande do Sul possui uma das tradições mais ricas do basquete brasileiro.
             Bi-campeões nacionais em 1934 e 1935, a seleção gaúcha continua produzindo
-            atletas de alto nível para o cenário nacional.
+            atletas de alto nível.
           </p>
         </div>
+      </div>
 
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
         {/* Legado Histórico */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-14">
           {[
-            { value: '1934', label: '1º Título Nacional', icon: '🏆' },
-            { value: '1935', label: '2º Título Nacional', icon: '🏅' },
-            { value: 'RS', label: 'Potência Nacional', icon: '⭐' },
+            { value: '1934', label: '1º Título Nacional', icon: '🏆', color: 'text-[var(--verde)]' },
+            { value: '1935', label: '2º Título Nacional', icon: '🏅', color: 'text-[var(--red)]' },
+            { value: 'RS', label: 'Potência Nacional', icon: '⭐', color: 'text-[var(--yellow)]' },
           ].map((s, i) => (
-            <div key={i} className="bg-[#141414] border border-white/[0.08] rounded-3xl p-6 text-center">
-              <div className="text-3xl mb-3">{s.icon}</div>
-              <p className="text-3xl font-black italic uppercase text-[#FF6B00] mb-1" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                {s.value}
-              </p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                {s.label}
-              </p>
+            <div key={i} className="fgb-card text-center p-6 bg-[var(--gray-l)]">
+              <div className="text-3xl mb-2">{s.icon}</div>
+              <p className={`fgb-display text-[28px] mb-1 ${s.color}`}>{s.value}</p>
+              <p className="fgb-label text-[var(--gray)]">{s.label}</p>
             </div>
           ))}
         </div>
 
-        {/* Seleções */}
-        <div className="mb-12">
-          <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-8">
-            Seleções Gaúchas Ativas
-          </h2>
+        {/* Seleções Ativas */}
+        <section className="mb-14">
+          <div className="fgb-section-header">
+            <div>
+              <div className="fgb-accent fgb-accent-verde" />
+              <h2 className="fgb-section-title">Seleções <span className="verde">Ativas</span></h2>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {selecoes.map((sel, i) => (
-              <div
-                key={i}
-                className={`bg-gradient-to-br ${sel.cor} border rounded-3xl p-6 hover:scale-[1.01] transition-all`}
-              >
+              <div key={i} className={`fgb-card p-6 ${sel.badge.includes('red') ? 'admin-card-red' : sel.badge.includes('yellow') ? 'admin-card-yellow' : 'admin-card-verde'}`}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <span className="text-xl">{sel.icon}</span>
-                    <h3 className="text-lg font-black italic uppercase text-white" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-                      {sel.categoria}
-                    </h3>
+                    <h3 className="fgb-display text-[18px] text-[var(--black)]">{sel.cat}</h3>
                   </div>
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${sel.badge}`}>
-                    {sel.genero}
-                  </span>
+                  <span className={`fgb-badge ${sel.badge}`}>{sel.gen}</span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">{sel.desc}</p>
-                <div className="pt-3 border-t border-white/[0.06]">
-                  <a
-                    href="https://basquetegaucho.com.br/selecao-gaucha/"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline"
-                  >
-                    Ver mais →
-                  </a>
-                </div>
+                <p className="fgb-label text-[var(--gray)] mb-4" style={{ textTransform: 'none', letterSpacing: 0 }}>{sel.desc}</p>
               </div>
             ))}
           </div>
-        </div>
+        </section>
 
         {/* Convocações */}
-        <div className="bg-[#141414] border border-[#FF6B00]/15 rounded-3xl p-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#FF6B00] mb-3">
-            Notas Oficiais
-          </p>
-          <h2 className="text-xl font-black italic uppercase text-white mb-4" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-            Convocações e boletins
-          </h2>
-          <p className="text-xs text-slate-400 leading-relaxed mb-6 max-w-xl">
+        <div className="fgb-section-verde border border-[var(--border)] rounded-xl p-8 text-center max-w-3xl mx-auto">
+          <div className="fgb-accent fgb-accent-yellow mx-auto mb-3" />
+          <h2 className="fgb-display text-[22px] text-[var(--black)] mb-3">Convocações e Notas Oficiais</h2>
+          <p className="fgb-label text-[var(--gray)] max-w-md mx-auto mb-6" style={{ textTransform: 'none', letterSpacing: 0 }}>
             As convocações oficiais das seleções gaúchas são publicadas como notas oficiais
-            da FGB. Acompanhe as últimas atualizações na página de notas.
+            da FGB. Acompanhe na página oficial de notas ou no portal principal.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <a
-              href="/fgb/notas"
-              className="inline-block bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
-            >
-              Ver Notas Oficiais
-            </a>
-            <a
-              href="https://basquetegaucho.com.br/selecao-gaucha/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-white font-black text-[10px] uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
-            >
-              Site Oficial FGB
-            </a>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <a href="/fgb/notas" className="fgb-btn-primary">Ver Notas Oficiais</a>
+            <a href="https://basquetegaucho.com.br/selecao-gaucha/" className="fgb-btn-secondary" style={{ color: 'var(--black)', borderColor: 'var(--border)' }}>Acessar Site Institucional</a>
           </div>
         </div>
       </main>

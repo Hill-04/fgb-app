@@ -20,11 +20,11 @@ function getStatusLabel(status: string) {
   return map[status] ?? status
 }
 
-function getStatusStyle(status: string) {
-  if (status === 'ONGOING') return 'text-[#FF6B00] bg-[#FF6B00]/10 border-[#FF6B00]/20'
-  if (status === 'REGISTRATION_OPEN') return 'text-green-400 bg-green-500/10 border-green-500/20'
-  if (status === 'FINISHED') return 'text-slate-400 bg-white/[0.05] border-white/[0.08]'
-  return 'text-slate-500 bg-white/[0.03] border-white/[0.05]'
+function getStatusBadge(status: string) {
+  if (status === 'ONGOING') return 'fgb-badge-red'
+  if (status === 'REGISTRATION_OPEN') return 'fgb-badge-verde'
+  if (status === 'FINISHED') return 'fgb-badge-outline'
+  return 'fgb-badge-outline'
 }
 
 function getSexIcon(sex: string) {
@@ -42,12 +42,7 @@ export default async function CampeonatosPage() {
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
     include: {
       categories: { select: { id: true, name: true } },
-      _count: {
-        select: {
-          registrations: true,
-          games: true,
-        },
-      },
+      _count: { select: { registrations: true, games: true } },
     },
   }).catch(() => [])
 
@@ -56,70 +51,59 @@ export default async function CampeonatosPage() {
   const finished = allChampionships.filter((c) => c.status === 'FINISHED')
 
   function ChampionshipCard({ c }: { c: typeof allChampionships[0] }) {
+    const isFinished = c.status === 'FINISHED'
     return (
       <Link
         href={`/campeonatos/${c.id}`}
-        className="group bg-[#141414] border border-white/[0.08] hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all hover:shadow-[0_8px_40px_rgba(255,107,0,0.06)] block"
+        className={`fgb-card block p-6 ${isFinished ? '' : 'admin-card-verde'}`}
       >
         <div className="flex items-start justify-between mb-5">
           <div className="flex items-center gap-2">
             <span className="text-2xl">{getSexIcon(c.sex)}</span>
             <span className="text-2xl">🏀</span>
           </div>
-          <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${getStatusStyle(c.status)}`}>
+          <span className={`fgb-badge ${getStatusBadge(c.status)}`}>
             {getStatusLabel(c.status)}
           </span>
         </div>
-        <h3 className="text-base font-black italic uppercase text-white group-hover:text-[#FF6B00] transition-colors leading-tight mb-2" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
+        <h3 className="fgb-display mb-2 text-[18px] text-[var(--black)] transition-colors line-clamp-2">
           {c.name}
         </h3>
-        <p className="text-[11px] text-slate-500 mb-5">
+        <p className="fgb-label text-[var(--gray)] mb-4">
           {c.categories.length > 0
             ? c.categories.map((cat) => cat.name).join(' · ')
             : 'Categorias a definir'}
         </p>
-        {c.description && (
-          <p className="text-[11px] text-slate-600 leading-relaxed mb-4 line-clamp-2">
-            {c.description}
-          </p>
-        )}
-        <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-          <div className="flex items-center gap-3 text-[10px] text-slate-500 uppercase tracking-wider">
+        <div className="flex items-center justify-between pt-4" style={{ borderTop: '0.5px solid var(--border)' }}>
+          <div className="flex items-center gap-3 fgb-label text-[var(--gray)]">
             <span>{c._count.registrations} equipes</span>
             <span>·</span>
             <span>{c._count.games} jogos</span>
           </div>
-          <span className="text-[10px] font-black text-[#FF6B00] uppercase tracking-widest">
-            Ver →
-          </span>
+          <span className="fgb-label text-[var(--verde)]">Ver →</span>
         </div>
       </Link>
     )
   }
 
-  function Section({ title, label, items, emptyMsg }: {
-    title: string
-    label: string
-    items: typeof allChampionships
-    emptyMsg: string
-  }) {
+  function Section({ title, items, colorClass, emptyMsg, accentClass }: any) {
     return (
-      <section className="py-10">
-        <div className="flex items-center gap-4 mb-7">
+      <section className="mb-14">
+        <div className="fgb-section-header">
           <div>
-            <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${label}`}>
-              {title}
-            </span>
+            <div className={`fgb-accent ${accentClass}`} />
+            <h2 className="fgb-section-title">
+              {title.split(' ')[0]} <span className={colorClass}>{title.split(' ').slice(1).join(' ')}</span>
+            </h2>
           </div>
-          <div className="flex-1 h-px bg-white/[0.05]" />
         </div>
         {items.length === 0 ? (
-          <div className="bg-[#141414] border border-white/[0.06] rounded-3xl p-10 text-center text-slate-600 text-xs uppercase tracking-widest">
-            {emptyMsg}
+          <div className="text-center py-12 bg-[var(--gray-l)] border border-[var(--border)] rounded">
+            <p className="fgb-label text-[var(--gray)]">{emptyMsg}</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {items.map((c) => (
+            {items.map((c: any) => (
               <ChampionshipCard key={c.id} c={c} />
             ))}
           </div>
@@ -129,76 +113,63 @@ export default async function CampeonatosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div>
       <PublicHeader />
 
-      <main className="max-w-7xl mx-auto px-6 py-16">
-        {/* Header */}
-        <div className="mb-14">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF6B00] mb-4">
-            FGB · Temporada 2026
-          </p>
-          <h1 className="text-4xl md:text-6xl font-black italic uppercase text-white tracking-tight mb-6 leading-[0.95]" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-            Campeonatos<br />
-            <span className="text-[#FF6B00]">FGB</span>
-          </h1>
-          <p className="text-slate-400 text-base leading-relaxed max-w-2xl">
+      <div className="fgb-page-header">
+        <div className="fgb-page-header-bg" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative text-center">
+          <div className="fgb-page-header-eyebrow">FGB · Temporada 2026</div>
+          <h1 className="fgb-page-header-title">Campeonatos</h1>
+          <p className="fgb-page-header-sub mx-auto">
             Todos os campeonatos oficiais organizados pela Federação Gaúcha de Basketball.
             Acompanhe classificações, jogos e resultados em tempo real.
           </p>
         </div>
+      </div>
 
-        {/* Em andamento */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         <Section
           title="Em Andamento"
-          label="text-[#FF6B00] bg-[#FF6B00]/10 border-[#FF6B00]/20"
+          colorClass="orange"
+          accentClass="fgb-accent-orange"
           items={ongoing}
           emptyMsg="Nenhum campeonato em andamento no momento."
         />
 
-        {/* Inscrições abertas */}
         <Section
           title="Inscrições Abertas"
-          label="text-green-400 bg-green-500/10 border-green-500/20"
+          colorClass="verde"
+          accentClass="fgb-accent-verde"
           items={open}
           emptyMsg="Nenhum campeonato com inscrições abertas no momento."
         />
 
-        {/* Finalizados */}
         <Section
-          title="Finalizados"
-          label="text-slate-400 bg-white/[0.05] border-white/[0.08]"
+          title="Finalizados "
+          colorClass=""
+          accentClass="fgb-accent-yellow"
           items={finished}
           emptyMsg="Nenhum campeonato finalizado."
         />
 
-        {/* Área restrita */}
-        <div className="mt-12 bg-[#141414] border border-white/[0.08] rounded-3xl p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div>
-            <h2 className="text-xl font-black italic uppercase text-white mb-2" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-              Inscreva sua equipe
-            </h2>
-            <p className="text-xs text-slate-500 max-w-md leading-relaxed">
-              Para inscrever sua equipe em campeonatos, faça login ou cadastre-se
-              na plataforma FGB. O processo é 100% digital.
-            </p>
-          </div>
-          <div className="flex gap-3 flex-shrink-0">
-            <Link
-              href="/login"
-              className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
-            >
-              Entrar
-            </Link>
-            <Link
-              href="/register"
-              className="bg-white/[0.05] hover:bg-white/[0.08] border border-white/[0.1] text-white font-black text-[10px] uppercase tracking-widest px-5 py-3 rounded-xl transition-all"
-            >
-              Cadastrar
-            </Link>
+        {/* Área restrita CTA */}
+        <div className="mt-12 fgb-cta" style={{ padding: '40px 24px', borderRadius: 8 }}>
+          <div className="fgb-cta-pattern" />
+          <div className="fgb-cta-inner flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-left">
+              <h2 className="fgb-display text-white text-[24px] mb-2">Inscreva sua equipe</h2>
+              <p className="fgb-label text-[rgba(255,255,255,0.6)] max-w-md" style={{ textTransform: 'none', letterSpacing: '0' }}>
+                Para inscrever sua equipe em campeonatos, faça login ou cadastre-se na plataforma FGB. O processo é 100% digital.
+              </p>
+            </div>
+            <div className="flex gap-3 flex-shrink-0">
+              <Link href="/login" className="fgb-btn-primary">Entrar</Link>
+              <Link href="/register" className="fgb-btn-secondary" style={{ borderColor: 'rgba(255,255,255,0.3)', color: '#fff' }}>Cadastrar</Link>
+            </div>
           </div>
         </div>
-      </main>
+      </div>
 
       <PublicFooter />
     </div>
