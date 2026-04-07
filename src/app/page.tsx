@@ -7,13 +7,6 @@ import { PublicFooter } from '@/components/PublicFooter'
 
 const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
 
-function getStatusStyle(status: string) {
-  if (status === 'ONGOING') return 'text-[#FF6B00] bg-[#FF6B00]/10 border-[#FF6B00]/20'
-  if (status === 'REGISTRATION_OPEN') return 'text-green-400 bg-green-500/10 border-green-500/20'
-  if (status === 'FINISHED') return 'text-slate-400 bg-white/[0.05] border-white/[0.08]'
-  return 'text-slate-500 bg-white/[0.03] border-white/[0.05]'
-}
-
 export default async function HomePage() {
   const championships = await prisma.championship.findMany({
     where: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false },
@@ -32,468 +25,476 @@ export default async function HomePage() {
     include: {
       homeTeam: { select: { name: true } },
       awayTeam: { select: { name: true } },
-      category: {
-        include: { championship: { select: { name: true } } },
-      },
+      category: { include: { championship: { select: { name: true } } } },
     },
   }).catch(() => [])
 
+  // Ticker items — dobrar para loop contínuo
+  const tickerBase = [
+    ...championships.map((c) => ({
+      text: c.name,
+      badge: formatChampionshipStatus(c.status),
+    })),
+    { text: 'Seleção Gaúcha Sub-15', badge: 'Convocação aberta' },
+    { text: 'FGB — Temporada 2026', badge: 'Plataforma oficial' },
+    { text: 'Estadual Feminino 2026', badge: 'Em andamento' },
+    { text: 'Arbitragem FGB', badge: 'Inscrições abertas' },
+  ]
+  // Duplicar para loop infinito sem pause
+  const tickerItems = [...tickerBase, ...tickerBase]
+
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden">
+    <div style={{ background: '#fff', color: '#111' }}>
       <PublicHeader />
 
-      <main>
+      {/* ──────────────────────────────────────
+          TICKER — laranja animado
+      ────────────────────────────────────── */}
+      <div className="ticker-wrap">
+        <div className="ticker-track">
+          {tickerItems.map((item, i) => (
+            <span key={i} className="ticker-item">
+              <span>{item.text}</span>
+              <span className="ticker-badge">{item.badge}</span>
+              <span className="ticker-sep">|</span>
+            </span>
+          ))}
+        </div>
+      </div>
 
-        {/* ═══════════════════════════════════════
-            HERO SECTION
-        ═══════════════════════════════════════ */}
-        <section className="relative min-h-[90vh] flex items-center justify-center px-6 overflow-hidden">
 
-          {/* Backgrounds */}
-          <div className="absolute inset-0">
-            {/* Grid de quadra */}
-            <div className="absolute inset-0 court-pattern" />
-            {/* Linhas de quadra SVG */}
-            <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-              <svg viewBox="0 0 800 500" className="w-full h-full max-w-5xl">
-                <rect x="40" y="40" width="720" height="420" stroke="white" strokeWidth="2" fill="none" />
-                <line x1="400" y1="40" x2="400" y2="460" stroke="white" strokeWidth="1" />
-                <circle cx="400" cy="250" r="60" stroke="white" strokeWidth="1.5" fill="none" />
-                <circle cx="400" cy="250" r="8" stroke="white" strokeWidth="2" fill="none" />
-                <rect x="40" y="140" width="140" height="220" stroke="white" strokeWidth="1.5" fill="none" />
-                <rect x="620" y="140" width="140" height="220" stroke="white" strokeWidth="1.5" fill="none" />
-                <path d="M 180 140 A 60 60 0 0 0 180 360" stroke="white" strokeWidth="1" fill="none" />
-                <path d="M 620 140 A 60 60 0 0 1 620 360" stroke="white" strokeWidth="1" fill="none" />
-              </svg>
-            </div>
-            {/* Glow laranja central */}
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_50%,rgba(255,107,0,0.07)_0%,transparent_70%)]" />
-            {/* Fade ao fundo */}
-            <div className="absolute bottom-0 inset-x-0 h-40 bg-gradient-to-t from-[#0A0A0A] to-transparent" />
-          </div>
+      {/* ──────────────────────────────────────
+          HERO — fundo escuro + quadra + stats 2×2
+      ────────────────────────────────────── */}
+      <section className="fgb-hero">
 
-          {/* Conteúdo */}
-          <div className="relative max-w-5xl mx-auto text-center">
+        {/* Left — conteúdo */}
+        <div className="fgb-hero-left">
+          <p className="fgb-label anim-fade-in" style={{ color: '#FF6B00', marginBottom: 16 }}>
+            FGB · Season 2026 · Plataforma Oficial
+          </p>
 
-            {/* Logo com glow */}
-            <div className="flex justify-center mb-8 animate-fade-in">
-              <div className="relative w-20 h-20 md:w-28 md:h-28">
-                <div className="absolute inset-0 rounded-full bg-[#FF6B00]/20 blur-2xl animate-pulse-orange" />
-                <Image
-                  src={FGB_LOGO}
-                  alt="FGB - Federação Gaúcha de Basketball"
-                  fill
-                  className="object-contain relative z-10 drop-shadow-[0_0_24px_rgba(255,107,0,0.35)]"
-                  priority
-                  unoptimized
-                />
-              </div>
-            </div>
+          <h1
+            className="fgb-display anim-fade-up anim-delay-1"
+            style={{
+              color: '#fff',
+              fontSize: 'clamp(36px, 5vw, 72px)',
+              marginBottom: 20,
+            }}
+          >
+            Federação<br />
+            Gaúcha<br />
+            <span style={{ color: '#FF6B00' }}>Basketball</span>
+          </h1>
 
-            {/* Label */}
-            <p className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.6em] text-[#FF6B00] mb-6 animate-fade-in delay-100">
-              FGB · Plataforma Oficial · Season 2026
-            </p>
+          <p
+            className="anim-fade-up anim-delay-2"
+            style={{
+              color: '#888',
+              fontSize: 14,
+              lineHeight: 1.7,
+              maxWidth: 300,
+              marginBottom: 28,
+            }}
+          >
+            Fundada em 18 de abril de 1952. Gerenciando o basquete
+            gaúcho com tradição e inovação há mais de 70 anos.
+          </p>
 
-            {/* H1 — mega impactante */}
-            <h1
-              className="font-black italic uppercase leading-[0.85] tracking-tight mb-6 animate-fade-up delay-200"
-              style={{
-                fontSize: 'clamp(3.5rem, 10vw, 9rem)',
-                fontFamily: 'var(--font-display), sans-serif',
-              }}
+          <div className="flex flex-wrap gap-3 anim-fade-up anim-delay-3">
+            <Link href="/campeonatos" className="btn-fgb-primary">
+              Ver Campeonatos
+            </Link>
+            <Link
+              href="/login"
+              className="btn-fgb-secondary"
+              style={{ color: '#fff', borderColor: '#444' }}
             >
-              <span className="text-white">Federação</span>
-              <br />
-              <span className="text-white">Gaúcha</span>
-              <br />
-              <span className="text-gradient-orange">Basketball</span>
-            </h1>
-
-            {/* Subtítulo */}
-            <p className="text-slate-400 text-base md:text-lg max-w-2xl mx-auto mb-10 leading-relaxed animate-fade-up delay-300">
-              Fundada em 18 de abril de 1952, em Porto Alegre.
-              Gerenciando o basquete gaúcho com tradição e inovação
-              há mais de 70 anos.
-            </p>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-4 justify-center animate-fade-up delay-400">
-              <Link
-                href="/campeonatos"
-                className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest px-8 py-4 rounded-2xl text-sm transition-all duration-300 hover:scale-[1.04] hover:-translate-y-0.5 shadow-[0_8px_30px_rgba(255,107,0,0.35)] hover:shadow-[0_12px_40px_rgba(255,107,0,0.5)]"
-              >
-                Ver Campeonatos →
-              </Link>
-              <Link
-                href="/login"
-                className="bg-white/[0.05] hover:bg-white/[0.1] border border-white/[0.12] hover:border-white/[0.2] text-white font-black uppercase tracking-widest px-8 py-4 rounded-2xl text-sm transition-all duration-300 hover:scale-[1.02] backdrop-blur-sm"
-              >
-                Área da Equipe
-              </Link>
-            </div>
-
-            {/* Scroll indicator */}
-            <div className="flex justify-center mt-16 animate-fade-in delay-500">
-              <div className="flex flex-col items-center gap-1.5 opacity-30">
-                <div className="w-[1px] h-8 bg-gradient-to-b from-transparent to-white" />
-                <span className="text-[9px] uppercase tracking-[0.3em] text-white">scroll</span>
-              </div>
-            </div>
+              Área da Equipe
+            </Link>
           </div>
-        </section>
+        </div>
+
+        {/* Right — stats grid + linhas de quadra */}
+        <div className="fgb-hero-right">
+          {/* SVG quadra de basquete */}
+          <svg
+            className="fgb-court-bg"
+            viewBox="0 0 400 280"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+          >
+            <rect x="20" y="20" width="360" height="240" stroke="white" strokeWidth="2" fill="none" />
+            <line x1="200" y1="20" x2="200" y2="260" stroke="white" strokeWidth="1" />
+            <circle cx="200" cy="140" r="55" stroke="white" strokeWidth="1.5" fill="none" />
+            <circle cx="200" cy="140" r="8" stroke="white" strokeWidth="2" fill="none" />
+            <rect x="20" y="90" width="110" height="100" stroke="white" strokeWidth="1.5" fill="none" />
+            <rect x="270" y="90" width="110" height="100" stroke="white" strokeWidth="1.5" fill="none" />
+            <path d="M 130 90 A 50 50 0 0 0 130 190" stroke="white" strokeWidth="1" fill="none" />
+            <path d="M 270 90 A 50 50 0 0 1 270 190" stroke="white" strokeWidth="1" fill="none" />
+          </svg>
+
+          {/* Stats 2×2 */}
+          <div className="fgb-stats-grid">
+            {[
+              { num: '1952', lbl: 'Fundação' },
+              { num: '70+', lbl: 'Anos' },
+              { num: '22', lbl: 'Fundadores' },
+              { num: 'RS', lbl: 'Estado' },
+            ].map((s, i) => (
+              <div key={i} className="fgb-stat-box">
+                <div className="fgb-stat-num">{s.num}</div>
+                <div className="fgb-stat-lbl">{s.lbl}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
 
-        {/* ═══════════════════════════════════════
-            STATS
-        ═══════════════════════════════════════ */}
-        <section className="py-10 px-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                { value: '1952', label: 'Fundação', sub: 'Porto Alegre, RS' },
-                { value: '70+', label: 'Anos de história', sub: 'de tradição gaúcha' },
-                { value: '22', label: 'Clubes fundadores', sub: 'Grêmio, Inter, SOGIPA...' },
-                { value: 'FGB', label: 'Federação oficial', sub: 'Rio Grande do Sul' },
-              ].map((stat, i) => (
+      {/* ──────────────────────────────────────
+          CAMPEONATOS ATIVOS
+      ────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 py-14">
+
+        {/* Section header */}
+        <div
+          className="flex items-end justify-between mb-8 pb-3"
+          style={{ borderBottom: '2px solid #111' }}
+        >
+          <div>
+            <div className="section-sep" />
+            <h2 className="fgb-display" style={{ fontSize: 28, color: '#111' }}>
+              Campeonatos <span style={{ color: '#FF6B00' }}>Ativos</span>
+            </h2>
+          </div>
+          <Link href="/campeonatos" className="fgb-label" style={{ color: '#FF6B00' }}>
+            Ver todos →
+          </Link>
+        </div>
+
+        {championships.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {championships.map((c) => (
+              <Link
+                key={c.id}
+                href={`/campeonatos/${c.id}`}
+                className="fgb-card block overflow-hidden"
+              >
+                {/* Thumbnail escuro com texto do nome */}
                 <div
-                  key={i}
-                  className="relative bg-[#141414] border border-white/[0.07] rounded-2xl p-5 text-center hover:border-[#FF6B00]/20 transition-all duration-300 group overflow-hidden"
+                  className="relative flex items-center justify-center overflow-hidden"
+                  style={{ height: 100, background: '#1A1A1A' }}
                 >
-                  <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,107,0,0.05)_0%,transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <p
-                    className="relative text-3xl md:text-4xl font-black italic uppercase text-[#FF6B00] group-hover:scale-105 transition-transform duration-300 tracking-tight"
-                    style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                  {/* Letras gigantes em laranja transparente */}
+                  <span
+                    className="fgb-display"
+                    style={{
+                      fontSize: 64,
+                      color: 'rgba(255,107,0,0.1)',
+                      letterSpacing: '-0.04em',
+                      userSelect: 'none',
+                    }}
                   >
-                    {stat.value}
-                  </p>
-                  <p className="relative text-[10px] font-black uppercase tracking-widest text-white/70 mt-1">
-                    {stat.label}
-                  </p>
-                  <p className="relative text-[9px] text-slate-600 mt-0.5 uppercase tracking-wide">
-                    {stat.sub}
-                  </p>
+                    {c.name.substring(0, 3).toUpperCase()}
+                  </span>
+                  {/* Badge status */}
+                  <div style={{ position: 'absolute', top: 10, right: 10 }}>
+                    <span className="badge-orange">
+                      {formatChampionshipStatus(c.status)}
+                    </span>
+                  </div>
+                  {/* Logo FGB no canto */}
+                  <div style={{ position: 'absolute', bottom: 10, left: 10, width: 28, height: 28 }}>
+                    <Image
+                      src={FGB_LOGO}
+                      alt="FGB"
+                      fill
+                      className="object-contain"
+                      unoptimized
+                    />
+                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </section>
 
-
-        {/* ═══════════════════════════════════════
-            CAMPEONATOS ATIVOS
-        ═══════════════════════════════════════ */}
-        <section className="py-16 px-6 border-t border-white/[0.05]">
-          <div className="max-w-7xl mx-auto">
-
-            <div className="flex items-end justify-between mb-10">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF6B00] mb-2">
-                  Temporada 2026
-                </p>
-                <h2
-                  className="text-3xl md:text-5xl font-black italic uppercase text-white tracking-tight leading-none"
-                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                >
-                  Campeonatos<br />
-                  <span className="text-slate-500">Ativos</span>
-                </h2>
-              </div>
-              <Link
-                href="/campeonatos"
-                className="hidden md:flex items-center gap-2 text-[11px] font-black uppercase tracking-widest text-slate-500 hover:text-[#FF6B00] transition-colors duration-200 group"
-              >
-                Ver todos
-                <span className="group-hover:translate-x-1 transition-transform duration-200">→</span>
-              </Link>
-            </div>
-
-            {championships.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {championships.map((c) => (
-                  <Link
-                    key={c.id}
-                    href={`/campeonatos/${c.id}`}
-                    className="group relative bg-[#141414] border border-white/[0.07] rounded-3xl p-6 overflow-hidden card-hover block"
+                {/* Conteúdo */}
+                <div style={{ padding: '16px 18px' }}>
+                  <p className="fgb-label mb-1" style={{ color: '#aaa' }}>
+                    Federação Gaúcha · {c.categories.length} categorias
+                  </p>
+                  <h3
+                    className="fgb-display mb-3"
+                    style={{ fontSize: 16, color: '#111', lineHeight: 1.1 }}
                   >
-                    {/* Corner glow */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[radial-gradient(circle_at_top_right,rgba(255,107,0,0.08),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                    <div className="relative">
-                      <div className="flex items-start justify-between mb-5">
-                        <div className="w-12 h-12 rounded-2xl bg-[#FF6B00]/10 border border-[#FF6B00]/20 flex items-center justify-center text-2xl group-hover:bg-[#FF6B00]/15 transition-all duration-300">
-                          🏀
-                        </div>
-                        <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1.5 rounded-full border ${getStatusStyle(c.status)}`}>
-                          {formatChampionshipStatus(c.status)}
-                        </span>
-                      </div>
-
-                      <h3
-                        className="text-lg font-black italic uppercase text-white group-hover:text-[#FF6B00] transition-colors duration-300 leading-tight mb-2 tracking-tight"
-                        style={{ fontFamily: 'var(--font-display), sans-serif' }}
+                    {c.name}
+                  </h3>
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {c.categories.slice(0, 3).map((cat) => (
+                      <span
+                        key={cat.name}
+                        className="fgb-label"
+                        style={{
+                          background: '#F7F7F7',
+                          padding: '2px 8px',
+                          fontSize: 9,
+                          color: '#888',
+                        }}
                       >
-                        {c.name}
-                      </h3>
-
-                      <div className="flex flex-wrap gap-1.5 mb-5">
-                        {c.categories.slice(0, 3).map((cat) => (
-                          <span
-                            key={cat.name}
-                            className="text-[9px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-white/[0.05] text-slate-500 border border-white/[0.06]"
-                          >
-                            {cat.name}
-                          </span>
-                        ))}
-                        {c.categories.length > 3 && (
-                          <span className="text-[9px] text-slate-700">+{c.categories.length - 3}</span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center justify-between pt-4 border-t border-white/[0.06]">
-                        <span className="text-[10px] text-slate-600 uppercase tracking-wider">
-                          {c._count.registrations} equipes confirmadas
-                        </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] group-hover:translate-x-1 transition-transform duration-200">
-                          Ver →
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="bg-[#141414] border border-white/[0.07] rounded-3xl p-12 text-center">
-                <p className="text-3xl mb-4">🏀</p>
-                <p className="text-slate-500 text-sm uppercase tracking-widest">
-                  Nenhum campeonato ativo no momento
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
-
-
-        {/* ═══════════════════════════════════════
-            ÚLTIMOS RESULTADOS
-        ═══════════════════════════════════════ */}
-        {recentGames.length > 0 && (
-          <section className="py-16 px-6 border-t border-white/[0.05]">
-            <div className="max-w-7xl mx-auto">
-
-              <div className="mb-10">
-                <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF6B00] mb-2">
-                  Ao vivo e recentes
-                </p>
-                <h2
-                  className="text-3xl md:text-5xl font-black italic uppercase text-white tracking-tight"
-                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                >
-                  Últimos<br />
-                  <span className="text-slate-500">Resultados</span>
-                </h2>
-              </div>
-
-              <div className="bg-[#141414] border border-white/[0.07] rounded-3xl overflow-hidden">
-                {recentGames.map((game, i) => (
+                        {cat.name}
+                      </span>
+                    ))}
+                    {c.categories.length > 3 && (
+                      <span className="fgb-label" style={{ fontSize: 9, color: '#bbb' }}>
+                        +{c.categories.length - 3}
+                      </span>
+                    )}
+                  </div>
                   <div
-                    key={game.id}
-                    className={`px-6 py-4 flex items-center justify-between hover:bg-white/[0.025] transition-all duration-200 ${
-                      i < recentGames.length - 1 ? 'border-b border-white/[0.05]' : ''
-                    }`}
+                    className="flex items-center justify-between pt-3"
+                    style={{ borderTop: '0.5px solid #E5E5E5' }}
                   >
-                    {/* Badge campeonato */}
-                    <span className="hidden sm:block text-[9px] font-black uppercase tracking-widest text-slate-700 bg-white/[0.04] px-2.5 py-1 rounded-full flex-shrink-0 w-36 truncate">
-                      {game.category.championship.name.length > 18
-                        ? game.category.championship.name.slice(0, 18) + '…'
-                        : game.category.championship.name}
+                    <span className="fgb-label" style={{ color: '#bbb' }}>
+                      {c._count.registrations} equipes
                     </span>
-
-                    {/* Placar */}
-                    <div className="flex items-center gap-4 flex-1 justify-center">
-                      <span className="text-sm font-black uppercase text-white text-right flex-1 truncate">
-                        {game.homeTeam.name}
-                      </span>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-xl font-black text-[#FF6B00] tabular-nums bg-[#FF6B00]/5 border border-[#FF6B00]/10 px-3 py-1 rounded-xl min-w-[2.75rem] text-center">
-                          {game.homeScore ?? '—'}
-                        </span>
-                        <span className="text-slate-700 font-black text-sm">×</span>
-                        <span className="text-xl font-black text-[#FF6B00] tabular-nums bg-[#FF6B00]/5 border border-[#FF6B00]/10 px-3 py-1 rounded-xl min-w-[2.75rem] text-center">
-                          {game.awayScore ?? '—'}
-                        </span>
-                      </div>
-                      <span className="text-sm font-black uppercase text-white flex-1 truncate">
-                        {game.awayTeam.name}
-                      </span>
-                    </div>
-
-                    {/* Status */}
-                    <span className="text-[9px] font-black uppercase text-slate-600 bg-white/[0.04] border border-white/[0.06] px-2.5 py-1 rounded-full flex-shrink-0 ml-3">
-                      Encerrado
+                    <span className="fgb-label" style={{ color: '#FF6B00' }}>
+                      Ver →
                     </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </section>
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div
+            className="text-center py-16"
+            style={{ border: '0.5px solid #E5E5E5', background: '#F7F7F7' }}
+          >
+            <p className="fgb-label" style={{ color: '#bbb' }}>
+              Nenhum campeonato ativo no momento
+            </p>
+          </div>
         )}
+      </section>
 
 
-        {/* ═══════════════════════════════════════
-            ACESSO RÁPIDO
-        ═══════════════════════════════════════ */}
-        <section className="py-16 px-6 border-t border-white/[0.05]">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  icon: '🏟️',
-                  title: 'Estadual Masculino',
-                  desc: 'Classificação, jogos e resultados do campeonato estadual masculino.',
-                  href: '/campeonatos?filtro=masculino',
-                  label: 'Acessar tabela',
-                },
-                {
-                  icon: '🏅',
-                  title: 'Estadual Feminino',
-                  desc: 'Classificação, calendário e resultados do estadual feminino.',
-                  href: '/campeonatos?filtro=feminino',
-                  label: 'Acessar tabela',
-                },
-                {
-                  icon: '📊',
-                  title: 'Cestinhas',
-                  desc: 'Ranking dos maiores pontuadores do basquete gaúcho na temporada.',
-                  href: '/campeonatos/cestinhas',
-                  label: 'Ver ranking',
-                },
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="bg-[#141414] border border-white/[0.07] rounded-3xl p-6 hover:border-[#FF6B00]/20 transition-all duration-300 group card-hover"
-                >
-                  <div className="text-3xl mb-4 group-hover:scale-110 transition-transform duration-300 w-fit">
-                    {item.icon}
-                  </div>
-                  <h3
-                    className="text-base font-black italic uppercase text-white mb-2 group-hover:text-[#FF6B00] transition-colors duration-200 tracking-tight"
-                    style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                  >
-                    {item.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed mb-5">{item.desc}</p>
-                  <Link
-                    href={item.href}
-                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:gap-3 transition-all duration-200"
-                  >
-                    {item.label} →
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+      {/* ──────────────────────────────────────
+          ÚLTIMOS RESULTADOS
+      ────────────────────────────────────── */}
+      {recentGames.length > 0 && (
+        <section style={{ background: '#F7F7F7', borderTop: '0.5px solid #E5E5E5' }} className="py-14">
+          <div className="max-w-7xl mx-auto px-6">
 
-
-        {/* ═══════════════════════════════════════
-            INSTITUCIONAL
-        ═══════════════════════════════════════ */}
-        <section className="py-16 px-6 border-t border-white/[0.05]">
-          <div className="max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                {
-                  title: 'Sobre a FGB',
-                  desc: 'Fundada em 1952 com apoio de 22 clubes. Mais de 70 anos promovendo o basquete gaúcho.',
-                  href: '/fgb/historia',
-                  label: 'Nossa história',
-                },
-                {
-                  title: 'Seleção Gaúcha',
-                  desc: 'Acompanhe convocações, treinamentos e resultados das seleções nas competições nacionais.',
-                  href: '/selecao-gaucha',
-                  label: 'Ver seleção',
-                },
-                {
-                  title: 'Documentos Oficiais',
-                  desc: 'Regulamento desportivo, normas do estadual, categorias e idades, regimento de taxas.',
-                  href: '/fgb/regulamento',
-                  label: 'Ver documentos',
-                },
-              ].map((card, i) => (
-                <div
-                  key={i}
-                  className="bg-[#141414] border border-white/[0.07] rounded-3xl p-6 group hover:border-white/[0.12] transition-all duration-300"
-                >
-                  <h3
-                    className="text-base font-black italic uppercase text-white mb-2 group-hover:text-[#FF6B00] transition-colors duration-200 tracking-tight"
-                    style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                  >
-                    {card.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed mb-5">{card.desc}</p>
-                  <Link
-                    href={card.href}
-                    className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:gap-3 transition-all duration-200"
-                  >
-                    {card.label} →
-                  </Link>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
-
-        {/* ═══════════════════════════════════════
-            CTA FINAL
-        ═══════════════════════════════════════ */}
-        <section className="py-20 px-6">
-          <div className="max-w-7xl mx-auto">
-            <div className="relative bg-[#141414] border border-white/[0.07] rounded-3xl p-10 md:p-16 text-center overflow-hidden">
-
-              {/* Decorações */}
-              <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,107,0,0.07)_0%,transparent_65%)] pointer-events-none" />
-              <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#FF6B00]/30 to-transparent" />
-              <div className="absolute bottom-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-[#FF6B00]/20 to-transparent" />
-              <div className="absolute inset-0 court-pattern opacity-50" />
-
-              <div className="relative">
-                <p className="text-[10px] font-black uppercase tracking-[0.5em] text-[#FF6B00] mb-5">
-                  Plataforma Oficial FGB
-                </p>
-                <h2
-                  className="text-3xl md:text-6xl font-black italic uppercase text-white tracking-tight leading-none mb-5"
-                  style={{ fontFamily: 'var(--font-display), sans-serif' }}
-                >
-                  Sua equipe no<br />
-                  <span className="text-gradient-orange">próximo campeonato</span>
+            <div
+              className="flex items-end justify-between mb-8 pb-3"
+              style={{ borderBottom: '2px solid #111' }}
+            >
+              <div>
+                <div className="section-sep" />
+                <h2 className="fgb-display" style={{ fontSize: 28, color: '#111' }}>
+                  Últimos <span style={{ color: '#FF6B00' }}>Resultados</span>
                 </h2>
-                <p className="text-slate-400 max-w-xl mx-auto mb-10 leading-relaxed text-sm md:text-base">
-                  Inscreva sua equipe, acompanhe jogos e resultados em tempo real.
-                  Gestão completa de campeonatos pelo sistema oficial da FGB.
-                </p>
-                <div className="flex flex-wrap gap-4 justify-center">
-                  <Link
-                    href="/register"
-                    className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest px-10 py-4 rounded-2xl text-sm transition-all duration-300 hover:scale-[1.04] shadow-[0_8px_30px_rgba(255,107,0,0.35)] hover:shadow-[0_12px_40px_rgba(255,107,0,0.5)]"
-                  >
-                    Cadastrar Equipe
-                  </Link>
-                  <Link
-                    href="/campeonatos"
-                    className="bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.1] text-white font-black uppercase tracking-widest px-10 py-4 rounded-2xl text-sm transition-all duration-300 hover:scale-[1.02]"
-                  >
-                    Ver Campeonatos
-                  </Link>
-                </div>
               </div>
             </div>
+
+            <div style={{ background: '#fff', border: '0.5px solid #E5E5E5' }}>
+              {recentGames.map((game) => (
+                <div key={game.id} className="fgb-score-row">
+                  {/* Campeonato */}
+                  <span
+                    className="fgb-label hidden sm:block"
+                    style={{
+                      width: 140,
+                      flexShrink: 0,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      fontSize: 9,
+                      color: '#ccc',
+                    }}
+                  >
+                    {game.category.championship.name}
+                  </span>
+
+                  {/* Placar */}
+                  <div className="flex items-center gap-3 flex-1 justify-center">
+                    <span
+                      className="fgb-display flex-1 text-right"
+                      style={{ fontSize: 14, color: '#111' }}
+                    >
+                      {game.homeTeam.name}
+                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <span className="fgb-score-num">{game.homeScore ?? '—'}</span>
+                      <span className="fgb-label" style={{ color: '#ccc' }}>×</span>
+                      <span className="fgb-score-num">{game.awayScore ?? '—'}</span>
+                    </div>
+                    <span
+                      className="fgb-display flex-1"
+                      style={{ fontSize: 14, color: '#111' }}
+                    >
+                      {game.awayTeam.name}
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  <span className="badge-outline flex-shrink-0">Encerrado</span>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
+      )}
 
-      </main>
+
+      {/* ──────────────────────────────────────
+          ACESSO RÁPIDO — Estaduais e Cestinhas
+      ────────────────────────────────────── */}
+      <section className="max-w-7xl mx-auto px-6 py-14">
+        <div
+          className="flex items-end justify-between mb-8 pb-3"
+          style={{ borderBottom: '2px solid #111' }}
+        >
+          <div>
+            <div className="section-sep" />
+            <h2 className="fgb-display" style={{ fontSize: 28, color: '#111' }}>
+              Estaduais e <span style={{ color: '#FF6B00' }}>Cestinhas</span>
+            </h2>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {[
+            {
+              title: 'Estadual Masculino',
+              desc: 'Tabela de classificação, jogos e resultados do campeonato estadual masculino.',
+              href: '/campeonatos?filtro=masculino',
+              accent: '#FF6B00',
+            },
+            {
+              title: 'Estadual Feminino',
+              desc: 'Classificação, calendário e resultados do campeonato estadual feminino.',
+              href: '/campeonatos?filtro=feminino',
+              accent: '#111',
+            },
+            {
+              title: 'Cestinhas',
+              desc: 'Ranking dos maiores pontuadores do basquete gaúcho na temporada.',
+              href: '/campeonatos/cestinhas',
+              accent: '#111',
+            },
+          ].map((item, i) => (
+            <Link key={i} href={item.href} className="fgb-card block p-5">
+              <div className="section-sep" style={{ background: item.accent, marginBottom: 10 }} />
+              <h3 className="fgb-display mb-2" style={{ fontSize: 16, color: '#111' }}>
+                {item.title}
+              </h3>
+              <p style={{ color: '#888', fontSize: 12, lineHeight: 1.6, marginBottom: 16 }}>
+                {item.desc}
+              </p>
+              <span className="fgb-label" style={{ color: '#FF6B00' }}>
+                Acessar →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+
+      {/* ──────────────────────────────────────
+          SOBRE / INSTITUCIONAL
+      ────────────────────────────────────── */}
+      <section
+        style={{ background: '#F7F7F7', borderTop: '0.5px solid #E5E5E5' }}
+        className="py-14"
+      >
+        <div className="max-w-7xl mx-auto px-6">
+          <div
+            className="flex items-end justify-between mb-8 pb-3"
+            style={{ borderBottom: '2px solid #111' }}
+          >
+            <div>
+              <div className="section-sep" />
+              <h2 className="fgb-display" style={{ fontSize: 28, color: '#111' }}>
+                Sobre a <span style={{ color: '#FF6B00' }}>FGB</span>
+              </h2>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {[
+              {
+                title: 'História',
+                desc: 'Fundada em 1952 com 22 clubes. Mais de 70 anos gerenciando o basquete gaúcho.',
+                href: '/fgb/historia',
+              },
+              {
+                title: 'Seleção Gaúcha',
+                desc: 'Convocações, treinamentos e resultados das seleções nas competições nacionais.',
+                href: '/selecao-gaucha',
+              },
+              {
+                title: 'Regulamento',
+                desc: 'Normas do estadual, categorias e idades, regimento de taxas oficiais.',
+                href: '/fgb/regulamento',
+              },
+            ].map((card, i) => (
+              <div key={i} className="fgb-card p-5" style={{ background: '#fff' }}>
+                <h3 className="fgb-display mb-2" style={{ fontSize: 15, color: '#111' }}>
+                  {card.title}
+                </h3>
+                <p style={{ color: '#888', fontSize: 12, lineHeight: 1.6, marginBottom: 16 }}>
+                  {card.desc}
+                </p>
+                <Link href={card.href} className="fgb-label" style={{ color: '#FF6B00' }}>
+                  Ver mais →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+
+      {/* ──────────────────────────────────────
+          CTA FINAL — fundo preto
+      ────────────────────────────────────── */}
+      <section style={{ background: '#111111' }} className="py-20 px-6">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="fgb-label mb-5" style={{ color: '#FF6B00' }}>
+            Plataforma Oficial FGB · Season 2026
+          </p>
+          <h2
+            className="fgb-display mb-5"
+            style={{
+              color: '#fff',
+              fontSize: 'clamp(28px, 4vw, 54px)',
+            }}
+          >
+            Sua equipe no próximo<br />
+            <span style={{ color: '#FF6B00' }}>campeonato gaúcho</span>
+          </h2>
+          <p
+            style={{
+              color: '#888',
+              maxWidth: 480,
+              margin: '0 auto 36px',
+              lineHeight: 1.7,
+              fontSize: 14,
+            }}
+          >
+            Inscreva sua equipe, acompanhe jogos e resultados em tempo real
+            pela plataforma oficial da Federação Gaúcha de Basketball.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/register" className="btn-fgb-primary">
+              Cadastrar Equipe
+            </Link>
+            <Link
+              href="/campeonatos"
+              className="btn-fgb-secondary"
+              style={{ color: '#fff', borderColor: '#444' }}
+            >
+              Ver Campeonatos
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <PublicFooter />
     </div>

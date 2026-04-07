@@ -1,139 +1,195 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
 
 const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
 
+const fgbLinks = [
+  { label: 'Diretoria', href: '/fgb/diretoria' },
+  { label: 'Fundação', href: '/fgb/fundacao' },
+  { label: 'História', href: '/fgb/historia' },
+  { label: 'Regulamento', href: '/fgb/regulamento' },
+  { label: 'Categorias e Idades', href: '/fgb/categorias' },
+  { label: 'Arbitragem', href: '/fgb/arbitragem' },
+  { label: 'Notas Oficiais', href: '/fgb/notas' },
+]
+
+const campLinks = [
+  { label: 'Todos os Campeonatos', href: '/campeonatos' },
+  { label: 'Estadual Feminino', href: '/campeonatos?filtro=feminino' },
+  { label: 'Estadual Masculino', href: '/campeonatos?filtro=masculino' },
+  { label: 'Cestinhas', href: '/campeonatos/cestinhas' },
+  { label: 'Seleção Gaúcha', href: '/selecao-gaucha' },
+  { label: 'Galeria de Fotos', href: '/galeria' },
+]
+
+const accessLinks = [
+  { label: 'Entrar na Plataforma', href: '/login', external: false },
+  { label: 'Cadastrar Equipe', href: '/register', external: false },
+  { label: 'Facebook', href: 'https://www.facebook.com/fgb.basquetegaucho', external: true },
+  { label: 'Instagram', href: 'https://www.instagram.com/fg_basquete/', external: true },
+  { label: 'WhatsApp', href: 'https://api.whatsapp.com/send?phone=555432233858', external: true },
+]
+
 export function PublicFooter() {
   return (
-    <footer className="bg-[#0D0D0D] border-t border-white/[0.08] mt-20">
-      <div className="max-w-7xl mx-auto px-6 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+    <>
+      {/* Estilos inline via style tag para hover sem JS */}
+      <style>{`
+        .footer-link {
+          display: block;
+          font-family: Arial, sans-serif;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          font-size: 10px;
+          color: #666;
+          text-decoration: none;
+          margin-bottom: 12px;
+          transition: color 0.15s ease;
+        }
+        .footer-link:hover { color: #FF6B00; }
+        .footer-col-title {
+          font-family: Arial, sans-serif;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          font-size: 10px;
+          color: #444;
+          padding-bottom: 12px;
+          margin-bottom: 16px;
+          border-bottom: 1px solid #2a2a2a;
+        }
+      `}</style>
 
-          {/* Logo + Info */}
-          <div className="md:col-span-1">
-            <div className="flex items-center gap-3 mb-5">
-              <div className="relative w-12 h-12 flex-shrink-0">
-                <Image
-                  src={FGB_LOGO}
-                  alt="FGB Logo"
-                  fill
-                  className="object-contain"
-                  unoptimized
-                />
+      <footer style={{ background: '#111111' }}>
+        <div className="max-w-7xl mx-auto px-6 py-14">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-10">
+
+            {/* Coluna 1 — Marca */}
+            <div>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="relative flex-shrink-0" style={{ width: 40, height: 40 }}>
+                  <Image
+                    src={FGB_LOGO}
+                    alt="FGB"
+                    fill
+                    className="object-contain"
+                    unoptimized
+                  />
+                </div>
+                <div>
+                  <p style={{
+                    fontFamily: "'Arial Black', Arial, sans-serif",
+                    fontSize: 12,
+                    color: '#fff',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    lineHeight: 1,
+                  }}>
+                    Federação Gaúcha
+                  </p>
+                  <p style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.12em',
+                    fontSize: 10,
+                    color: '#FF6B00',
+                    marginTop: 4,
+                  }}>
+                    de Basketball
+                  </p>
+                </div>
               </div>
-              <div>
-                <p className="text-white font-black text-sm uppercase tracking-tight leading-none">Federação Gaúcha</p>
-                <p className="text-[10px] text-[#FF6B00] uppercase tracking-[0.2em] mt-0.5">de Basketball</p>
+              <div style={{
+                fontFamily: 'Arial, sans-serif',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '0.1em',
+                fontSize: 10,
+                color: '#555',
+                lineHeight: 2.2,
+              }}>
+                <span className="block">Rua Marechal Floriano, 388</span>
+                <span className="block">Centro, Caxias do Sul - RS</span>
+                <span className="block" style={{ marginTop: 6 }}>(54) 3223-3858</span>
+                <span className="block">8h às 12h · 13h às 17h</span>
+                <span className="block" style={{ marginTop: 6 }}>fgb@basquetegaucho.com.br</span>
               </div>
             </div>
-            <div className="text-xs text-slate-500 leading-relaxed space-y-1">
-              <p>Rua Marechal Floriano, 388</p>
-              <p>Centro, Caxias do Sul - RS</p>
-              <p className="pt-1">(54) 3223-3858</p>
-              <p>8h às 12h · 13h às 17h</p>
-              <p className="pt-1">fgb@basquetegaucho.com.br</p>
-            </div>
-          </div>
 
-          {/* FGB */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-5">FGB</p>
-            <div className="space-y-2.5">
-              {[
-                { label: 'Diretoria', href: '/fgb/diretoria' },
-                { label: 'Fundação', href: '/fgb/fundacao' },
-                { label: 'História da Federação', href: '/fgb/historia' },
-                { label: 'Regulamento Desportivo', href: '/fgb/regulamento' },
-                { label: 'Categorias e Idades', href: '/fgb/categorias' },
-                { label: 'Arbitragem', href: '/fgb/arbitragem' },
-                { label: 'Notas Oficiais', href: '/fgb/notas' },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block text-xs text-slate-500 hover:text-white hover:translate-x-0.5 transition-all"
-                >
-                  {item.label}
+            {/* Coluna 2 — FGB */}
+            <div>
+              <div className="footer-col-title">FGB</div>
+              {fgbLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="footer-link">
+                  {link.label}
                 </Link>
               ))}
             </div>
-          </div>
 
-          {/* Campeonatos */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-5">Campeonatos</p>
-            <div className="space-y-2.5">
-              {[
-                { label: 'Todos os Campeonatos', href: '/campeonatos' },
-                { label: 'Estadual Feminino', href: '/campeonatos?filtro=feminino' },
-                { label: 'Estadual Masculino', href: '/campeonatos?filtro=masculino' },
-                { label: 'Cestinhas', href: '/campeonatos/cestinhas' },
-                { label: 'Seleção Gaúcha', href: '/selecao-gaucha' },
-                { label: 'Galeria de Fotos', href: '/galeria' },
-              ].map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="block text-xs text-slate-500 hover:text-white hover:translate-x-0.5 transition-all"
-                >
-                  {item.label}
+            {/* Coluna 3 — Campeonatos */}
+            <div>
+              <div className="footer-col-title">Campeonatos</div>
+              {campLinks.map((link) => (
+                <Link key={link.href} href={link.href} className="footer-link">
+                  {link.label}
                 </Link>
               ))}
             </div>
-          </div>
 
-          {/* Redes Sociais */}
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-5">Redes Sociais</p>
-            <div className="space-y-2.5">
-              <a
-                href="https://www.facebook.com/fgb.basquetegaucho"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-slate-500 hover:text-[#FF6B00] transition-colors"
-              >
-                <span className="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-[10px] font-black">f</span>
-                Facebook
-              </a>
-              <a
-                href="https://www.instagram.com/fg_basquete/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-slate-500 hover:text-[#FF6B00] transition-colors"
-              >
-                <span className="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-[10px] font-black">ig</span>
-                Instagram
-              </a>
-              <a
-                href="https://api.whatsapp.com/send?phone=555432233858&text=Olá!%20Tudo%20Bem?"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-slate-500 hover:text-[#FF6B00] transition-colors"
-              >
-                <span className="w-6 h-6 rounded-lg bg-white/[0.04] flex items-center justify-center text-[10px] font-black">W</span>
-                WhatsApp
-              </a>
-            </div>
-            <div className="mt-8 pt-6 border-t border-white/[0.05]">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-3">Área Restrita</p>
-              <Link
-                href="/login"
-                className="inline-block bg-[#FF6B00]/10 border border-[#FF6B00]/20 hover:bg-[#FF6B00]/20 text-[#FF6B00] font-black text-[10px] uppercase tracking-widest px-4 py-2.5 rounded-xl transition-all"
-              >
-                Acessar Painel
-              </Link>
+            {/* Coluna 4 — Acesso */}
+            <div>
+              <div className="footer-col-title">Acesso</div>
+              {accessLinks.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  target={link.external ? '_blank' : undefined}
+                  rel={link.external ? 'noopener noreferrer' : undefined}
+                  className="footer-link"
+                >
+                  {link.label}
+                </a>
+              ))}
+              <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid #2a2a2a' }}>
+                <Link href="/login" className="btn-fgb-primary block text-center">
+                  Acessar Painel
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Bottom bar */}
-        <div className="border-t border-white/[0.06] pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
-          <p className="text-[10px] text-slate-600">
-            © {new Date().getFullYear()} Federação Gaúcha de Basketball. Todos os direitos reservados.
-          </p>
-          <p className="text-[10px] text-slate-700 uppercase tracking-widest">FGB Season 26 · Plataforma Oficial</p>
+          {/* Bottom bar */}
+          <div
+            className="flex flex-col md:flex-row items-center justify-between gap-3"
+            style={{ borderTop: '1px solid #1a1a1a', paddingTop: 20 }}
+          >
+            <p style={{
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              fontSize: 10,
+              color: '#444',
+            }}>
+              © {new Date().getFullYear()} Federação Gaúcha de Basketball. Todos os direitos reservados.
+            </p>
+            <p style={{
+              fontFamily: 'Arial, sans-serif',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+              fontSize: 10,
+              color: '#333',
+            }}>
+              FGB Season 26 · Plataforma Oficial
+            </p>
+          </div>
         </div>
-      </div>
-    </footer>
+      </footer>
+    </>
   )
 }

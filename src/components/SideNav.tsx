@@ -102,21 +102,38 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
       </button>
 
       {/* Header */}
-      <div className={cn("mb-8 border-b border-[rgba(255,255,255,0.05)] pb-6 w-full hidden md:flex", isCollapsed ? "justify-center" : "justify-start px-2")}>
-        <Link href="/" className="inline-flex items-center gap-2.5 group">
-          <div className="relative w-8 h-8 flex-shrink-0">
+      <div
+        className={cn("mb-8 w-full hidden md:flex", isCollapsed ? "justify-center px-2 pb-4" : "justify-start px-2 pb-4")}
+        style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+      >
+        <Link href="/" className="inline-flex items-center gap-2.5">
+          <div className="relative flex-shrink-0" style={{ width: 28, height: 28 }}>
             <Image
               src={FGB_LOGO}
               alt="FGB"
               fill
-              className="object-contain group-hover:scale-105 transition-transform duration-300"
+              className="object-contain"
               unoptimized
             />
           </div>
           {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="font-black text-white text-[11px] tracking-tight uppercase leading-none">FGB Admin</span>
-              <span className="text-[#FF6B00] text-[9px] tracking-[0.15em] uppercase mt-0.5 whitespace-nowrap">Painel de Gestão</span>
+            <div>
+              <p style={{
+                fontFamily: "'Arial Black', Arial, sans-serif",
+                fontSize: 11,
+                color: '#fff',
+                textTransform: 'uppercase',
+                letterSpacing: '0.04em',
+                lineHeight: 1,
+              }}>FGB Admin</p>
+              <p style={{
+                fontSize: 9,
+                color: '#FF6B00',
+                textTransform: 'uppercase',
+                letterSpacing: '0.12em',
+                fontWeight: 700,
+                marginTop: 3,
+              }}>Painel de Gestão</p>
             </div>
           )}
         </Link>
