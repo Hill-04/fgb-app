@@ -168,10 +168,19 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
       {/* Footer */}
       {!isCollapsed ? (
         <div className="mt-8 border-t border-white/5 w-full pt-6 px-4">
-           <div className="bg-white/chan05 p-3 rounded-2xl border border-white/chan05">
+           <div className="bg-white/chan05 p-3 rounded-2xl border border-white/chan05 mb-3">
               <p className="text-[10px] font-black text-white tracking-tight leading-none mb-1">FGB SEASON '26</p>
               <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest leading-none">Beta Access</p>
            </div>
+           <a
+             href="/"
+             target="_blank"
+             rel="noopener noreferrer"
+             className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-[#FF6B00] transition-colors py-1"
+           >
+             <span>🌐</span>
+             Ver site público
+           </a>
         </div>
       ) : (
         <div className="mt-8 border-t border-white/5 w-full pt-6 flex justify-center">
