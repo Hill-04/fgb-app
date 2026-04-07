@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { 
@@ -9,6 +10,8 @@ import {
   Home, Calendar, BarChart3, Bell, MessageSquare,
   ChevronLeft, ChevronRight, Shield, FlaskConical
 } from "lucide-react"
+
+const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
 
 type SideNavProps = {
   role: "TEAM" | "ADMIN"
@@ -100,14 +103,20 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
 
       {/* Header */}
       <div className={cn("mb-8 border-b border-[rgba(255,255,255,0.05)] pb-6 w-full hidden md:flex", isCollapsed ? "justify-center" : "justify-start px-2")}>
-        <Link href="/" className="inline-flex items-center gap-3 group">
-          <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[10px] shadow-[0_4px_10px_rgba(255,107,0,0.2)] shrink-0">
-            <span className="font-display font-black text-white text-[12px]">FGB</span>
+        <Link href="/" className="inline-flex items-center gap-2.5 group">
+          <div className="relative w-8 h-8 flex-shrink-0">
+            <Image
+              src={FGB_LOGO}
+              alt="FGB"
+              fill
+              className="object-contain group-hover:scale-105 transition-transform duration-300"
+              unoptimized
+            />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="font-display font-black text-white text-xs tracking-wider uppercase leading-none">Federação</span>
-              <span className="font-display font-medium text-[#FF6B00] text-[8px] tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap">Gaúcha de Basquete</span>
+              <span className="font-black text-white text-[11px] tracking-tight uppercase leading-none">FGB Admin</span>
+              <span className="text-[#FF6B00] text-[9px] tracking-[0.15em] uppercase mt-0.5 whitespace-nowrap">Painel de Gestão</span>
             </div>
           )}
         </Link>
@@ -135,7 +144,7 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
                     "flex items-center rounded-xl transition-all duration-300 group relative",
                     isCollapsed ? "w-12 h-12 justify-center mx-auto" : "w-full h-10 px-3 gap-3",
                     isActive
-                      ? "bg-white/5 text-white shadow-sm"
+                      ? "bg-[#FF6B00]/10 text-[#FF6B00] shadow-[0_0_15px_rgba(255,107,0,0.08)] border border-[#FF6B00]/20"
                       : "text-slate-400 hover:bg-white/[0.03] hover:text-white"
                   )}
                 >
