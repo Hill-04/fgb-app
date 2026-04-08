@@ -494,7 +494,7 @@ export default function SimulationPage() {
                     </div>
                     <div className="flex justify-between items-center text-xs border-t border-white/10 pt-4">
                       <span className="text-white/60 font-bold uppercase tracking-tight">Tipo de Dados</span>
-                      <span className="text-[var(--amarelo)] font-black uppercase tracking-widest">Persistente</span>
+                      <span className="text-[var(--yellow)] font-black uppercase tracking-widest">Persistente</span>
                     </div>
                   </div>
                 </div>

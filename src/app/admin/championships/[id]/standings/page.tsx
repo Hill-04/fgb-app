@@ -89,12 +89,7 @@ export default async function AdminStandingsPage({
           <div className="flex flex-wrap gap-2 animate-fade-in">
             <Link
               href={`/admin/championships/${id}/standings`}
-              className={cn(
-                "h-9 px-5 rounded-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border",
-                !categoryId 
-                  ? "bg-orange-50 border-orange-200 text-orange-600 shadow-sm" 
-                  : "bg-white border-[var(--border)] text-[var(--gray)] hover:bg-[var(--gray-l)] hover:text-[var(--black)] shadow-sm"
-              )}
+              className={!categoryId ? 'fgb-badge fgb-badge-verde' : 'fgb-badge fgb-badge-outline hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors'}
             >
               Todas as Categorias
             </Link>
@@ -102,12 +97,7 @@ export default async function AdminStandingsPage({
               <Link
                 key={cat.id}
                 href={`/admin/championships/${id}/standings?categoryId=${cat.id}`}
-                className={cn(
-                  "h-9 px-5 rounded-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border",
-                  categoryId === cat.id
-                    ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm"
-                    : "bg-white border-[var(--border)] text-[var(--gray)] hover:bg-[var(--gray-l)] hover:text-[var(--black)] shadow-sm"
-                )}
+                className={categoryId === cat.id ? 'fgb-badge fgb-badge-verde' : 'fgb-badge fgb-badge-outline hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors'}
               >
                 {cat.name}
               </Link>

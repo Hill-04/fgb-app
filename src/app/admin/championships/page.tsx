@@ -35,29 +35,27 @@ export default async function AdminChampionshipsPage() {
   })
 
   return (
-    <div className="space-y-10 max-w-[1400px] mx-auto pb-20 px-4 animate-in fade-in duration-700">
+    <div className="space-y-8 pb-20 animate-in fade-in duration-700">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tighter leading-none mb-3">
-            Campeonatos
-          </h1>
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-slate-500">
-            Gestão de Competições da Federação
-          </p>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Gestão</span>
+            <span className="fgb-badge fgb-badge-verde">FEDERAÇÃO</span>
+          </div>
+          <h1 className="fgb-display text-3xl text-[var(--black)]">Campeonatos</h1>
+          <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Gestão de Competições da Federação Gaúcha de Basketball</p>
         </div>
         <div className="flex gap-3">
           <SimulationModalWrapper />
-          <Link href="/admin/championships/new">
-            <Button className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black px-8 h-12 rounded-xl shadow-lg shadow-orange-600/20 transition-all hover:scale-105 active:scale-95 text-[10px] uppercase tracking-widest">
-              <Plus className="w-5 h-5 mr-2" /> Novo Campeonato
-            </Button>
+          <Link href="/admin/championships/new" className="fgb-btn-primary flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Novo Campeonato
           </Link>
         </div>
       </div>
 
       {/* Grid Ativos */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {activeChampionships.map((c) => (
           <ChampionshipCard
             key={c.id}
@@ -76,16 +74,16 @@ export default async function AdminChampionshipsPage() {
         {/* Card Novo Campeonato */}
         <Link
           href="/admin/championships/new"
-          className="group block bg-[#141414] border border-dashed border-white/10 hover:border-[#FF6B00]/30 rounded-3xl p-6 transition-all flex flex-col items-center justify-center gap-4 min-h-[220px] hover:bg-[#FF6B00]/[0.02]"
+          className="group fgb-card border-dashed flex flex-col items-center justify-center gap-4 min-h-[200px] hover:border-[var(--verde)] transition-colors"
         >
-          <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-[#FF6B00]/10 transition-all">
-            <Plus className="w-6 h-6 text-slate-600 group-hover:text-[#FF6B00] transition-colors" />
+          <div className="w-12 h-12 rounded-xl bg-[var(--gray-l)] flex items-center justify-center group-hover:bg-[var(--verde)]/10 transition-all">
+            <Plus className="w-6 h-6 text-[var(--gray)] group-hover:text-[var(--verde)] transition-colors" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-black italic uppercase text-slate-500 group-hover:text-white transition-colors tracking-tight">
+            <p className="fgb-display text-sm text-[var(--gray)] group-hover:text-[var(--black)] transition-colors">
               Novo Campeonato
             </p>
-            <p className="text-[10px] text-slate-600 uppercase tracking-widest mt-1">
+            <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 10 }}>
               Criar e configurar
             </p>
           </div>
@@ -94,12 +92,12 @@ export default async function AdminChampionshipsPage() {
 
       {/* Seção de arquivados */}
       {archivedChampionships.length > 0 && (
-        <div className="mt-16 pt-16 border-t border-white/5">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 mb-6 flex items-center gap-3">
+        <div className="pt-8 border-t border-[var(--border)]">
+          <p className="fgb-label text-[var(--gray)] mb-5 flex items-center gap-3" style={{ fontSize: 10 }}>
             Arquivados ({archivedChampionships.length})
-            <span className="h-px bg-white/5 flex-1" />
+            <span className="h-px bg-[var(--border)] flex-1" />
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 opacity-40 hover:opacity-100 transition-opacity duration-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 opacity-50 hover:opacity-100 transition-opacity duration-700">
             {archivedChampionships.map((c) => (
               <ChampionshipCard
                 key={c.id}

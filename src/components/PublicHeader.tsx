@@ -110,7 +110,7 @@ export function PublicHeader() {
                 {item.children && dropdown === item.label && (
                   <div className="fgb-dropdown">
                     {item.children.map(c => (
-                      <Link key={c.href} href={c.href}>{c.label}</Link>
+                      <Link key={c.href} href={c.href} onClick={() => setDropdown(null)}>{c.label}</Link>
                     ))}
                   </div>
                 )}

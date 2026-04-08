@@ -29,6 +29,61 @@ export default async function HomePage() {
     },
   }).catch(() => [])
 
+  // Live / upcoming games today
+  const today = new Date()
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
+  const todayEnd = new Date(todayStart.getTime() + 86400000)
+  const liveGames = await prisma.game.findMany({
+    where: {
+      OR: [
+        { status: 'ONGOING' },
+        { status: 'SCHEDULED', dateTime: { gte: todayStart, lt: todayEnd } }
+      ]
+    },
+    orderBy: { dateTime: 'asc' },
+    take: 8,
+    include: {
+      homeTeam: { select: { name: true } },
+      awayTeam: { select: { name: true } },
+      category: { select: { name: true } },
+    },
+  }).catch(() => [])
+
+  // All unique categories across active championships for filter bar
+  const allCategories = await prisma.championshipCategory.findMany({
+    where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false } },
+    distinct: ['name'],
+    select: { name: true },
+    orderBy: { name: 'asc' },
+  }).catch(() => [])
+
+  // Featured championship (most active/ongoing)
+  const featuredChampionship = await prisma.championship.findFirst({
+    where: { status: 'ONGOING', isSimulation: false },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      categories: { select: { name: true } },
+      _count: {
+        select: {
+          registrations: { where: { status: 'CONFIRMED' } },
+          games: true,
+        }
+      }
+    },
+  }).catch(() => null) ?? await prisma.championship.findFirst({
+    where: { status: 'REGISTRATION_OPEN', isSimulation: false },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      categories: { select: { name: true } },
+      _count: {
+        select: {
+          registrations: { where: { status: 'CONFIRMED' } },
+          games: true,
+        }
+      }
+    },
+  }).catch(() => null)
+
   return (
     <>
       <PublicHeader />
@@ -97,6 +152,86 @@ export default async function HomePage() {
         {/* TRICOLOR HERO STRIP */}
         <div className="fgb-hero-tricolor" />
 
+        {/* ──────────────────────────────────────
+            BARRA DE JOGOS AO VIVO / HOJE (#4)
+        ────────────────────────────────────── */}
+        {liveGames.length > 0 && (
+          <div style={{ background: 'var(--black2)', borderBottom: '2px solid var(--red)' }}>
+            <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4 overflow-x-auto fgb-hide-scrollbar">
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--red)] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--red)]" />
+                </span>
+                <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 9, letterSpacing: '0.2em' }}>JOGOS DE HOJE</span>
+              </div>
+              <div className="h-4 w-px bg-white/10 flex-shrink-0" />
+              {liveGames.map((game, i) => (
+                <div key={game.id} className="flex items-center gap-3 flex-shrink-0 px-4 py-1.5 rounded-full" style={{ background: game.status === 'ONGOING' ? 'rgba(204,16,22,0.15)' : 'rgba(255,255,255,0.05)', border: game.status === 'ONGOING' ? '1px solid rgba(204,16,22,0.3)' : '1px solid rgba(255,255,255,0.08)' }}>
+                  {game.status === 'ONGOING' && (
+                    <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 8, letterSpacing: '0.15em' }}>● AO VIVO</span>
+                  )}
+                  <span className="fgb-display" style={{ fontSize: 11, color: '#fff', letterSpacing: '0.02em' }}>
+                    {game.homeTeam.name}
+                    {game.homeScore != null ? <span style={{ color: 'var(--yellow)', margin: '0 6px' }}>{game.homeScore} × {game.awayScore}</span> : <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 6px' }}>vs</span>}
+                    {game.awayTeam.name}
+                  </span>
+                  <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>{game.category.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ──────────────────────────────────────
+            DESTAQUE — CAMPEONATO PRINCIPAL (#6)
+        ────────────────────────────────────── */}
+        {featuredChampionship && (
+          <section style={{ background: 'var(--verde)', borderBottom: '4px solid var(--verde-dark)' }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">
+              <div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="fgb-badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none' }}>
+                    {formatChampionshipStatus(featuredChampionship.status)}
+                  </span>
+                  <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.6)', fontSize: 9, letterSpacing: '0.2em' }}>EM DESTAQUE · 2026</span>
+                </div>
+                <h2 className="fgb-display" style={{ fontSize: 'clamp(1.75rem, 4vw, 3rem)', color: '#fff', lineHeight: 1.05, marginBottom: 12 }}>
+                  {featuredChampionship.name}
+                </h2>
+                <div className="flex flex-wrap gap-2 mb-4">
+                  {featuredChampionship.categories.map((cat) => (
+                    <span key={cat.name} className="fgb-badge" style={{ background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)', border: 'none', fontSize: 9 }}>
+                      {cat.name}
+                    </span>
+                  ))}
+                </div>
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="fgb-display" style={{ fontSize: 28, color: 'var(--yellow)', lineHeight: 1 }}>{featuredChampionship._count.registrations}</p>
+                    <p className="fgb-label" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9, marginTop: 2 }}>EQUIPES</p>
+                  </div>
+                  <div>
+                    <p className="fgb-display" style={{ fontSize: 28, color: 'var(--yellow)', lineHeight: 1 }}>{featuredChampionship._count.games}</p>
+                    <p className="fgb-label" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9, marginTop: 2 }}>JOGOS</p>
+                  </div>
+                  <div>
+                    <p className="fgb-display" style={{ fontSize: 28, color: 'var(--yellow)', lineHeight: 1 }}>{featuredChampionship.categories.length}</p>
+                    <p className="fgb-label" style={{ color: 'rgba(255,255,255,0.55)', fontSize: 9, marginTop: 2 }}>CATEGORIAS</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3 items-start md:items-end">
+                <Link href={`/campeonatos/${featuredChampionship.id}`} className="fgb-btn-primary" style={{ background: 'var(--yellow)', color: 'var(--black)', border: 'none', fontWeight: 900 }}>
+                  Ver Campeonato →
+                </Link>
+                <Link href="/campeonatos" className="fgb-btn-secondary" style={{ color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.2)' }}>
+                  Todos os Campeonatos
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* ──────────────────────────────────────
             CAMPEONATOS ATIVOS
@@ -112,6 +247,20 @@ export default async function HomePage() {
               </div>
               <Link href="/campeonatos" className="fgb-section-link">Ver todos →</Link>
             </div>
+
+            {/* Filtro por Categoria (#5) */}
+            {allCategories.length > 0 && (
+              <div className="flex items-center gap-2 overflow-x-auto fgb-hide-scrollbar mb-6 pb-1">
+                <Link href="/campeonatos" className="fgb-badge fgb-badge-verde flex-shrink-0">
+                  Todos
+                </Link>
+                {allCategories.map((cat) => (
+                  <Link key={cat.name} href={`/campeonatos?categoria=${encodeURIComponent(cat.name)}`} className="fgb-badge fgb-badge-outline flex-shrink-0 hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors">
+                    {cat.name}
+                  </Link>
+                ))}
+              </div>
+            )}
 
             {championships.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

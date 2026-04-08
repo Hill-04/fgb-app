@@ -41,7 +41,7 @@ const STEPS = [
 function OptionButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${active ? 'bg-[#FF6B00]/15 border-[#FF6B00]/50 text-[#FF6B00]' : 'bg-white/[0.02] border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
+      className={`px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${active ? 'bg-[var(--amarelo)]/15 border-[var(--amarelo)]/50 text-[var(--amarelo)]' : 'bg-white/[0.02] border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
       {children}
     </button>
   )
@@ -55,7 +55,7 @@ function Toggle({ checked, onCheckedChange, label }: { checked: boolean; onCheck
   return (
     <label className="flex items-center gap-3 cursor-pointer select-none">
       <button type="button" onClick={() => onCheckedChange(!checked)}
-        className={`relative w-10 h-5 rounded-full border transition-all ${checked ? 'bg-[#FF6B00] border-[#FF6B00]' : 'bg-white/5 border-white/10'}`}>
+        className={`relative w-10 h-5 rounded-full border transition-all ${checked ? 'bg-[var(--amarelo)] border-[var(--amarelo)]' : 'bg-white/5 border-white/10'}`}>
         <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
       <span className="text-sm text-slate-300 font-medium">{label}</span>
@@ -123,7 +123,7 @@ export default function NewChampionshipPage() {
         <SectionLabel>Nome da Competição</SectionLabel>
         <Input value={form.name} onChange={e => setField('name', e.target.value)}
           placeholder="Ex: Estadual 2026 Masculino"
-          className="bg-white/[0.03] border-white/10 h-13 rounded-xl focus:border-[#FF6B00] text-white text-base" />
+          className="bg-white/[0.03] border-white/10 h-13 rounded-xl focus:border-[var(--amarelo)] text-white text-base" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -165,7 +165,7 @@ export default function NewChampionshipPage() {
             const active = form.categories.includes(cat.code)
             return (
               <button type="button" key={cat.code} onClick={() => toggleCategory(cat.code)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${active ? 'bg-[#FF6B00]/15 border-[#FF6B00]/50 text-[#FF6B00]' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/15'}`}>
+                className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${active ? 'bg-[var(--amarelo)]/15 border-[var(--amarelo)]/50 text-[var(--amarelo)]' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/15'}`}>
                 {active && <Check className="w-3 h-3" />}
                 <span className="text-[10px] font-black tracking-tight">{cat.label}</span>
               </button>
@@ -195,10 +195,10 @@ export default function NewChampionshipPage() {
             { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguidos por mata-mata final.' },
           ].map(o => (
             <button key={o.value} type="button" onClick={() => setField('format', o.value)}
-              className={`p-4 rounded-2xl border text-left transition-all ${form.format === o.value ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+              className={`p-4 rounded-2xl border text-left transition-all ${form.format === o.value ? 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
               <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-black uppercase tracking-widest ${form.format === o.value ? 'text-[#FF6B00]' : 'text-slate-300'}`}>{o.label}</span>
-                {form.format === o.value && <Check className="w-4 h-4 text-[#FF6B00]" />}
+                <span className={`text-xs font-black uppercase tracking-widest ${form.format === o.value ? 'text-[var(--amarelo)]' : 'text-slate-300'}`}>{o.label}</span>
+                {form.format === o.value && <Check className="w-4 h-4 text-[var(--amarelo)]" />}
               </div>
               <p className="text-[10px] text-slate-500 font-medium leading-tight">{o.desc}</p>
             </button>
@@ -270,8 +270,8 @@ export default function NewChampionshipPage() {
       <Card className="bg-[#0A0A0A] border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
         <div className="flex border-b border-white/5">
           {STEPS.map((s, i) => (
-            <div key={i} className={`flex-1 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[#FF6B00] bg-[#FF6B00]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
-              <p className={`text-[8px] font-black uppercase tracking-widest ${i === step ? 'text-[#FF6B00]' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>{s.title}</p>
+            <div key={i} className={`flex-1 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[var(--amarelo)] bg-[var(--amarelo)]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
+              <p className={`text-[8px] font-black uppercase tracking-widest ${i === step ? 'text-[var(--amarelo)]' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>{s.title}</p>
             </div>
           ))}
         </div>
@@ -291,7 +291,7 @@ export default function NewChampionshipPage() {
             <Button disabled={step === 0} variant="ghost" onClick={prevStep} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">
               Voltar
             </Button>
-            <Button onClick={step < STEPS.length - 1 ? nextStep : handleSubmit} disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20">
+            <Button onClick={step < STEPS.length - 1 ? nextStep : handleSubmit} disabled={submitLoading} className="flex-1 bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20">
               {submitLoading ? 'Salvando...' : step < STEPS.length - 1 ? 'Próximo' : 'Criar Campeonato'}
             </Button>
           </div>

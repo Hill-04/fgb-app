@@ -37,6 +37,9 @@
   /* Font */
   --font-display: 'Barlow Condensed', sans-serif;
   --font-body:    'Barlow', sans-serif;
+
+  /* Alias (retrocompatibilidade) */
+  --amarelo: #F5C200;
 }
 
 /* ── RESET ────────────────────────────────────────────────── */
@@ -503,6 +506,61 @@ body {
 .admin-card-yellow { border-top: 3px solid var(--yellow); }
 .admin-card-orange { border-top: 3px solid var(--orange); }
 
+/* Solid FGB stat blocks — usados no dashboard admin */
+.fgb-stat-block {
+  border-radius: 12px;
+  padding: 24px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.fgb-stat-block::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+  pointer-events: none;
+}
+.fgb-stat-block-verde  { background: var(--verde);  color: #fff; }
+.fgb-stat-block-red    { background: var(--red);    color: #fff; }
+.fgb-stat-block-yellow { background: var(--yellow); color: var(--black); }
+.fgb-stat-block-orange { background: var(--orange); color: #fff; }
+.fgb-stat-block-dark   { background: var(--black2); color: #fff; }
+
+.fgb-stat-block-num {
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.fgb-stat-block-label {
+  font-family: var(--font-display);
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  opacity: 0.8;
+}
+
+/* FGB tricolor top banner usado no admin header */
+.fgb-tricolor-banner {
+  height: 4px;
+  background: linear-gradient(to right, var(--verde) 33%, var(--yellow) 33% 66%, var(--red) 66%);
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Pill badges com fundo sólido — usados em modais e cards */
+.fgb-pill-verde  { background: var(--verde-light);  color: var(--verde);  border: 1px solid rgba(27,115,64,0.2);  border-radius: 999px; padding: 4px 12px; font-family: var(--font-display); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+.fgb-pill-red    { background: var(--red-light);    color: var(--red);    border: 1px solid rgba(204,16,22,0.2);   border-radius: 999px; padding: 4px 12px; font-family: var(--font-display); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+.fgb-pill-yellow { background: var(--yellow-light); color: var(--yellow-dark); border: 1px solid rgba(245,194,0,0.3); border-radius: 999px; padding: 4px 12px; font-family: var(--font-display); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+.fgb-pill-orange { background: var(--orange-light); color: var(--orange-dark); border: 1px solid rgba(255,107,0,0.2);  border-radius: 999px; padding: 4px 12px; font-family: var(--font-display); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; }
+
 /* ── SECTION LAYOUT ─────────────────────────────────────── */
 .fgb-section { padding: 44px 24px; }
 .fgb-section-alt { background: var(--gray-l); }
@@ -688,3 +746,18 @@ body {
 .fgb-delay-2 { animation-delay:0.2s; opacity:0; }
 .fgb-delay-3 { animation-delay:0.3s; opacity:0; }
 .fgb-delay-4 { animation-delay:0.4s; opacity:0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fgb-anim-up,
+  .fgb-anim-in {
+    animation: none;
+    opacity: 1;
+  }
+  .fgb-delay-1,
+  .fgb-delay-2,
+  .fgb-delay-3,
+  .fgb-delay-4 {
+    animation-delay: 0s;
+    opacity: 1;
+  }
+}

@@ -225,7 +225,7 @@ export function SimulationModal({ isOpen, onClose, onComplete }: { isOpen: boole
                            "text-xs font-black uppercase tracking-widest",
                            s.status === 'loading' ? "text-white" : "text-slate-500"
                          )}>{s.label}</span>
-                         {s.status === 'loading' && <span className="text-[#FF6B00] text-[8px] font-black animate-pulse uppercase">Processando...</span>}
+                         {s.status === 'loading' && <span className="text-[var(--amarelo)] text-[8px] font-black animate-pulse uppercase">Processando...</span>}
                        </div>
                        {s.detail && <p className="text-[10px] text-slate-600 font-medium mt-0.5">{s.detail}</p>}
                     </div>

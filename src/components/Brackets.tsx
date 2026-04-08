@@ -29,30 +29,30 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
   return (
     <div className="relative group perspective-1000">
       <div className={cn(
-        "bg-[#111] border rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 w-64 transform-gpu group-hover:-translate-y-1",
+        "bg-white border rounded-2xl overflow-hidden shadow-sm transition-all duration-500 w-64 transform-gpu group-hover:-translate-y-1",
         isFinal 
-          ? "border-orange-500/40 shadow-orange-500/20 ring-1 ring-orange-500/20" 
-          : "border-white/5 hover:border-white/20"
+          ? "border-[var(--amarelo)] shadow-[var(--amarelo)]/10 ring-1 ring-[var(--amarelo)]/20" 
+          : "border-[var(--border)] hover:border-[var(--black)]"
       )}>
         {/* Home Team */}
         <div className={cn(
-          "flex items-center justify-between p-3 border-b border-white/[0.03] transition-colors relative",
-          isHomeWinner ? "bg-orange-500/10" : ""
+          "flex items-center justify-between p-3 border-b border-[var(--border)] transition-colors relative",
+          isHomeWinner ? "bg-[var(--yellow)]/20" : ""
         )}>
           {isHomeWinner && (
-             <div className="absolute left-0 top-0 w-1 h-full bg-orange-500" />
+             <div className="absolute left-0 top-0 w-1 h-full bg-[var(--amarelo)]" />
           )}
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+            <div className="w-7 h-7 rounded-xl bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
                {game.homeTeam.logoUrl ? (
                  <img src={game.homeTeam.logoUrl} alt={game.homeTeam.name} className="w-full h-full object-cover p-0.5" />
                ) : (
-                 <Users className="w-3.5 h-3.5 text-slate-700" />
+                 <Users className="w-3.5 h-3.5 text-[var(--gray)]" />
                )}
             </div>
             <span className={cn(
               "text-[11px] font-black uppercase tracking-tight truncate",
-              isHomeWinner ? "text-white" : isScheduled ? "text-slate-400" : "text-slate-500"
+              isHomeWinner ? "text-[var(--black)]" : isScheduled ? "text-slate-400" : "text-[var(--gray)]"
             )}>
               {game.homeTeam.name}
             </span>
@@ -60,7 +60,7 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
           {isFinished && (
             <span className={cn(
               "text-sm font-black tabular-nums font-mono px-2", 
-              isHomeWinner ? "text-[#FF6B00]" : "text-slate-600"
+              isHomeWinner ? "text-[var(--amarelo)] drop-shadow-sm" : "text-[var(--gray)]"
             )}>
               {homeScore}
             </span>
@@ -70,22 +70,22 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
         {/* Away Team */}
         <div className={cn(
           "flex items-center justify-between p-3 transition-colors relative",
-          isAwayWinner ? "bg-orange-500/10" : ""
+          isAwayWinner ? "bg-[var(--yellow)]/20" : ""
         )}>
           {isAwayWinner && (
-             <div className="absolute left-0 top-0 w-1 h-full bg-orange-500" />
+             <div className="absolute left-0 top-0 w-1 h-full bg-[var(--amarelo)]" />
           )}
           <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
+            <div className="w-7 h-7 rounded-xl bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center overflow-hidden shrink-0 shadow-inner">
                {game.awayTeam.logoUrl ? (
                  <img src={game.awayTeam.logoUrl} alt={game.awayTeam.name} className="w-full h-full object-cover p-0.5" />
                ) : (
-                 <Users className="w-3.5 h-3.5 text-slate-700" />
+                 <Users className="w-3.5 h-3.5 text-[var(--gray)]" />
                )}
             </div>
             <span className={cn(
               "text-[11px] font-black uppercase tracking-tight truncate",
-              isAwayWinner ? "text-white" : isScheduled ? "text-slate-400" : "text-slate-500"
+              isAwayWinner ? "text-[var(--black)]" : isScheduled ? "text-slate-400" : "text-[var(--gray)]"
             )}>
               {game.awayTeam.name}
             </span>
@@ -93,7 +93,7 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
           {isFinished && (
             <span className={cn(
               "text-sm font-black tabular-nums font-mono px-2", 
-              isAwayWinner ? "text-[#FF6B00]" : "text-slate-600"
+              isAwayWinner ? "text-[var(--amarelo)] drop-shadow-sm" : "text-[var(--gray)]"
             )}>
               {awayScore}
             </span>
@@ -101,15 +101,15 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
         </div>
 
         {isScheduled && (
-          <div className="bg-white/[0.02] py-1 text-center border-t border-white/[0.03]">
-             <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.2em]">Live Tracking</span>
+          <div className="bg-[var(--gray-l)] py-1 text-center border-t border-[var(--border)]">
+             <span className="text-[8px] font-black text-[var(--gray)] uppercase tracking-[0.2em]">Agendado</span>
           </div>
         )}
       </div>
       
       {!isFinal && (
         <div className="absolute top-1/2 -right-12 w-12 flex items-center">
-           <div className="h-px flex-1 bg-gradient-to-r from-white/20 to-transparent" />
+           <div className="h-px flex-1 bg-gradient-to-r from-[var(--border)] to-transparent" />
         </div>
       )}
     </div>
@@ -118,9 +118,9 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
 
 export function Brackets({ games, className }: Props) {
   if (!games || games.length === 0) return (
-    <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-white/5 rounded-[40px] bg-white/[0.01]">
-       <Trophy className="w-12 h-12 text-slate-800 mb-4" />
-       <p className="text-xs font-black uppercase tracking-widest text-slate-600">Aguardando definição da fase final</p>
+    <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-[var(--border)] rounded-[40px] bg-[var(--gray-l)]">
+       <Trophy className="w-12 h-12 text-[var(--gray)] mb-4" />
+       <p className="text-xs font-black uppercase tracking-widest text-[var(--black)] opacity-50">Aguardando definição da fase final</p>
     </div>
   )
 
@@ -149,8 +149,8 @@ export function Brackets({ games, className }: Props) {
         {sortedPhases.map((phaseNum, phaseIdx) => (
           <div key={phaseNum} className="flex flex-col gap-16 relative">
              <div className="flex items-center gap-3 mb-4 px-4">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#FF6B00] shadow-[0_0_10px_rgba(255,107,0,0.5)]" />
-                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/50 whitespace-nowrap">
+                <div className="w-1.5 h-1.5 rounded-full bg-[var(--amarelo)] shadow-[0_0_10px_rgba(245,194,0,0.5)]" />
+                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)] whitespace-nowrap">
                    {getPhaseName(phaseNum, sortedPhases.length)}
                 </h3>
              </div>
@@ -169,9 +169,9 @@ export function Brackets({ games, className }: Props) {
              </div>
 
              {phaseIdx === sortedPhases.length - 1 && (
-               <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                 <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/30 p-4 rounded-full shadow-[0_0_30px_rgba(255,107,0,0.1)]">
-                    <Trophy className="w-8 h-8 text-[#FF6B00] drop-shadow-[0_0_10px_rgba(255,107,0,0.5)]" />
+               <div className="absolute -top-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 z-10">
+                 <div className="bg-white border border-[var(--amarelo)]/30 p-3 rounded-full shadow-md">
+                    <Trophy className="w-6 h-6 text-[var(--amarelo)]" />
                  </div>
                </div>
              )}
@@ -180,7 +180,7 @@ export function Brackets({ games, className }: Props) {
       </div>
 
       {/* Background Decorative Element */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500/5 blur-[120px] rounded-full pointer-events-none -z-10" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--yellow)]/20 blur-[120px] rounded-full pointer-events-none -z-10" />
     </div>
   )
 }

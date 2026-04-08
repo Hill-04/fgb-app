@@ -2,20 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/Badge'
-import { Label } from '@/components/ui/label'
-import { 
-  Trophy, 
-  Calendar, 
-  MapPin, 
-  LayoutGrid, 
-  List, 
-  Filter,
-  Users,
-  Clock
-} from 'lucide-react'
+import { Calendar, LayoutGrid, List, Filter, Clock, MapPin, Trophy, CheckCircle2 } from 'lucide-react'
+import { RegisterResultButton } from '@/app/admin/championships/[id]/matches/RegisterResultButton'
+import { GenerateSumulaButton } from '@/app/admin/championships/[id]/matches/GenerateSumulaButton'
 
 type Game = {
   id: string
@@ -32,15 +21,15 @@ type Game = {
 type Championship = {
   id: string
   name: string
-  categories: { id: string, name: string }[]
+  categories: { id: string; name: string }[]
 }
 
-const STATUS_OPTIONS = [
-  { value: 'SCHEDULED', label: 'Agendado', color: 'bg-gray-100 text-gray-600 border-gray-200' },
-  { value: 'IN_PROGRESS', label: 'Em Andamento', color: 'bg-yellow-50 text-yellow-700 border-yellow-200' },
-  { value: 'FINISHED', label: 'Encerrado', color: 'bg-green-50 text-green-700 border-green-200' },
-  { value: 'CANCELLED', label: 'Cancelado', color: 'bg-red-50 text-red-700 border-red-200' },
-]
+const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string; border: string }> = {
+  SCHEDULED:   { label: 'Agendado',    bg: 'bg-[var(--gray-l)]',       text: 'text-[var(--gray)]',  border: 'border-[var(--border)]' },
+  IN_PROGRESS: { label: 'Em Andamento',bg: 'bg-[var(--yellow)]/20',    text: 'text-[var(--black)]', border: 'border-[var(--yellow)]/40' },
+  FINISHED:    { label: 'Encerrado',   bg: 'bg-[var(--verde)]/10',     text: 'text-[var(--verde)]', border: 'border-[var(--verde)]/20' },
+  CANCELLED:   { label: 'Cancelado',   bg: 'bg-[var(--red)]/10',       text: 'text-[var(--red)]',   border: 'border-[var(--red)]/20' },
+}
 
 export default function TeamMatchesPage() {
   const { data: session } = useSession()
@@ -49,8 +38,6 @@ export default function TeamMatchesPage() {
   const [games, setGames] = useState<Game[]>([])
   const [championships, setChampionships] = useState<Championship[]>([])
   const [loading, setLoading] = useState(true)
-  
-  // Filters
   const [selectedChamp, setSelectedChamp] = useState('')
   const [selectedCat, setSelectedCat] = useState('')
   const [onlyMyTeam, setOnlyMyTeam] = useState(true)
@@ -67,7 +54,7 @@ export default function TeamMatchesPage() {
       if (selectedChamp) url.searchParams.set('championshipId', selectedChamp)
       if (selectedCat) url.searchParams.set('categoryId', selectedCat)
       if (onlyMyTeam) url.searchParams.set('teamId', teamId)
-      
+
       const gameRes = await fetch(url.toString())
       if (gameRes.ok) setGames(await gameRes.json())
     } catch (err) {
@@ -77,74 +64,110 @@ export default function TeamMatchesPage() {
     }
   }, [selectedChamp, selectedCat, onlyMyTeam, teamId])
 
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+  useEffect(() => { fetchData() }, [fetchData])
+
+  const scheduled = games.filter(g => g.status === 'SCHEDULED' || g.status === 'IN_PROGRESS').length
+  const finished  = games.filter(g => g.status === 'FINISHED').length
+
+  const gamesByDate = games.reduce((acc, game) => {
+    const dateKey = new Date(game.dateTime).toLocaleDateString('pt-BR', {
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+      timeZone: 'America/Sao_Paulo'
+    })
+    if (!acc[dateKey]) acc[dateKey] = []
+    acc[dateKey].push(game)
+    return acc
+  }, {} as Record<string, typeof games>)
 
   return (
-    <div className="space-y-8 max-w-[1400px] mx-auto pb-20 font-sans">
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-black text-[var(--black)] uppercase tracking-tight mb-2 italic">Jogos e Resultados</h1>
-          <p className="text-[var(--gray)] font-medium uppercase tracking-widest text-[10px]">Agenda completa e histórico de partidas</p>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Minha Equipe</span>
+            <span className="fgb-badge fgb-badge-verde">JOGOS</span>
+          </div>
+          <h1 className="fgb-display text-3xl text-[var(--black)]">Jogos e Resultados</h1>
+          <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>
+            Agenda completa e histórico de partidas da sua equipe
+          </p>
         </div>
-        
-        <div className="flex items-center gap-2 bg-gray-50 p-1 rounded-xl border border-[var(--border)]">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setViewMode('CARD')}
-            className={`h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${viewMode === 'CARD' ? 'bg-[var(--amarelo)] text-[var(--black)]' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <LayoutGrid className="w-3.5 h-3.5 mr-2" /> Cards
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setViewMode('TABLE')}
-            className={`h-9 px-4 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${viewMode === 'TABLE' ? 'bg-[var(--amarelo)] text-[var(--black)]' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            <List className="w-3.5 h-3.5 mr-2" /> Tabela
-          </Button>
+
+        {/* View toggle */}
+        <div className="flex items-center bg-[var(--gray-l)] border border-[var(--border)] p-1 rounded-xl self-start md:self-auto">
+          {(['CARD', 'TABLE'] as const).map(mode => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`flex items-center gap-1.5 h-8 px-4 rounded-lg fgb-label transition-all ${
+                viewMode === mode
+                  ? 'bg-white border border-[var(--border)] text-[var(--black)] shadow-sm'
+                  : 'text-[var(--gray)] hover:text-[var(--black)]'
+              }`}
+              style={{ fontSize: 9 }}
+            >
+              {mode === 'CARD' ? <><LayoutGrid className="w-3 h-3" /> Cards</> : <><List className="w-3 h-3" /> Tabela</>}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats strip */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="fgb-card bg-white p-4 border-t-[3px] border-t-[var(--verde)]">
+          <p className="fgb-display text-3xl text-[var(--black)] leading-none">{games.length}</p>
+          <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 9 }}>Total de Jogos</p>
+        </div>
+        <div className="fgb-card bg-white p-4 border-t-[3px] border-t-[var(--yellow)]">
+          <p className="fgb-display text-3xl text-[var(--black)] leading-none">{scheduled}</p>
+          <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 9 }}>Agendados</p>
+        </div>
+        <div className="fgb-card bg-white p-4 border-t-[3px] border-t-[var(--verde)]">
+          <p className="fgb-display text-3xl text-[var(--verde)] leading-none">{finished}</p>
+          <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 9 }}>Realizados</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-3xl border border-[var(--border)] space-y-6 shadow-sm">
-        <div className="flex items-center justify-between gap-2 mb-2">
+      <div className="fgb-card bg-white p-6 space-y-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-orange-500" />
-            <span className="text-[10px] uppercase font-black text-[var(--black)] tracking-[0.2em]">Filtros</span>
+            <Filter className="w-4 h-4 text-[var(--gray)]" />
+            <span className="fgb-label text-[var(--black)]" style={{ fontSize: 9 }}>Filtros</span>
           </div>
-          <button 
+          <button
             onClick={() => setOnlyMyTeam(!onlyMyTeam)}
-            className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all shadow-sm ${onlyMyTeam ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-500 hover:text-gray-800'}`}
+            className={`fgb-label px-3 py-1.5 rounded-full border transition-all ${
+              onlyMyTeam
+                ? 'bg-[var(--verde)]/10 border-[var(--verde)]/30 text-[var(--verde)]'
+                : 'bg-[var(--gray-l)] border-[var(--border)] text-[var(--gray)]'
+            }`}
+            style={{ fontSize: 9 }}
           >
-            {onlyMyTeam ? 'Apenas minha equipe' : 'Todas as equipes'}
+            {onlyMyTeam ? '✓ Apenas minha equipe' : 'Todas as equipes'}
           </button>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <Label className="text-[10px] uppercase font-bold text-[var(--gray)] tracking-widest ml-1">Campeonato</Label>
-            <select 
-              value={selectedChamp} 
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Campeonato</label>
+            <select
+              value={selectedChamp}
               onChange={e => { setSelectedChamp(e.target.value); setSelectedCat('') }}
-              className="w-full bg-gray-50 border-[var(--border)] border h-12 rounded-2xl px-4 text-sm text-[var(--black)] focus:outline-none focus:border-orange-300 transition-colors"
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-11 rounded-xl px-3 text-sm font-sans text-[var(--black)] focus:outline-none focus:border-[var(--verde)] transition-colors"
             >
               <option value="">Todos os Campeonatos</option>
               {championships.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           </div>
-
-          <div className="space-y-2">
-            <Label className="text-[10px] uppercase font-bold text-[var(--gray)] tracking-widest ml-1">Categoria</Label>
-            <select 
-              value={selectedCat} 
+          <div className="space-y-1.5">
+            <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Categoria</label>
+            <select
+              value={selectedCat}
               onChange={e => setSelectedCat(e.target.value)}
               disabled={!selectedChamp}
-              className="w-full bg-gray-50 border-[var(--border)] border h-12 rounded-2xl px-4 text-sm text-[var(--black)] focus:outline-none focus:border-orange-300 transition-colors disabled:opacity-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-11 rounded-xl px-3 text-sm font-sans text-[var(--black)] focus:outline-none focus:border-[var(--verde)] transition-colors disabled:opacity-50"
             >
               <option value="">Todas as Categorias</option>
               {championships.find(c => c.id === selectedChamp)?.categories.map(cat => (
@@ -157,109 +180,161 @@ export default function TeamMatchesPage() {
 
       {/* Content */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1,2,3,4,5,6].map(i => <div key={i} className="bg-gray-50 border border-[var(--border)] h-56 animate-pulse rounded-[32px]" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="fgb-card bg-white h-52 animate-pulse" />
+          ))}
         </div>
       ) : games.length === 0 ? (
-        <div className="py-32 text-center bg-gray-50 rounded-[40px] border border-dashed border-gray-300">
-          <Calendar className="w-16 h-16 mx-auto mb-6 text-gray-400" />
-          <h3 className="text-xl font-bold text-gray-800 mb-2 uppercase tracking-tight italic">Nenhuma partida encontrada</h3>
-          <p className="text-[var(--gray)] font-medium max-w-xs mx-auto text-sm">Não há jogos agendados com os filtros atuais.</p>
+        <div className="fgb-card bg-white p-20 text-center">
+          <Calendar className="w-12 h-12 text-[var(--gray)] mx-auto mb-4 opacity-30" />
+          <h3 className="fgb-display text-lg text-[var(--black)] mb-2">Nenhuma partida encontrada</h3>
+          <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+            Não há jogos agendados com os filtros atuais.
+          </p>
         </div>
       ) : viewMode === 'CARD' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {games.map(game => (
-            <Card key={game.id} className="fgb-card bg-white border border-[var(--border)] rounded-[32px] overflow-hidden group hover:border-orange-200 transition-all duration-300 shadow-sm hover:shadow-md">
-               <CardHeader className="p-6 pb-2 border-b border-[var(--border)] bg-gray-50">
-                  <div className="flex justify-between items-center">
-                    <Badge variant="outline" className="text-[9px] uppercase font-black tracking-tight text-orange-600 border-orange-200 bg-orange-50">{game.category.name}</Badge>
-                    <Trophy className="w-4 h-4 text-[var(--gray)] opacity-50" />
-                  </div>
-               </CardHeader>
-               <CardContent className="p-8">
-                  <div className="flex items-center justify-between gap-6 mb-8 relative">
-                     <div className="flex-1 text-center">
-                        <div className="text-[9px] font-black uppercase text-[var(--gray)] mb-2 tracking-widest">CASA</div>
-                        <div className="font-display font-black text-[var(--black)] text-base uppercase leading-tight min-h-[3rem] flex items-center justify-center italic tracking-tighter">{game.homeTeam.name}</div>
-                     </div>
-                     
-                     <div className="flex flex-col items-center">
-                        <div className="text-4xl font-display font-black italic text-[var(--black)] mb-1">
-                           {game.status === 'SCHEDULED' ? 'vs' : `${game.homeScore} — ${game.awayScore}`}
-                        </div>
-                     </div>
+        <div className="space-y-10">
+          {Object.entries(gamesByDate).map(([date, dayGames]) => (
+            <div key={date} className="space-y-4">
+              <div className="flex items-center gap-3 py-2 sticky top-[72px] bg-[var(--background)] z-10">
+                <div className="h-px flex-1 bg-[var(--border)]" />
+                <span className="text-[10px] font-black font-sans uppercase tracking-widest text-[var(--black)] px-4 py-1.5 bg-[var(--yellow)] border border-[var(--orange-dark)]/20 rounded-full shadow-sm">
+                  {date}
+                </span>
+                <div className="h-px flex-1 bg-[var(--border)]" />
+              </div>
 
-                     <div className="flex-1 text-center">
-                        <div className="text-[9px] font-black uppercase text-[var(--gray)] mb-2 tracking-widest">FORA</div>
-                        <div className="font-display font-black text-[var(--black)] text-base uppercase leading-tight min-h-[3rem] flex items-center justify-center italic tracking-tighter">{game.awayTeam.name}</div>
-                     </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 pt-6 border-t border-[var(--border)]">
-                     <div className="flex flex-col gap-1.5">
-                        <span className="text-[8px] font-black text-[var(--gray)] uppercase tracking-widest">Data & Hora</span>
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-800 uppercase">
-                          <Clock className="w-3.5 h-3.5 text-orange-500" />
-                          {new Date(game.dateTime).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} • {new Date(game.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              <div className="grid gap-3 font-sans">
+                {dayGames.map(game => {
+                  const st = STATUS_CONFIG[game.status] ?? STATUS_CONFIG.SCHEDULED
+                  const isFinished = game.status === 'FINISHED'
+                  return (
+                    <div key={game.id} className="fgb-card bg-white p-5 flex items-center gap-6 hover:border-[var(--black)] transition-all group shadow-sm">
+                      {/* Horário */}
+                      <div className="text-center flex-shrink-0 w-16 group-hover:scale-105 transition-transform">
+                        <p className="text-base font-black text-[var(--black)]">
+                          {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
+                            hour: '2-digit', minute: '2-digit',
+                            timeZone: 'America/Sao_Paulo'
+                          })}
+                        </p>
+                        <span className={`text-[8px] font-black uppercase tracking-widest mt-1 inline-block px-2 py-0.5 rounded-full border ${st.bg} ${st.text} ${st.border}`}>
+                          {st.label}
+                        </span>
+                      </div>
+
+                      {/* Divisor */}
+                      <div className="w-px h-12 bg-[var(--border)] hidden md:block" />
+
+                      {/* Confronto */}
+                      <div className="flex-1 flex items-center gap-4 min-w-0">
+                        {/* Mandante */}
+                        <div className="flex items-center gap-3 flex-1 min-w-0 justify-end">
+                          <span className="text-sm font-black uppercase text-[var(--black)] truncate text-right">
+                            {game.homeTeam.name}
+                          </span>
                         </div>
-                     </div>
-                     <div className="flex flex-col gap-1.5 text-right">
-                        <span className="text-[8px] font-black text-[var(--gray)] uppercase tracking-widest">Localização</span>
-                        <div className="flex items-center justify-end gap-2 text-[10px] font-bold text-gray-800 uppercase">
-                          <span className="truncate max-w-[120px]">{game.location}</span>
-                          <MapPin className="w-3.5 h-3.5 text-orange-500" />
+
+                        {/* Score / VS */}
+                        <div className="flex-shrink-0 w-24 flex justify-center">
+                          {isFinished ? (
+                            <div className="flex items-center gap-2 bg-[var(--gray-l)] px-3 py-1 rounded-xl border border-[var(--border)]">
+                              <span className="text-xl font-black text-[var(--black)] tabular-nums">{game.homeScore}</span>
+                              <span className="text-[var(--gray)] font-black text-xs">×</span>
+                              <span className="text-xl font-black text-[var(--black)] tabular-nums">{game.awayScore}</span>
+                            </div>
+                          ) : (
+                            <div className="px-3 py-1 rounded-full bg-[var(--gray-l)] border border-[var(--border)]">
+                               <span className="text-[10px] font-black italic text-[var(--gray)] uppercase">vs</span>
+                            </div>
+                          )}
                         </div>
-                     </div>
-                  </div>
-               </CardContent>
-               <div className={`py-3 px-6 text-center text-[10px] font-black uppercase tracking-[0.2em] border-t border-[var(--border)] ${STATUS_OPTIONS.find(o => o.value === game.status)?.color}`}>
-                  {STATUS_OPTIONS.find(o => o.value === game.status)?.label}
-               </div>
-            </Card>
+
+                        {/* Visitante */}
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <span className="text-sm font-black uppercase text-[var(--black)] truncate">
+                            {game.awayTeam.name}
+                          </span>
+                        </div>
+                      </div>
+
+                        {/* Divisor */}
+                        <div className="w-px h-12 bg-[var(--border)] hidden md:block" />
+
+                        {/* Categoria + Local + Ações */}
+                        <div className="hidden md:flex flex-col items-end justify-center gap-1.5 flex-shrink-0 w-32">
+                          <span className="text-[8px] font-black uppercase tracking-widest text-[var(--black)] bg-[var(--yellow)]/30 border border-[var(--amarelo)]/20 px-2 py-0.5 rounded-full mb-1">
+                            {game.category.name}
+                          </span>
+                          
+                          {isFinished ? (
+                            <div className="flex flex-col gap-2 items-end">
+                              <span className="text-[8px] font-black uppercase tracking-widest text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded-full flex items-center gap-1">
+                                <CheckCircle2 className="w-2 h-2" /> Encerrado
+                              </span>
+                              <GenerateSumulaButton gameId={game.id} />
+                            </div>
+                          ) : (
+                            <div className="flex flex-col gap-2 items-end">
+                              <RegisterResultButton gameId={game.id} />
+                              <GenerateSumulaButton gameId={game.id} />
+                            </div>
+                          )}
+                        </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           ))}
         </div>
       ) : (
         /* TABLE VIEW */
-        <div className="bg-white rounded-[32px] border border-[var(--border)] overflow-hidden shadow-sm">
+        <div className="fgb-card bg-white overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead className="bg-gray-50 border-b border-[var(--border)]">
-                <tr>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Status</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Data</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Categoria</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-widest text-[var(--gray)] text-center">Confronto</th>
-                  <th className="p-6 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Local</th>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-[var(--border)] bg-[var(--gray-l)]">
+                  {['Status', 'Data', 'Categoria', 'Confronto', 'Local'].map(h => (
+                    <th key={h} className="px-5 py-3 fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border)]">
-                {games.map(game => (
-                  <tr key={game.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="p-6">
-                      <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${STATUS_OPTIONS.find(o => o.value === game.status)?.color}`}>
-                        {STATUS_OPTIONS.find(o => o.value === game.status)?.label}
-                      </span>
-                    </td>
-                    <td className="p-6">
-                      <div className="text-xs font-bold text-gray-800 uppercase">
-                        {new Date(game.dateTime).toLocaleDateString('pt-BR')} • {new Date(game.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </td>
-                    <td className="p-6">
-                      <span className="text-[10px] font-black text-[var(--black)] uppercase tracking-tight">{game.category.name}</span>
-                    </td>
-                    <td className="p-6">
-                      <div className="flex items-center justify-center gap-6">
-                        <span className="text-xs font-black text-gray-800 uppercase flex-1 text-right italic tracking-tighter">{game.homeTeam.name}</span>
-                        <span className="text-lg font-display font-black italic text-orange-600">
-                          {game.status === 'SCHEDULED' ? 'vs' : `${game.homeScore} - ${game.awayScore}`}
+                {games.map(game => {
+                  const st = STATUS_CONFIG[game.status] ?? STATUS_CONFIG.SCHEDULED
+                  const isFinished = game.status === 'FINISHED'
+                  return (
+                    <tr key={game.id} className="hover:bg-[var(--gray-l)]/50 transition-colors">
+                      <td className="px-5 py-4">
+                        <span className={`fgb-label px-2 py-0.5 rounded-full border ${st.bg} ${st.text} ${st.border}`} style={{ fontSize: 8 }}>
+                          {st.label}
                         </span>
-                        <span className="text-xs font-black text-gray-800 uppercase flex-1 italic tracking-tighter">{game.awayTeam.name}</span>
-                      </div>
-                    </td>
-                    <td className="p-6 text-[var(--gray)] text-xs font-medium uppercase truncate max-w-[150px]">{game.location}</td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-5 py-4 fgb-label text-[var(--black)]" style={{ fontSize: 10, textTransform: 'none', letterSpacing: 0 }}>
+                        {new Date(game.dateTime).toLocaleDateString('pt-BR')}
+                        <br />
+                        <span className="text-[var(--gray)]">{new Date(game.dateTime).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', timeZone: 'America/Sao_Paulo' })}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <span className="fgb-display text-xs text-[var(--black)]">{game.category.name}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3 font-sans">
+                          <span className="text-xs font-bold text-[var(--black)] text-right flex-1 truncate italic uppercase">{game.homeTeam.name}</span>
+                          <span className="fgb-display text-base text-[var(--verde)] flex-shrink-0">
+                            {isFinished ? `${game.homeScore} × ${game.awayScore}` : 'vs'}
+                          </span>
+                          <span className="text-xs font-bold text-[var(--black)] flex-1 truncate italic uppercase">{game.awayTeam.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 fgb-label text-[var(--gray)] truncate max-w-[140px]" style={{ fontSize: 9, textTransform: 'none', letterSpacing: 0 }}>
+                        {game.location || '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

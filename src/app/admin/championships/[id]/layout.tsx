@@ -22,37 +22,39 @@ export default async function ChampionshipLayout({
 
   if (!championship) notFound()
 
-  const statusColor: Record<string, string> = {
-    'DRAFT': 'text-slate-400 bg-slate-500/10 border-slate-500/20',
-    'REGISTRATION_OPEN': 'text-blue-400 bg-blue-500/10 border-blue-500/20',
-    'REGISTRATION_CLOSED': 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20',
-    'ONGOING': 'text-green-400 bg-green-500/10 border-green-500/20',
-    'FINISHED': 'text-purple-400 bg-purple-500/10 border-purple-500/20',
-    'ARCHIVED': 'text-slate-600 bg-slate-800/10 border-slate-700/20',
+  const statusBadge: Record<string, string> = {
+    'DRAFT':                'fgb-badge fgb-badge-outline',
+    'REGISTRATION_OPEN':    'fgb-badge fgb-badge-verde',
+    'REGISTRATION_CLOSED':  'fgb-badge fgb-badge-yellow',
+    'ONGOING':              'fgb-badge fgb-badge-red',
+    'FINISHED':             'fgb-badge fgb-badge-outline',
+    'ARCHIVED':             'fgb-badge fgb-badge-outline',
   }
 
   return (
-    <div className="space-y-6 pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 px-4 md:px-0">
+    <div className="space-y-0 pb-10">
+      {/* Page header */}
+      <div className="fgb-card rounded-none border-x-0 border-t-0 px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <Link
             href="/admin/championships"
-            className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] hover:text-orange-500 transition-colors"
+            className="fgb-label text-[var(--gray)] hover:text-[var(--verde)] transition-colors"
+            style={{ fontSize: 10 }}
           >
             ← Todos os Campeonatos
           </Link>
-          <h1 className="text-2xl font-black text-white tracking-tight mt-1">
+          <h1 className="fgb-display text-2xl text-[var(--black)] mt-1">
             {championship.name}
           </h1>
         </div>
-        <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border ${statusColor[championship.status] || statusColor['DRAFT']}`}>
+        <span className={statusBadge[championship.status] || statusBadge['DRAFT']}>
           {formatChampionshipStatus(championship.status)}
         </span>
       </div>
 
       <ChampionshipTabs id={id} />
 
-      <div className="px-4 md:px-0">
+      <div className="px-6 pt-6">
         {children}
       </div>
     </div>

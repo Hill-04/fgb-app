@@ -38,30 +38,30 @@ export function GameCard({
     <div className={cn("card-fgb p-4 space-y-3", className)}>
       <div className="flex items-center justify-between">
         <Badge variant="orange" size="sm">{category}</Badge>
-        <span className="text-xs text-[--text-dim]">Fase {phase}</span>
+        <span className="text-xs text-[var(--gray)]">Fase {phase}</span>
       </div>
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-[--text-main]">{homeTeam}</span>
-          {hasScore && <span className="text-2xl font-bold text-[--text-main]">{homeScore}</span>}
+          <span className="font-semibold text-[var(--black)]">{homeTeam}</span>
+          {hasScore && <span className="text-2xl font-bold text-[var(--black)]">{homeScore}</span>}
         </div>
         <div className="flex items-center justify-between">
-          <span className="font-semibold text-[--text-main]">{awayTeam}</span>
-          {hasScore && <span className="text-2xl font-bold text-[--text-main]">{awayScore}</span>}
+          <span className="font-semibold text-[var(--black)]">{awayTeam}</span>
+          {hasScore && <span className="text-2xl font-bold text-[var(--black)]">{awayScore}</span>}
         </div>
       </div>
 
-      <div className="pt-3 border-t border-[--border-color] space-y-1">
+      <div className="pt-3 border-t border-[var(--border)] space-y-1">
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[--text-secondary]">
+          <span className="text-[var(--gray-d)]">
             {format(dateTime, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
           </span>
           {blockName && (
             <Badge variant="default" size="sm">{blockName}</Badge>
           )}
         </div>
-        <div className="text-xs text-[--text-dim]">
+        <div className="text-xs text-[var(--gray)]">
           {location} - {city}
         </div>
       </div>
@@ -71,7 +71,7 @@ export function GameCard({
         <div className="pt-1">
           {status === "ONGOING" && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-live">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FF6B00]"></span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--amarelo)]"></span>
               Em Andamento
             </span>
           )}

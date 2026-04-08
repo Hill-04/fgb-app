@@ -34,7 +34,7 @@ export function AIAssistantBubble() {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-2xl hover:scale-110 active:scale-90 pointer-events-auto relative group overflow-hidden",
-          isOpen ? "bg-white/10 rotate-90" : "bg-gradient-to-tr from-[#FF6B00] to-[#E66000]"
+          isOpen ? "bg-white/10 rotate-90" : "bg-gradient-to-tr from-[var(--amarelo)] to-[var(--orange-dark)]"
         )}
       >
         <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500" />

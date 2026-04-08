@@ -43,10 +43,16 @@ export function PublicFooter() {
               style={{ color: 'rgba(255,255,255,0.25)', fontSize: 9, borderBottom: '1px solid rgba(255,255,255,0.1)', letterSpacing: '0.18em' }}>
               FGB
             </p>
-            {['Diretoria', 'Fundação', 'História', 'Regulamento',
-              'Categorias e Idades', 'Notas Oficiais', 'Arbitragem'].map(link => (
-              <Link key={link} href={`/fgb/${link.toLowerCase().replace(/ /g,'-')}`}
-                className="fgb-footer-link">{link}</Link>
+            {[
+              { label: 'Diretoria',           href: '/fgb/diretoria' },
+              { label: 'Fundação',            href: '/fgb/fundacao' },
+              { label: 'História',            href: '/fgb/historia' },
+              { label: 'Regulamento',         href: '/fgb/regulamento' },
+              { label: 'Categorias e Idades', href: '/fgb/categorias' },
+              { label: 'Notas Oficiais',      href: '/fgb/notas' },
+              { label: 'Arbitragem',          href: '/fgb/arbitragem' },
+            ].map(link => (
+              <Link key={link.href} href={link.href} className="fgb-footer-link">{link.label}</Link>
             ))}
           </div>
 

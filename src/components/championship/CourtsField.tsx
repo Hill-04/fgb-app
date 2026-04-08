@@ -32,7 +32,7 @@ export function CourtsField({ value, onChange, disabled = false }: CourtsFieldPr
                 onChange(parsed)
               }
             }}
-            className="w-16 bg-transparent border-none text-right font-display font-black text-xl text-[#FF6B00] 
+            className="w-16 bg-transparent border-none text-right font-display font-black text-xl text-[var(--amarelo)] 
                        focus:outline-none focus:ring-0
                        disabled:opacity-50"
           />

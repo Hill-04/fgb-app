@@ -35,7 +35,7 @@ export default async function AdminReportsPage() {
 
     const kpis = [
       { label: 'Total de Equipes', value: teamCount, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-      { label: 'Campeonatos', value: championshipCount, icon: Trophy, color: 'text-[#FF6B00]', bg: 'bg-orange-500/10' },
+      { label: 'Campeonatos', value: championshipCount, icon: Trophy, color: 'text-[var(--amarelo)]', bg: 'bg-orange-500/10' },
       { label: 'Jogos Realizados', value: gameCount, icon: MapPin, color: 'text-purple-400', bg: 'bg-purple-500/10' },
       { label: 'Atletas Estimados', value: activePlayers, icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10' },
     ]
@@ -59,7 +59,7 @@ export default async function AdminReportsPage() {
             <div key={i} className="bg-[var(--gray-l)] border border-[var(--border)] rounded-[32px] overflow-hidden relative group p-8">
               <div className={`absolute top-0 right-0 w-32 h-32 ${kpi.bg} rounded-full blur-[40px] -mr-16 -mt-16 opacity-50`} />
               <div className={`w-12 h-12 rounded-2xl ${kpi.bg} flex items-center justify-center mb-6 relative z-10`}>
-                <kpi.icon className={`w-6 h-6 ${kpi.color.replace('text-[#FF6B00]', 'text-[var(--verde)]')}`} />
+                <kpi.icon className={`w-6 h-6 ${kpi.color.replace('text-[var(--amarelo)]', 'text-[var(--verde)]')}`} />
               </div>
               <div className="fgb-display text-4xl text-[var(--black)] mb-1 relative z-10 leading-none">{kpi.value}</div>
               <div className="fgb-label text-[var(--gray)] relative z-10" style={{ fontSize: 10 }}>{kpi.label}</div>

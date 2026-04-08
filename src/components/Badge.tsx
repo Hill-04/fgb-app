@@ -21,7 +21,7 @@ export function Badge({
     warning: "bg-[#F59E0B]/10 text-[#F59E0B] border-[#F59E0B]/20",
     error: "bg-[#EF4444]/10 text-[#EF4444] border-[#EF4444]/20",
     info: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
-    orange: "bg-[#FF6B00]/10 text-[#FF6B00] border-[#FF6B00]/20",
+    orange: "bg-[var(--amarelo)]/10 text-[var(--amarelo)] border-[var(--amarelo)]/20",
     blue: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
     purple: "bg-[#8B5CF6]/10 text-[#A78BFA] border-[#8B5CF6]/20",
     pink: "bg-[#EC4899]/10 text-[#F472B6] border-[#EC4899]/20",

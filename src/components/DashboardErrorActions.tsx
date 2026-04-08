@@ -56,7 +56,7 @@ export function DashboardErrorActions({ championshipId }: { championshipId: stri
           className={`flex items-center gap-2 px-6 h-12 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${
             success 
               ? 'bg-green-500/20 border-green-500/40 text-green-400' 
-              : 'bg-[#FF6B00]/10 border-[#FF6B00]/40 text-[#FF6B00] hover:bg-[#FF6B00] hover:text-white'
+              : 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/40 text-[var(--amarelo)] hover:bg-[var(--amarelo)] hover:text-white'
           }`}
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}

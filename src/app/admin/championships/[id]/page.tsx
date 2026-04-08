@@ -141,11 +141,12 @@ export default async function ChampionshipDetailsPage({
               >
                 <Settings className="w-4 h-4" />
               </Link>
-              <span className={`text-[9px] font-black font-sans uppercase tracking-widest px-2.5 py-1 rounded-full border shadow-sm ${
-                championship.status === 'ONGOING' ? 'text-green-600 bg-green-50 border-green-200' :
-                championship.status === 'REGISTRATION_OPEN' ? 'text-blue-600 bg-blue-50 border-blue-200' :
-                championship.status === 'FINISHED' ? 'text-[var(--verde)] bg-[var(--verde)]/10 border-[var(--verde)]/20' :
-                'text-[var(--gray)] bg-[var(--gray-l)] border-[var(--border)]'
+              <span className={`fgb-badge ${
+                championship.status === 'ONGOING' ? 'fgb-badge-red' :
+                championship.status === 'REGISTRATION_OPEN' ? 'fgb-badge-verde' :
+                championship.status === 'REGISTRATION_CLOSED' ? 'fgb-badge-yellow' :
+                championship.status === 'FINISHED' ? 'fgb-badge-outline' :
+                'fgb-badge-outline'
               }`}>
                 {formatChampionshipStatus(championship.status)}
               </span>
@@ -375,7 +376,7 @@ export default async function ChampionshipDetailsPage({
                     </div>
                     <Link
                       href={`/admin/championships/${activeChampionshipId}/organization`}
-                      className="flex items-center justify-center gap-2 w-full text-[10px] font-black uppercase tracking-widest text-[var(--black)] bg-[var(--amarelo)] hover:bg-[#E66000] h-10 rounded-xl transition-all shadow-sm"
+                      className="flex items-center justify-center gap-2 w-full fgb-btn-primary h-10 rounded-xl"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       Organizar com IA
@@ -459,7 +460,7 @@ export default async function ChampionshipDetailsPage({
                     <div className="grid grid-cols-2 gap-2">
                       <Link
                         href={`/admin/championships/${activeChampionshipId}/matches`}
-                        className="flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-[var(--black)] bg-[var(--amarelo)] hover:bg-[#E66000] h-9 rounded-xl transition-all shadow-sm"
+                        className="flex items-center justify-center fgb-btn-primary h-9 rounded-xl text-[9px]"
                       >
                         Registrar resultado
                       </Link>
@@ -513,14 +514,14 @@ export default async function ChampionshipDetailsPage({
 
           {/* Stat Cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
-            <StatCard label="Categorias" value={categoryCount} sublabel="categorias ativas" accent="blue" icon={<BarChart3 className="w-5 h-5" />} />
-            <StatCard label="Equipes Inscritas" value={confirmedTeams} sublabel="Times confirmados" accent="blue" icon={<Users className="w-5 h-5" />} />
-            <StatCard label="Progresso de Jogos" value={`${completedGames}/${totalGames}`} sublabel="Jogos realizados" accent="purple" icon={<Calendar className="w-5 h-5" />} />
+            <StatCard label="Categorias" value={categoryCount} sublabel="categorias ativas" accent="verde" icon={<BarChart3 className="w-5 h-5" />} />
+            <StatCard label="Equipes Inscritas" value={confirmedTeams} sublabel="Times confirmados" accent="yellow" icon={<Users className="w-5 h-5" />} />
+            <StatCard label="Progresso de Jogos" value={`${completedGames}/${totalGames}`} sublabel="Jogos realizados" accent="orange" icon={<Calendar className="w-5 h-5" />} />
             <StatCard
               label="Próximo Jogo"
               value={nextGame ? format(nextGame.dateTime, "dd MMM", { locale: ptBR }) : "--"}
               sublabel={nextGame ? `${nextGame.homeTeam.name} vs ${nextGame.awayTeam.name}` : "Nenhum jogo agendado"}
-              accent="green"
+              accent="verde"
               icon={<PlayCircle className="w-5 h-5" />}
             />
           </div>
@@ -530,7 +531,7 @@ export default async function ChampionshipDetailsPage({
             <div className="fgb-card overflow-hidden">
               <div className="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--gray-l)]">
                 <h3 className="fgb-label text-[var(--black)] uppercase" style={{ fontSize: 10 }}>Próximos Jogos</h3>
-                <Link href={`/admin/championships/${id}/matches`} className="text-[10px] font-black text-blue-600 uppercase hover:underline">Ver Todos →</Link>
+                <Link href={`/admin/championships/${id}/matches`} className="text-[10px] font-black text-[var(--verde)] uppercase hover:underline">Ver Todos →</Link>
               </div>
               <div className="divide-y divide-[var(--border)] bg-white font-sans">
                 {upcomingGames.length > 0 ? upcomingGames.map((game) => (

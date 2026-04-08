@@ -17,7 +17,7 @@ export function AdminRegistrationModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="w-full bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm group flex items-center justify-center gap-2">
+      <DialogTrigger className="w-full bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm group flex items-center justify-center gap-2">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
         Nova Inscrição (Manual)
       </DialogTrigger>
@@ -32,7 +32,7 @@ export function AdminRegistrationModal() {
             {[1, 2, 3, 4].map((i) => (
               <div 
                 key={i} 
-                className={`h-1.5 w-12 rounded-full transition-colors duration-300 ${step >= i ? 'bg-[#FF6B00]' : 'bg-white/10'}`} 
+                className={`h-1.5 w-12 rounded-full transition-colors duration-300 ${step >= i ? 'bg-[var(--amarelo)]' : 'bg-white/10'}`} 
               />
             ))}
           </div>
@@ -47,7 +47,7 @@ export function AdminRegistrationModal() {
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-[--text-secondary]">Campeonato Ativo</label>
-                  <select className="bg-[#111] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-sm focus:outline-none focus:border-[#FF6B00] transition-colors">
+                  <select className="bg-[#111] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--amarelo)] transition-colors">
                     <option>Estadual Base 2026 - Masculino</option>
                     <option>Estadual Base 2026 - Feminino</option>
                   </select>
@@ -55,7 +55,7 @@ export function AdminRegistrationModal() {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-[--text-secondary]">Equipe</label>
-                  <select className="bg-[#111] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-sm focus:outline-none focus:border-[#FF6B00] transition-colors">
+                  <select className="bg-[#111] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--amarelo)] transition-colors">
                     <option>Selecione uma equipe vinculada</option>
                     <option>Sogipa</option>
                     <option>Flyboys</option>
@@ -73,8 +73,8 @@ export function AdminRegistrationModal() {
               
               <div className="grid grid-cols-2 gap-3">
                 {['Sub 12', 'Sub 13', 'Sub 14', 'Sub 15', 'Sub 16', 'Sub 17'].map((cat) => (
-                  <label key={cat} className="flex items-center gap-3 bg-[#111] border border-[rgba(255,255,255,0.05)] p-3 rounded-lg cursor-pointer hover:border-[#FF6B00]/50 transition-colors">
-                    <input type="checkbox" className="accent-[#FF6B00] w-4 h-4" />
+                  <label key={cat} className="flex items-center gap-3 bg-[#111] border border-[rgba(255,255,255,0.05)] p-3 rounded-lg cursor-pointer hover:border-[var(--amarelo)]/50 transition-colors">
+                    <input type="checkbox" className="accent-[var(--amarelo)] w-4 h-4" />
                     <span className="text-sm font-medium">{cat}</span>
                   </label>
                 ))}
@@ -100,7 +100,7 @@ export function AdminRegistrationModal() {
                 <div className="flex flex-col gap-2">
                   <label className="text-xs font-bold uppercase tracking-widest text-[--text-secondary]">Observações Logísticas</label>
                   <textarea 
-                    className="bg-[#111] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-sm focus:outline-none focus:border-[#FF6B00] transition-colors resize-none h-24"
+                    className="bg-[#111] border border-[rgba(255,255,255,0.1)] rounded-lg p-3 text-sm focus:outline-none focus:border-[var(--amarelo)] transition-colors resize-none h-24"
                     placeholder="Ex: O ginásio da equipe estará em reforma até o mês 05..."
                   />
                 </div>
@@ -132,9 +132,9 @@ export function AdminRegistrationModal() {
                 </div>
               </div>
 
-              <div className="bg-[#FF6B00]/10 border border-[#FF6B00]/20 p-4 rounded-xl flex items-start gap-3 mt-4">
-                <svg className="w-5 h-5 text-[#FF6B00] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <p className="text-xs text-[#FF6B00]">Ao confirmar, a inscrição entrará como PENDENTE na área de moderação. A aprovação final não envolve pagamentos através da plataforma.</p>
+              <div className="bg-[var(--amarelo)]/10 border border-[var(--amarelo)]/20 p-4 rounded-xl flex items-start gap-3 mt-4">
+                <svg className="w-5 h-5 text-[var(--amarelo)] shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <p className="text-xs text-[var(--amarelo)]">Ao confirmar, a inscrição entrará como PENDENTE na área de moderação. A aprovação final não envolve pagamentos através da plataforma.</p>
               </div>
             </div>
           )}

@@ -20,10 +20,10 @@ type ChampionshipCardProps = {
 
 const statusBadge: Record<string, string> = {
   'DRAFT':                'bg-slate-700 text-slate-300',
-  'REGISTRATION_OPEN':    'bg-blue-500 text-white',
-  'REGISTRATION_CLOSED':  'bg-yellow-500 text-black',
-  'ONGOING':              'bg-[#FF6B00] text-white',
-  'FINISHED':             'bg-green-500 text-white',
+  'REGISTRATION_OPEN':    'bg-[var(--verde)] text-white',
+  'REGISTRATION_CLOSED':  'bg-[var(--yellow)] text-[var(--black)]',
+  'ONGOING':              'bg-[var(--orange)] text-white',
+  'FINISHED':             'bg-[var(--verde-dark)] text-white',
   'ARCHIVED':             'bg-slate-800 text-slate-500',
 }
 
@@ -34,12 +34,12 @@ export function ChampionshipCard({
   return (
     <Link
       href={href}
-      className="group block bg-[#141414] border border-white/[0.08] hover:border-[#FF6B00]/40 rounded-3xl p-6 transition-all duration-200 hover:bg-[#FF6B00]/[0.03] cursor-pointer shadow-xl shadow-black/20"
+      className="group block bg-[#141414] border border-white/[0.08] hover:border-[var(--amarelo)]/40 rounded-3xl p-6 transition-all duration-200 hover:bg-[var(--amarelo)]/[0.03] cursor-pointer shadow-xl shadow-black/20"
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
-        <div className="w-10 h-10 rounded-2xl bg-[#FF6B00]/15 flex items-center justify-center flex-shrink-0">
-          <Trophy className="w-5 h-5 text-[#FF6B00]" />
+        <div className="w-10 h-10 rounded-2xl bg-[var(--amarelo)]/15 flex items-center justify-center flex-shrink-0">
+          <Trophy className="w-5 h-5 text-[var(--amarelo)]" />
         </div>
         <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full ${statusBadge[status] || statusBadge['DRAFT']}`}>
           {formatChampionshipStatus(status)}
@@ -48,7 +48,7 @@ export function ChampionshipCard({
 
       {/* Title */}
       <div className="mb-4">
-        <h3 className="text-xl font-black italic uppercase text-white group-hover:text-[#FF6B00] transition-colors leading-tight tracking-tight">
+        <h3 className="text-xl font-black italic uppercase text-white group-hover:text-[var(--amarelo)] transition-colors leading-tight tracking-tight">
           {name}
         </h3>
         <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-1">
@@ -88,9 +88,9 @@ export function ChampionshipCard({
             {[...Array(Math.min(3, teamCount))].map((_, i) => (
               <div
                 key={i}
-                className="w-6 h-6 rounded-full bg-[#FF6B00]/20 border-2 border-[#141414] flex items-center justify-center"
+                className="w-6 h-6 rounded-full bg-[var(--amarelo)]/20 border-2 border-[#141414] flex items-center justify-center"
               >
-                <span className="text-[7px] font-black text-[#FF6B00]">T</span>
+                <span className="text-[7px] font-black text-[var(--amarelo)]">T</span>
               </div>
             ))}
           </div>
@@ -98,7 +98,7 @@ export function ChampionshipCard({
             {teamCount} {teamCount === 1 ? 'Equipe' : 'Equipes'}
           </span>
         </div>
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-white/[0.04] px-3 py-1.5 rounded-full border border-white/[0.06] group-hover:bg-[#FF6B00]/10 group-hover:text-[#FF6B00] group-hover:border-[#FF6B00]/20 transition-all">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 bg-white/[0.04] px-3 py-1.5 rounded-full border border-white/[0.06] group-hover:bg-[var(--amarelo)]/10 group-hover:text-[var(--amarelo)] group-hover:border-[var(--amarelo)]/20 transition-all">
           {buttonLabel}
         </span>
       </div>

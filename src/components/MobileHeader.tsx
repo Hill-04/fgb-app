@@ -25,12 +25,12 @@ export function MobileHeader({ role, teamName }: MobileHeaderProps) {
   return (
     <header className="md:hidden flex items-center justify-between px-6 py-4 bg-[#060606] border-b border-white/5 sticky top-0 z-50">
       <Link href="/" className="inline-flex items-center gap-3 group">
-        <div className="w-8 h-8 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[8px] shadow-[0_4px_10px_rgba(255,107,0,0.2)]">
+        <div className="w-8 h-8 bg-gradient-to-br from-[var(--amarelo)] to-[#CC5500] flex items-center justify-center rounded-[8px] shadow-[0_4px_10px_rgba(255,107,0,0.2)]">
           <span className="font-display font-black text-white text-[10px] tracking-tight">FGB</span>
         </div>
         <div className="flex flex-col">
           <span className="font-display font-black text-white text-[10px] tracking-wider uppercase leading-none">Federação</span>
-          <span className="font-display font-medium text-[#FF6B00] text-[7px] tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap">Gaúcha de Basquete</span>
+          <span className="font-display font-medium text-[var(--amarelo)] text-[7px] tracking-[0.2em] uppercase mt-0.5 whitespace-nowrap">Gaúcha de Basquete</span>
         </div>
       </Link>
 
@@ -50,7 +50,7 @@ export function MobileHeader({ role, teamName }: MobileHeaderProps) {
           
           <div className="flex flex-col h-full overflow-y-auto">
             <div className="p-6 flex justify-between items-center border-b border-white/5">
-                <div className="w-8 h-8 bg-gradient-to-br from-[#FF6B00] to-[#CC5500] flex items-center justify-center rounded-[8px]">
+                <div className="w-8 h-8 bg-gradient-to-br from-[var(--amarelo)] to-[#CC5500] flex items-center justify-center rounded-[8px]">
                     <span className="font-display font-black text-white text-[10px]">FGB</span>
                 </div>
                 <button 

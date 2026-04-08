@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -12,17 +13,19 @@ export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [defaultRole, setDefaultRole] = useState<string>('AUXILIAR')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
+    setPasswordError(null)
 
     const formData = new FormData(e.currentTarget)
     const password = formData.get('password') as string
     const confirmPassword = formData.get('confirmPassword') as string
 
     if (password !== confirmPassword) {
-      alert("As senhas não coincidem")
+      setPasswordError("As senhas não coincidem")
       setLoading(false)
       return
     }
@@ -44,15 +47,15 @@ export default function RegisterPage() {
       const result = await res.json()
 
       if (!res.ok) {
-        alert(result.error || "Erro no cadastro")
+        toast.error(result.error || "Erro no cadastro")
         setLoading(false)
         return
       }
 
-      alert("Conta criada com sucesso! Faça login para continuar.")
+      toast.success("Conta criada com sucesso! Faça login para continuar.")
       router.push('/login')
     } catch {
-      alert("Erro ao conectar ao servidor.")
+      toast.error("Erro ao conectar ao servidor.")
       setLoading(false)
     }
   }
@@ -168,7 +171,8 @@ export default function RegisterPage() {
                     type="password"
                     required
                     minLength={6}
-                    className="bg-white border-[var(--border)] text-[var(--black)] placeholder:text-[var(--gray)] rounded-xl h-11 px-4 focus-visible:ring-1 focus-visible:ring-[var(--verde)] focus-visible:border-[var(--verde)] shadow-sm font-sans"
+                    onChange={() => setPasswordError(null)}
+                    className={`bg-white border-[var(--border)] text-[var(--black)] placeholder:text-[var(--gray)] rounded-xl h-11 px-4 focus-visible:ring-1 focus-visible:ring-[var(--verde)] focus-visible:border-[var(--verde)] shadow-sm font-sans ${passwordError ? 'border-[var(--red)] focus-visible:ring-[var(--red)]' : ''}`}
                   />
                 </div>
 
@@ -179,10 +183,16 @@ export default function RegisterPage() {
                     type="password"
                     required
                     minLength={6}
-                    className="bg-white border-[var(--border)] text-[var(--black)] placeholder:text-[var(--gray)] rounded-xl h-11 px-4 focus-visible:ring-1 focus-visible:ring-[var(--verde)] focus-visible:border-[var(--verde)] shadow-sm font-sans"
+                    onChange={() => setPasswordError(null)}
+                    className={`bg-white border-[var(--border)] text-[var(--black)] placeholder:text-[var(--gray)] rounded-xl h-11 px-4 focus-visible:ring-1 focus-visible:ring-[var(--verde)] focus-visible:border-[var(--verde)] shadow-sm font-sans ${passwordError ? 'border-[var(--red)] focus-visible:ring-[var(--red)]' : ''}`}
                   />
                 </div>
               </div>
+              {passwordError && (
+                <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 11 }}>
+                  {passwordError}
+                </p>
+              )}
 
               <Button
                 type="submit"

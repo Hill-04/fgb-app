@@ -105,41 +105,50 @@ export default async function FederationDashboardPage() {
           />
         </div>
 
+        {/* Tricolor accent */}
+        <div className="fgb-tricolor-banner rounded-full" />
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Status Breakdown */}
+          {/* Status Breakdown — solid FGB color blocks */}
           <div className="lg:col-span-2 fgb-card p-8">
              <div className="flex items-center gap-3 mb-8">
                <Activity className="w-5 h-5 text-[var(--red)]" />
                <h3 className="fgb-display text-sm text-[var(--black)]">Distribuição por Fase</h3>
              </div>
-             
+
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Rascunho', status: 'DRAFT', count: statusCounts['DRAFT'] || 0, badge: 'fgb-badge-outline' },
-                  { label: 'Inscrições', status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, badge: 'fgb-badge-yellow' },
-                  { label: 'Em Andamento', status: 'ONGOING', count: statusCounts['ONGOING'] || 0, badge: 'fgb-badge-verde' },
-                  { label: 'Encerrados', status: 'FINISHED', count: statusCounts['FINISHED'] || 0, badge: 'fgb-badge-red' },
+                  { label: 'Rascunho',    status: 'DRAFT',             count: statusCounts['DRAFT'] || 0,             blockClass: 'fgb-stat-block-dark' },
+                  { label: 'Inscrições',  status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, blockClass: 'fgb-stat-block-yellow' },
+                  { label: 'Em Andamento',status: 'ONGOING',           count: statusCounts['ONGOING'] || 0,           blockClass: 'fgb-stat-block-verde' },
+                  { label: 'Encerrados',  status: 'FINISHED',          count: statusCounts['FINISHED'] || 0,          blockClass: 'fgb-stat-block-red' },
                 ].map((item) => (
-                  <div key={item.status} className="bg-[var(--gray-l)] border border-[var(--border)] rounded-lg p-5 flex flex-col items-center justify-center text-center">
-                    <span className="fgb-display text-3xl text-[var(--black)] mb-2 leading-none">{item.count}</span>
-                    <span className={`fgb-badge ${item.badge}`}>{item.label}</span>
+                  <div key={item.status} className={`fgb-stat-block ${item.blockClass}`}>
+                    <span className="fgb-stat-block-num">{item.count}</span>
+                    <span className="fgb-stat-block-label">{item.label}</span>
                   </div>
                 ))}
              </div>
           </div>
 
-          <div className="fgb-card admin-card-verde p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-[0.03] rounded-full blur-3xl -mr-16 -mt-16" />
-             <ShieldCheck className="w-12 h-12 text-[var(--verde)] mb-4" />
-             <h3 className="fgb-display text-sm text-[var(--black)] mb-2">Sistema Operacional</h3>
-             <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Todos os serviços online.</p>
-             <div className="mt-6 flex items-center justify-center gap-2">
-                <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--verde)' }}></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3" style={{ backgroundColor: 'var(--verde)' }}></span>
-                </span>
-                <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Status: ON</span>
-             </div>
+          {/* Status sistema + jogos realizados */}
+          <div className="flex flex-col gap-4">
+            <div className="fgb-card flex-1 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{ background: 'var(--verde)', borderColor: 'transparent' }}>
+               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,transparent_60%)]" />
+               <ShieldCheck className="w-10 h-10 text-white mb-3 relative z-10" />
+               <h3 className="fgb-display text-sm text-white mb-1 relative z-10">Sistema Online</h3>
+               <div className="mt-3 flex items-center justify-center gap-2 relative z-10">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+                  </span>
+                  <span className="fgb-label text-white" style={{ fontSize: 9, opacity: 0.85 }}>Todos os serviços ativos</span>
+               </div>
+            </div>
+            <div className="fgb-card p-6 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{ background: 'var(--yellow)', borderColor: 'transparent' }}>
+               <p className="fgb-display text-4xl text-[var(--black)] leading-none mb-1">{finishedGames}</p>
+               <p className="fgb-stat-block-label text-[var(--black)]" style={{ opacity: 0.7 }}>Súmulas cadastradas</p>
+            </div>
           </div>
         </div>
 

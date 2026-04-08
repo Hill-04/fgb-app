@@ -208,7 +208,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
             awayTeamId: pair.awayTeamId,
             round: globalRound,
             phase: phaseNum,
-            isReturn: false
+            isReturn: false,
+            groupIdx: gIdx
           })
 
           if (turns >= 2) {
@@ -218,7 +219,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
               awayTeamId: pair.homeTeamId,
               round: globalRound,
               phase: phaseNum,
-              isReturn: true
+              isReturn: true,
+              groupIdx: gIdx
             })
           }
         }
@@ -226,36 +228,42 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
   }
 
-  // PASSO 6: Agendar jogos por fase — cada fase recebe seu próprio bloco de fim de semana
-  // Agrupa jogos por fase
-  const gamesByPhaseMap = new Map<number, GameToSchedule[]>()
+  // PASSO 6: Agendar jogos separando rigorosamente por Grupo e Fase (Viagens Separadas)
+  // Agrupa jogos por Fase E Grupo
+  const gamesByPhaseGroupMap = new Map<string, GameToSchedule[]>()
   for (const game of allGamesToSchedule) {
     const ph = (game as any).phase || 1
-    if (!gamesByPhaseMap.has(ph)) gamesByPhaseMap.set(ph, [])
-    gamesByPhaseMap.get(ph)!.push(game)
+    const gIdx = (game as any).groupIdx || 0
+    const key = `${ph}-${gIdx}`
+    if (!gamesByPhaseGroupMap.has(key)) gamesByPhaseGroupMap.set(key, [])
+    gamesByPhaseGroupMap.get(key)!.push(game)
   }
 
   let nextWeekendStart = startDate
   const finalScheduled: ScheduledGame[] = []
 
   for (let phaseNum = 1; phaseNum <= phases; phaseNum++) {
-    const phaseGames = gamesByPhaseMap.get(phaseNum) || []
-    if (phaseGames.length === 0) continue
+    for (let gIdx = 0; gIdx < groups.length; gIdx++) {
+      const key = `${phaseNum}-${gIdx}`
+      const groupGames = gamesByPhaseGroupMap.get(key) || []
+      
+      if (groupGames.length === 0) continue
 
-    const result = scheduleGamesByTimeWindow(phaseGames, {
-      numberOfCourts,
-      dayStartTime,
-      regularDayEndTime,
-      extendedDayEndTime,
-      slotDurationMinutes,
-      minRestSlotsPerTeam,
-      blockFormat,
-      startWeekend: nextWeekendStart
-    })
+      const result = scheduleGamesByTimeWindow(groupGames, {
+        numberOfCourts,
+        dayStartTime,
+        regularDayEndTime,
+        extendedDayEndTime,
+        slotDurationMinutes,
+        minRestSlotsPerTeam,
+        blockFormat,
+        startWeekend: nextWeekendStart
+      })
 
-    finalScheduled.push(...result.games)
-    // Avança 1 semana a partir do último bloco desta fase para garantir separação
-    nextWeekendStart = addDays(result.lastWeekendStart, 7)
+      finalScheduled.push(...result.games)
+      // Ajuste crucial: Avança 1 semana para a próxima Viagem (Grupo ou Fase)
+      nextWeekendStart = addDays(result.lastWeekendStart, 7)
+    }
   }
 
   // PASSO 7: Montar resultados

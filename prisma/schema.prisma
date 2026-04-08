@@ -18,6 +18,7 @@ model User {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
   membership  TeamMembership?
+  playerStats PlayerStat[]
 }
 
 model Team {
@@ -38,6 +39,7 @@ model Team {
   registrations Registration[]
   standings     Standing[]
   members       TeamMembership[]
+  playerStats   PlayerStat[]
 }
 
 model Gym {
@@ -181,6 +183,7 @@ model Game {
   block          Block?               @relation(fields: [blockId], references: [id])
   category       ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   championship   Championship         @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  playerStats    PlayerStat[]
 }
 
 model Standing {
@@ -251,4 +254,19 @@ model TeamMembership {
   updatedAt   DateTime  @updatedAt
   team        Team      @relation(fields: [teamId], references: [id])
   user        User      @relation(fields: [userId], references: [id])
+}
+
+model PlayerStat {
+  id        String   @id @default(uuid())
+  gameId    String
+  teamId    String
+  userId    String
+  points    Int      @default(0)
+  fouls     Int      @default(0)
+  
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, userId])
 }

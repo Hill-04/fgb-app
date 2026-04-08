@@ -21,7 +21,8 @@ export default async function MatchesPage({
 
   const gamesByDate = games.reduce((acc, game) => {
     const dateKey = new Date(game.dateTime).toLocaleDateString('pt-BR', {
-      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
+      weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+      timeZone: 'America/Sao_Paulo'
     })
     if (!acc[dateKey]) acc[dateKey] = []
     acc[dateKey].push(game)
@@ -68,7 +69,8 @@ export default async function MatchesPage({
                     <div className="text-center flex-shrink-0 w-16 group-hover:scale-105 transition-transform">
                       <p className="text-base font-black text-[var(--black)]">
                         {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
-                          hour: '2-digit', minute: '2-digit'
+                          hour: '2-digit', minute: '2-digit',
+                          timeZone: 'America/Sao_Paulo'
                         })}
                       </p>
                       <p className="text-[9px] text-[var(--verde)] font-black uppercase tracking-widest mt-0.5">Rodada {game.round || 1}</p>

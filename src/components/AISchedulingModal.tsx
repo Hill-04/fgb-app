@@ -235,8 +235,8 @@ export function AISchedulingModal({
         {/* Header */}
         <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#FF6B00]/20 flex items-center justify-center border border-[#FF6B00]/20 shadow-lg shadow-orange-600/10">
-              <Sparkles className="w-6 h-6 text-[#FF6B00]" />
+            <div className="w-12 h-12 rounded-2xl bg-[var(--amarelo)]/20 flex items-center justify-center border border-[var(--amarelo)]/20 shadow-lg shadow-orange-600/10">
+              <Sparkles className="w-6 h-6 text-[var(--amarelo)]" />
             </div>
             <div>
               <h3 className="text-2xl font-black italic uppercase text-white tracking-tight leading-none">
@@ -251,8 +251,8 @@ export function AISchedulingModal({
           <div className="flex items-center gap-2 mr-4">
             {(['diagnosis', 'preview', 'review'] as Step[]).map((s, i) => (
               <div key={s} className={`w-1.5 h-1.5 rounded-full transition-all ${
-                step === s ? 'bg-[#FF6B00] w-3' :
-                ['preview', 'review', 'applying', 'done'].includes(step) && i < (['diagnosis', 'preview', 'review']).indexOf(step) ? 'bg-[#FF6B00]/50' :
+                step === s ? 'bg-[var(--amarelo)] w-3' :
+                ['preview', 'review', 'applying', 'done'].includes(step) && i < (['diagnosis', 'preview', 'review']).indexOf(step) ? 'bg-[var(--amarelo)]/50' :
                 'bg-white/10'
               }`} />
             ))}
@@ -272,8 +272,8 @@ export function AISchedulingModal({
           {step === 'idle' && (
             <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
               <div className="relative inline-block">
-                <div className="absolute inset-0 bg-[#FF6B00] blur-[40px] opacity-20 animate-pulse" />
-                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-[#FF6B00] to-[#E66000] flex items-center justify-center mx-auto shadow-2xl">
+                <div className="absolute inset-0 bg-[var(--amarelo)] blur-[40px] opacity-20 animate-pulse" />
+                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--amarelo)] to-[var(--orange-dark)] flex items-center justify-center mx-auto shadow-2xl">
                   <Sparkles className="w-10 h-10 text-white" />
                 </div>
               </div>
@@ -299,7 +299,7 @@ export function AISchedulingModal({
               </div>
               <button
                 onClick={handleStart}
-                className="w-full max-w-xs mx-auto block bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-95"
+                className="w-full max-w-xs mx-auto block bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-95"
               >
                 Iniciar Análise →
               </button>
@@ -309,7 +309,7 @@ export function AISchedulingModal({
           {/* ——— VALIDATING ——— */}
           {step === 'validating' && (
             <div className="text-center space-y-4 py-16 animate-in fade-in duration-300">
-              <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin mx-auto" />
+              <Loader2 className="w-10 h-10 text-[var(--amarelo)] animate-spin mx-auto" />
               <p className="text-sm font-black italic uppercase text-white tracking-tight">
                 Analisando configurações...
               </p>
@@ -388,7 +388,7 @@ export function AISchedulingModal({
                 {validation.viable ? (
                   <button
                     onClick={handleSimulate}
-                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 active:scale-95"
+                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 active:scale-95"
                   >
                     <Sparkles className="w-3.5 h-3.5" />
                     Gerar Calendário →
@@ -409,8 +409,8 @@ export function AISchedulingModal({
           {step === 'simulating' && (
             <div className="text-center space-y-6 py-16 animate-in fade-in duration-300">
               <div className="relative w-16 h-16 mx-auto">
-                <Loader2 className="w-16 h-16 text-[#FF6B00] animate-spin" />
-                <Sparkles className="w-6 h-6 text-[#FF6B00] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+                <Loader2 className="w-16 h-16 text-[var(--amarelo)] animate-spin" />
+                <Sparkles className="w-6 h-6 text-[var(--amarelo)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
               </div>
               <div className="space-y-2">
                 <p className="text-lg font-black italic uppercase text-white tracking-tight animate-pulse">
@@ -461,7 +461,7 @@ export function AISchedulingModal({
               <div className="grid grid-cols-2 gap-2">
                 {simulation.categories?.map((cat: any) => (
                   <div key={cat.id} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00] mb-1 truncate">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)] mb-1 truncate">
                       {cat.name}
                     </p>
                     <p className="text-sm font-black text-white">{pluralizeJogos(cat.gamesCount)}</p>
@@ -473,10 +473,10 @@ export function AISchedulingModal({
 
               {/* Sugestão IA */}
               {simulation.aiOptimization?.available && (
-                <div className="bg-[#FF6B00]/5 border border-[#FF6B00]/20 rounded-2xl p-4">
+                <div className="bg-[var(--amarelo)]/5 border border-[var(--amarelo)]/20 rounded-2xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#FF6B00]" />
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00]">
+                    <Sparkles className="w-3.5 h-3.5 text-[var(--amarelo)]" />
+                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)]">
                       Sugestão IA · {simulation.aiOptimization.provider}
                     </p>
                   </div>
@@ -496,7 +496,7 @@ export function AISchedulingModal({
                 </button>
                 <button
                   onClick={() => setStep('review')}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all"
+                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all"
                 >
                   Ver Calendário Completo →
                 </button>
@@ -538,7 +538,7 @@ export function AISchedulingModal({
                     onClick={() => setPreviewTab(tab.key as any)}
                     className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
                       previewTab === tab.key
-                        ? 'bg-[#FF6B00] text-white'
+                        ? 'bg-[var(--amarelo)] text-white'
                         : 'text-slate-500 hover:text-white'
                     }`}
                   >
@@ -568,7 +568,7 @@ export function AISchedulingModal({
                     <div className="divide-y divide-white/[0.04]">
                       {day.timeSlots?.map((slot: any, j: number) => (
                         <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                          <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
+                          <span className="text-[10px] font-black text-[var(--amarelo)] w-10 flex-shrink-0">
                             {slot.time}
                           </span>
                           <div className="flex-1">
@@ -596,7 +596,7 @@ export function AISchedulingModal({
                 {previewTab === 'category' && simulation.categories?.map((cat: any) => (
                   <div key={cat.id} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
                     <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00]">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--amarelo)]">
                         {cat.name}
                       </p>
                       <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
@@ -606,7 +606,7 @@ export function AISchedulingModal({
                     <div className="divide-y divide-white/[0.04]">
                       {cat.games?.map((game: any, j: number) => (
                         <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                          <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
+                          <span className="text-[10px] font-black text-[var(--amarelo)] w-10 flex-shrink-0">
                             {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
                               hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
                             })}
@@ -650,8 +650,8 @@ export function AISchedulingModal({
                           </span>
                         </div>
                         {/* Data do bloco */}
-                        <div className="px-4 py-2 bg-[#FF6B00]/5 border-b border-white/[0.04]">
-                          <p className="text-[9px] text-[#FF6B00] font-black uppercase tracking-widest">
+                        <div className="px-4 py-2 bg-[var(--amarelo)]/5 border-b border-white/[0.04]">
+                          <p className="text-[9px] text-[var(--amarelo)] font-black uppercase tracking-widest">
                             📅 {new Date(games[0].dateTime).toLocaleDateString('pt-BR', {
                               weekday: 'long', day: '2-digit', month: 'long'
                             })}
@@ -662,7 +662,7 @@ export function AISchedulingModal({
                             const cat = simulation.categories?.find((c: any) => c.id === game.categoryId)
                             return (
                               <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                                <span className="text-[10px] font-black text-[#FF6B00] w-10 flex-shrink-0">
+                                <span className="text-[10px] font-black text-[var(--amarelo)] w-10 flex-shrink-0">
                                   {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
                                     hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
                                   })}
@@ -688,8 +688,8 @@ export function AISchedulingModal({
               {/* Chat com IA para otimização */}
               <div className="bg-[#141414] border border-white/[0.08] rounded-2xl p-4 space-y-3">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-[#FF6B00]" />
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[#FF6B00]">
+                  <Sparkles className="w-3.5 h-3.5 text-[var(--amarelo)]" />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)]">
                     Otimizar com IA
                   </p>
                 </div>
@@ -701,7 +701,7 @@ export function AISchedulingModal({
                       <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] rounded-xl px-3 py-2 text-[10px] leading-relaxed ${
                           msg.role === 'user'
-                            ? 'bg-[#FF6B00]/20 text-white'
+                            ? 'bg-[var(--amarelo)]/20 text-white'
                             : 'bg-white/[0.05] text-slate-300'
                         }`}>
                           {msg.content}
@@ -726,12 +726,12 @@ export function AISchedulingModal({
                     onChange={e => setChatInput(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && !chatLoading && handleChat()}
                     placeholder="Ex: junte Sub 12 e Sub 13 no mesmo dia..."
-                    className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[#FF6B00]/30"
+                    className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[var(--amarelo)]/30"
                   />
                   <button
                     onClick={handleChat}
                     disabled={chatLoading || !chatInput.trim()}
-                    className="w-10 h-10 bg-[#FF6B00] hover:bg-[#E66000] rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40"
+                    className="w-10 h-10 bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40"
                   >
                     <ArrowRight className="w-4 h-4 text-white" />
                   </button>
@@ -752,7 +752,7 @@ export function AISchedulingModal({
                 </button>
                 <button
                   onClick={handleApply}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
+                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
                 >
                   ✓ Aprovar e Aplicar
                 </button>
@@ -763,7 +763,7 @@ export function AISchedulingModal({
           {/* ——— APPLYING ——— */}
           {step === 'applying' && (
             <div className="text-center space-y-6 py-16">
-              <Loader2 className="w-14 h-14 text-[#FF6B00] animate-spin mx-auto" />
+              <Loader2 className="w-14 h-14 text-[var(--amarelo)] animate-spin mx-auto" />
               <div className="space-y-2">
                 <p className="text-lg font-black italic uppercase text-white tracking-tight">Efetivando...</p>
                 <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Gravando jogos no banco de dados</p>
@@ -790,7 +790,7 @@ export function AISchedulingModal({
                 </button>
                 <button
                   onClick={() => { onApplied(); onClose() }}
-                  className="flex-1 h-12 text-[10px] font-black uppercase tracking-widest text-white bg-[#FF6B00] hover:bg-[#E66000] rounded-xl transition-all flex items-center justify-center gap-2"
+                  className="flex-1 h-12 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all flex items-center justify-center gap-2"
                 >
                   Ver Jogos <ArrowRight className="w-3.5 h-3.5" />
                 </button>
