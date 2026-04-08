@@ -40,7 +40,7 @@ export default async function AdminRegistrationsPage() {
         include: { category: { select: { id: true, name: true } } },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { registeredAt: 'desc' },
   })
 
   const totalConfirmed = registrations.filter(r => r.status === 'CONFIRMED').length

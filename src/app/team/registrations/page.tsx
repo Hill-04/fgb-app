@@ -57,7 +57,7 @@ export default async function TeamRegistrationsPage() {
         },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { registeredAt: 'desc' },
   })
 
   const confirmed = registrations.filter(r => r.status === 'CONFIRMED')
