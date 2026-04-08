@@ -19,6 +19,8 @@ interface SchedulerConfig {
   minRestSlotsPerTeam: number
   blockFormat: BlockFormat
   startWeekend: Date
+  /** Maximum distinct categories allowed per day (default: 2) */
+  maxCategoriesPerDay?: number
 }
 
 export interface ScheduledGame extends GameToSchedule {
@@ -28,6 +30,12 @@ export interface ScheduledGame extends GameToSchedule {
   dateTime: Date
 }
 
+export interface ScheduleResult {
+  games: ScheduledGame[]
+  /** The last weekend block start that was used (for chaining phases) */
+  lastWeekendStart: Date
+}
+
 /**
  * Agendador tipo "Sala de Reunião"
  * Preenche slots da esquerda para a direita, respeitando quadras e descanso.
@@ -35,7 +43,7 @@ export interface ScheduledGame extends GameToSchedule {
 export function scheduleGamesByTimeWindow(
   games: GameToSchedule[],
   config: SchedulerConfig
-): ScheduledGame[] {
+): ScheduleResult {
   const {
     numberOfCourts,
     dayStartTime,
@@ -45,10 +53,11 @@ export function scheduleGamesByTimeWindow(
     minRestSlotsPerTeam,
     blockFormat,
     startWeekend,
+    maxCategoriesPerDay = 2,
   } = config
 
   const result: ScheduledGame[] = []
-  
+
   // 1. Preparar fila de jogos (ordenar por rodada para manter ordem cronológica lógica)
   const queue = [...games].sort((a, b) => (a.round || 0) - (b.round || 0))
 
@@ -63,10 +72,14 @@ export function scheduleGamesByTimeWindow(
   // key: "teamId-categoryId-date" -> slotIndex
   const teamLastSlot = new Map<string, number>()
 
+  // Mapa para controlar categorias distintas agendadas por dia
+  // key: "yyyy-MM-dd" -> Set de categoryIds
+  const categoriesPerDay = new Map<string, Set<string>>()
+
   // 3. Loop principal de alocação
   while (queue.length > 0) {
     const weekendDays = getWeekendDays(currentWeekendStart, blockFormat)
-    
+
     for (const day of weekendDays) {
       if (queue.length === 0) break
 
@@ -74,20 +87,25 @@ export function scheduleGamesByTimeWindow(
       const isSat = isSaturday(day)
       const endTime = isSat && blockFormat !== 'SAT_ONLY' ? extendedDayEndTime : regularDayEndTime
       const slots = generateSlotTimes(dayStartTime, endTime, slotDurationMinutes)
-      
-      // slotsCourts[slotIdx] = [court1_occupied, court2_occupied, ...]
-      const slotsCourtsStatus = slots.map(() => new Array(numberOfCourts).fill(false))
+
+      if (!categoriesPerDay.has(dateStr)) {
+        categoriesPerDay.set(dateStr, new Set())
+      }
 
       // Tentar encaixar o máximo de jogos hoje
       for (let slotIdx = 0; slotIdx < slots.length; slotIdx++) {
         for (let courtIdx = 0; courtIdx < numberOfCourts; courtIdx++) {
           if (queue.length === 0) break
 
-          // Encontrar o primeiro jogo da fila que pode jogar NESTE slot (descanso)
+          // Encontrar o primeiro jogo da fila que pode jogar NESTE slot (descanso + limite de categorias)
           let gameIdx = -1
           for (let i = 0; i < queue.length; i++) {
             const game = queue[i]
-            if (canTeamPlayInSlot(game, dateStr, slotIdx, teamLastSlot, minRestSlotsPerTeam)) {
+            const dayCategories = categoriesPerDay.get(dateStr)!
+            const categoryAlreadyToday = dayCategories.has(game.categoryId)
+            const categoryLimitReached = !categoryAlreadyToday && dayCategories.size >= maxCategoriesPerDay
+
+            if (!categoryLimitReached && canTeamPlayInSlot(game, dateStr, slotIdx, teamLastSlot, minRestSlotsPerTeam)) {
               gameIdx = i
               break
             }
@@ -96,15 +114,17 @@ export function scheduleGamesByTimeWindow(
           if (gameIdx !== -1) {
             const game = queue.splice(gameIdx, 1)[0]
             const time = slots[slotIdx]
-            
+
+            // Registrar categoria do dia
+            categoriesPerDay.get(dateStr)!.add(game.categoryId)
+
             // Marcar ocupação do time
             markTeamSlot(game.homeTeamId, game.categoryId, dateStr, slotIdx, teamLastSlot)
             markTeamSlot(game.awayTeamId, game.categoryId, dateStr, slotIdx, teamLastSlot)
-            
-            // Criar data/hora real para o Prisma
-            const [h, m] = time.split(':').map(Number)
-            const dateTime = new Date(day)
-            dateTime.setHours(h, m, 0, 0)
+
+            // Bug 3 fix: criar dateTime com offset BRT explícito (-03:00)
+            // Evita que o servidor UTC interprete o horário como UTC em vez de BRT
+            const dateTime = new Date(`${dateStr}T${time}:00-03:00`)
 
             result.push({
               ...game,
@@ -113,8 +133,6 @@ export function scheduleGamesByTimeWindow(
               court: numberOfCourts > 1 ? `Quadra ${String.fromCharCode(65 + courtIdx)}` : 'Quadra Única',
               dateTime
             })
-
-            slotsCourtsStatus[slotIdx][courtIdx] = true
           }
         }
       }
@@ -130,7 +148,7 @@ export function scheduleGamesByTimeWindow(
     }
   }
 
-  return result
+  return { games: result, lastWeekendStart: currentWeekendStart }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

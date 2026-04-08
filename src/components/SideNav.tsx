@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, BarChart2, Globe, Home, ClipboardList,
+  FileText, Bell, MessageSquare, User,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -41,7 +42,17 @@ const teamNavGroups = [
       { href: '/team/dashboard',      label: 'Painel',        icon: Home },
       { href: '/team/registrations',  label: 'Inscrições',    icon: ClipboardList },
       { href: '/team/championships',  label: 'Campeonatos',   icon: Trophy },
+      { href: '/team/matches',        label: 'Jogos',         icon: Calendar },
       { href: '/team/standings',      label: 'Classificação', icon: BarChart2 },
+    ],
+  },
+  {
+    label: 'Conta',
+    items: [
+      { href: '/team/profile',        label: 'Meu Perfil',    icon: User },
+      { href: '/team/documents',      label: 'Documentos',    icon: FileText },
+      { href: '/team/notifications',  label: 'Notificações',  icon: Bell },
+      { href: '/team/chat',           label: 'Chat',          icon: MessageSquare },
     ],
   },
 ]

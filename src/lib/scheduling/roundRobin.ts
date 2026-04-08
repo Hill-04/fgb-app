@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
-import { scheduleGamesByTimeWindow, type GameToSchedule } from '@/lib/calendar/time-window-scheduler'
+import { scheduleGamesByTimeWindow, type GameToSchedule, type ScheduledGame } from '@/lib/calendar/time-window-scheduler'
 import { BlockFormat } from '@/lib/championship/time-window'
+import { addDays } from 'date-fns'
 import { countDistinctDateBlocks } from '@/lib/calendar/summary'
 import { assignPhasesToGroups } from '@/lib/calendar/grouping'
 
@@ -238,17 +239,37 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
   }
 
-  // PASSO 6: Agendar jogos por janela de horário
-  const finalScheduled = scheduleGamesByTimeWindow(allGamesToSchedule, {
-    numberOfCourts,
-    dayStartTime,
-    regularDayEndTime,
-    extendedDayEndTime,
-    slotDurationMinutes,
-    minRestSlotsPerTeam,
-    blockFormat,
-    startWeekend: startDate
-  })
+  // PASSO 6: Agendar jogos por fase — cada fase recebe seu próprio bloco de fim de semana
+  // Agrupa jogos por fase
+  const gamesByPhaseMap = new Map<number, GameToSchedule[]>()
+  for (const game of allGamesToSchedule) {
+    const ph = (game as any).phase || 1
+    if (!gamesByPhaseMap.has(ph)) gamesByPhaseMap.set(ph, [])
+    gamesByPhaseMap.get(ph)!.push(game)
+  }
+
+  let nextWeekendStart = startDate
+  const finalScheduled: ScheduledGame[] = []
+
+  for (let phaseNum = 1; phaseNum <= phases; phaseNum++) {
+    const phaseGames = gamesByPhaseMap.get(phaseNum) || []
+    if (phaseGames.length === 0) continue
+
+    const result = scheduleGamesByTimeWindow(phaseGames, {
+      numberOfCourts,
+      dayStartTime,
+      regularDayEndTime,
+      extendedDayEndTime,
+      slotDurationMinutes,
+      minRestSlotsPerTeam,
+      blockFormat,
+      startWeekend: nextWeekendStart
+    })
+
+    finalScheduled.push(...result.games)
+    // Avança 1 semana a partir do último bloco desta fase para garantir separação
+    nextWeekendStart = addDays(result.lastWeekendStart, 7)
+  }
 
   // PASSO 7: Montar resultados
   const catNameMap = new Map(validCategories.map(c => [c.id, c.name]))

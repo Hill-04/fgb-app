@@ -52,7 +52,7 @@ export default async function MatchesPage({
               {/* Header da data */}
               <div className="flex items-center gap-3 py-2 sticky top-0 bg-[var(--background)] z-10">
                 <div className="h-px flex-1 bg-[var(--border)]" />
-                <span className="text-[10px] font-black font-sans uppercase tracking-widest text-[var(--black)] px-4 py-1.5 bg-[var(--amarelo)] border border-[#E66000]/20 rounded-full shadow-sm">
+                <span className="text-[10px] font-black font-sans uppercase tracking-widest text-[var(--black)] px-4 py-1.5 bg-[var(--yellow)] border border-[var(--orange-dark)]/20 rounded-full shadow-sm">
                   {date}
                 </span>
                 <div className="h-px flex-1 bg-[var(--border)]" />
@@ -132,7 +132,7 @@ export default async function MatchesPage({
 
                     {/* Categoria + Status + Ação */}
                     <div className="flex flex-col items-end gap-1.5 flex-shrink-0 w-32">
-                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--black)] bg-[var(--amarelo)]/30 border border-[#FF6B00]/20 px-2 py-0.5 rounded-full">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--black)] bg-[var(--yellow)]/30 border border-[var(--orange)]/20 px-2 py-0.5 rounded-full">
                         {game.category.name}
                       </span>
                       {game.status === 'FINISHED' ? (

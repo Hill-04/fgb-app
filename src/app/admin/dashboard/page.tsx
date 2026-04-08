@@ -79,28 +79,28 @@ export default async function FederationDashboardPage() {
             label="Campeonatos Ativos"
             value={totalActive}
             sublabel="Em fase de planejamento ou execução"
-            accent="orange"
+            accent="verde"
             icon={<Trophy className="w-5 h-5" />}
           />
           <StatCard
             label="Equipes Envolvidas"
             value={totalTeams}
             sublabel="Total de Inscrições Confirmadas"
-            accent="blue"
+            accent="yellow"
             icon={<Users className="w-5 h-5" />}
           />
           <StatCard
             label="Volume de Jogos"
             value={totalGames}
             sublabel="Jogos previstos no calendário geral"
-            accent="purple"
+            accent="red"
             icon={<Calendar className="w-5 h-5" />}
           />
           <StatCard
             label="Jogos Realizados"
             value={finishedGames}
             sublabel="Súmulas já cadastradas no sistema"
-            accent="green"
+            accent="orange"
             icon={<Flag className="w-5 h-5" />}
           />
         </div>
