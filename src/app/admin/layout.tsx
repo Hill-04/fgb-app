@@ -12,16 +12,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen relative overflow-hidden" style={{ background: 'var(--gray-l)', color: 'var(--black)' }}>
-      {/* Background decoration */}
+    <div className="flex flex-col md:flex-row min-h-screen relative overflow-hidden" style={{ background: 'var(--bg-admin)', color: 'var(--black)' }}>
+      {/* Background decoration - subtle patterns for Premium feel */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000005_1px,transparent_1px),linear-gradient(to_bottom,#00000005_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000003_1px,transparent_1px),linear-gradient(to_bottom,#00000003_1px,transparent_1px)] bg-[size:3rem_3rem]" />
+        <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-[var(--verde)]/5 blur-[120px] rounded-full -mr-[200px] -mt-[200px]" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[var(--red)]/5 blur-[100px] rounded-full -ml-[150px] -mb-[150px]" />
       </div>
 
       <SideNav />
       
-      <main className="flex-1 p-4 sm:p-8 md:p-12 overflow-y-auto relative z-10 custom-scrollbar">
-        <div className="max-w-[1600px] mx-auto">
+      <main className="flex-1 p-6 sm:p-10 md:p-14 lg:p-16 overflow-y-auto relative z-10 custom-scrollbar">
+        <div className="max-w-[1440px] mx-auto">
           {children}
         </div>
       </main>

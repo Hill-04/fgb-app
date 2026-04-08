@@ -108,46 +108,53 @@ export default async function FederationDashboardPage() {
         {/* Tricolor accent */}
         <div className="fgb-tricolor-banner rounded-full" />
 
+        {/* Status sistema + jogos realizados */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Status Breakdown — solid FGB color blocks */}
-          <div className="lg:col-span-2 fgb-card p-8">
+          {/* Status Breakdown — higher volume FGB color blocks */}
+          <div className="lg:col-span-2 bg-white border border-[var(--border)] rounded-[20px] p-8 shadow-sm">
              <div className="flex items-center gap-3 mb-8">
-               <Activity className="w-5 h-5 text-[var(--red)]" />
-               <h3 className="fgb-display text-sm text-[var(--black)]">Distribuição por Fase</h3>
+               <div className="w-1.5 h-6 bg-[var(--red)] rounded-full" />
+               <h3 className="fgb-display text-sm text-[var(--black)]">Distribuição por Status</h3>
              </div>
 
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 {[
                   { label: 'Rascunho',    status: 'DRAFT',             count: statusCounts['DRAFT'] || 0,             blockClass: 'fgb-stat-block-dark' },
                   { label: 'Inscrições',  status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, blockClass: 'fgb-stat-block-yellow' },
                   { label: 'Em Andamento',status: 'ONGOING',           count: statusCounts['ONGOING'] || 0,           blockClass: 'fgb-stat-block-verde' },
                   { label: 'Encerrados',  status: 'FINISHED',          count: statusCounts['FINISHED'] || 0,          blockClass: 'fgb-stat-block-red' },
                 ].map((item) => (
-                  <div key={item.status} className={`fgb-stat-block ${item.blockClass}`}>
-                    <span className="fgb-stat-block-num">{item.count}</span>
-                    <span className="fgb-stat-block-label">{item.label}</span>
+                  <div key={item.status} className={`fgb-stat-block ${item.blockClass} group cursor-default h-32`}>
+                    <span className="fgb-stat-block-num text-4xl mb-0 transition-transform group-hover:scale-110">{item.count}</span>
+                    <span className="fgb-stat-block-label" style={{ letterSpacing: '0.2em' }}>{item.label}</span>
                   </div>
                 ))}
              </div>
           </div>
 
-          {/* Status sistema + jogos realizados */}
-          <div className="flex flex-col gap-4">
-            <div className="fgb-card flex-1 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{ background: 'var(--verde)', borderColor: 'transparent' }}>
-               <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.05)_0%,transparent_60%)]" />
-               <ShieldCheck className="w-10 h-10 text-white mb-3 relative z-10" />
-               <h3 className="fgb-display text-sm text-white mb-1 relative z-10">Sistema Online</h3>
-               <div className="mt-3 flex items-center justify-center gap-2 relative z-10">
-                  <span className="relative flex h-2.5 w-2.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+          <div className="flex flex-col gap-6">
+            <div 
+              className="flex-1 rounded-[24px] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-500 hover:shadow-premium group" 
+              style={{ background: 'linear-gradient(135deg, var(--verde) 0%, var(--verde-dark) 100%)' }}
+            >
+               <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.05)_0%,transparent_60%)] group-hover:opacity-60 transition-opacity" />
+               <div className="bg-white/10 p-4 rounded-3xl mb-4 relative z-10 backdrop-blur-sm group-hover:rotate-12 transition-transform">
+                  <ShieldCheck className="w-10 h-10 text-white" />
+               </div>
+               <h3 className="fgb-display text-sm text-white mb-2 relative z-10">FGB Digital</h3>
+               <div className="flex items-center justify-center gap-2 relative z-10 bg-black/20 px-4 py-1.5 rounded-full border border-white/10">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
                   </span>
-                  <span className="fgb-label text-white" style={{ fontSize: 9, opacity: 0.85 }}>Todos os serviços ativos</span>
+                  <span className="fgb-label text-white" style={{ fontSize: 9, letterSpacing: '0.1em' }}>SISTEMA ONLINE</span>
                </div>
             </div>
-            <div className="fgb-card p-6 flex flex-col items-center justify-center text-center relative overflow-hidden" style={{ background: 'var(--yellow)', borderColor: 'transparent' }}>
-               <p className="fgb-display text-4xl text-[var(--black)] leading-none mb-1">{finishedGames}</p>
-               <p className="fgb-stat-block-label text-[var(--black)]" style={{ opacity: 0.7 }}>Súmulas cadastradas</p>
+            
+            <div className="rounded-[24px] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden bg-white border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
+               <div className="absolute top-0 left-0 w-full h-1 bg-[var(--yellow)]" />
+               <p className="fgb-display text-5xl text-[var(--black)] leading-none mb-1 group-hover:scale-105 transition-transform">{finishedGames}</p>
+               <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, textTransform: 'none' }}>Súmulas Integradas</p>
             </div>
           </div>
         </div>

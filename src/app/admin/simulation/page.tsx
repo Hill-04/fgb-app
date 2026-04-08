@@ -178,30 +178,32 @@ export default function SimulationPage() {
   )
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-500 max-w-6xl mx-auto pb-10">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-10 h-10 rounded-xl bg-[var(--verde)]/10 border border-[var(--verde)]/20 flex items-center justify-center">
-              <FlaskConical className="w-5 h-5 text-[var(--verde)]" />
+    <div className="space-y-12 animate-in fade-in duration-700 max-w-[1440px] mx-auto pb-20">
+      {/* Header - High End Glassmorphism */}
+      <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-10 bg-white p-10 rounded-[40px] border border-[var(--border)] shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--verde)]/5 blur-[100px] rounded-full -mr-48 -mt-48" />
+        
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--verde)] to-[var(--verde-dark)] shadow-[0_8px_20px_rgba(27,115,64,0.3)] flex items-center justify-center transition-transform hover:rotate-6">
+              <FlaskConical className="w-7 h-7 text-white" />
             </div>
-            <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 10, letterSpacing: 2 }}>FGB LABS</span>
+            <div>
+              <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: '0.3em' }}>LABORATÓRIO EXPERIMENTAL</p>
+              <h1 className="fgb-display text-5xl text-[var(--black)] mt-1">FGB Labs: Simulation Engine</h1>
+            </div>
           </div>
-          <h1 className="fgb-display text-4xl sm:text-5xl text-[var(--black)] italic leading-none">
-            Laboratório de Simulação
-          </h1>
-          <p className="fgb-label text-[var(--gray)] mt-2 max-w-xl" style={{ textTransform: 'none', letterSpacing: 0 }}>
-            Configure e execute cenários completos de campeonatos. As simulações agora são <strong className="text-[var(--verde)] font-bold">persistentes</strong> e marcadas para visualização administrativa.
+          <p className="fgb-label text-[var(--gray)] max-w-2xl text-[13px] leading-relaxed italic" style={{ textTransform: 'none', letterSpacing: 0, opacity: 0.8 }}>
+            Projete cenários competitivos complexos, teste limites de agendamento e valide o motor de IA em tempo real.
+            <span className="block mt-1 font-bold text-[var(--verde)]">Ambientado para Dados Persistentes v4.5</span>
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap gap-4 w-full xl:w-auto relative z-10">
           {!running && !showConfig && (
             <Button
               onClick={() => setShowConfig(true)}
-              variant="outline"
-              className="flex-1 sm:flex-none fgb-btn-outline h-12 px-6"
+              className="flex-1 sm:flex-none h-14 px-8 bg-white border-2 border-[var(--verde)] text-[var(--verde)] hover:bg-[var(--verde)]/5 font-bold uppercase tracking-widest rounded-2xl transition-all"
             >
               Nova Configuração
             </Button>
@@ -210,23 +212,22 @@ export default function SimulationPage() {
           <Button
             onClick={cleanSimulation}
             disabled={cleaning || running}
-            variant="ghost"
-            className="flex-1 sm:flex-none text-[var(--red)] hover:text-[var(--red)] hover:bg-[var(--red)]/10 border border-[var(--red)]/20 rounded-xl h-12 px-6 font-bold font-sans"
+            className="flex-1 sm:flex-none h-14 px-8 bg-white border-2 border-[var(--red)] text-[var(--red)] hover:bg-[var(--red)]/5 font-bold uppercase tracking-widest rounded-2xl transition-all"
           >
-            {cleaning ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
-            Limpar Dados
+            {cleaning ? <Loader2 className="w-5 h-5 mr-3 animate-spin" /> : <Trash2 className="w-5 h-5 mr-3" />}
+            Limpar Lab
           </Button>
 
           {showConfig && (
             <Button
               onClick={runSimulation}
               disabled={running || cleaning || selectedTeamIds.length < 2 || selectedCategories.length === 0}
-              className="flex-[2] sm:flex-none fgb-btn-primary h-12 px-8 shadow-lg hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+              className="flex-[2] sm:flex-none h-14 px-10 bg-[var(--yellow)] text-[var(--black)] hover:bg-[var(--yellow-dark)] font-black uppercase tracking-widest rounded-2xl shadow-[0_8px_25px_rgba(245,194,0,0.3)] transition-all hover:-translate-y-1 active:translate-y-0"
             >
               {running ? (
-                <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Iniciando...</>
+                <><Loader2 className="w-6 h-6 mr-3 animate-spin" />Sintonizando IA...</>
               ) : (
-                <><Play className="w-5 h-5 mr-2" />Efetuar Simulação</>
+                <><Play className="w-6 h-6 mr-3 fill-current" />Gerar Universo</>
               )}
             </Button>
           )}
@@ -234,174 +235,192 @@ export default function SimulationPage() {
       </div>
 
       {showConfig ? (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in slide-in-from-bottom-4 duration-500">
-          {/* Main Config */}
-          <div className="lg:col-span-2 space-y-8">
-            <section className="fgb-card p-8 space-y-6">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500">
-                  <Shield className="w-4 h-4" />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 animate-in slide-in-from-bottom-8 duration-700">
+          {/* Main Config Area */}
+          <div className="lg:col-span-8 space-y-10">
+            {/* Panel 1: Basics */}
+            <section className="bg-white rounded-[40px] border border-[var(--border)] shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+              <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-admin)]/50 flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                  <Shield className="w-5 h-5 text-blue-600" />
                 </div>
-                <h2 className="fgb-display text-lg text-[var(--black)] leading-none">Informações Básicas</h2>
+                <h2 className="fgb-display text-xl text-[var(--black)]">Parâmetros do Cenário</h2>
               </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Nome do Campeonato</label>
+              
+              <div className="p-10 space-y-10">
+                <div className="space-y-3">
+                  <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: '0.15em' }}>TÍTULO DA SIMULAÇÃO</label>
                   <Input 
                     value={name} 
                     onChange={e => setName(e.target.value)}
-                    placeholder="Ex: Torneio de Verão 2026"
-                    className="bg-white border-[var(--border)] h-14 rounded-2xl focus-visible:ring-1 focus-visible:ring-[var(--verde)] text-[var(--black)] text-base font-bold shadow-sm font-sans"
+                    className="h-16 px-6 bg-[var(--bg-admin)] border-2 border-transparent focus:border-[var(--verde)] rounded-[20px] text-lg font-bold transition-all shadow-inner"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Sexo</label>
-                    <div className="flex gap-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                  <div className="space-y-4">
+                    <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: '0.15em' }}>GENÊRO</label>
+                    <div className="flex gap-3 bg-[var(--bg-admin)] p-1.5 rounded-[22px] border border-[var(--border)]">
                       {['masculino', 'feminino'].map(s => (
                         <button
                           key={s}
                           onClick={() => setSex(s)}
                           className={cn(
-                            "flex-1 h-12 rounded-xl border fgb-label uppercase transition-all shadow-sm",
-                            sex === s ? "bg-[var(--verde)]/10 border-[var(--verde)]/40 text-[var(--verde)]" : "bg-white border-[var(--border)] text-[var(--gray)] hover:bg-[var(--gray-l)] hover:text-[var(--black)]"
+                            "flex-1 h-12 rounded-[16px] fgb-label uppercase transition-all font-black text-[10px]",
+                            sex === s ? "bg-white text-[var(--verde)] shadow-md border border-[var(--verde)]/10" : "text-[var(--gray)] hover:text-[var(--black)]"
                           )}
-                          style={{ fontSize: 10 }}
                         >
                           {s}
                         </button>
                       ))}
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Categorias</label>
-                    <p className="text-[11px] text-[var(--gray)] font-medium h-12 flex items-center italic font-sans">{selectedCategories.length} selecionadas</p>
+                  <div className="space-y-4">
+                    <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: '0.15em' }}>CATEGORIAS SELECIONADAS</label>
+                    <div className="h-14 flex items-center px-6 bg-[var(--bg-admin)] rounded-[20px] border border-[var(--border)] border-dashed border-2">
+                      <p className="text-xs font-black text-[var(--black)] uppercase tracking-tight">{selectedCategories.length} Níveis Ativos</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-2 pt-2">
+                <div className="flex flex-wrap gap-2.5 pt-4">
                   {ALL_CATEGORIES.map(cat => (
                     <button
                       key={cat}
                       onClick={() => toggleCategory(cat)}
                       className={cn(
-                        "px-4 py-2 rounded-xl border text-[10px] font-bold transition-all shadow-sm font-sans",
-                        selectedCategories.includes(cat) ? "bg-[var(--verde)]/10 border-[var(--verde)]/40 text-[var(--verde)]" : "bg-white border-[var(--border)] text-[var(--gray)] hover:bg-[var(--gray-l)] hover:text-[var(--black)]"
+                        "px-6 py-3 rounded-full border-2 text-[10px] font-black transition-all shadow-sm",
+                        selectedCategories.includes(cat) 
+                          ? "bg-[var(--verde)] border-[var(--verde)] text-white shadow-[0_4px_12px_rgba(27,115,64,0.2)]" 
+                          : "bg-white border-[var(--border)] text-[var(--gray)] hover:border-[var(--gray-d)] hover:text-[var(--black)]"
                       )}
                     >
-                      {cat}
+                      {cat.toUpperCase()}
                     </button>
                   ))}
                 </div>
               </div>
             </section>
 
-            <section className="fgb-card p-8 space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-500">
-                    <Filter className="w-4 h-4" />
+            {/* Panel 2: Teams */}
+            <section className="bg-white rounded-[40px] border border-[var(--border)] shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
+              <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-admin)]/50 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
+                    <Filter className="w-5 h-5 text-orange-600" />
                   </div>
-                  <h2 className="fgb-display text-lg text-[var(--black)] leading-none">Seleção de Equipes</h2>
+                  <h2 className="fgb-display text-xl text-[var(--black)]">Seleção de Clubes</h2>
                 </div>
-                <span className="fgb-label text-[var(--gray)] uppercase" style={{ fontSize: 10 }}>{selectedTeamIds.length} equipes</span>
+                <div className="flex items-center gap-2 px-4 py-2 bg-[var(--verde)]/10 rounded-full border border-[var(--verde)]/20">
+                   <div className="w-2 h-2 bg-[var(--verde)] rounded-full animate-pulse" />
+                   <span className="fgb-label font-black text-[var(--verde)]" style={{ fontSize: 9 }}>{selectedTeamIds.length} CLUBES</span>
+                </div>
               </div>
 
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--gray)]" />
-                <Input 
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  placeholder="Buscar equipe ou cidade..."
-                  className="bg-white border-[var(--border)] shadow-sm h-12 pl-12 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)] text-[var(--black)] font-sans"
-                />
-              </div>
+              <div className="p-10 space-y-8">
+                <div className="relative group/search">
+                  <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--gray)] transition-colors group-focus-within/search:text-[var(--verde)]" />
+                  <Input 
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    placeholder="Filtrar por nome ou cidade..."
+                    className="h-16 pl-16 pr-6 bg-[var(--bg-admin)] border-2 border-transparent focus:border-[var(--verde)] rounded-[20px] text-base transition-all shadow-inner"
+                  />
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-                {fetchingTeams ? (
-                  Array(6).fill(0).map((_, i) => <div key={i} className="h-16 bg-[var(--gray-l)] rounded-2xl animate-pulse" />)
-                ) : (
-                  filteredTeams.map(team => (
-                    <button
-                      key={team.id}
-                      onClick={() => toggleTeam(team.id)}
-                      className={cn(
-                        "flex items-center gap-4 p-4 rounded-2xl border text-left transition-all shadow-sm",
-                        selectedTeamIds.includes(team.id) ? "bg-[var(--verde)]/10 border-[var(--verde)]/40" : "bg-white border-[var(--border)] hover:bg-[var(--gray-l)] hover:border-gray-300"
-                      )}
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-[var(--gray-l)] flex items-center justify-center shrink-0 border border-[var(--border)]">
-                        {team.logoUrl ? <img src={team.logoUrl} className="w-6 h-6 object-contain" /> : <Shield className="w-5 h-5 text-slate-300" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={cn("text-xs font-bold truncate font-sans tracking-tight", selectedTeamIds.includes(team.id) ? "text-[var(--black)]" : "text-[var(--gray)]")}>{team.name}</p>
-                        <p className="text-[10px] text-[var(--gray)] font-medium truncate font-sans">{team.city}</p>
-                      </div>
-                      <Checkbox checked={selectedTeamIds.includes(team.id)} className="rounded-[4px] border-gray-300 data-[state=checked]:bg-[var(--verde)] data-[state=checked]:border-[var(--verde)] shadow-none" />
-                    </button>
-                  ))
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[500px] overflow-y-auto pr-4 custom-scrollbar">
+                  {fetchingTeams ? (
+                    Array(8).fill(0).map((_, i) => <div key={i} className="h-20 bg-[var(--bg-admin)] rounded-3xl animate-pulse" />)
+                  ) : (
+                    filteredTeams.map(team => (
+                      <button
+                        key={team.id}
+                        onClick={() => toggleTeam(team.id)}
+                        className={cn(
+                          "group/card flex items-center gap-5 p-5 rounded-3xl border-2 text-left transition-all duration-300",
+                          selectedTeamIds.includes(team.id) 
+                            ? "bg-[var(--bg-admin)] border-[var(--verde)] shadow-md" 
+                            : "bg-white border-transparent hover:bg-[var(--bg-admin)]"
+                        )}
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-[var(--border)] shadow-sm group-hover/card:scale-110 transition-transform">
+                          {team.logoUrl ? <img src={team.logoUrl} className="w-8 h-8 object-contain" /> : <Shield className="w-6 h-6 text-slate-200" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className={cn("text-sm font-black truncate tracking-tight uppercase", selectedTeamIds.includes(team.id) ? "text-[var(--black)]" : "text-[var(--gray)]")}>{team.name}</p>
+                          <p className="text-[11px] text-[var(--gray)] font-medium truncate opacity-60">{team.city}</p>
+                        </div>
+                        <Checkbox checked={selectedTeamIds.includes(team.id)} className="w-6 h-6 rounded-lg border-2 border-[var(--border)] data-[state=checked]:bg-[var(--verde)] data-[state=checked]:border-[var(--verde)] transition-all" />
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </section>
           </div>
 
-          {/* Preview / Sidebar */}
-          <div className="space-y-6">
-            <div className="fgb-card admin-card-verde p-8 text-white shadow-xl">
-              <h3 className="fgb-label text-white/60 mb-6" style={{ fontSize: 10, letterSpacing: 2 }}>Resumo da Simulação</h3>
-              
-              <div className="space-y-6">
-                <div>
-                  <p className="fgb-label text-white/50 mb-1" style={{ fontSize: 9 }}>Cenário</p>
-                  <p className="fgb-display text-xl leading-tight italic">{name}</p>
-                </div>
+          {/* Right Sidebar: Prediction & Execution */}
+          <div className="lg:col-span-4 space-y-10">
+            <div className="sticky top-10 space-y-10">
+              {/* Executive Summary Card */}
+              <div 
+                className="rounded-[40px] p-10 text-white relative overflow-hidden shadow-premium" 
+                style={{ background: 'linear-gradient(145deg, var(--verde) 0%, var(--verde-dark) 100%)' }}
+              >
+                 <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 blur-[50px] rounded-full -mr-24 -mt-24 pointer-events-none" />
+                 
+                 <div className="relative z-10 space-y-10">
+                   <div className="flex items-center gap-3">
+                     <span className="w-1.5 h-6 bg-[var(--yellow)] rounded-full" />
+                     <h3 className="fgb-label text-white/60" style={{ fontSize: 10, letterSpacing: '0.2em' }}>EXECUTIVE PREVIEW</h3>
+                   </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="fgb-label text-white/50 mb-1" style={{ fontSize: 9 }}>Equipes</p>
-                    <p className="fgb-display text-2xl">{selectedTeamIds.length}</p>
-                  </div>
-                  <div>
-                    <p className="fgb-label text-white/50 mb-1" style={{ fontSize: 9 }}>Categorias</p>
-                    <p className="fgb-display text-2xl">{selectedCategories.length}</p>
-                  </div>
-                </div>
+                   <div className="space-y-8">
+                     <div className="p-6 bg-black/20 rounded-[28px] border border-white/10 backdrop-blur-sm">
+                        <p className="fgb-label text-white/40 mb-2" style={{ fontSize: 9 }}>PROJEÇÃO DE CARGA</p>
+                        <p className="fgb-display text-4xl mb-1">{Math.floor(selectedTeamIds.length * (selectedTeamIds.length - 1) / 2 * (selectedCategories.length || 0))}</p>
+                        <p className="fgb-label text-[var(--yellow)]" style={{ fontSize: 9, textTransform: 'none' }}>Partidas a serem instanciadas</p>
+                     </div>
 
-                <div className="pt-6 border-t border-white/20">
-                  <p className="text-[10px] font-medium leading-relaxed text-white/80 italic font-sans">
-                    Esta simulação irá gerar aproximadamente {Math.floor(selectedTeamIds.length * (selectedTeamIds.length - 1) / 2 * (selectedCategories.length || 0))} jogos distribuídos entre as categorias selecionadas.
-                  </p>
-                </div>
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="p-5 bg-white/5 rounded-[24px] border border-white/5">
+                           <p className="fgb-label text-white/40 mb-1" style={{ fontSize: 8 }}> CLUBES</p>
+                           <p className="fgb-display text-3xl">{selectedTeamIds.length}</p>
+                        </div>
+                        <div className="p-5 bg-white/5 rounded-[24px] border border-white/5">
+                           <p className="fgb-label text-white/40 mb-1" style={{ fontSize: 8 }}> NÍVEIS</p>
+                           <p className="fgb-display text-3xl">{selectedCategories.length}</p>
+                        </div>
+                     </div>
+                   </div>
 
-                <Button 
-                  onClick={runSimulation}
-                  disabled={selectedTeamIds.length < 2 || selectedCategories.length === 0}
-                  className="w-full h-14 bg-white text-[var(--verde)] hover:bg-gray-100 font-bold font-sans uppercase tracking-widest rounded-2xl shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 text-xs"
-                >
-                  Confirmar e Iniciar
-                </Button>
+                   <Button 
+                    onClick={runSimulation}
+                    disabled={selectedTeamIds.length < 2 || selectedCategories.length === 0}
+                    className="w-full h-20 bg-white text-[var(--verde)] hover:bg-gray-100 font-black uppercase tracking-[0.2em] rounded-[28px] shadow-2xl transition-all hover:scale-[1.03] active:scale-95 disabled:opacity-50 text-[11px]"
+                  >
+                    Instanciar Mundo
+                  </Button>
+                 </div>
               </div>
-            </div>
 
-            <div className="fgb-card p-6 space-y-4 shadow-sm bg-[var(--gray-l)]">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-4 h-4 text-[var(--gray)]" />
-                <h4 className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Cronograma Simulado</h4>
-              </div>
-              <div className="space-y-3 font-sans">
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-[var(--gray)] font-bold uppercase tracking-tight">Período</span>
-                  <span className="text-[var(--black)] font-black">Maio – Outubro 2026</span>
+              {/* Simulation Meta Panel */}
+              <div className="bg-white rounded-[40px] p-8 border border-[var(--border)] shadow-sm space-y-6">
+                <div className="flex items-center gap-3">
+                  <Clock className="w-5 h-5 text-[var(--gray)]" />
+                  <h4 className="fgb-label text-[var(--gray)]" style={{ fontSize: 10, letterSpacing: '0.1em' }}>CRONOGRAMA DO CENÁRIO</h4>
                 </div>
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-[var(--gray)] font-bold uppercase tracking-tight">Fase</span>
-                  <span className="text-[var(--black)] font-black">Única (Regular)</span>
-                </div>
-                <div className="flex justify-between items-center text-[11px]">
-                  <span className="text-[var(--gray)] font-bold uppercase tracking-tight">Localização</span>
-                  <span className="text-[var(--black)] font-black">Sedes Randômicas</span>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Janela Temporal', value: 'Maio – Outubro 2026' },
+                    { label: 'Estrutura fase 1', value: 'Round-Robin (Standard)' },
+                    { label: 'Geolocalização', value: 'Múltiplos Clusters' },
+                  ].map((item, i) => (
+                    <div key={i} className="flex justify-between items-center bg-[var(--bg-admin)] p-4 rounded-[20px] transition-colors hover:bg-white hover:border hover:border-[var(--border)]">
+                      <span className="text-[10px] font-black text-[var(--gray)] uppercase tracking-tight">{item.label}</span>
+                      <span className="text-[11px] font-bold text-[var(--black)]">{item.value}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

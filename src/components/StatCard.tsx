@@ -44,32 +44,46 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "fgb-card bg-white p-6 relative overflow-hidden group transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
-        borderAccents[accent],
-        "border-t-[3px]",
+        "group relative overflow-hidden transition-all duration-300",
+        "bg-white border border-[var(--border)] rounded-[20px]",
+        "hover:shadow-premium hover:-translate-y-1.5",
+        "flex flex-col h-full",
         className
       )}
     >
-      <div className="flex justify-between items-start mb-4">
-        <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>
-          {label}
-        </p>
-        {icon && (
-          <div className={cn("p-2.5 rounded-xl flex items-center justify-center transition-transform duration-200 group-hover:scale-105", iconBgs[accent])}>
-            {icon}
-          </div>
-        )}
-      </div>
+      {/* Visual Accent - Top Bar + Corner Glow */}
+      <div className={cn("absolute top-0 left-0 w-full h-1.5", borderAccents[accent])} />
+      <div className={cn("absolute top-0 right-0 w-24 h-24 blur-[40px] opacity-10 rounded-full -mr-12 -mt-12 transition-opacity group-hover:opacity-20", iconBgs[accent])} />
 
-      <div>
-        <p className="fgb-display text-4xl text-[var(--black)] leading-none mb-1">
-          {value}
-        </p>
-        {sublabel && (
-          <p className="fgb-label text-[var(--gray)] mt-2" style={{ fontSize: 10, textTransform: 'none', letterSpacing: 0 }}>
-            {sublabel}
+      <div className="p-7 flex flex-col h-full relative z-10">
+        <div className="flex justify-between items-start mb-6">
+          <div className="space-y-1">
+            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: '0.15em' }}>
+              {label}
+            </p>
+            {sublabel && (
+              <p className="text-[10px] font-medium text-[var(--gray)] opacity-70 leading-tight line-clamp-1">
+                {sublabel}
+              </p>
+            )}
+          </div>
+          {icon && (
+            <div className={cn(
+              "p-3 rounded-2xl flex items-center justify-center transition-all duration-300",
+              "shadow-sm group-hover:shadow-md group-hover:scale-110 group-hover:rotate-3",
+              iconBgs[accent]
+            )}>
+              {icon}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto">
+          <p className="fgb-display text-5xl text-[var(--black)] leading-none tracking-tight">
+            {value}
           </p>
-        )}
+          <div className="w-10 h-1 bg-[var(--border)] mt-4 rounded-full transition-all duration-500 group-hover:w-20 group-hover:bg-[var(--verde)]" />
+        </div>
       </div>
     </div>
   )
