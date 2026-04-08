@@ -228,42 +228,49 @@ export async function generateChampionshipSchedule(championshipId: string) {
     }
   }
 
-  // PASSO 6: Agendar jogos separando rigorosamente por Grupo e Fase (Viagens Separadas)
-  // Agrupa jogos por Fase E Grupo
-  const gamesByPhaseGroupMap = new Map<string, GameToSchedule[]>()
+  // PASSO 6: Agrupar jogos por "Viagem" (Pairing Home-Away) e "Fase"
+  // Uma viagem (Trip) na FGB contém todos os jogos de diferentes categorias entre os mesmos dois clubes.
+  const gamesByTripMap = new Map<string, GameToSchedule[]>()
+  
   for (const game of allGamesToSchedule) {
-    const ph = (game as any).phase || 1
-    const gIdx = (game as any).groupIdx || 0
-    const key = `${ph}-${gIdx}`
-    if (!gamesByPhaseGroupMap.has(key)) gamesByPhaseGroupMap.set(key, [])
-    gamesByPhaseGroupMap.get(key)!.push(game)
+    // A chave da viagem é: Fase + Mandante + Visitante
+    // Assim todos os Sub-13, Sub-15 etc entre Time A x Time B na Fase 1 ficam juntos
+    const key = `phase${game.phase}-h${game.homeTeamId}-a${game.awayTeamId}`
+    if (!gamesByTripMap.has(key)) gamesByTripMap.set(key, [])
+    gamesByTripMap.get(key)!.push(game)
   }
+
+  // Ordenar as chaves para garantir determinismo e separação por fase
+  const tripKeys = Array.from(gamesByTripMap.keys()).sort()
 
   let nextWeekendStart = startDate
   const finalScheduled: ScheduledGame[] = []
+  
+  // Agora iteramos sobre cada Viagem (Trip)
+  for (const tripKey of tripKeys) {
+    const tripGames = gamesByTripMap.get(tripKey) || []
+    if (tripGames.length === 0) continue
 
-  for (let phaseNum = 1; phaseNum <= phases; phaseNum++) {
-    for (let gIdx = 0; gIdx < groups.length; gIdx++) {
-      const key = `${phaseNum}-${gIdx}`
-      const groupGames = gamesByPhaseGroupMap.get(key) || []
-      
-      if (groupGames.length === 0) continue
+    // Agendar todos os jogos dessa viagem (ex: 3 categorias de uma vez)
+    // O scheduler vai cuidar de colocar 2 no Sábado e 1 no Domingo se necessário
+    const result = scheduleGamesByTimeWindow(tripGames, {
+      numberOfCourts,
+      dayStartTime,
+      regularDayEndTime,
+      extendedDayEndTime,
+      slotDurationMinutes,
+      minRestSlotsPerTeam,
+      blockFormat,
+      startWeekend: nextWeekendStart,
+      maxCategoriesPerDay: 2 // Forçar o limite de 2 categorias/dia por viagem
+    })
 
-      const result = scheduleGamesByTimeWindow(groupGames, {
-        numberOfCourts,
-        dayStartTime,
-        regularDayEndTime,
-        extendedDayEndTime,
-        slotDurationMinutes,
-        minRestSlotsPerTeam,
-        blockFormat,
-        startWeekend: nextWeekendStart
-      })
-
-      finalScheduled.push(...result.games)
-      // Ajuste crucial: Avança 1 semana para a próxima Viagem (Grupo ou Fase)
-      nextWeekendStart = addDays(result.lastWeekendStart, 7)
-    }
+    finalScheduled.push(...result.games)
+    
+    // Avança para o próximo FINAL DE SEMANA para a próxima viagem
+    // Isso garante que "Fases como viagens separadas" seja respeitado 
+    // e que cada conjunto de jogos Home x Away seja em sua própria semana/viagem
+    nextWeekendStart = addDays(result.lastWeekendStart, 7)
   }
 
   // PASSO 7: Montar resultados

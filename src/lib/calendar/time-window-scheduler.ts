@@ -105,7 +105,13 @@ export function scheduleGamesByTimeWindow(
             const categoryAlreadyToday = dayCategories.has(game.categoryId)
             const categoryLimitReached = !categoryAlreadyToday && dayCategories.size >= maxCategoriesPerDay
 
-            if (!categoryLimitReached && canTeamPlayInSlot(game, dateStr, slotIdx, teamLastSlot, minRestSlotsPerTeam)) {
+            if (categoryLimitReached) {
+              // Log para depuração (opcional, remova se poluir muito)
+              // console.log(`[Scheduler] Ignorando ${game.categoryId} em ${dateStr} - Limite atingido (${dayCategories.size}/${maxCategoriesPerDay})`)
+              continue
+            }
+
+            if (canTeamPlayInSlot(game, dateStr, slotIdx, teamLastSlot, minRestSlotsPerTeam)) {
               gameIdx = i
               break
             }
@@ -115,15 +121,14 @@ export function scheduleGamesByTimeWindow(
             const game = queue.splice(gameIdx, 1)[0]
             const time = slots[slotIdx]
 
-            // Registrar categoria do dia
+            // Registrar categoria do dia se ainda não registrada
             categoriesPerDay.get(dateStr)!.add(game.categoryId)
 
             // Marcar ocupação do time
             markTeamSlot(game.homeTeamId, game.categoryId, dateStr, slotIdx, teamLastSlot)
             markTeamSlot(game.awayTeamId, game.categoryId, dateStr, slotIdx, teamLastSlot)
 
-            // Bug 3 fix: criar dateTime com offset BRT explícito (-03:00)
-            // Evita que o servidor UTC interprete o horário como UTC em vez de BRT
+            // Criar dateTime com offset BRT explícito (-03:00) para evitar bugs de UTC
             const dateTime = new Date(`${dateStr}T${time}:00-03:00`)
 
             result.push({

@@ -7,11 +7,12 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    const { homeScore, awayScore, status } = await request.json()
+    const { homeScore, awayScore, status, playerStats } = await request.json()
 
     const game = await prisma.game.findUnique({ where: { id } })
     if (!game) return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 })
 
+    // 1. Atualizar Placar do Jogo
     await prisma.game.update({
       where: { id },
       data: { 
@@ -21,7 +22,28 @@ export async function PATCH(
       }
     })
 
-    // Recalcular standings se o jogo foi finalizado
+    // 2. Salvar Estatísticas dos Jogadores (Cestinhas)
+    if (playerStats && Array.isArray(playerStats)) {
+      // Limpar estatísticas anteriores do jogo para evitar duplicatas se houver re-edição
+      await prisma.playerStat.deleteMany({
+        where: { gameId: id }
+      })
+
+      // Criar novas estatísticas
+      if (playerStats.length > 0) {
+        await prisma.playerStat.createMany({
+          data: playerStats.map((ps: any) => ({
+            gameId: id,
+            teamId: ps.teamId,
+            userId: ps.userId,
+            points: ps.points || 0,
+            fouls: ps.fouls || 0
+          }))
+        })
+      }
+    }
+
+    // 3. Recalcular standings se o jogo foi finalizado
     if (status === 'FINISHED' || !status) {
       await recalculateStandings(game.categoryId)
     }
