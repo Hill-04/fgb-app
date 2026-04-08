@@ -10,19 +10,6 @@ import { assignPhasesToGroups } from '@/lib/calendar/grouping'
 // ═══════════════════════════════════════════
 type Team = { id: string; name: string }
 
-type ScheduledGame = { 
-  categoryId: string
-  homeTeamId: string
-  awayTeamId: string
-  round: number
-  phase: number
-  dateTime: Date
-  time: string
-  date: string
-  court: string
-  isReturn?: boolean
-}
-
 // ═══════════════════════════════════════════
 // GERAÇÃO ROUND-ROBIN
 // ═══════════════════════════════════════════
