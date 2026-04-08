@@ -4,72 +4,170 @@ import { PublicFooter } from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
   title: 'Fundação — FGB',
-  description: 'A fundação da Federação Gaúcha de Basketball em 18 de abril de 1952.',
+  description: 'A fundação da Federação Gaúcha de Basketball em 18 de abril de 1952, em Porto Alegre, com 22 clubes fundadores e o 1º presidente José Carlos Daut.',
 }
+
+const marcosHistoricos = [
+  {
+    ano: '1934 – 1935',
+    titulo: 'Bi-campeões Nacionais',
+    desc: 'Antes mesmo de existir como federação formal, o Rio Grande do Sul já mostrava sua força conquistando dois títulos brasileiros consecutivos.',
+    icon: '🏆',
+    badge: 'fgb-badge-yellow',
+    highlight: true,
+  },
+  {
+    ano: '18 Abr 1952',
+    titulo: 'Assembleia de Fundação',
+    desc: 'Em Porto Alegre, com representantes de 22 clubes do estado, foi realizada a assembleia histórica que deu origem à Federação Gaúcha de Basketball.',
+    icon: '🏛️',
+    badge: 'fgb-badge-verde',
+    highlight: false,
+  },
+  {
+    ano: '1952',
+    titulo: '1º Presidente Eleito',
+    desc: 'José Carlos Daut foi eleito como primeiro presidente da FGB por aclamação dos clubes fundadores presentes na assembleia.',
+    icon: '👤',
+    badge: 'fgb-badge-verde',
+    highlight: false,
+  },
+  {
+    ano: '1952 – hoje',
+    titulo: 'Mais de 70 Anos de História',
+    desc: 'A FGB governa e organiza o basquete gaúcho continuamente há mais de 7 décadas, sendo a entidade esportiva mais longeva do basquete do RS.',
+    icon: '📅',
+    badge: 'fgb-badge-outline',
+    highlight: false,
+  },
+]
+
+const clubesFundadores = [
+  'Grêmio Foot-Ball Porto Alegrense', 'Sport Club Internacional', 'SOGIPA', 'Juventude',
+  'Americano F.C.', 'Caxias do Sul', 'Pelotas', 'Santa Maria', 'Rio Grande', 'Passo Fundo',
+  'Novo Hamburgo', 'São Leopoldo', 'Canoas', 'Cachoeira do Sul', 'Bagé', 'Uruguaiana',
+  'Santa Cruz do Sul', 'Lajeado', 'Cruz Alta', 'Erechim', 'Bento Gonçalves', 'Caxias',
+]
 
 export default function FundacaoPage() {
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-white">
+    <div>
       <PublicHeader />
-      <main className="max-w-4xl mx-auto px-6 py-16">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 mb-8">
-          Início · FGB · Fundação
-        </p>
-        <div className="mb-14">
-          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-[#FF6B00] mb-4">18 de abril de 1952</p>
-          <h1 className="text-4xl md:text-6xl font-black italic uppercase text-white tracking-tight mb-6 leading-[0.95]" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-            Fundação<br /><span className="text-[#FF6B00]">da FGB</span>
-          </h1>
-          <p className="text-slate-400 text-base leading-relaxed max-w-2xl">
-            Em 18 de abril de 1952, Porto Alegre sediou o evento histórico que daria origem
-            à Federação Gaúcha de Basketball — a entidade que governa o basquete
-            do Rio Grande do Sul até hoje.
+
+      <div className="fgb-page-header">
+        <div className="fgb-page-header-bg" />
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 relative text-center">
+          <div className="fgb-page-header-eyebrow">18 de Abril de 1952 · Porto Alegre/RS</div>
+          <h1 className="fgb-page-header-title">Fundação da FGB</h1>
+          <p className="fgb-page-header-sub mx-auto">
+            Em 18 de abril de 1952, 22 clubes gaúchos se reuniram em Porto Alegre para
+            criar a entidade que organizaria o basquete do Rio Grande do Sul para sempre.
           </p>
         </div>
-        <div className="space-y-5">
-          <div className="bg-[#141414] border border-[#FF6B00]/20 rounded-3xl p-8">
-            <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#FF6B00] to-transparent rounded-t-3xl" />
-            <p className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] mb-4">O Momento da Fundação</p>
-            <h2 className="text-2xl font-black italic uppercase text-white mb-4" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-              18 de Abril de 1952
-            </h2>
-            <p className="text-sm text-slate-400 leading-relaxed">
-              Em Porto Alegre, com presença de representantes de 22 clubes do estado,
-              foi realizada a assembleia de fundação da Federação Gaúcha de Basketball.
-              José Carlos Daut foi eleito como primeiro presidente da entidade,
-              que nasceu com o objetivo de organizar e fomentar o basquete gaúcho.
-            </p>
-          </div>
-          <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8">
-            <h2 className="text-xl font-black italic uppercase text-white mb-4" style={{ fontFamily: 'var(--font-display), sans-serif' }}>
-              Primeiro Presidente
-            </h2>
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-[#FF6B00]/10 flex items-center justify-center text-3xl">
-                👤
-              </div>
-              <div>
-                <p className="text-base font-black uppercase text-white">José Carlos Daut</p>
-                <p className="text-xs text-[#FF6B00] uppercase tracking-widest mt-1">1º Presidente da FGB · 1952</p>
-              </div>
+      </div>
+
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-14">
+
+        {/* Stats strip */}
+        <div className="fgb-stats-strip rounded overflow-hidden mb-14" style={{ border: '1px solid var(--border)' }}>
+          {[
+            { n: '1952', l: 'Ano de Fundação' },
+            { n: '22', l: 'Clubes Fundadores' },
+            { n: '70+', l: 'Anos de história' },
+            { n: 'RS', l: 'Estado Sede' },
+          ].map((s, i) => (
+            <div key={i} className="fgb-stats-strip-item" style={{ background: '#fff' }}>
+              <div className="fgb-stats-num" style={{ color: 'var(--verde)' }}>{s.n}</div>
+              <div className="fgb-stats-label">{s.l}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Marcos Históricos */}
+        <section className="mb-14">
+          <div className="fgb-section-header">
+            <div>
+              <div className="fgb-accent fgb-accent-verde" />
+              <h2 className="fgb-section-title">Marcos <span className="verde">Históricos</span></h2>
             </div>
           </div>
-          <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8">
-            <p className="text-xs text-slate-500 leading-relaxed mb-5">
-              Para mais informações sobre a fundação e o histórico completo da FGB,
-              acesse o site oficial.
-            </p>
-            <a
-              href="https://basquetegaucho.com.br/fundacao/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:underline"
-            >
-              Ver no site oficial →
-            </a>
+
+          <div className="space-y-4">
+            {marcosHistoricos.map((m, i) => (
+              <div key={i} className={`fgb-card p-6 flex items-start gap-5 ${m.highlight ? 'admin-card-yellow' : ''}`}>
+                <span className="text-3xl flex-shrink-0">{m.icon}</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className={`fgb-badge ${m.badge}`}>{m.ano}</span>
+                    {m.highlight && <span className="fgb-badge fgb-badge-red">Destaque</span>}
+                  </div>
+                  <h3 className="fgb-display text-[16px] text-[var(--black)] mb-1">{m.titulo}</h3>
+                  <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>{m.desc}</p>
+                </div>
+              </div>
+            ))}
           </div>
+        </section>
+
+        {/* Primeiro Presidente */}
+        <section className="mb-14">
+          <div className="fgb-section-header">
+            <div>
+              <div className="fgb-accent fgb-accent-red" />
+              <h2 className="fgb-section-title">Primeiro <span className="red">Presidente</span></h2>
+            </div>
+          </div>
+          <div className="fgb-card admin-card-verde p-8 flex flex-col md:flex-row items-center md:items-start gap-6">
+            <div style={{
+              width: 80, height: 80, borderRadius: '50%',
+              background: 'var(--verde)', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontSize: 36, flexShrink: 0,
+            }}>
+              👤
+            </div>
+            <div>
+              <span className="fgb-badge fgb-badge-verde mb-3 inline-block">1º Presidente da FGB</span>
+              <h3 className="fgb-display text-[28px] text-[var(--black)] mb-1">José Carlos Daut</h3>
+              <p className="fgb-label text-[var(--verde)] mb-4">Eleito em 18 de Abril de 1952 · Porto Alegre/RS</p>
+              <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0, maxWidth: 480 }}>
+                José Carlos Daut liderou a assembleia de fundação e foi escolhido por aclamação
+                como o primeiro presidente da Federação Gaúcha de Basketball, cargo que exerceu
+                com dedicação nos primeiros anos da entidade.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Clubes Fundadores */}
+        <section className="fgb-section fgb-section-alt rounded-lg mb-14" style={{ padding: '32px' }}>
+          <div className="fgb-accent fgb-accent-red mb-3" />
+          <h2 className="fgb-display text-[24px] text-[var(--black)] mb-8">
+            Os 22 Clubes <span style={{ color: 'var(--red)' }}>Fundadores</span>
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {clubesFundadores.map((clube, i) => (
+              <div key={i} className="flex items-center gap-2 fgb-label bg-white p-3 rounded" style={{ border: '1px solid var(--border)' }}>
+                <span className="font-black w-5 text-right flex-shrink-0" style={{ color: 'var(--red)', fontSize: 10 }}>{i + 1}.</span>
+                <span style={{ color: 'var(--black)', letterSpacing: 0, textTransform: 'none', fontSize: 10 }}>{clube}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA */}
+        <div className="text-center">
+          <a
+            href="https://basquetegaucho.com.br/fundacao/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="fgb-btn-primary"
+          >
+            Ver Página Oficial da Fundação →
+          </a>
         </div>
+
       </main>
+
       <PublicFooter />
     </div>
   )
