@@ -61,13 +61,13 @@ export default async function FederationDashboardPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-black text-orange-500 uppercase tracking-[0.2em]">Visão Global</span>
-                <Badge variant="blue" size="sm" className="bg-orange-500/10 text-orange-500 border-orange-500/20">EXECUTIVA</Badge>
+                <span className="fgb-label text-[var(--red)]" style={{ fontSize: 10 }}>Visão Global</span>
+                <span className="fgb-badge fgb-badge-red">EXECUTIVA</span>
               </div>
-              <h1 className="text-3xl font-black text-white tracking-tight">Painel da Federação</h1>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Métricas de todos os campeonatos ativos</p>
+              <h1 className="fgb-display text-3xl text-[var(--black)]">Painel da Federação</h1>
+              <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Métricas de todos os campeonatos ativos</p>
             </div>
-            <Link href="/admin/championships" className="h-10 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center transition-all border border-white/10">
+            <Link href="/admin/championships" className="fgb-btn-outline">
               Acessar Campeonatos →
             </Link>
           </div>
@@ -107,38 +107,38 @@ export default async function FederationDashboardPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Status Breakdown */}
-          <div className="lg:col-span-2 bg-[#0A0A0A] border border-white/5 rounded-3xl p-8">
+          <div className="lg:col-span-2 fgb-card p-8">
              <div className="flex items-center gap-3 mb-8">
-               <Activity className="w-5 h-5 text-orange-500" />
-               <h3 className="text-sm font-black text-white uppercase tracking-widest">Distribuição por Fase</h3>
+               <Activity className="w-5 h-5 text-[var(--red)]" />
+               <h3 className="fgb-display text-sm text-[var(--black)]">Distribuição por Fase</h3>
              </div>
              
              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Rascunho', status: 'DRAFT', count: statusCounts['DRAFT'] || 0, color: 'text-slate-400', bg: 'bg-slate-500/10' },
-                  { label: 'Inscrições', status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-                  { label: 'Em Andamento', status: 'ONGOING', count: statusCounts['ONGOING'] || 0, color: 'text-green-400', bg: 'bg-green-500/10' },
-                  { label: 'Encerrados', status: 'FINISHED', count: statusCounts['FINISHED'] || 0, color: 'text-purple-400', bg: 'bg-purple-500/10' },
+                  { label: 'Rascunho', status: 'DRAFT', count: statusCounts['DRAFT'] || 0, badge: 'fgb-badge-outline' },
+                  { label: 'Inscrições', status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, badge: 'fgb-badge-yellow' },
+                  { label: 'Em Andamento', status: 'ONGOING', count: statusCounts['ONGOING'] || 0, badge: 'fgb-badge-verde' },
+                  { label: 'Encerrados', status: 'FINISHED', count: statusCounts['FINISHED'] || 0, badge: 'fgb-badge-red' },
                 ].map((item) => (
-                  <div key={item.status} className={`${item.bg} border border-white/5 rounded-2xl p-5 flex flex-col items-center justify-center text-center`}>
-                    <span className={`text-3xl font-black ${item.color} leading-none mb-2`}>{item.count}</span>
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{item.label}</span>
+                  <div key={item.status} className="bg-[var(--gray-l)] border border-[var(--border)] rounded-lg p-5 flex flex-col items-center justify-center text-center">
+                    <span className="fgb-display text-3xl text-[var(--black)] mb-2 leading-none">{item.count}</span>
+                    <span className={`fgb-badge ${item.badge}`}>{item.label}</span>
                   </div>
                 ))}
              </div>
           </div>
 
-          <div className="bg-[#0A0A0A] border border-white/5 rounded-3xl p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
-             <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
-             <ShieldCheck className="w-12 h-12 text-slate-800 mb-4" />
-             <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2">Sistema Operacional</h3>
-             <p className="text-xs font-bold text-slate-500 mt-1">Todos os serviços online.</p>
+          <div className="fgb-card admin-card-verde p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-[0.03] rounded-full blur-3xl -mr-16 -mt-16" />
+             <ShieldCheck className="w-12 h-12 text-[var(--verde)] mb-4" />
+             <h3 className="fgb-display text-sm text-[var(--black)] mb-2">Sistema Operacional</h3>
+             <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Todos os serviços online.</p>
              <div className="mt-6 flex items-center justify-center gap-2">
                 <span className="relative flex h-3 w-3">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: 'var(--verde)' }}></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3" style={{ backgroundColor: 'var(--verde)' }}></span>
                 </span>
-                <span className="text-[10px] font-black text-green-500 uppercase tracking-widest">Status: ON</span>
+                <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Status: ON</span>
              </div>
           </div>
         </div>
@@ -148,11 +148,10 @@ export default async function FederationDashboardPage() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">Campeonatos em Destaque</h3>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Ações rápidas para as competições principais</p>
+                <h3 className="fgb-display text-sm text-[var(--black)]">Campeonatos em Destaque</h3>
+                <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Ações rápidas para as competições principais</p>
               </div>
-              <Link href="/admin/championships"
-                className="text-[10px] font-black uppercase tracking-widest text-[#FF6B00] hover:text-[#E66000] px-4 py-2 bg-[#FF6B00]/5 rounded-lg border border-[#FF6B00]/10 transition-all">
+              <Link href="/admin/championships" className="fgb-badge fgb-badge-red hover:opacity-80 cursor-pointer">
                 Ver Todos →
               </Link>
             </div>
@@ -178,10 +177,11 @@ export default async function FederationDashboardPage() {
   } catch (error: any) {
     console.error("Dashboard Global Error:", error)
     return (
-      <div className="bg-[#0A0A0A] border border-red-500/20 rounded-3xl p-20 text-center">
-        <h2 className="text-2xl font-black text-white mb-2">Erro ao carregar Dashboard Executivo</h2>
-        <p className="text-slate-500 mb-6 font-mono text-xs">{error.message}</p>
+      <div className="fgb-card admin-card-red p-20 text-center">
+        <h2 className="fgb-display text-2xl text-[var(--black)] mb-2">Erro ao carregar Dashboard Executivo</h2>
+        <p className="fgb-label text-[var(--gray)] mb-6 font-mono" style={{ textTransform: 'none', letterSpacing: 0 }}>{error.message}</p>
       </div>
     )
   }
 }
+

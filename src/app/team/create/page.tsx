@@ -54,41 +54,41 @@ export default function CreateTeamPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[--bg-main] text-[--text-main]">
+    <div className="min-h-screen bg-gray-50 text-[var(--black)] font-sans">
       {/* Header */}
-      <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[--border-color] bg-[--bg-sidebar]">
+      <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[var(--border)] bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-[--orange] flex items-center justify-center rotate-45">
-            <span className="font-display font-black text-white text-xs -rotate-45">FGB</span>
+          <div className="w-9 h-9 bg-orange-500 flex items-center justify-center rounded-lg shadow-sm">
+            <span className="font-display font-black text-white text-xs tracking-wider">FGB</span>
           </div>
-          <div className="text-sm font-semibold text-[--text-main]">Criar Equipe</div>
+          <div className="text-sm font-bold text-[var(--black)] uppercase tracking-wide">Criar Equipe</div>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-black uppercase text-white mb-2">
+          <h1 className="text-3xl font-display font-black uppercase text-[var(--black)] mb-2 italic tracking-tight">
             Criar Nova Equipe
           </h1>
-          <p className="text-[--text-secondary]">
+          <p className="text-[var(--gray)] font-medium">
             Preencha os dados da sua equipe. Você será automaticamente o Head Coach.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-[--error]/10 border border-[--error] rounded-lg text-[--error]">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm font-medium">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Informações Básicas */}
-          <div className="card-fgb p-6">
-            <h2 className="text-xl font-bold text-white mb-4">Informações Básicas</h2>
+          <div className="fgb-card bg-white border border-[var(--border)] rounded-[2rem] p-8 shadow-sm">
+            <h2 className="text-xl font-bold text-[var(--black)] mb-6 uppercase tracking-tight italic">Informações Básicas</h2>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                   Nome da Equipe *
                 </label>
                 <Input
@@ -97,12 +97,12 @@ export default function CreateTeamPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Ex: Caxias Basquete"
-                  className="bg-[--bg-main] border-[--border-color] text-white"
+                  className="bg-gray-50 border-[var(--border)] text-[var(--black)] focus-visible:ring-orange-500 rounded-xl"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                   URL do Logótipo (opcional)
                 </label>
                 <Input
@@ -110,9 +110,9 @@ export default function CreateTeamPage() {
                   value={formData.logoUrl}
                   onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
                   placeholder="https://exemplo.com/logo.png"
-                  className="bg-[--bg-main] border-[--border-color] text-white"
+                  className="bg-gray-50 border-[var(--border)] text-[var(--black)] focus-visible:ring-orange-500 rounded-xl"
                 />
-                <p className="text-xs text-[--text-dim] mt-1">
+                <p className="text-xs text-gray-400 mt-2 font-medium">
                   Cole o link de uma imagem hospedada online
                 </p>
               </div>
@@ -120,24 +120,24 @@ export default function CreateTeamPage() {
           </div>
 
           {/* Ginásio */}
-          <div className="card-fgb p-6">
+          <div className="fgb-card bg-white border border-[var(--border)] rounded-[2rem] p-8 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-bold text-white">Ginásio Próprio</h2>
+              <h2 className="text-xl font-bold text-[var(--black)] uppercase tracking-tight italic">Ginásio Próprio</h2>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
                   checked={formData.hasGym}
                   onChange={(e) => setFormData({ ...formData, hasGym: e.target.checked })}
-                  className="w-4 h-4"
+                  className="w-4 h-4 text-orange-600 border-[var(--border)] rounded focus:ring-orange-500"
                 />
-                <span className="text-sm text-[--text-secondary]">Possui ginásio próprio</span>
+                <span className="text-xs font-bold text-[var(--gray)] uppercase tracking-wide">Possui ginásio próprio</span>
               </label>
             </div>
 
             {formData.hasGym && (
-              <div className="space-y-4 mt-4 pt-4 border-t border-[--border-color]">
+              <div className="space-y-4 mt-6 pt-6 border-t border-[var(--border)]">
                 <div>
-                  <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                  <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                     Nome do Ginásio *
                   </label>
                   <Input
@@ -149,12 +149,12 @@ export default function CreateTeamPage() {
                       gym: { ...formData.gym, name: e.target.value }
                     })}
                     placeholder="Ex: Ginásio Municipal"
-                    className="bg-[--bg-main] border-[--border-color] text-white"
+                    className="bg-gray-50 border-[var(--border)] text-[var(--black)] focus-visible:ring-orange-500 rounded-xl"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                  <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                     Endereço *
                   </label>
                   <Input
@@ -166,13 +166,13 @@ export default function CreateTeamPage() {
                       gym: { ...formData.gym, address: e.target.value }
                     })}
                     placeholder="Rua, número, bairro"
-                    className="bg-[--bg-main] border-[--border-color] text-white"
+                    className="bg-gray-50 border-[var(--border)] text-[var(--black)] focus-visible:ring-orange-500 rounded-xl"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                    <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                       Cidade *
                     </label>
                     <Input
@@ -184,12 +184,12 @@ export default function CreateTeamPage() {
                         gym: { ...formData.gym, city: e.target.value }
                       })}
                       placeholder="Ex: Caxias do Sul"
-                      className="bg-[--bg-main] border-[--border-color] text-white"
+                      className="bg-gray-50 border-[var(--border)] text-[var(--black)] focus-visible:ring-orange-500 rounded-xl"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                    <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                       Capacidade *
                     </label>
                     <Input
@@ -201,13 +201,13 @@ export default function CreateTeamPage() {
                         gym: { ...formData.gym, capacity: e.target.value }
                       })}
                       placeholder="500"
-                      className="bg-[--bg-main] border-[--border-color] text-white"
+                      className="bg-gray-50 border-[var(--border)] text-[var(--black)] focus-visible:ring-orange-500 rounded-xl"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[--text-secondary] mb-2">
+                  <label className="block text-xs font-bold text-[var(--gray)] mb-2 uppercase tracking-wide">
                     Disponibilidade *
                   </label>
                   <select
@@ -217,7 +217,7 @@ export default function CreateTeamPage() {
                       ...formData,
                       gym: { ...formData.gym, availability: e.target.value }
                     })}
-                    className="w-full px-3 py-2 bg-[--bg-main] border border-[--border-color] rounded-md text-white"
+                    className="w-full px-3 py-2 bg-gray-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus-visible:outline-none focus:ring-1 focus:ring-orange-500"
                   >
                     <option value="sabado_domingo">Sábado e Domingo</option>
                     <option value="sabado">Apenas Sábado</option>
@@ -234,14 +234,14 @@ export default function CreateTeamPage() {
               type="button"
               variant="outline"
               onClick={() => router.back()}
-              className="flex-1"
+              className="flex-1 border-[var(--border)] text-[var(--gray)] hover:bg-gray-100 font-black uppercase tracking-widest h-12 rounded-xl transition-colors"
               disabled={loading}
             >
               Voltar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-[--orange] hover:bg-[--orange-hover] text-white"
+              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black uppercase tracking-widest h-12 rounded-xl shadow-md transition-all hover:shadow-lg"
               disabled={loading}
             >
               {loading ? 'Criando...' : 'Criar Equipe'}

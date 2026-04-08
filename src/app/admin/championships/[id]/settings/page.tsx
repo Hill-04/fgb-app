@@ -49,7 +49,7 @@ type Toast = { msg: string; type: 'success' | 'error' } | null
 function FieldGroup({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
         {label}
       </label>
       {children}
@@ -61,11 +61,11 @@ function Toggle({ enabled, onClick }: { enabled: boolean; onClick: () => void })
   return (
     <button
       onClick={onClick}
-      className={`relative w-11 h-6 rounded-full transition-all duration-300 ${
-        enabled ? 'bg-[#FF6B00]' : 'bg-white/10'
+      className={`relative w-11 h-6 rounded-full transition-all duration-300 shadow-inner border border-[var(--border)] ${
+        enabled ? 'bg-green-500 border-green-600' : 'bg-[var(--gray-l)]'
       }`}
     >
-      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${
+      <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-sm ${
         enabled ? 'left-6' : 'left-1'
       }`} />
     </button>
@@ -205,27 +205,27 @@ export default function ChampionshipSettingsPage({
   if (loading || !form) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin" />
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Carregando configurações...</p>
+        <Loader2 className="w-10 h-10 text-[var(--verde)] animate-spin" />
+        <p className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest">Carregando configurações...</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-8 pb-20 max-w-5xl animate-in fade-in duration-500">
+    <div className="space-y-8 pb-20 max-w-5xl animate-in fade-in duration-500 font-sans">
       
       {/* SEÇÃO 1: Informações Gerais */}
-      <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl">
+      <div className="fgb-card bg-white p-8 space-y-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 rounded-xl bg-[#FF6B00]/10 flex items-center justify-center">
-                <Settings className="w-5 h-5 text-[#FF6B00]" />
+             <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100">
+                <Settings className="w-5 h-5 text-orange-600" />
              </div>
              <div>
-                <h3 className="text-xl font-black italic uppercase text-white tracking-tight leading-none">
+                <h3 className="fgb-display text-xl text-[var(--black)] leading-none">
                   Informações Gerais
                 </h3>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1.5">
+                <p className="fgb-label text-[var(--gray)] mt-1.5" style={{ fontSize: 10, letterSpacing: 2 }}>
                   Identificação básica do campeonato
                 </p>
              </div>
@@ -233,7 +233,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('general')}
             disabled={saving === 'general'}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
+            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'general' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -243,7 +243,7 @@ export default function ChampionshipSettingsPage({
             <input 
               value={form.name} 
               onChange={e => setForm(p => p ? ({...p, name: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] transition-all" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] transition-all" 
             />
           </FieldGroup>
           <FieldGroup label="Ano">
@@ -251,44 +251,44 @@ export default function ChampionshipSettingsPage({
               type="number" 
               value={form.year} 
               onChange={e => setForm(p => p ? ({...p, year: Number(e.target.value)}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] transition-all" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] transition-all" 
             />
           </FieldGroup>
           <FieldGroup label="Gênero">
             <select 
               value={form.sex} 
               onChange={e => setForm(p => p ? ({...p, sex: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] appearance-none"
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
             >
-              <option value="masculino" className="bg-[#0A0A0A]">Masculino</option>
-              <option value="feminino" className="bg-[#0A0A0A]">Feminino</option>
-              <option value="misto" className="bg-[#0A0A0A]">Misto</option>
+              <option value="masculino" className="bg-white">Masculino</option>
+              <option value="feminino" className="bg-white">Feminino</option>
+              <option value="misto" className="bg-white">Misto</option>
             </select>
           </FieldGroup>
           <FieldGroup label="Status">
             <select 
               value={form.status} 
               onChange={e => setForm(p => p ? ({...p, status: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] appearance-none"
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
             >
-              <option value="DRAFT" className="bg-[#0A0A0A]">Rascunho</option>
-              <option value="REGISTRATION_OPEN" className="bg-[#0A0A0A]">Inscrições Abertas</option>
-              <option value="REGISTRATION_CLOSED" className="bg-[#0A0A0A]">Inscrições Encerradas</option>
-              <option value="ONGOING" className="bg-[#0A0A0A]">Em Andamento</option>
-              <option value="FINISHED" className="bg-[#0A0A0A]">Encerrado</option>
+              <option value="DRAFT" className="bg-white">Rascunho</option>
+              <option value="REGISTRATION_OPEN" className="bg-white">Inscrições Abertas</option>
+              <option value="REGISTRATION_CLOSED" className="bg-white">Inscrições Encerradas</option>
+              <option value="ONGOING" className="bg-white">Em Andamento</option>
+              <option value="FINISHED" className="bg-white">Encerrado</option>
             </select>
           </FieldGroup>
         </div>
       </div>
 
       {/* SEÇÃO 2: Datas */}
-      <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl">
+      <div className="fgb-card bg-white p-8 space-y-6 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-black italic uppercase text-white tracking-tight">Cronograma</h3>
+          <h3 className="fgb-display text-xl text-[var(--black)] leading-none">Cronograma</h3>
           <button
             onClick={() => handleSave('dates')}
             disabled={saving === 'dates'}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
+            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'dates' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -299,7 +299,7 @@ export default function ChampionshipSettingsPage({
               type="date" 
               value={form.regDeadline ? form.regDeadline.split('T')[0] : ''} 
               onChange={e => setForm(p => p ? ({...p, regDeadline: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
             />
           </FieldGroup>
           <FieldGroup label="Data Início">
@@ -307,7 +307,7 @@ export default function ChampionshipSettingsPage({
               type="date" 
               value={form.startDate ? form.startDate.split('T')[0] : ''} 
               onChange={e => setForm(p => p ? ({...p, startDate: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
             />
           </FieldGroup>
           <FieldGroup label="Data Fim">
@@ -315,20 +315,20 @@ export default function ChampionshipSettingsPage({
               type="date" 
               value={form.endDate ? form.endDate.split('T')[0] : ''} 
               onChange={e => setForm(p => p ? ({...p, endDate: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
             />
           </FieldGroup>
         </div>
       </div>
 
       {/* SEÇÃO 3: Formato de Competição */}
-      <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl">
+      <div className="fgb-card bg-white p-8 space-y-6 shadow-sm">
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-black italic uppercase text-white tracking-tight">Formato e Regras</h3>
+          <h3 className="fgb-display text-xl text-[var(--black)] leading-none">Formato e Regras</h3>
           <button
             onClick={() => handleSave('format')}
             disabled={saving === 'format'}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
+            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'format' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -338,11 +338,11 @@ export default function ChampionshipSettingsPage({
             <select 
               value={form.format} 
               onChange={e => setForm(p => p ? ({...p, format: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] appearance-none"
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
             >
-              <option value="todos_contra_todos" className="bg-[#0A0A0A]">Todos contra todos</option>
-              <option value="grupos_e_mata_mata" className="bg-[#0A0A0A]">Grupos e Mata-mata</option>
-              <option value="eliminatoria_simples" className="bg-[#0A0A0A]">Eliminatória Simples</option>
+              <option value="todos_contra_todos" className="bg-white">Todos contra todos</option>
+              <option value="grupos_e_mata_mata" className="bg-white">Grupos e Mata-mata</option>
+              <option value="eliminatoria_simples" className="bg-white">Eliminatória Simples</option>
             </select>
           </FieldGroup>
           <FieldGroup label="Turnos (Fase Regular)">
@@ -350,7 +350,7 @@ export default function ChampionshipSettingsPage({
               type="number" 
               value={form.turns} 
               onChange={e => setForm(p => p ? ({...p, turns: Number(e.target.value)}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
             />
           </FieldGroup>
           <FieldGroup label="Phases/Etapas">
@@ -358,7 +358,7 @@ export default function ChampionshipSettingsPage({
               type="number" 
               value={form.phases} 
               onChange={e => setForm(p => p ? ({...p, phases: Number(e.target.value)}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
             />
           </FieldGroup>
           <FieldGroup label="Equipes Mín. p/ Categoria">
@@ -366,18 +366,18 @@ export default function ChampionshipSettingsPage({
               type="number" 
               value={form.minTeamsPerCat} 
               onChange={e => setForm(p => p ? ({...p, minTeamsPerCat: Number(e.target.value)}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
             />
           </FieldGroup>
           <FieldGroup label="Mando de Quadra">
             <select 
               value={form.fieldControl} 
               onChange={e => setForm(p => p ? ({...p, fieldControl: e.target.value}) : null)}
-              className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] appearance-none"
+              className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
             >
-              <option value="alternado" className="bg-[#0A0A0A]">Alternado (Inscrição)</option>
-              <option value="fixo" className="bg-[#0A0A0A]">Fixo (Sede Única)</option>
-              <option value="neutro" className="bg-[#0A0A0A]">Neutro / Aleatório</option>
+              <option value="alternado" className="bg-white">Alternado (Inscrição)</option>
+              <option value="fixo" className="bg-white">Fixo (Sede Única)</option>
+              <option value="neutro" className="bg-white">Neutro / Aleatório</option>
             </select>
           </FieldGroup>
         </div>
@@ -405,13 +405,13 @@ export default function ChampionshipSettingsPage({
       </div>
 
       {/* SEÇÃO 4: Playoffs */}
-      <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl relative overflow-hidden">
+      <div className="fgb-card bg-white p-8 space-y-6 shadow-sm relative overflow-hidden">
         {/* Glow if enabled */}
-        {form.hasPlayoffs && <div className="absolute top-0 right-0 w-64 h-64 bg-orange-500/5 blur-[100px]" />}
+        {form.hasPlayoffs && <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 blur-[100px]" />}
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <h3 className="text-xl font-black italic uppercase text-white tracking-tight">Fase de Playoffs</h3>
+             <h3 className="fgb-display text-xl text-[var(--black)] leading-none">Fase de Playoffs</h3>
              <Toggle 
                enabled={form.hasPlayoffs} 
                onClick={() => setForm(p => p ? ({...p, hasPlayoffs: !p.hasPlayoffs}) : null)} 
@@ -420,7 +420,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('playoffs')}
             disabled={saving === 'playoffs'}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
+            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'playoffs' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -433,21 +433,21 @@ export default function ChampionshipSettingsPage({
                 type="number" 
                 value={form.playoffTeams} 
                 onChange={e => setForm(p => p ? ({...p, playoffTeams: Number(e.target.value)}) : null)}
-                className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+                className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
               />
             </FieldGroup>
             <FieldGroup label="Formato dos Playoffs">
               <select 
                 value={form.playoffFormat} 
                 onChange={e => setForm(p => p ? ({...p, playoffFormat: e.target.value}) : null)}
-                className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00] appearance-none"
+                className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
               >
-                <option value="melhor_de_1" className="bg-[#0A0A0A]">Jogo Único</option>
-                <option value="melhor_de_3" className="bg-[#0A0A0A]">Melhor de 3</option>
+                <option value="melhor_de_1" className="bg-white">Jogo Único</option>
+                <option value="melhor_de_3" className="bg-white">Melhor de 3</option>
               </select>
             </FieldGroup>
             <div className="flex items-center gap-4 pt-6">
-               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Disputa de 3º Lugar?</label>
+               <label className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Disputa de 3º Lugar?</label>
                <Toggle 
                  enabled={form.hasThirdPlace} 
                  onClick={() => setForm(p => p ? ({...p, hasThirdPlace: !p.hasThirdPlace}) : null)} 
@@ -458,10 +458,10 @@ export default function ChampionshipSettingsPage({
       </div>
 
        {/* SEÇÃO 5: Rebaixamento/Promoção */}
-       <div className="bg-[#141414] border border-white/[0.08] rounded-3xl p-8 space-y-6 shadow-2xl">
+       <div className="fgb-card bg-white p-8 space-y-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-             <h3 className="text-xl font-black italic uppercase text-white tracking-tight">Série e Acesso</h3>
+             <h3 className="fgb-display text-xl text-[var(--black)] leading-none">Série e Acesso</h3>
              <Toggle 
                enabled={form.hasRelegation} 
                onClick={() => setForm(p => p ? ({...p, hasRelegation: !p.hasRelegation}) : null)} 
@@ -470,7 +470,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('relegation')}
             disabled={saving === 'relegation'}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
+            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'relegation' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -483,7 +483,7 @@ export default function ChampionshipSettingsPage({
                 type="number" 
                 value={form.relegationDown} 
                 onChange={e => setForm(p => p ? ({...p, relegationDown: Number(e.target.value)}) : null)}
-                className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+                className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
               />
             </FieldGroup>
             <FieldGroup label="Equipes Promovidas">
@@ -491,7 +491,7 @@ export default function ChampionshipSettingsPage({
                 type="number" 
                 value={form.promotionUp} 
                 onChange={e => setForm(p => p ? ({...p, promotionUp: Number(e.target.value)}) : null)}
-                className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm font-bold text-white focus:outline-none focus:border-[#FF6B00]" 
+                className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]" 
               />
             </FieldGroup>
           </div>
@@ -499,14 +499,14 @@ export default function ChampionshipSettingsPage({
       </div>
 
       {/* SEÇÃO 6: Zona de Perigo */}
-      <div className="bg-red-500/5 border border-red-500/20 rounded-3xl p-8 space-y-6 shadow-xl">
+      <div className="bg-red-50 border border-red-200 rounded-3xl p-8 space-y-6 shadow-sm">
         <div className="flex items-center gap-3">
-          <AlertTriangle className="w-6 h-6 text-red-400" />
+          <AlertTriangle className="w-6 h-6 text-red-600" />
           <div>
-            <h3 className="text-xl font-black italic uppercase text-red-400 tracking-tight">
+            <h3 className="fgb-display text-xl text-red-600 leading-none">
               Zona de Perigo
             </h3>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-red-500/50 mt-1">
+            <p className="fgb-label text-red-500/70 mt-1" style={{ fontSize: 10, letterSpacing: 2 }}>
               Ações irreversíveis que impactam o histórico
             </p>
           </div>
@@ -515,13 +515,13 @@ export default function ChampionshipSettingsPage({
         <div className="flex flex-wrap gap-4 pt-2">
           <button
             onClick={handleArchive}
-            className="px-6 h-11 rounded-2xl border border-yellow-500/40 text-yellow-500 text-[10px] font-black uppercase tracking-widest hover:bg-yellow-500/10 transition-all flex items-center gap-2"
+            className="px-6 h-11 rounded-2xl border border-orange-200 bg-white text-orange-600 text-[10px] font-black uppercase tracking-widest hover:bg-orange-50 transition-all flex items-center gap-2 shadow-sm"
           >
             Arquivar Campeonato
           </button>
           <button
             onClick={handleDelete}
-            className="px-6 h-11 rounded-2xl bg-red-600/10 border border-red-500/40 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 shadow-lg shadow-red-900/20"
+            className="px-6 h-11 rounded-2xl bg-red-100 border border-red-200 text-red-700 text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white hover:border-red-600 transition-all flex items-center gap-2 shadow-sm"
           >
             Excluir Permanentemente
           </button>
@@ -530,11 +530,11 @@ export default function ChampionshipSettingsPage({
 
       {/* Toast Feedback */}
       {toast && (
-        <div className={`fixed bottom-8 right-8 z-[100] px-6 py-4 rounded-[24px] shadow-2xl flex items-center gap-4 animate-in slide-in-from-right-10 duration-500 border border-white/10 backdrop-blur-xl ${
-          toast.type === 'success' ? 'bg-green-500/90' : 'bg-red-500/90'
+        <div className={`fixed bottom-8 right-8 z-[100] px-6 py-4 rounded-[24px] shadow-sm flex items-center gap-4 animate-in slide-in-from-right-10 duration-500 border backdrop-blur-xl ${
+          toast.type === 'success' ? 'bg-green-100 border-green-200 text-green-800' : 'bg-red-100 border-red-200 text-red-800'
         }`}>
-          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-white" /> : <X className="w-5 h-5 text-white" />}
-          <span className="text-[10px] font-black uppercase tracking-widest text-white">{toast.msg}</span>
+          {toast.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <X className="w-5 h-5" />}
+          <span className="text-[10px] font-black uppercase tracking-widest">{toast.msg}</span>
         </div>
       )}
 

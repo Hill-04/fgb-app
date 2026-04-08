@@ -146,8 +146,8 @@ export default function RegistrationsPage() {
   if (loading || !championship) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin" />
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Carregando inscrições...</p>
+        <Loader2 className="w-10 h-10 text-[var(--verde)] animate-spin" />
+        <p className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest">Carregando inscrições...</p>
       </div>
     )
   }
@@ -155,29 +155,29 @@ export default function RegistrationsPage() {
   const today = new Date()
   const regStatus = championship.regDeadline
     ? new Date(championship.regDeadline) > today
-      ? { label: 'Inscrições Abertas', color: 'text-green-400 bg-green-500/10 border-green-500/20' }
-      : { label: 'Inscrições Encerradas', color: 'text-red-400 bg-red-500/10 border-red-500/20' }
-    : { label: 'Prazo não definido', color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20' }
+      ? { label: 'Inscrições Abertas', color: 'text-green-600 bg-green-50 border-green-200' }
+      : { label: 'Inscrições Encerradas', color: 'text-red-600 bg-red-50 border-red-200' }
+    : { label: 'Prazo não definido', color: 'text-orange-600 bg-orange-50 border-orange-200' }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 font-sans">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-4xl font-black italic uppercase text-white tracking-tight">
+          <h2 className="fgb-display text-4xl text-[var(--black)] leading-none">
             Inscrições
           </h2>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mt-1">
+          <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 10, letterSpacing: 2 }}>
             {registrations.length} equipe(s) inscrita(s)
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border ${regStatus.color}`}>
+          <span className={`text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border shadow-sm ${regStatus.color}`}>
             {regStatus.label}
           </span>
           <button
             onClick={openNew}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest px-5 h-10 rounded-xl flex items-center gap-2 transition-all"
+            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-5 h-10 rounded-xl flex items-center gap-2 transition-all shadow-sm"
           >
             <Plus className="w-4 h-4" />
             Adicionar Inscrição
@@ -186,41 +186,41 @@ export default function RegistrationsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#141414] border border-white/[0.08] rounded-3xl overflow-hidden shadow-2xl">
+      <div className="fgb-card bg-white mt-8 overflow-hidden shadow-sm">
         <table className="w-full">
-          <thead className="bg-white/[0.02]">
-            <tr className="border-b border-white/5">
-              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left px-6 py-4">Equipe</th>
-              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left px-6 py-4">Categorias</th>
-              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-left px-6 py-4">Status</th>
-              <th className="text-[9px] font-black uppercase tracking-widest text-slate-500 text-right px-6 py-4">Ações</th>
+          <thead className="bg-[var(--gray-l)]">
+            <tr className="border-b border-[var(--border)]">
+              <th className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)] text-left px-6 py-4">Equipe</th>
+              <th className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)] text-left px-6 py-4">Categorias</th>
+              <th className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)] text-left px-6 py-4">Status</th>
+              <th className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)] text-right px-6 py-4">Ações</th>
             </tr>
           </thead>
           <tbody>
             {registrations.map((reg) => (
-              <tr key={reg.id} className="border-b border-white/[0.04] hover:bg-white/[0.02] transition-colors group">
+              <tr key={reg.id} className="border-b border-[var(--border)] hover:bg-[var(--gray-l)] transition-colors group">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#FF6B00]/10 flex items-center justify-center">
-                      <Shield className="w-4 h-4 text-[#FF6B00]" />
+                    <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center border border-orange-100">
+                      <Shield className="w-4 h-4 text-orange-600" />
                     </div>
-                    <span className="text-sm font-black uppercase text-white group-hover:text-[#FF6B00] transition-colors">{reg.team.name}</span>
+                    <span className="text-sm font-black uppercase text-[var(--black)] group-hover:text-green-600 transition-colors">{reg.team.name}</span>
                   </div>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex flex-wrap gap-1">
                     {reg.categories.map(c => (
-                      <span key={c.id} className="text-[8px] font-black uppercase tracking-widest bg-white/[0.04] border border-white/[0.08] px-2 py-1 rounded-lg text-slate-300">
+                      <span key={c.id} className="text-[8px] font-black uppercase tracking-widest bg-white border border-[var(--border)] px-2 py-1 rounded-lg text-[var(--gray)] shadow-sm">
                         {c.name}
                       </span>
                     ))}
                   </div>
                 </td>
                 <td className="px-6 py-4">
-                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border ${
+                  <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full border shadow-sm ${
                     reg.status === 'CONFIRMED'
-                      ? 'text-green-400 bg-green-500/10 border-green-500/20'
-                      : 'text-yellow-400 bg-yellow-500/10 border-yellow-500/20'
+                      ? 'text-green-600 bg-green-50 border-green-200'
+                      : 'text-orange-600 bg-orange-50 border-orange-200'
                   }`}>
                     {reg.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
                   </span>
@@ -229,13 +229,13 @@ export default function RegistrationsPage() {
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => openEdit(reg)}
-                      className="w-8 h-8 rounded-xl hover:bg-[#FF6B00]/10 flex items-center justify-center text-slate-400 hover:text-[#FF6B00] transition-all"
+                      className="w-8 h-8 rounded-xl hover:bg-orange-50 flex items-center justify-center text-[var(--gray)] hover:text-orange-600 transition-all"
                     >
                       <Edit2 className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(reg.id)}
-                      className="w-8 h-8 rounded-xl hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-500 transition-all"
+                      className="w-8 h-8 rounded-xl hover:bg-red-50 flex items-center justify-center text-[var(--gray)] hover:text-red-500 transition-all"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -247,7 +247,7 @@ export default function RegistrationsPage() {
         </table>
         {registrations.length === 0 && (
           <div className="p-16 text-center">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
               Nenhuma inscrição ainda
             </p>
           </div>
@@ -256,48 +256,48 @@ export default function RegistrationsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg bg-[#0A0A0A] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95">
-            <div className="p-8 border-b border-white/5 bg-white/[0.01]">
-              <h3 className="text-2xl font-black italic uppercase text-white tracking-tight">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg fgb-card bg-white overflow-hidden shadow-2xl animate-in zoom-in-95">
+            <div className="p-8 border-b border-[var(--border)] bg-[var(--gray-l)]">
+              <h3 className="fgb-display text-2xl text-[var(--black)] leading-none">
                 {editingReg ? 'Editar Inscrição' : 'Nova Inscrição'}
               </h3>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-1">
+              <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 10, letterSpacing: 2 }}>
                 Dados da inscrição manual
               </p>
             </div>
             <div className="p-8 space-y-6">
               {/* Select Equipe */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
                   Equipe
                 </label>
                 <select
                   disabled={!!editingReg}
                   value={formTeamId}
                   onChange={e => setFormTeamId(e.target.value)}
-                  className="w-full bg-white/[0.03] border border-white/10 h-12 rounded-xl px-4 text-sm text-white focus:outline-none focus:border-[#FF6B00] disabled:opacity-50 appearance-none font-bold"
+                  className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm text-[var(--black)] focus:outline-none focus:border-[var(--verde)] disabled:opacity-50 appearance-none font-bold"
                 >
-                  <option value="" className="bg-[#0A0A0A]">Selecionar equipe...</option>
+                  <option value="" className="bg-white">Selecionar equipe...</option>
                   {allTeams.map(t => (
-                    <option key={t.id} value={t.id} className="bg-[#0A0A0A]">{t.name}</option>
+                    <option key={t.id} value={t.id} className="bg-white">{t.name}</option>
                   ))}
                 </select>
               </div>
 
               {/* Categorias */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
                   Categorias
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   {allCategories.map(cat => (
                     <label
                       key={cat.id}
-                      className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all ${
+                      className={`flex items-center gap-2 p-3 rounded-xl border cursor-pointer transition-all shadow-sm ${
                         formCategoryIds.includes(cat.id)
-                          ? 'bg-[#FF6B00]/10 border-[#FF6B00]/30 text-[#FF6B00]'
-                          : 'bg-white/[0.02] border-white/[0.08] text-slate-400 hover:border-white/20'
+                          ? 'bg-green-50 border-green-200 text-green-700'
+                          : 'bg-white border-[var(--border)] text-[var(--gray)] hover:border-gray-400'
                       }`}
                     >
                       <input
@@ -322,7 +322,7 @@ export default function RegistrationsPage() {
 
               {/* Status */}
               <div className="space-y-2">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
                   Status
                 </label>
                 <div className="flex gap-2">
@@ -331,10 +331,10 @@ export default function RegistrationsPage() {
                       key={s}
                       type="button"
                       onClick={() => setFormStatus(s)}
-                      className={`flex-1 h-11 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all ${
+                      className={`flex-1 h-11 rounded-xl border text-[10px] font-black uppercase tracking-widest transition-all shadow-sm ${
                         formStatus === s
-                          ? 'bg-[#FF6B00]/10 border-[#FF6B00]/30 text-[#FF6B00]'
-                          : 'bg-white/[0.02] border-white/10 text-slate-500 hover:border-white/20'
+                          ? s === 'CONFIRMED' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-orange-50 border-orange-200 text-orange-600'
+                          : 'bg-white border-[var(--border)] text-[var(--gray)] hover:border-gray-400'
                       }`}
                     >
                       {s === 'PENDING' ? 'Pendente' : 'Confirmado'}
@@ -344,7 +344,7 @@ export default function RegistrationsPage() {
               </div>
 
               {formError && (
-                <p className="text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-500/10 p-4 rounded-xl border border-red-500/20">
+                <p className="text-red-600 text-[10px] font-black uppercase tracking-widest bg-red-50 p-4 rounded-xl border border-red-200">
                   {formError}
                 </p>
               )}
@@ -352,14 +352,14 @@ export default function RegistrationsPage() {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={() => setShowModal(false)}
-                  className="flex-1 h-12 font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-white transition-all rounded-xl"
+                  className="flex-1 h-12 font-black text-[10px] uppercase tracking-widest text-[var(--gray)] hover:text-[var(--black)] transition-all rounded-xl border border-[var(--border)] shadow-sm bg-white"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitLoading}
-                  className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all disabled:opacity-50 shadow-lg shadow-orange-600/20"
+                  className="flex-1 bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all disabled:opacity-50 shadow-sm"
                 >
                   {submitLoading ? 'Salvando...' : 'Salvar Inscrição'}
                 </button>

@@ -75,12 +75,12 @@ export default async function AdminStandingsPage({
     }))
 
     return (
-      <div className="space-y-8 pb-20">
+      <div className="space-y-8 pb-20 font-sans">
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-black text-white tracking-tight">Classificação Premium</h1>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Tabelas Oficiais da Federacão</p>
+            <h1 className="fgb-display text-3xl text-[var(--black)] leading-none">Classificação Premium</h1>
+            <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 10, letterSpacing: 2 }}>Tabelas Oficiais da Federacão</p>
           </div>
         </div>
 
@@ -92,8 +92,8 @@ export default async function AdminStandingsPage({
               className={cn(
                 "h-9 px-5 rounded-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border",
                 !categoryId 
-                  ? "bg-orange-500 border-orange-500 text-white shadow-lg shadow-orange-500/20" 
-                  : "bg-white/5 border-white/5 text-slate-500 hover:bg-white/10 hover:border-white/10"
+                  ? "bg-orange-50 border-orange-200 text-orange-600 shadow-sm" 
+                  : "bg-white border-[var(--border)] text-[var(--gray)] hover:bg-[var(--gray-l)] hover:text-[var(--black)] shadow-sm"
               )}
             >
               Todas as Categorias
@@ -105,8 +105,8 @@ export default async function AdminStandingsPage({
                 className={cn(
                   "h-9 px-5 rounded-full flex items-center justify-center text-[10px] font-black uppercase tracking-widest transition-all border",
                   categoryId === cat.id
-                    ? "bg-blue-500 border-blue-500 text-white shadow-lg shadow-blue-500/20"
-                    : "bg-white/5 border-white/5 text-slate-500 hover:bg-white/10 hover:border-white/10"
+                    ? "bg-blue-50 border-blue-200 text-blue-600 shadow-sm"
+                    : "bg-white border-[var(--border)] text-[var(--gray)] hover:bg-[var(--gray-l)] hover:text-[var(--black)] shadow-sm"
                 )}
               >
                 {cat.name}
@@ -118,14 +118,14 @@ export default async function AdminStandingsPage({
         {/* Tables Section */}
         <div className="space-y-12">
           {categoriesWithData.map((catGroup) => (
-            <div key={catGroup.id} className="bg-[#0A0A0A] border border-white/5 rounded-[32px] overflow-hidden animate-fade-up">
+            <div key={catGroup.id} className="fgb-card bg-white overflow-hidden animate-fade-up shadow-sm">
               {/* Section Header */}
-              <div className="bg-white/[0.02] px-8 py-6 border-b border-white/5 flex justify-between items-center">
+              <div className="bg-[var(--gray-l)] px-8 py-6 border-b border-[var(--border)] flex justify-between items-center">
                  <div className="flex items-center gap-4">
-                    <div className="w-1.5 h-8 bg-orange-500 rounded-full" />
+                    <div className="w-1.5 h-8 bg-orange-600 rounded-full" />
                     <div>
-                      <h3 className="text-xl font-black text-white uppercase tracking-tight leading-none">{catGroup.name}</h3>
-                      <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1.5">Campeonato Estadual</p>
+                      <h3 className="fgb-display text-xl text-[var(--black)] leading-none">{catGroup.name}</h3>
+                      <p className="fgb-label text-[var(--gray)] mt-1.5" style={{ fontSize: 10, letterSpacing: 2 }}>Campeonato Estadual</p>
                     </div>
                  </div>
                  <div className="flex gap-2">
@@ -140,14 +140,14 @@ export default async function AdminStandingsPage({
 
               {catGroup.standings.length === 0 ? (
                 <div className="p-20 text-center">
-                  <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Aguardando início das rodadas...</p>
+                  <p className="text-xs font-black text-[var(--gray)] uppercase tracking-widest">Aguardando início das rodadas...</p>
                 </div>
               ) : (
                 <>
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest bg-white/[0.01]">
+                        <tr className="border-b border-[var(--border)] text-[10px] font-black text-[var(--gray)] uppercase tracking-widest bg-[var(--gray-l)]">
                           <th className="px-8 py-5 text-center w-20">POS</th>
                           <th className="px-8 py-5">EQUIPE</th>
                           <th className="px-4 py-5 text-center">J</th>
@@ -156,61 +156,61 @@ export default async function AdminStandingsPage({
                           <th className="px-4 py-5 text-center">PF</th>
                           <th className="px-4 py-5 text-center">PC</th>
                           <th className="px-4 py-5 text-center">SC</th>
-                          <th className="px-10 py-5 text-center bg-white/[0.03] text-white">PTS</th>
+                          <th className="px-10 py-5 text-center bg-gray-50 text-[var(--black)] border-l border-[var(--border)]">PTS</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-white/[0.02]">
+                      <tbody className="divide-y divide-[var(--border)]">
                         {catGroup.standings.map((row: any, index: number) => {
                           const isTop3 = index < 3
                           const medalColors = [
-                            "text-amber-400 bg-amber-400/10 border-amber-400/20", // Gold
-                            "text-slate-400 bg-slate-400/10 border-slate-400/20", // Silver
-                            "text-amber-700 bg-amber-700/10 border-amber-700/20"  // Bronze
+                            "text-amber-500 bg-amber-50 border-amber-200", // Gold
+                            "text-slate-500 bg-slate-50 border-slate-200", // Silver
+                            "text-amber-700 bg-orange-50 border-orange-200"  // Bronze
                           ]
                           
                           return (
-                            <tr key={row.id} className="hover:bg-white/[0.02] transition-all group">
+                            <tr key={row.id} className="hover:bg-[var(--gray-l)] transition-all group">
                               <td className="px-8 py-5 text-center">
                                 {isTop3 ? (
                                   <div className={cn("w-9 h-9 rounded-xl border flex items-center justify-center font-black text-sm mx-auto shadow-sm", medalColors[index])}>
                                     {index + 1}
                                   </div>
                                 ) : (
-                                  <span className="text-xs font-black text-slate-700">{index + 1}</span>
+                                  <span className="text-xs font-black text-[var(--gray)]">{index + 1}</span>
                                 )}
                               </td>
                               <td className="px-8 py-5">
                                 <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shadow-inner group-hover:border-orange-500/50 transition-all">
+                                  <div className="w-12 h-12 rounded-2xl bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center overflow-hidden shadow-inner group-hover:border-[var(--amarelo)] transition-all">
                                     {row.team.logoUrl ? (
                                       <img src={row.team.logoUrl} alt={row.team.name} className="w-full h-full object-cover" />
                                     ) : (
-                                      <span className="text-sm font-black text-white">{row.team.name.charAt(0)}</span>
+                                      <span className="text-sm font-black text-[var(--black)]">{row.team.name.charAt(0)}</span>
                                     )}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-black text-white group-hover:text-orange-500 transition-colors uppercase tracking-tight">{row.team.name}</p>
+                                    <p className="text-sm font-black text-[var(--black)] group-hover:text-orange-600 transition-colors uppercase tracking-tight">{row.team.name}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
-                                      <div className="w-1 h-1 rounded-full bg-green-500" />
-                                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Inscrito</span>
+                                      <div className="w-1 h-1 rounded-full bg-[var(--verde)]" />
+                                      <span className="text-[9px] font-bold text-[var(--gray)] uppercase tracking-widest">Inscrito</span>
                                     </div>
                                   </div>
                                 </div>
                               </td>
-                              <td className="px-4 py-5 text-center text-xs font-black text-slate-400 tabular-nums">{row.played}</td>
-                              <td className="px-4 py-5 text-center text-xs font-black text-green-500 tabular-nums">{row.wins}</td>
-                              <td className="px-4 py-5 text-center text-xs font-black text-red-500 tabular-nums">{row.losses}</td>
-                              <td className="px-4 py-5 text-center text-[11px] font-bold text-slate-600 tabular-nums">{row.pointsFor}</td>
-                              <td className="px-4 py-5 text-center text-[11px] font-bold text-slate-600 tabular-nums">{row.pointsAg}</td>
+                              <td className="px-4 py-5 text-center text-xs font-black text-[var(--gray)] tabular-nums">{row.played}</td>
+                              <td className="px-4 py-5 text-center text-xs font-black text-green-600 tabular-nums">{row.wins}</td>
+                              <td className="px-4 py-5 text-center text-xs font-black text-red-600 tabular-nums">{row.losses}</td>
+                              <td className="px-4 py-5 text-center text-[11px] font-bold text-[var(--gray)] tabular-nums">{row.pointsFor}</td>
+                              <td className="px-4 py-5 text-center text-[11px] font-bold text-[var(--gray)] tabular-nums">{row.pointsAg}</td>
                               <td className="px-4 py-5 text-center text-[11px] font-black italic tabular-nums">
                                 <span className={cn(
-                                  row.pointsFor - row.pointsAg > 0 ? "text-blue-500" : row.pointsFor - row.pointsAg < 0 ? "text-orange-500/50" : "text-slate-600"
+                                  row.pointsFor - row.pointsAg > 0 ? "text-blue-600" : row.pointsFor - row.pointsAg < 0 ? "text-orange-600" : "text-[var(--gray)]"
                                 )}>
                                   {(row.pointsFor - row.pointsAg) > 0 ? `+${row.pointsFor - row.pointsAg}` : row.pointsFor - row.pointsAg}
                                 </span>
                               </td>
-                              <td className="px-10 py-5 text-center bg-white/[0.03]">
-                                <span className="text-2xl font-black text-white leading-none tracking-tighter">{row.points}</span>
+                              <td className="px-10 py-5 text-center bg-gray-50 border-l border-[var(--border)]">
+                                <span className="text-2xl font-black text-[var(--black)] leading-none tracking-tighter">{row.points}</span>
                               </td>
                             </tr>
                           )
@@ -221,12 +221,12 @@ export default async function AdminStandingsPage({
 
                   {/* Integrated Brackets */}
                   {catGroup.games.length > 0 && (
-                    <div className="p-8 border-t border-white/5 bg-white/[0.01]">
+                    <div className="p-8 border-t border-[var(--border)] bg-[var(--gray-l)]">
                       <div className="mb-8 flex items-center gap-3">
-                         <Medal className="w-5 h-5 text-orange-500" />
+                         <Medal className="w-5 h-5 text-orange-600" />
                          <div>
-                           <h4 className="text-sm font-black text-white uppercase tracking-wider">Playoffs & Chaves</h4>
-                           <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Fase Eliminatória Direta</p>
+                           <h4 className="text-sm font-black text-[var(--black)] uppercase tracking-wider">Playoffs & Chaves</h4>
+                           <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest">Fase Eliminatória Direta</p>
                          </div>
                       </div>
                       <div className="transform scale-95 origin-left">
@@ -245,8 +245,8 @@ export default async function AdminStandingsPage({
     console.error('[STANDINGS PAGE ERROR]', error?.message, error?.stack)
     return (
       <div className="p-10 text-center">
-        <h2 className="text-xl font-black text-white mb-2">Erro ao carregar Classificação</h2>
-        <p className="text-slate-500 font-mono text-xs">{error?.message || 'Erro desconhecido'}</p>
+        <h2 className="text-xl font-black text-[var(--black)] mb-2">Erro ao carregar Classificação</h2>
+        <p className="text-[var(--gray)] font-mono text-xs">{error?.message || 'Erro desconhecido'}</p>
       </div>
     )
   }

@@ -15,21 +15,21 @@ export function StandingsSelector({
     <div className="flex items-center gap-4">
       <div className="flex-1 max-w-xs relative">
         <select
-          className="w-full bg-white/[0.03] border-white/10 border h-11 rounded-xl px-4 text-xs text-white focus:outline-none focus:border-[#FF6B00]/50 transition-all font-bold appearance-none"
+          className="w-full bg-white border-[var(--border)] border h-11 rounded-xl px-4 text-xs text-[var(--black)] focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold appearance-none shadow-sm"
           defaultValue={categoryId ?? ''}
           onChange={(e) => {
             const val = e.target.value
             router.push(val ? `/team/standings?categoryId=${val}` : '/team/standings')
           }}
         >
-          <option value="" className="bg-[#0A0A0A]">Todas as Categorias</option>
+          <option value="" className="bg-white">Todas as Categorias</option>
           {allTeamCategories.map((cat) => (
-            <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.name}</option>
+            <option key={cat.id} value={cat.id} className="bg-white">{cat.name}</option>
           ))}
         </select>
       </div>
       {categoryId && (
-        <a href="/team/standings" className="text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-white transition-colors">
+        <a href="/team/standings" className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest hover:text-[var(--black)] transition-colors">
           Limpar Filtro
         </a>
       )}

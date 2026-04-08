@@ -144,12 +144,12 @@ export default function AdminTeamsPage() {
     <div className="space-y-8 max-w-[1400px] mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">Equipes</h1>
-          <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">Gestão de Filiados e Clubes</p>
+          <h1 className="fgb-display text-4xl text-[var(--black)] leading-none mb-2">Equipes</h1>
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Gestão de Filiados e Clubes</p>
         </div>
         <Button 
           onClick={openCreateDialog}
-          className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold px-8 h-12 rounded-xl"
+          className="fgb-btn-primary px-8 h-12"
         >
           <Plus className="w-5 h-5 mr-2" />
           Nova Equipe
@@ -158,151 +158,155 @@ export default function AdminTeamsPage() {
 
       <div className="flex gap-4 items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--gray)]" />
           <Input 
             placeholder="Buscar por nome ou cidade..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10 bg-[#111] border-white/5 h-11 rounded-xl text-white"
+            className="pl-10 bg-white border-[var(--border)] h-11 rounded-xl text-[var(--black)] font-sans shadow-sm focus-visible:ring-1 focus-visible:ring-[var(--verde)]"
           />
         </div>
       </div>
 
-      <Card className="bg-[#121212] border-white/5 overflow-hidden rounded-3xl">
-        <Table>
-          <TableHeader className="bg-white/[0.02]">
-            <TableRow className="border-white/5 hover:bg-transparent">
-              <TableHead className="text-slate-400 font-bold uppercase tracking-widest text-[10px] h-14">Equipe</TableHead>
-              <TableHead className="text-slate-400 font-bold uppercase tracking-widest text-[10px] h-14">Cidade / Estado</TableHead>
-              <TableHead className="text-slate-400 font-bold uppercase tracking-widest text-[10px] h-14">Responsável</TableHead>
-              <TableHead className="text-slate-400 font-bold uppercase tracking-widest text-[10px] h-14">Contato</TableHead>
-              <TableHead className="text-slate-400 font-bold uppercase tracking-widest text-[10px] h-14 text-right">Ação</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="fgb-card p-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-[var(--gray-l)] fgb-label text-[var(--gray)]">
+              <tr>
+                <th className="px-8 py-5">Equipe</th>
+                <th className="px-8 py-5">Cidade / Estado</th>
+                <th className="px-8 py-5">Responsável</th>
+                <th className="px-8 py-5">Contato</th>
+                <th className="px-8 py-5 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border)]">
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-20 animate-pulse text-slate-500 font-bold uppercase tracking-widest text-xs">Carregando...</TableCell></TableRow>
+              <tr><td colSpan={5} className="text-center py-20 animate-pulse fgb-label text-[var(--gray)]">Carregando...</td></tr>
             ) : filteredTeams.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-20 text-slate-500 italic">Nenhuma equipe encontrada.</TableCell></TableRow>
+              <tr><td colSpan={5} className="text-center py-20 text-[var(--gray)] italic">Nenhuma equipe encontrada.</td></tr>
             ) : (
               filteredTeams.map((team) => {
                 const headCoach = team.members[0]?.user
                 return (
-                  <TableRow key={team.id} className="border-white/5 hover:bg-white/[0.02] transition-colors group">
-                    <TableCell className="py-5">
+                  <tr key={team.id} className="hover:bg-[var(--gray-l)] transition-colors group">
+                    <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center overflow-hidden shrink-0">
                           {team.logoUrl ? (
                             <img src={team.logoUrl} alt={team.name} className="w-full h-full object-cover" />
                           ) : (
-                            <Shield className="w-5 h-5 text-slate-600" />
+                            <Shield className="w-5 h-5 text-[var(--gray)]" />
                           )}
                         </div>
                         <div>
-                          <div className="font-bold text-white uppercase tracking-tight">{team.name}</div>
-                          <Badge variant="outline" className="text-[9px] mt-1 text-slate-500 border-white/5 uppercase">
-                            {team.sex || 'Masculino'}
-                          </Badge>
+                          <div className="font-bold text-[var(--black)] tracking-tight font-sans text-xs flex items-center gap-2">
+                             {team.name}
+                          </div>
+                          <span className="fgb-badge fgb-badge-outline mt-1" style={{ fontSize: 9 }}>
+                             {team.sex || 'Masculino'}
+                          </span>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs text-slate-300 flex items-center gap-1.5"><MapPin className="w-3 h-3 text-[#FF6B00]" /> {team.city}, {team.state}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs text-white font-medium">{headCoach?.name || '--'}</div>
-                      <div className="text-[10px] text-slate-500">{headCoach?.email || ''}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-xs text-slate-300 flex items-center gap-1.5"><Phone className="w-3 h-3 text-[#FF6B00]" /> {team.phone || '--'}</div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(team)} className="h-9 w-9 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white">
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="text-xs text-[var(--gray)] flex items-center gap-1.5 font-sans"><MapPin className="w-3 h-3 text-[var(--verde)]" /> {team.city}, {team.state}</div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="text-xs text-[var(--black)] font-bold">{headCoach?.name || '--'}</div>
+                      <div className="fgb-label text-[var(--gray)]" style={{ fontSize: 10, textTransform: 'none', letterSpacing: 0 }}>{headCoach?.email || ''}</div>
+                    </td>
+                    <td className="px-8 py-5">
+                      <div className="text-xs text-[var(--gray)] flex items-center gap-1.5 font-sans"><Phone className="w-3 h-3 text-[var(--verde)]" /> {team.phone || '--'}</div>
+                    </td>
+                    <td className="px-8 py-5 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(team)} className="text-[var(--gray)] hover:text-[var(--black)] hover:bg-[var(--gray-l)]">
                           <Edit2 className="w-4 h-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)} className="h-9 w-9 rounded-xl hover:bg-red-500/5 text-slate-400 hover:text-red-500">
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)} className="text-[var(--gray)] hover:text-[var(--red)] hover:bg-[var(--red)]/10">
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 )
               })
             )}
-          </TableBody>
-        </Table>
-      </Card>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Modal */}
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-          <Card className="w-full max-w-xl bg-[#0A0A0A] border-white/10 text-white rounded-3xl overflow-hidden shadow-2xl">
-            <CardHeader className="p-8 border-b border-white/5">
-              <CardTitle className="text-3xl font-display font-black uppercase tracking-tight">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-xl fgb-card overflow-hidden shadow-2xl relative">
+            <div className="p-8 border-b border-[var(--border)] bg-white">
+              <h2 className="fgb-display text-3xl text-[var(--black)] tracking-tight">
                 {editingId ? 'Editar Equipe' : 'Cadastrar Equipe'}
-              </CardTitle>
-              <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Dados cadastrais básicos</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
+              </h2>
+              <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Dados cadastrais básicos</p>
+            </div>
+            <div className="p-8 bg-white">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-[100px_1fr] gap-6">
                   <div className="space-y-4">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Logo</Label>
-                    <div className="w-24 h-24 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center overflow-hidden relative group/logo">
+                    <Label className="fgb-label text-[var(--gray)]">Logo</Label>
+                    <div className="w-24 h-24 rounded-2xl bg-[var(--gray-l)] border-2 border-dashed border-[var(--border)] flex items-center justify-center overflow-hidden relative group/logo">
                       {formLogoUrl ? (
                         <img src={formLogoUrl} alt="Logo preview" className="w-full h-full object-cover" />
                       ) : (
-                        <Shield className="w-8 h-8 text-slate-700" />
+                        <Shield className="w-8 h-8 text-slate-300" />
                       )}
                     </div>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nome da Equipe</Label>
-                      <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Ex: Grêmio Náutico União" className="bg-white/[0.03] border-white/10 h-11 rounded-xl" />
+                      <Label className="fgb-label text-[var(--gray)]">Nome da Equipe</Label>
+                      <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Ex: Grêmio Náutico União" className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-11 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">URL da Logomarca (PNG/SVG)</Label>
-                      <Input value={formLogoUrl} onChange={e => setFormLogoUrl(e.target.value)} placeholder="https://..." className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-xs" />
+                      <Label className="fgb-label text-[var(--gray)]">URL da Logomarca (PNG/SVG)</Label>
+                      <Input value={formLogoUrl} onChange={e => setFormLogoUrl(e.target.value)} placeholder="https://..." className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-11 rounded-xl text-xs focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                     </div>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Cidade</Label>
-                    <Input value={formCity} onChange={e => setFormCity(e.target.value)} placeholder="Porto Alegre" className="bg-white/[0.03] border-white/10 h-12 rounded-xl" />
+                    <Label className="fgb-label text-[var(--gray)]">Cidade</Label>
+                    <Input value={formCity} onChange={e => setFormCity(e.target.value)} placeholder="Porto Alegre" className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-12 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Gênero</Label>
+                    <Label className="fgb-label text-[var(--gray)]">Gênero</Label>
                     <select 
                       value={formSex} 
                       onChange={e => setFormSex(e.target.value)}
-                      className="w-full bg-white/[0.03] border-white/10 border h-12 rounded-xl px-3 text-sm text-white focus:outline-none focus:border-[#FF6B00]"
+                      className="w-full bg-white border border-[var(--border)] h-12 rounded-xl px-3 text-sm text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-[var(--verde)] shadow-sm"
                     >
-                      <option value="masculino" className="bg-[#0A0A0A]">Masculino</option>
-                      <option value="feminino" className="bg-[#0A0A0A]">Feminino</option>
+                      <option value="masculino">Masculino</option>
+                      <option value="feminino">Feminino</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Telefone / WhatsApp</Label>
-                  <Input value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="(51) 99999-9999" className="bg-white/[0.03] border-white/10 h-12 rounded-xl" />
+                  <Label className="fgb-label text-[var(--gray)]">Telefone / WhatsApp</Label>
+                  <Input value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="(51) 99999-9999" className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-12 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                 </div>
 
-                {formError && <p className="text-red-500 text-xs font-bold uppercase tracking-widest bg-red-500/10 p-4 rounded-xl">{formError}</p>}
+                {formError && <p className="fgb-label text-[var(--red)] bg-[var(--red)]/10 p-4 rounded-xl" style={{ textTransform: 'none', letterSpacing: 0 }}>{formError}</p>}
 
                 <div className="flex gap-4 pt-4">
-                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-12 font-bold text-slate-400 hover:text-white">Cancelar</Button>
-                  <Button disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-12 rounded-xl">
+                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-12 text-[var(--gray)] font-bold hover:bg-[var(--gray-l)] hover:text-[var(--black)]">Cancelar</Button>
+                  <Button disabled={submitLoading} className="flex-1 fgb-btn-primary h-12">
                     {submitLoading ? 'Salvando...' : 'Salvar Equipe'}
                   </Button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </div>

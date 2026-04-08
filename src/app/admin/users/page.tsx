@@ -153,12 +153,12 @@ export default function UsersManagementPage() {
     <div className="space-y-8 max-w-[1400px] mx-auto">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-display font-black text-white uppercase tracking-tight mb-2">Usuários</h1>
-          <p className="text-[--text-secondary] font-medium uppercase tracking-widest text-[10px]">Controle de Acessos e Administração</p>
+          <h1 className="fgb-display text-4xl text-[var(--black)] leading-none mb-2">Usuários</h1>
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Controle de Acessos e Administração</p>
         </div>
         <Button 
           onClick={openCreateDialog}
-          className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold px-8 h-12 rounded-xl"
+          className="fgb-btn-primary px-8 h-12"
         >
           <Plus className="w-5 h-5 mr-2" />
           Novo Usuário
@@ -167,158 +167,160 @@ export default function UsersManagementPage() {
 
       <div className="flex gap-4 items-center">
         <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--gray)]" />
           <Input 
             placeholder="Buscar por nome ou email..." 
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="pl-10 bg-[#111] border-white/5 h-11 rounded-xl text-white"
+            className="pl-10 bg-white border-[var(--border)] h-11 rounded-xl text-[var(--black)] font-sans shadow-sm focus-visible:ring-1 focus-visible:ring-[var(--verde)]"
           />
         </div>
       </div>
 
-      <Card className="bg-[#121212] border-white/5 overflow-hidden rounded-3xl">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-white/[0.02] text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                <tr>
-                  <th className="px-8 py-5">Perfil</th>
-                  <th className="px-8 py-5">Vínculo</th>
-                  <th className="px-8 py-5">Permissões</th>
-                  <th className="px-8 py-5 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-white/5">
-                {loading ? (
-                  <tr><td colSpan={4} className="text-center py-20 text-slate-500 uppercase font-black tracking-widest text-xs animate-pulse">Carregando usuários...</td></tr>
-                ) : filteredUsers.map((user) => {
-                  const isCurrentUser = session?.user?.email === user.email
-                  const isSupremeAdmin = user.email === 'brayanalexguarnieri@gmail.com'
+      <div className="fgb-card p-0 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="bg-[var(--gray-l)] fgb-label text-[var(--gray)]">
+              <tr>
+                <th className="px-8 py-5">Perfil</th>
+                <th className="px-8 py-5">Vínculo</th>
+                <th className="px-8 py-5">Permissões</th>
+                <th className="px-8 py-5 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[var(--border)]">
+              {loading ? (
+                <tr><td colSpan={4} className="text-center py-20 fgb-label text-[var(--gray)] animate-pulse">Carregando usuários...</td></tr>
+              ) : filteredUsers.map((user) => {
+                const isCurrentUser = session?.user?.email === user.email
+                const isSupremeAdmin = user.email === 'brayanalexguarnieri@gmail.com'
 
-                  return (
-                    <tr key={user.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${user.isAdmin ? 'bg-orange-500/10 text-orange-500' : 'bg-slate-800 text-slate-400'}`}>
-                            {user.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-bold text-white uppercase tracking-tight">{user.name} {isCurrentUser && <span className="text-[10px] text-[#FF6B00] ml-2 font-black tracking-widest">VOCÊ</span>}</div>
-                            <div className="text-slate-500 text-[10px] uppercase font-bold tracking-wider">{user.email}</div>
-                          </div>
+                return (
+                  <tr key={user.id} className="hover:bg-[var(--gray-l)] transition-colors group">
+                    <td className="px-8 py-6">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${user.isAdmin ? 'bg-orange-500/10 text-orange-500' : 'bg-slate-100 text-[var(--gray)]'}`}>
+                          {user.name.charAt(0).toUpperCase()}
                         </div>
-                      </td>
-                      <td className="px-8 py-6">
-                         {user.membership ? (
-                           <div>
-                             <div className="text-white font-bold text-xs uppercase tracking-tight">{user.membership.team.name}</div>
-                             <div className="text-slate-500 text-[9px] uppercase font-bold tracking-widest">{user.membership.role}</div>
-                           </div>
-                         ) : (
-                           <span className="text-slate-600 italic text-xs">Sem vínculo ativo</span>
-                         )}
-                      </td>
-                      <td className="px-8 py-6">
-                        {isSupremeAdmin ? (
-                          <Badge variant="blue" size="sm" withDot>Admin Supremo</Badge>
-                        ) : user.isAdmin ? (
-                          <Badge variant="orange" size="sm" withDot>Administrador</Badge>
-                        ) : (
-                          <Badge variant="outline" size="sm">Membro Padrão</Badge>
-                        )}
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!isSupremeAdmin && !isCurrentUser && (
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => toggleAdminFast(user.id, user.isAdmin, user.email)}
-                              title={user.isAdmin ? "Revogar Admin" : "Tornar Admin"}
-                            >
-                              <Shield className={`w-4 h-4 ${user.isAdmin ? 'text-red-400' : 'text-orange-400'}`} />
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(user)} className="text-slate-500 hover:text-white">
-                            <Edit2 className="w-4 h-4" />
+                        <div>
+                          <div className="font-bold text-[var(--black)] tracking-tight font-sans flex items-center">
+                            {user.name}
+                            {isCurrentUser && <span className="fgb-badge fgb-badge-red ml-2" style={{ padding: '0 4px', fontSize: 8 }}>VOCÊ</span>}
+                          </div>
+                          <div className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 10 }}>{user.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-8 py-6">
+                       {user.membership ? (
+                         <div>
+                           <div className="font-bold text-[var(--black)] tracking-tight font-sans text-xs">{user.membership.team.name}</div>
+                           <div className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>{user.membership.role}</div>
+                         </div>
+                       ) : (
+                         <span className="text-[var(--gray)] italic text-xs">Sem vínculo ativo</span>
+                       )}
+                    </td>
+                    <td className="px-8 py-6">
+                      {isSupremeAdmin ? (
+                        <Badge variant="blue" size="sm" withDot>Admin Supremo</Badge>
+                      ) : user.isAdmin ? (
+                        <span className="fgb-badge fgb-badge-red">Administrador</span>
+                      ) : (
+                        <span className="fgb-badge fgb-badge-outline">Membro</span>
+                      )}
+                    </td>
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!isSupremeAdmin && !isCurrentUser && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => toggleAdminFast(user.id, user.isAdmin, user.email)}
+                            title={user.isAdmin ? "Revogar Admin" : "Tornar Admin"}
+                            className="hover:bg-[var(--gray-l)]"
+                          >
+                            <Shield className={`w-4 h-4 ${user.isAdmin ? 'text-[var(--red)]' : 'text-orange-400'}`} />
                           </Button>
-                          {!isSupremeAdmin && !isCurrentUser && (
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-slate-500 hover:text-red-500">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(user)} className="text-[var(--gray)] hover:text-[var(--black)] hover:bg-[var(--gray-l)]">
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        {!isSupremeAdmin && !isCurrentUser && (
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(user.id)} className="text-[var(--gray)] hover:text-[var(--red)] hover:bg-[var(--red)]/10">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
       {/* Modal User */}
       {showDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-          <Card className="w-full max-w-xl bg-[#0A0A0A] border-white/10 text-white rounded-3xl overflow-hidden shadow-2xl">
-            <CardHeader className="p-8 border-b border-white/5">
-              <CardTitle className="text-3xl font-display font-black uppercase tracking-tight">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-xl fgb-card overflow-hidden shadow-2xl relative">
+            <div className="p-8 border-b border-[var(--border)] bg-white">
+              <h2 className="fgb-display text-3xl text-[var(--black)] tracking-tight">
                 {editingId ? 'Editar Perfil' : 'Novo Usuário'}
-              </CardTitle>
-              <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">Configurações de conta e sistema</CardDescription>
-            </CardHeader>
-            <CardContent className="p-8">
+              </h2>
+              <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Configurações de conta e sistema</p>
+            </div>
+            <div className="p-8 bg-white">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Nome Completo</Label>
-                  <Input value={formName} onChange={e => setFormName(e.target.value)} className="bg-white/[0.03] border-white/10 h-12 rounded-xl" />
+                  <Label className="fgb-label text-[var(--gray)]">Nome Completo</Label>
+                  <Input value={formName} onChange={e => setFormName(e.target.value)} className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-12 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email Institucional</Label>
-                  <Input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="bg-white/[0.03] border-white/10 h-12 rounded-xl" />
+                  <Label className="fgb-label text-[var(--gray)]">Email Institucional</Label>
+                  <Input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-12 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <Label className="fgb-label text-[var(--gray)]">
                     {editingId ? 'Nova Senha (deixe em branco para manter)' : 'Senha de Acesso'}
                   </Label>
-                  <Input type="password" value={formPassword} onChange={e => setFormPassword(e.target.value)} className="bg-white/[0.03] border-white/10 h-12 rounded-xl" />
+                  <Input type="password" value={formPassword} onChange={e => setFormPassword(e.target.value)} className="bg-white border-[var(--border)] text-[var(--black)] shadow-sm h-12 rounded-xl focus-visible:ring-1 focus-visible:ring-[var(--verde)]" />
                 </div>
 
                 <div className="pt-2">
                     <div 
                       onClick={() => setFormIsAdmin(!formIsAdmin)}
-                      className={`flex items-center justify-between p-4 rounded-2xl border cursor-pointer transition-all ${formIsAdmin ? 'bg-orange-600/10 border-orange-500/40' : 'bg-white/[0.02] border-white/5'}`}
+                      className={`flex items-center justify-between p-4 rounded-xl border cursor-pointer transition-all ${formIsAdmin ? 'bg-[var(--red)]/5 border-[var(--red)]' : 'bg-[var(--gray-l)] border-[var(--border)]'}`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg ${formIsAdmin ? 'bg-orange-500/20 text-orange-500' : 'bg-slate-800 text-slate-500'}`}>
+                        <div className={`p-2 rounded-lg ${formIsAdmin ? 'bg-[var(--red)] text-white' : 'bg-white border border-[var(--border)] text-[var(--gray)]'}`}>
                           <ShieldAlert className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="text-[10px] font-black uppercase tracking-widest">Privilégios Admin</div>
-                          <div className="text-[10px] text-slate-500 font-medium tracking-tight">Acesso total ao painel da federação</div>
+                          <div className="fgb-label text-[var(--black)]" style={{ fontSize: 11 }}>Privilégios Admin</div>
+                          <div className="text-xs text-[var(--gray)] font-sans">Acesso total ao painel da federação</div>
                         </div>
                       </div>
-                      <div className={`w-10 h-6 rounded-full relative transition-colors ${formIsAdmin ? 'bg-orange-600' : 'bg-slate-800'}`}>
+                      <div className={`w-10 h-6 rounded-full relative transition-colors ${formIsAdmin ? 'bg-[var(--red)]' : 'bg-slate-300'}`}>
                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formIsAdmin ? 'left-5' : 'left-1'}`} />
                       </div>
                     </div>
                 </div>
 
-                {formError && <p className="text-red-500 text-xs font-bold uppercase tracking-widest bg-red-500/10 p-4 rounded-xl">{formError}</p>}
+                {formError && <p className="fgb-label text-[var(--red)] bg-[var(--red)]/10 p-4 rounded-xl" style={{ textTransform: 'none', letterSpacing: 0 }}>{formError}</p>}
 
                 <div className="flex gap-4 pt-4">
-                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-12 font-bold text-slate-400 hover:text-white">Cancelar</Button>
-                  <Button disabled={submitLoading} className="flex-1 bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-12 rounded-xl">
+                  <Button variant="ghost" type="button" onClick={() => setShowDialog(false)} className="flex-1 h-12 text-[var(--gray)] font-bold hover:bg-[var(--gray-l)] hover:text-[var(--black)]">Cancelar</Button>
+                  <Button disabled={submitLoading} className="flex-1 fgb-btn-primary h-12">
                     {submitLoading ? 'Processando...' : 'Salvar Usuário'}
                   </Button>
                 </div>
               </form>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       )}
     </div>
