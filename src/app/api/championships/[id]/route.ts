@@ -152,6 +152,7 @@ export async function DELETE(
       await tx.document.deleteMany({ where: { championshipId: id } })
       await tx.standing.deleteMany({ where: { categoryId: { in: categoryIds } } })
       await tx.game.deleteMany({ where: { championshipId: id } })
+      await tx.athleteCategory.deleteMany({ where: { registrationId: { in: registrationIds } } })
       await tx.blockedDate.deleteMany({ where: { registrationId: { in: registrationIds } } })
       await tx.registrationCategory.deleteMany({ where: { registrationId: { in: registrationIds } } })
       await tx.registration.deleteMany({ where: { championshipId: id } })

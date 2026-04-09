@@ -40,11 +40,15 @@ export async function POST(request: Request) {
               phase: game.phase || 1,
               round: game.round || 1,
               dateTime: new Date(game.dateTime),
-              location: 'A definir',
-              city: 'A definir',
+              isReturn: game.isReturn || false,
+              period: game.period || null,
+              venue: game.venue || 'A definir',
+              location: game.location || game.venue || 'A definir',
+              city: game.city || 'A definir',
+              wasRescheduled: game.wasRescheduled || false,
+              rescheduleReason: game.rescheduleReason || null,
+              blockedByTeamId: game.blockedByTeamId || null,
               status: 'SCHEDULED',
-              homeScore: 0,
-              awayScore: 0,
             }
           })
         )

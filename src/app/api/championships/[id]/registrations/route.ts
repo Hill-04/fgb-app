@@ -12,6 +12,12 @@ export async function GET(
       where: { championshipId: id },
       include: {
         team: { select: { id: true, name: true } },
+        blockedDates: {
+          orderBy: { startDate: 'asc' }
+        },
+        athletePlayers: {
+          orderBy: { createdAt: 'asc' }
+        },
         categories: {
           include: {
             category: { select: { id: true, name: true } }
@@ -39,7 +45,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const { teamId, categoryIds, status } = await request.json()
+  const {
+    teamId,
+    categoryIds,
+    status,
+    observations,
+    coachName,
+    coachPhone,
+    coachEmail,
+    coachMultiTeam,
+    blockedDates = [],
+    athletePlayers = []
+  } = await request.json()
   
   try {
     // Check if registration already exists
@@ -56,20 +73,41 @@ export async function POST(
     let registration
 
     if (existingRegistration) {
-      // Update existing registration status and add NEW categories only
-      const existingCatIds = existingRegistration.categories.map(c => c.categoryId)
-      const newCatIds = categoryIds.filter((cid: string) => !existingCatIds.includes(cid))
-
       registration = await prisma.registration.update({
         where: { id: existingRegistration.id },
         data: {
           status: status || existingRegistration.status,
+          observations: observations ?? existingRegistration.observations,
+          coachName: coachName ?? null,
+          coachPhone: coachPhone ?? null,
+          coachEmail: coachEmail ?? null,
+          coachMultiTeam: coachMultiTeam ?? false,
+          blockedDates: {
+            deleteMany: {},
+            create: blockedDates.map((blockedDate: any) => ({
+              startDate: new Date(blockedDate.startDate),
+              endDate: new Date(blockedDate.endDate || blockedDate.startDate),
+              reason: blockedDate.reason || null,
+              affectsAllCats: blockedDate.affectsAllCats ?? false,
+            })),
+          },
+          athletePlayers: {
+            deleteMany: {},
+            create: athletePlayers.map((athlete: any) => ({
+              athleteName: athlete.athleteName,
+              athleteDoc: athlete.athleteDoc || null,
+              categoryIds: JSON.stringify(athlete.categoryIds || []),
+            })),
+          },
           categories: {
-            create: newCatIds.map((cid: string) => ({ categoryId: cid }))
+            deleteMany: {},
+            create: categoryIds.map((cid: string) => ({ categoryId: cid }))
           }
         },
         include: {
           team: true,
+          blockedDates: { orderBy: { startDate: 'asc' } },
+          athletePlayers: true,
           categories: { include: { category: true } }
         }
       })
@@ -80,12 +118,34 @@ export async function POST(
           championshipId: id,
           teamId,
           status: status || 'PENDING',
+          observations: observations || null,
+          coachName: coachName || null,
+          coachPhone: coachPhone || null,
+          coachEmail: coachEmail || null,
+          coachMultiTeam: coachMultiTeam ?? false,
+          blockedDates: {
+            create: blockedDates.map((blockedDate: any) => ({
+              startDate: new Date(blockedDate.startDate),
+              endDate: new Date(blockedDate.endDate || blockedDate.startDate),
+              reason: blockedDate.reason || null,
+              affectsAllCats: blockedDate.affectsAllCats ?? false,
+            })),
+          },
+          athletePlayers: {
+            create: athletePlayers.map((athlete: any) => ({
+              athleteName: athlete.athleteName,
+              athleteDoc: athlete.athleteDoc || null,
+              categoryIds: JSON.stringify(athlete.categoryIds || []),
+            })),
+          },
           categories: {
             create: categoryIds.map((cid: string) => ({ categoryId: cid }))
           }
         },
         include: {
           team: true,
+          blockedDates: { orderBy: { startDate: 'asc' } },
+          athletePlayers: true,
           categories: { include: { category: true } }
         }
       })
@@ -93,7 +153,11 @@ export async function POST(
 
     const formatted = {
       ...registration,
-      categories: registration.categories.map(rc => rc.category)
+      categories: registration.categories.map(rc => rc.category),
+      athletePlayers: registration.athletePlayers.map(athlete => ({
+        ...athlete,
+        categoryIds: athlete.categoryIds,
+      })),
     }
 
     return NextResponse.json(formatted)

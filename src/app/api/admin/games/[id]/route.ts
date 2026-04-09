@@ -53,10 +53,8 @@ export async function PATCH(
               championshipId: currentChampionship.championshipId,
               teamId: { in: [currentChampionship.homeTeamId, currentChampionship.awayTeamId] }
             },
-            OR: [
-              { startDate: { lte: gameDate }, endDate: { gte: gameDate } },
-              { startDate: { lte: gameDate }, endDate: null }
-            ]
+            startDate: { lte: gameDate },
+            endDate: { gte: gameDate }
           },
           include: { registration: { include: { team: true } } }
         })

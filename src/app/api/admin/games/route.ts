@@ -71,10 +71,8 @@ export async function POST(request: Request) {
           championshipId,
           teamId: { in: [homeTeamId, awayTeamId] }
         },
-        OR: [
-          { startDate: { lte: gameDate }, endDate: { gte: gameDate } },
-          { startDate: { lte: gameDate }, endDate: null }
-        ]
+        startDate: { lte: gameDate },
+        endDate: { gte: gameDate }
       },
       include: { registration: { include: { team: true } } }
     })

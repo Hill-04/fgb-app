@@ -116,6 +116,10 @@ model Registration {
   observations   String?
   registeredAt   DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
+  coachName      String?
+  coachPhone     String?
+  coachEmail     String?
+  coachMultiTeam Boolean                @default(false)
 
   // Gym Hosting / Sede
   canHost        Boolean                @default(false)
@@ -125,6 +129,7 @@ model Registration {
   gymMapsLink    String?
 
   blockedDates   BlockedDate[]
+  athletePlayers AthleteCategory[]
   team           Team                   @relation(fields: [teamId], references: [id])
   championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
   categories     RegistrationCategory[]
@@ -146,9 +151,26 @@ model BlockedDate {
   id             String       @id @default(uuid())
   registrationId String
   startDate      DateTime
-  endDate        DateTime?
+  endDate        DateTime
   reason         String?
+  affectsAllCats Boolean      @default(false)
+  createdAt      DateTime     @default(now())
   registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@index([registrationId])
+  @@index([startDate, endDate])
+}
+
+model AthleteCategory {
+  id             String       @id @default(cuid())
+  registrationId String
+  athleteName    String
+  athleteDoc     String?
+  categoryIds    String
+  createdAt      DateTime     @default(now())
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+
+  @@index([registrationId])
 }
 
 model Block {
@@ -167,16 +189,22 @@ model Game {
   blockId        String?
   homeTeamId     String
   awayTeamId     String
-  phase          Int
+  phase          Int                  @default(1)
   round          Int?                 @default(1)
   dateTime       DateTime
   altDateTime    DateTime?
   location       String
   city           String
   court          String?
+  venue          String?
+  isReturn       Boolean              @default(false)
+  period         String?
   status         String               @default("SCHEDULED")
   homeScore      Int?
   awayScore      Int?
+  wasRescheduled Boolean              @default(false)
+  rescheduleReason String?
+  blockedByTeamId String?
   createdAt      DateTime             @default(now())
   awayTeam       Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
   homeTeam       Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
@@ -193,9 +221,13 @@ model Standing {
   played     Int                  @default(0)
   wins       Int                  @default(0)
   losses     Int                  @default(0)
+  draws      Int                  @default(0)
   points     Int                  @default(0)
   pointsFor  Int                  @default(0)
   pointsAg   Int                  @default(0)
+  pointsAgainst Int               @default(0)
+  diff       Int                  @default(0)
+  updatedAt  DateTime             @updatedAt
   category   ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   team       Team                 @relation(fields: [teamId], references: [id])
 

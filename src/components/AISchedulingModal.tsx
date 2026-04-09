@@ -30,26 +30,40 @@ type GameEntry = {
   round: number
   phase: number
   dateTime: string
+  wasRescheduled?: boolean
+  rescheduleReason?: string
 }
 
 type ValidationIssue = {
   type: 'error' | 'warning' | 'info'
   field: string
   message: string
-  suggestion: string
+  suggestion?: string
+}
+
+type ValidationWarning = {
+  type: 'warning' | 'info'
+  field: string
+  message: string
+  suggestion?: string
+  athletes?: { name: string; categories: string[] }[]
 }
 
 type ValidationResult = {
   viable: boolean
   issues: ValidationIssue[]
+  warnings: ValidationWarning[]
+  fieldControlType: 'centralizado' | 'alternado'
+  fieldControlImpact: string
   summary: {
     totalTeams: number
     totalCategories: number
     totalGames: number
     estimatedDays: number
-    periodDays: number
-    gamesPerDay: number
+    totalBlockedDates: number
+    multiCatAthletes: number
     turns: number
+    phases: number
     format: string
     hasPlayoffs: boolean
   }
@@ -78,11 +92,30 @@ type SimulationResult = {
       awayTeamId: string
       awayTeamName: string
       round: number
+      phase?: number
+      isReturn?: boolean
       court?: string
+      period?: string
+      wasRescheduled?: boolean
+      rescheduleReason?: string
     }[]
   }[]
   categories: CategoryResult[]
   games: GameEntry[]
+  conflictsResolved?: {
+    categoryName: string
+    phase: number
+    originalDate: string
+    newDate: string
+    reason: string
+  }[]
+  unresolvableConflicts?: {
+    groupCategories: string[]
+    phase: number
+    message: string
+    suggestion: string
+  }[]
+  phases?: number
   aiOptimization?: {
     available: boolean
     provider: string
@@ -342,6 +375,21 @@ export function AISchedulingModal({
                 </div>
               </div>
 
+              <div className={`rounded-2xl border p-4 ${
+                validation.fieldControlType === 'centralizado'
+                  ? 'border-orange-500/20 bg-orange-500/10'
+                  : 'border-blue-500/20 bg-blue-500/10'
+              }`}>
+                <p className="text-[9px] font-black uppercase tracking-widest text-white">
+                  {validation.fieldControlType === 'centralizado'
+                    ? 'Campeonato CENTRALIZADO'
+                    : 'Campeonato ALTERNADO'}
+                </p>
+                <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                  {validation.fieldControlImpact}
+                </p>
+              </div>
+
               {/* Resumo do campeonato */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
@@ -358,6 +406,47 @@ export function AISchedulingModal({
                 </div>
               </div>
 
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
+                <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)]">
+                  Restrições de Datas
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-center">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Bloqueios</p>
+                    <p className="mt-1 text-lg font-black text-white">{validation.summary.totalBlockedDates}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-center">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Atletas Multi-Cat</p>
+                    <p className="mt-1 text-lg font-black text-white">{validation.summary.multiCatAthletes}</p>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-center">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Fases</p>
+                    <p className="mt-1 text-lg font-black text-white">{validation.summary.phases}</p>
+                  </div>
+                </div>
+
+                {validation.warnings.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {validation.warnings.map((warning, index) => (
+                      <div key={`${warning.field}-${index}`} className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3">
+                        <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400">
+                          {warning.type === 'info' ? 'Info' : 'Atenção'}
+                        </p>
+                        <p className="mt-1 text-[11px] leading-snug text-slate-300">{warning.message}</p>
+                        {warning.suggestion && (
+                          <p className="mt-1 text-[10px] italic text-slate-500">{warning.suggestion}</p>
+                        )}
+                        {warning.athletes && warning.athletes.length > 0 && (
+                          <p className="mt-1 text-[10px] text-slate-400">
+                            {warning.athletes.map((athlete) => `${athlete.name} (${athlete.categories.join(', ')})`).join(' · ')}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Lista de issues */}
               {validation.issues.length > 0 && (
                 <div className="space-y-2 max-h-52 overflow-y-auto custom-scrollbar pr-1">
@@ -369,7 +458,9 @@ export function AISchedulingModal({
                           {colors.label}
                         </p>
                         <p className="text-[11px] text-slate-300 mb-1 leading-snug">{issue.message}</p>
-                        <p className="text-[10px] text-slate-500 italic">💡 {issue.suggestion}</p>
+                        {issue.suggestion && (
+                          <p className="text-[10px] text-slate-500 italic">Sugestão: {issue.suggestion}</p>
+                        )}
                       </div>
                     )
                   })}
@@ -526,6 +617,36 @@ export function AISchedulingModal({
                 </button>
               </div>
 
+              {simulation.unresolvableConflicts && simulation.unresolvableConflicts.length > 0 && (
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400">
+                    Conflitos não resolvíveis
+                  </p>
+                  <div className="mt-3 space-y-3">
+                    {simulation.unresolvableConflicts.map((conflict, index) => (
+                      <div key={`${conflict.phase}-${index}`} className="rounded-xl border border-red-500/20 bg-black/20 p-3">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                          {conflict.groupCategories.join(' + ')} · Fase {conflict.phase}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-300">{conflict.message}</p>
+                        <p className="mt-1 text-[10px] text-slate-400">{conflict.suggestion}</p>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button className="rounded-xl border border-red-500/20 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-300">
+                      Estender período
+                    </button>
+                    <button className="rounded-xl border border-red-500/20 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-300">
+                      Verificar equipes
+                    </button>
+                    <button className="rounded-xl border border-red-500/20 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-300">
+                      Continuar mesmo assim
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Abas de visualização */}
               <div className="flex gap-1 bg-white/[0.03] border border-white/[0.06] rounded-xl p-1">
                 {[
@@ -579,6 +700,14 @@ export function AISchedulingModal({
                               <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400">
                                 {slot.categoryName} · Rod. {slot.round}
                               </span>
+                              {slot.wasRescheduled && (
+                                <span
+                                  title={slot.rescheduleReason || 'Jogo reagendado por bloqueio'}
+                                  className="text-[8px] font-black uppercase bg-yellow-500/15 border border-yellow-500/20 px-2 py-0.5 rounded-lg text-yellow-300"
+                                >
+                                  Reagendado
+                                </span>
+                              )}
                               {slot.court && (
                                 <span className="text-[9px] text-slate-500 italic">
                                   {slot.court}
@@ -622,6 +751,14 @@ export function AISchedulingModal({
                                    weekday: 'short', day: '2-digit', month: 'short'
                                  })}
                                </span>
+                               {game.wasRescheduled && (
+                                 <span
+                                   title={game.rescheduleReason || 'Jogo reagendado por bloqueio'}
+                                   className="text-[8px] font-black uppercase bg-yellow-500/15 border border-yellow-500/20 px-2 py-0.5 rounded-lg text-yellow-300"
+                                 >
+                                   Reagendado
+                                 </span>
+                               )}
                              </div>
                           </div>
                         </div>

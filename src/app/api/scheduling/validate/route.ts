@@ -1,31 +1,56 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
+import { prisma } from '@/lib/db'
 import { authOptions } from '@/lib/auth'
-import { validateCategoryTeams } from '@/lib/calendar/validation'
 
 type ValidationIssue = {
   type: 'error' | 'warning' | 'info'
   field: string
   message: string
-  suggestion: string
+  suggestion?: string
 }
 
-type ValidationResult = {
-  viable: boolean
-  issues: ValidationIssue[]
-  summary: {
-    totalTeams: number
-    totalCategories: number
-    totalGames: number
-    estimatedDays: number
-    periodDays: number
-    gamesPerDay: number
-    turns: number
-    format: string
-    hasPlayoffs: boolean
+type ValidationWarning = {
+  type: 'warning' | 'info'
+  field: string
+  message: string
+  suggestion?: string
+  athletes?: Array<{ name: string; categories: string[] }>
+}
+
+function startOfUtcDay(date: Date) {
+  const normalized = new Date(date)
+  normalized.setUTCHours(0, 0, 0, 0)
+  return normalized
+}
+
+function endOfUtcDay(date: Date) {
+  const normalized = new Date(date)
+  normalized.setUTCHours(23, 59, 59, 999)
+  return normalized
+}
+
+function parseCategoryIds(value: string) {
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.map(String) : []
+  } catch {
+    return []
   }
-  aiMessage: string
+}
+
+function getWeekendStarts(startDate: Date, endDate: Date) {
+  const weekends: Date[] = []
+  const cursor = startOfUtcDay(new Date(startDate))
+
+  while (cursor <= endDate) {
+    if (cursor.getUTCDay() === 6) {
+      weekends.push(new Date(cursor))
+    }
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+  }
+
+  return weekends
 }
 
 export async function POST(request: Request) {
@@ -44,11 +69,19 @@ export async function POST(request: Request) {
           include: {
             registrations: {
               where: { registration: { status: 'CONFIRMED' } },
-              include: { registration: { include: { team: true } } }
-            }
-          }
-        }
-      }
+              include: {
+                registration: {
+                  include: {
+                    team: true,
+                    blockedDates: true,
+                    athletePlayers: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!championship) {
@@ -56,193 +89,208 @@ export async function POST(request: Request) {
     }
 
     const issues: ValidationIssue[] = []
-    const MAX_GAMES_PER_DAY = 8
-    const PREFERRED_DAYS_PER_WEEK = 3 // sex, sáb, dom
+    const warnings: ValidationWarning[] = []
+    const fieldControl = championship.fieldControl || 'alternado'
+    const isCentralized = fieldControl === 'fixo' || fieldControl === 'neutro'
 
-    // Calcular total de jogos necessários
-    let totalGames = 0
-    const teamsPerCategory: { name: string; count: number }[] = []
+    for (const category of championship.categories) {
+      const teamCount = category.registrations.length
 
-    for (const cat of championship.categories) {
-      const n = cat.registrations.length
-      teamsPerCategory.push({ name: cat.name, count: n })
-
-      const validation = validateCategoryTeams(n)
-      if (!validation.isValid) {
+      if (teamCount < 2) {
         issues.push({
-          type: 'warning',
-          field: `categoria.${cat.name}`,
-          message: `A categoria "${cat.name}" tem apenas ${n} equipe(s) confirmada(s) e será IGNORADA no agendamento.`,
-          suggestion: validation.error || 'Adicione mais equipes se desejar incluir esta categoria.'
+          type: 'error',
+          field: `categoria.${category.name}`,
+          message: `${category.name}: apenas ${teamCount} equipe(s). Mínimo: 2.`,
+          suggestion: 'Adicione mais equipes ou desative esta categoria.',
         })
-        continue
-      } else if (validation.warning) {
+      } else if (teamCount < championship.minTeamsPerCat) {
         issues.push({
           type: 'warning',
-          field: `categoria.${cat.name}`,
-          message: `A categoria "${cat.name}" tem ${n} equipe(s).`,
-          suggestion: validation.warning
+          field: `minTeams.${category.name}`,
+          message: `${category.name}: ${teamCount} equipes, mínimo configurado: ${championship.minTeamsPerCat}.`,
+          suggestion: `Adicione ${championship.minTeamsPerCat - teamCount} equipe(s) ou reduza o mínimo.`,
         })
       }
-
-      // Round-robin: n*(n-1)/2 jogos por turno
-      const gamesPerTurn = (n * (n - 1)) / 2
-      totalGames += gamesPerTurn * (championship.turns || 1)
     }
 
-    // Verificar viabilidade de cada grupo por fase
-    const maxTeamsInAnyCat = Math.max(...championship.categories.map(c => c.registrations.length), 0)
-    const maxPairsForAnyCat = (maxTeamsInAnyCat * (maxTeamsInAnyCat - 1)) / 2
-    const pairsPerPhaseCalc = Math.ceil(maxPairsForAnyCat / (championship.phases || 1))
+    const startDate = championship.startDate
+      ? new Date(championship.startDate)
+      : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000)
+    const endDate = championship.endDate ? new Date(championship.endDate) : null
+    const availableWeekends = endDate ? getWeekendStarts(startDate, endDate) : []
 
-    // Calcular jogos por dia máximo para 2 cats (limite FGB)
-    const MAX_SLOTS_PER_DAY = 6  // 6 jogos de 75min cabem das 08:00 às 16:45
-    const jogsPerGroupPerFase = pairsPerPhaseCalc * 2 * (championship.turns || 1)
-    const diasNecessariosPorGrupoFase = Math.ceil(jogsPerGroupPerFase / MAX_SLOTS_PER_DAY)
+    for (const category of championship.categories) {
+      const registrations = category.registrations
+      if (registrations.length < 2) {
+        continue
+      }
 
-    if (diasNecessariosPorGrupoFase > 3) {
-      issues.push({
-        type: 'error',
-        field: 'phases',
-        message: `Cada fase precisaria de ${diasNecessariosPorGrupoFase} dias para os jogos do grupo, mas o máximo permitido é 3 (sex+sáb+dom).`,
-        suggestion: `Aumente o número de fases para ${Math.ceil((championship.phases || 1) * diasNecessariosPorGrupoFase / 3)} ou reduza o número de equipes por categoria.`
+      if (isCentralized && endDate) {
+        let freeWeekends = 0
+
+        for (const weekendStart of availableWeekends) {
+          const weekendEnd = new Date(weekendStart)
+          weekendEnd.setUTCDate(weekendEnd.getUTCDate() + 1)
+
+          const allFree = registrations.every((registration) => {
+            return !registration.registration.blockedDates.some((blockedDate) => {
+              const blockedStart = startOfUtcDay(new Date(blockedDate.startDate))
+              const blockedEnd = endOfUtcDay(new Date(blockedDate.endDate))
+              return weekendStart <= blockedEnd && weekendEnd >= blockedStart
+            })
+          })
+
+          if (allFree) {
+            freeWeekends += 1
+          }
+        }
+
+        const requiredWeekends = championship.phases || 1
+        if (freeWeekends < requiredWeekends) {
+          issues.push({
+            type: 'error',
+            field: `datas.${category.name}`,
+            message: `${category.name}: apenas ${freeWeekends} fim(ns) de semana onde TODAS as ${registrations.length} equipes estão livres. Necessário: ${requiredWeekends}.`,
+            suggestion:
+              'Campeonato centralizado exige que todas as equipes estejam presentes. Estenda o período ou negocie as datas bloqueadas.',
+          })
+        }
+      }
+
+      for (const registration of registrations) {
+        const totalDays = endDate
+          ? Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / 86400000) + 1)
+          : 90
+        let blockedDays = 0
+
+        for (const blockedDate of registration.registration.blockedDates) {
+          const blockedStart = startOfUtcDay(new Date(blockedDate.startDate))
+          const blockedEnd = endOfUtcDay(new Date(blockedDate.endDate))
+          blockedDays += Math.ceil((blockedEnd.getTime() - blockedStart.getTime()) / 86400000)
+        }
+
+        const blockedPct = totalDays > 0 ? (blockedDays / totalDays) * 100 : 0
+        if (blockedPct > 50) {
+          warnings.push({
+            type: 'warning',
+            field: `bloqueio.${registration.registration.team.name}`,
+            message: `${registration.registration.team.name} (${category.name}): ${Math.round(blockedPct)}% do período bloqueado.`,
+            suggestion: 'Esta equipe pode comprometer a organização. Verificar com o responsável.',
+          })
+        }
+      }
+    }
+
+    const athleteMap = new Map<string, string[]>()
+
+    for (const category of championship.categories) {
+      for (const registration of category.registrations) {
+        for (const athlete of registration.registration.athletePlayers || []) {
+          const categoryIds = parseCategoryIds(athlete.categoryIds || '[]')
+          const key = athlete.athleteDoc || athlete.athleteName
+
+          if (!athleteMap.has(key)) {
+            athleteMap.set(key, [])
+          }
+
+          for (const categoryId of categoryIds) {
+            if (!athleteMap.get(key)!.includes(categoryId)) {
+              athleteMap.get(key)!.push(categoryId)
+            }
+          }
+        }
+      }
+    }
+
+    const multiCategoryAthletes = Array.from(athleteMap.entries()).filter(([, categoryIds]) => categoryIds.length > 1)
+
+    if (multiCategoryAthletes.length > 0) {
+      warnings.push({
+        type: 'info',
+        field: 'atletas',
+        message: `${multiCategoryAthletes.length} atleta(s) em múltiplas categorias. A IA ajustará os horários automaticamente.`,
+        athletes: multiCategoryAthletes.map(([name, categories]) => ({ name, categories })),
       })
     }
 
-    // -- Verificar data de início
     if (!championship.startDate) {
       issues.push({
         type: 'error',
         field: 'startDate',
         message: 'Data de início não definida.',
-        suggestion: 'Defina uma data de início nas Configurações antes de organizar.'
+        suggestion: 'Defina a data de início nas Configurações.',
       })
     }
 
-    // -- Calcular período disponível
-    const startDate = championship.startDate ? new Date(championship.startDate) : null
-    const endDate = championship.endDate ? new Date(championship.endDate) : null
-    let periodDays = 0
-
-    if (startDate && endDate) {
-      periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
-      const availableDays = Math.floor(periodDays / 7) * PREFERRED_DAYS_PER_WEEK
-
-      if (periodDays < 7) {
-        issues.push({
-          type: 'error',
-          field: 'endDate',
-          message: `Período muito curto: apenas ${periodDays} dia(s) entre início e fim.`,
-          suggestion: 'Estenda a data de fim para ter pelo menos 2 fins de semana disponíveis.'
-        })
-      } else if (totalGames > 0) {
-        const estimatedDays = Math.ceil(totalGames / MAX_GAMES_PER_DAY)
-
-        if (estimatedDays > availableDays) {
-          const extraWeeks = Math.ceil((estimatedDays - availableDays) / PREFERRED_DAYS_PER_WEEK)
-          issues.push({
-            type: 'error',
-            field: 'periodo',
-            message: `Período insuficiente. Necessário ${estimatedDays} dia(s) de jogo, disponível ${availableDays} nos fins de semana.`,
-            suggestion: `Estenda o campeonato em ${extraWeeks} semana(s), reduza de ${championship.turns} para 1 turno, ou remova categorias com poucos times.`
-          })
-        } else if (estimatedDays > availableDays * 0.8) {
-          issues.push({
-            type: 'warning',
-            field: 'periodo',
-            message: `Calendário apertado: ${totalGames} jogos em ${availableDays} dias disponíveis (${estimatedDays} necessários).`,
-            suggestion: 'O calendário é viável, mas com pouca margem de segurança. Considere estender o período se houver imprevistos.'
-          })
-        }
-      }
-    } else if (startDate && !endDate) {
-      const daysNeeded = Math.ceil(totalGames / MAX_GAMES_PER_DAY / PREFERRED_DAYS_PER_WEEK * 7)
-      issues.push({
-        type: 'warning',
-        field: 'endDate',
-        message: 'Data de fim não definida.',
-        suggestion: `Com ${totalGames} jogos, o campeonato precisará de aproximadamente ${daysNeeded} dias corridos. Defina uma data de fim para melhor controle.`
-      })
-    }
-
-    // -- Verificar playoffs
     if (championship.hasPlayoffs) {
-      const minTeamsForPlayoff = championship.playoffTeams || 4
-      for (const cat of championship.categories) {
-        if (cat.registrations.length > 0 && cat.registrations.length < minTeamsForPlayoff) {
-          issues.push({
+      const playoffTeams = championship.playoffTeams || 4
+
+      for (const category of championship.categories) {
+        if (category.registrations.length < playoffTeams) {
+          warnings.push({
             type: 'warning',
-            field: `playoff.${cat.name}`,
-            message: `"${cat.name}": ${cat.registrations.length} equipe(s), mas os playoffs exigem ${minTeamsForPlayoff}.`,
-            suggestion: `Reduza "Equipes no Playoff" para ${Math.max(2, cat.registrations.length)} nas Configurações, ou adicione mais times.`
+            field: `playoff.${category.name}`,
+            message: `${category.name}: ${category.registrations.length} equipes, mas playoffs exige ${playoffTeams}.`,
+            suggestion: `Reduza para ${Math.max(2, category.registrations.length)} equipes no playoff.`,
           })
         }
       }
     }
 
-    // -- Verificar mínimo de times por categoria
-    for (const cat of teamsPerCategory) {
-      if (cat.count > 0 && cat.count < championship.minTeamsPerCat) {
-        issues.push({
-          type: 'warning',
-          field: `minTeams.${cat.name}`,
-          message: `"${cat.name}": ${cat.count} equipe(s), mínimo configurado: ${championship.minTeamsPerCat}.`,
-          suggestion: `Confirme mais ${championship.minTeamsPerCat - cat.count} equipe(s) ou altere "Mínimo por Categoria" nas Configurações.`
-        })
+    const hasErrors = issues.some((issue) => issue.type === 'error')
+    const totalGames = championship.categories.reduce((accumulator, category) => {
+      const teamCount = category.registrations.length
+      if (teamCount < 2) {
+        return accumulator
       }
-    }
 
-    // -- Verificar categorias vazias (sem nenhuma equipe)
-    const categoriesWithNoTeams = championship.categories.filter(c => c.registrations.length === 0)
-    if (categoriesWithNoTeams.length > 0) {
-      issues.push({
-        type: 'info',
-        field: 'categorias_vazias',
-        message: `${categoriesWithNoTeams.length} categoria(s) sem equipes confirmadas e serão ignoradas: ${categoriesWithNoTeams.map(c => c.name).join(', ')}.`,
-        suggestion: 'Isso é normal se algumas categorias estiverem sem participantes. Elas serão puladas na geração do calendário.'
-      })
-    }
+      const pairs = (teamCount * (teamCount - 1)) / 2
+      return accumulator + pairs * (championship.turns || 1)
+    }, 0)
 
-    // Determinar viabilidade
-    const hasErrors = issues.some(i => i.type === 'error')
-    const hasWarnings = issues.some(i => i.type === 'warning')
-    const viable = !hasErrors
+    const estimatedDays = Math.ceil(totalGames / 8)
+    const totalBlockedCount = championship.categories.reduce(
+      (accumulator, category) =>
+        accumulator +
+        category.registrations.reduce(
+          (registrationAccumulator, registration) =>
+            registrationAccumulator + registration.registration.blockedDates.length,
+          0
+        ),
+      0
+    )
 
-    // Calcular estimativas finais
-    const estimatedDays = totalGames > 0 ? Math.ceil(totalGames / MAX_GAMES_PER_DAY) : 0
-    const gamesPerDay = totalGames > 0
-      ? Math.min(MAX_GAMES_PER_DAY, Math.ceil(totalGames / Math.max(estimatedDays, 1)))
-      : 0
-
-    // Gerar mensagem IA humanizada
-    let aiMessage: string
-    if (!viable) {
-      const errorCount = issues.filter(i => i.type === 'error').length
-      aiMessage = `Encontrei ${errorCount} problema(s) que impedem a geração do calendário. Corrija os itens abaixo nas Configurações do campeonato antes de continuar.`
-    } else if (hasWarnings) {
-      const warnCount = issues.filter(i => i.type === 'warning').length
-      aiMessage = `O campeonato pode ser organizado! Mas identifiquei ${warnCount} ponto(s) de atenção. Você pode continuar ou ajustar os itens listados para um calendário mais robusto.`
+    let aiMessage = ''
+    if (hasErrors) {
+      aiMessage = `Encontrei ${issues.filter((issue) => issue.type === 'error').length} problema(s) que impedem a organização. Corrija antes de continuar.`
+    } else if (issues.length > 0 || warnings.length > 0) {
+      aiMessage = `O campeonato é viável com ${issues.length + warnings.length} ponto(s) de atenção. Você pode continuar ou ajustar.`
     } else {
-      aiMessage = `Tudo certo! O campeonato está perfeitamente configurado. Posso gerar o calendário com ${totalGames} jogo(s) distribuídos em aproximadamente ${estimatedDays} dia(s) de competição.`
+      aiMessage = `Tudo certo! ${totalGames} jogos distribuídos em aprox. ${estimatedDays} dia(s). ${totalBlockedCount} restrição(ões) de data serão consideradas.`
     }
 
     return NextResponse.json({
-      viable,
+      viable: !hasErrors,
       issues,
+      warnings,
+      fieldControlType: isCentralized ? 'centralizado' : 'alternado',
+      fieldControlImpact: isCentralized
+        ? 'Todas as equipes precisam estar presentes em cada fase. Um bloqueio invalida o dia inteiro.'
+        : 'Apenas o confronto específico é afetado por um bloqueio.',
       summary: {
-        totalTeams: teamsPerCategory.reduce((a, c) => a + c.count, 0),
+        totalTeams: championship.categories.reduce((accumulator, category) => accumulator + category.registrations.length, 0),
         totalCategories: championship.categories.length,
         totalGames,
         estimatedDays,
-        periodDays,
-        gamesPerDay,
+        totalBlockedDates: totalBlockedCount,
+        multiCatAthletes: multiCategoryAthletes.length,
         turns: championship.turns || 1,
+        phases: championship.phases || 1,
         format: championship.format || 'todos_contra_todos',
-        hasPlayoffs: championship.hasPlayoffs || false
+        hasPlayoffs: championship.hasPlayoffs || false,
       },
-      aiMessage
-    } as ValidationResult)
-
+      aiMessage,
+    })
   } catch (error: any) {
     console.error('[Scheduling Validate Error]', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

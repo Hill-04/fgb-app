@@ -6,7 +6,18 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; regId: string }> }
 ) {
   const { regId } = await params
-  const { teamId, categoryIds, status } = await request.json()
+  const {
+    teamId,
+    categoryIds,
+    status,
+    observations,
+    coachName,
+    coachPhone,
+    coachEmail,
+    coachMultiTeam,
+    blockedDates = [],
+    athletePlayers = []
+  } = await request.json()
   
   try {
     const registration = await prisma.registration.update({
@@ -14,6 +25,28 @@ export async function PATCH(
       data: {
         teamId,
         status,
+        observations: observations || null,
+        coachName: coachName || null,
+        coachPhone: coachPhone || null,
+        coachEmail: coachEmail || null,
+        coachMultiTeam: coachMultiTeam ?? false,
+        blockedDates: {
+          deleteMany: {},
+          create: blockedDates.map((blockedDate: any) => ({
+            startDate: new Date(blockedDate.startDate),
+            endDate: new Date(blockedDate.endDate || blockedDate.startDate),
+            reason: blockedDate.reason || null,
+            affectsAllCats: blockedDate.affectsAllCats ?? false,
+          }))
+        },
+        athletePlayers: {
+          deleteMany: {},
+          create: athletePlayers.map((athlete: any) => ({
+            athleteName: athlete.athleteName,
+            athleteDoc: athlete.athleteDoc || null,
+            categoryIds: JSON.stringify(athlete.categoryIds || []),
+          }))
+        },
         categories: {
           deleteMany: {},
           create: categoryIds.map((cid: string) => ({ categoryId: cid }))
@@ -21,6 +54,8 @@ export async function PATCH(
       },
       include: {
         team: true,
+        blockedDates: { orderBy: { startDate: 'asc' } },
+        athletePlayers: { orderBy: { createdAt: 'asc' } },
         categories: {
           include: {
             category: true
@@ -48,6 +83,8 @@ export async function DELETE(
   const { regId } = await params
   
   try {
+    await prisma.athleteCategory.deleteMany({ where: { registrationId: regId } })
+    await prisma.blockedDate.deleteMany({ where: { registrationId: regId } })
     await prisma.registration.delete({
       where: { id: regId }
     })
