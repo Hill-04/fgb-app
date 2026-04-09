@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
-  Calendar, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User, FlaskConical,
+  Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
+  FileText, Bell, MessageSquare, User,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -18,25 +18,22 @@ type SideNavProps = {
 
 const adminNavGroups = [
   {
-    label: 'Principal',
+    label: 'Visão Geral',
     items: [
-      { href: '/admin/dashboard',     label: 'Dashboard',     icon: LayoutDashboard },
-      { href: '/admin/championships', label: 'Campeonatos',   icon: Trophy },
-      { href: '/admin/matches',       label: 'Jogos',         icon: Calendar },
+      { href: '/admin/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
+      { href: '/admin/calendario', label: 'Calendário', icon: CalendarDays },
     ],
   },
   {
-    label: 'Gestão',
+    label: 'Campeonatos',
     items: [
-      { href: '/admin/registrations', label: 'Inscrições',    icon: Users },
-      { href: '/admin/standings',     label: 'Classificação', icon: BarChart2 },
-      { href: '/admin/settings',      label: 'Configurações', icon: Settings },
+      { href: '/admin/championships', label: 'Campeonatos', icon: Trophy },
     ],
   },
   {
-    label: 'Ferramentas',
+    label: 'Sistema',
     items: [
-      { href: '/admin/simulation',    label: 'Simulação',     icon: FlaskConical },
+      { href: '/admin/settings', label: 'Configurações', icon: Settings },
     ],
   },
 ]

@@ -22,9 +22,30 @@ const statusBadge: Record<string, string> = {
   DRAFT: 'bg-slate-100 text-slate-700 border-slate-200',
   REGISTRATION_OPEN: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   REGISTRATION_CLOSED: 'bg-[var(--yellow-light)] text-[var(--yellow-dark)] border-yellow-200',
-  ONGOING: 'bg-[var(--red-light)] text-[var(--red)] border-red-200',
+  ORGANIZING: 'bg-blue-100 text-blue-700 border-blue-200',
+  ONGOING: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
+  ACTIVE: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   FINISHED: 'bg-[#edf3ff] text-[#3052a5] border-[#d8e2ff]',
   ARCHIVED: 'bg-slate-50 text-slate-500 border-slate-200',
+}
+
+const actionLabelMap: Record<string, string> = {
+  REGISTRATION_OPEN: 'Gerenciar Inscrições',
+  REGISTRATION_CLOSED: 'Organizar com IA',
+  ORGANIZING: 'Revisar Calendário',
+  ONGOING: 'Registrar Resultados',
+  ACTIVE: 'Registrar Resultados',
+  FINISHED: 'Ver Relatório',
+}
+
+const statusStepMap: Record<string, number> = {
+  DRAFT: 1,
+  REGISTRATION_OPEN: 2,
+  REGISTRATION_CLOSED: 2,
+  ORGANIZING: 3,
+  ONGOING: 4,
+  ACTIVE: 4,
+  FINISHED: 5,
 }
 
 export function ChampionshipCard({
@@ -36,8 +57,12 @@ export function ChampionshipCard({
   teamCount,
   gameCount,
   href,
-  buttonLabel = 'Ver Painel',
+  buttonLabel,
 }: ChampionshipCardProps) {
+  const currentStep = statusStepMap[status] ?? 1
+  const actionLabel = buttonLabel ?? actionLabelMap[status] ?? 'Ver Painel'
+  const showPulse = status === 'REGISTRATION_OPEN' || status === 'ONGOING' || status === 'ACTIVE'
+
   return (
     <Link
       href={href}
@@ -61,7 +86,13 @@ export function ChampionshipCard({
             </div>
           </div>
 
-          <span className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${statusBadge[status] || statusBadge.DRAFT}`}>
+          <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${statusBadge[status] || statusBadge.DRAFT}`}>
+            {showPulse && (
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--verde)] opacity-70"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--verde)]"></span>
+              </span>
+            )}
             {formatChampionshipStatus(status)}
           </span>
         </div>
@@ -97,6 +128,30 @@ export function ChampionshipCard({
           </div>
         </div>
 
+        <div className="mb-5">
+          <div className="flex items-center justify-between mb-2">
+            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Progresso do campeonato</p>
+            <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>
+              Etapa {currentStep}/5
+            </span>
+          </div>
+          <div className="flex gap-1.5">
+            {[1, 2, 3, 4, 5].map((step) => (
+              <span
+                key={step}
+                className={`h-2 flex-1 rounded-full border ${step <= currentStep ? 'bg-[var(--verde)] border-[var(--verde)]' : 'bg-white border-[var(--border)]'}`}
+              />
+            ))}
+          </div>
+          <div className="mt-2 flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">
+            <span>Criação</span>
+            <span>Inscrições</span>
+            <span>Organização</span>
+            <span>Jogos</span>
+            <span>Encerrado</span>
+          </div>
+        </div>
+
         <div className="mb-6 flex flex-wrap gap-2">
           {categories.slice(0, 5).map((cat) => (
             <span
@@ -122,7 +177,7 @@ export function ChampionshipCard({
           </div>
 
           <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--black)] transition-all duration-300 group-hover:border-[var(--yellow)] group-hover:bg-[var(--yellow)] group-hover:text-[var(--black)]">
-            {buttonLabel}
+            {actionLabel}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </span>
         </div>
