@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User,
+  FileText, Bell, MessageSquare, User, FlaskConical,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -14,26 +14,28 @@ type SideNavProps = {
   teamName?: string
   className?: string
   onItemClick?: () => void
+  width?: number | string
 }
 
 const adminNavGroups = [
   {
-    label: 'Visão Geral',
+    label: 'Principal',
     items: [
-      { href: '/admin/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
-      { href: '/admin/calendario', label: 'Calendário', icon: CalendarDays },
+      { href: '/admin/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
+      { href: '/admin/championships', label: 'Campeonatos',  icon: Trophy },
+      { href: '/admin/calendario',    label: 'Calendário',   icon: CalendarDays },
     ],
   },
   {
-    label: 'Campeonatos',
+    label: 'Ferramentas',
     items: [
-      { href: '/admin/championships', label: 'Campeonatos', icon: Trophy },
+      { href: '/admin/simulation',    label: 'Simulação',    icon: FlaskConical },
     ],
   },
   {
     label: 'Sistema',
     items: [
-      { href: '/admin/settings', label: 'Configurações', icon: Settings },
+      { href: '/admin/settings',      label: 'Configurações', icon: Settings },
     ],
   },
 ]
@@ -60,7 +62,7 @@ const teamNavGroups = [
   },
 ]
 
-export function SideNav({ role, teamName, className, onItemClick }: SideNavProps) {
+export function SideNav({ role, teamName, className, onItemClick, width }: SideNavProps) {
   const pathname = usePathname()
   const isTeam = role === 'TEAM'
   const navGroups = isTeam ? teamNavGroups : adminNavGroups
@@ -71,7 +73,7 @@ export function SideNav({ role, teamName, className, onItemClick }: SideNavProps
     <div
       style={{
         background: '#145530',
-        width: 220,
+        width: width ?? 220,
         flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',

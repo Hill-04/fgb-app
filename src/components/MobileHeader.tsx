@@ -66,6 +66,7 @@ export function MobileHeader({ role, teamName }: MobileHeaderProps) {
                     role={role} 
                     teamName={teamName} 
                     className="border-r-0 w-full" 
+                    width="100%"
                     onItemClick={() => setIsOpen(false)}
                 />
             </div>

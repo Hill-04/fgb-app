@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { SideNav } from "@/components/SideNav"
+import { MobileHeader } from "@/components/MobileHeader"
 import { AIAssistantBubble } from "@/components/AIAssistantBubble"
 import { ensureDatabaseSchema } from "@/lib/db-patch"
 
@@ -23,9 +24,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-[var(--red)]/5 blur-[100px] rounded-full -ml-[150px] -mb-[150px]" />
       </div>
 
-      <SideNav />
+      <MobileHeader role="ADMIN" />
+      <SideNav className="hidden md:flex shrink-0" />
       
-      <main className="flex-1 p-6 sm:p-10 md:p-14 lg:p-16 overflow-y-auto relative z-10 custom-scrollbar">
+      <main className="flex-1 p-4 sm:p-8 md:p-12 lg:p-16 overflow-y-auto relative z-10 custom-scrollbar">
         <div className="max-w-[1440px] mx-auto">
           {children}
         </div>
