@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 export async function GET(
   request: Request,
@@ -8,24 +9,26 @@ export async function GET(
   const { id } = await params
   
   try {
-    const registrations = await prisma.registration.findMany({
-      where: { championshipId: id },
-      include: {
-        team: { select: { id: true, name: true } },
-        blockedDates: {
-          orderBy: { startDate: 'asc' }
-        },
-        athletePlayers: {
-          orderBy: { createdAt: 'asc' }
-        },
-        categories: {
-          include: {
-            category: { select: { id: true, name: true } }
+    const registrations = await withDatabaseSchemaRetry(() =>
+      prisma.registration.findMany({
+        where: { championshipId: id },
+        include: {
+          team: { select: { id: true, name: true } },
+          blockedDates: {
+            orderBy: { startDate: 'asc' }
+          },
+          athletePlayers: {
+            orderBy: { createdAt: 'asc' }
+          },
+          categories: {
+            include: {
+              category: { select: { id: true, name: true } }
+            }
           }
-        }
-      },
-      orderBy: { registeredAt: 'desc' }
-    })
+        },
+        orderBy: { registeredAt: 'desc' }
+      })
+    )
 
     // Map to flatten categories for the frontend
     const formatted = registrations.map(reg => ({
@@ -60,15 +63,17 @@ export async function POST(
   
   try {
     // Check if registration already exists
-    const existingRegistration = await prisma.registration.findUnique({
-      where: {
-        championshipId_teamId: {
-          championshipId: id,
-          teamId
-        }
-      },
-      include: { categories: true }
-    })
+    const existingRegistration = await withDatabaseSchemaRetry(() =>
+      prisma.registration.findUnique({
+        where: {
+          championshipId_teamId: {
+            championshipId: id,
+            teamId
+          }
+        },
+        include: { categories: true }
+      })
+    )
 
     let registration
 

@@ -3,12 +3,14 @@ import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { recalculateIsViable } from '@/services/registration-service'
+import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -43,9 +45,11 @@ export async function POST(
     }
 
     // Verificar se o campeonato existe
-    const championship = await prisma.championship.findUnique({
-      where: { id: championshipId }
-    })
+    const championship = await withDatabaseSchemaRetry(() =>
+      prisma.championship.findUnique({
+        where: { id: championshipId }
+      })
+    )
 
     if (!championship) {
       return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })

@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const { id } = await params
   const { athleteName, athleteDoc, categoryIds } = await request.json()
 
@@ -24,12 +26,15 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const { id } = await params
 
-  const athletes = await prisma.athleteCategory.findMany({
-    where: { registrationId: id },
-    orderBy: { createdAt: 'asc' },
-  })
+  const athletes = await withDatabaseSchemaRetry(() =>
+    prisma.athleteCategory.findMany({
+      where: { registrationId: id },
+      orderBy: { createdAt: 'asc' },
+    })
+  )
 
   return NextResponse.json(athletes)
 }

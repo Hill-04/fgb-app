@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/db'
 import { authOptions } from '@/lib/auth'
 import { isDateBlockedByRanges } from '@/lib/scheduling/availability'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 async function getRegistrationForCategory(teamId: string, categoryId: string) {
   return prisma.registration.findFirst({
@@ -20,6 +21,7 @@ async function getRegistrationForCategory(teamId: string, categoryId: string) {
 }
 
 export async function GET(request: Request) {
+  await ensureDatabaseSchema()
   const session = await getServerSession(authOptions)
   if (!session) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -46,6 +48,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  await ensureDatabaseSchema()
   const session = await getServerSession(authOptions)
   if (!session || !(session.user as any).isAdmin) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })

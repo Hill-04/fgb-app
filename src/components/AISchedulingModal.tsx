@@ -1,12 +1,16 @@
 'use client'
 
-import { useState } from 'react'
-import { pluralizeJogos, pluralizeDias } from '@/utils/pluralize'
+import { useMemo, useState } from 'react'
+import { pluralizeDias, pluralizeJogos } from '@/utils/pluralize'
 import { calculateCalendarSummary } from '@/lib/calendar/summary'
-import { formatGameSlot } from '@/lib/calendar/display'
 import {
-  Sparkles, X, CheckCircle2, AlertCircle, Loader2,
-  ArrowRight, TriangleAlert
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  Sparkles,
+  TriangleAlert,
+  X,
 } from 'lucide-react'
 
 type AISchedulingModalProps = {
@@ -21,17 +25,6 @@ type CategoryResult = {
   name: string
   teams: number
   gamesCount: number
-}
-
-type GameEntry = {
-  categoryId: string
-  homeTeamId: string
-  awayTeamId: string
-  round: number
-  phase: number
-  dateTime: string
-  wasRescheduled?: boolean
-  rescheduleReason?: string
 }
 
 type ValidationIssue = {
@@ -70,7 +63,51 @@ type ValidationResult = {
   aiMessage: string
 }
 
-type Step = 'idle' | 'validating' | 'diagnosis' | 'simulating' | 'preview' | 'review' | 'applying' | 'done' | 'error'
+type Step =
+  | 'idle'
+  | 'validating'
+  | 'diagnosis'
+  | 'simulating'
+  | 'preview'
+  | 'review'
+  | 'applying'
+  | 'done'
+  | 'error'
+
+type PreviewSlot = {
+  time: string
+  categoryId: string
+  categoryName?: string
+  homeTeamId: string
+  homeTeamName: string
+  awayTeamId: string
+  awayTeamName: string
+  round: number
+  phase?: number
+  isReturn?: boolean
+  court?: string
+  period?: string
+  wasRescheduled?: boolean
+  rescheduleReason?: string
+}
+
+type PreviewDay = {
+  date: string
+  dayOfWeek: string
+  gamesCount: number
+  timeSlots: PreviewSlot[]
+}
+
+type SimulationGame = {
+  categoryId: string
+  homeTeamId: string
+  awayTeamId: string
+  round: number
+  phase: number
+  dateTime: string
+  wasRescheduled?: boolean
+  rescheduleReason?: string
+}
 
 type SimulationResult = {
   success: boolean
@@ -79,29 +116,9 @@ type SimulationResult = {
   totalBlockedDates?: number
   totalDays: number
   maxGamesPerDay: number
-  schedulePreview?: {
-    date: string
-    dayOfWeek: string
-    gamesCount: number
-    timeSlots: {
-      time: string
-      categoryId: string
-      categoryName?: string
-      homeTeamId: string
-      homeTeamName: string
-      awayTeamId: string
-      awayTeamName: string
-      round: number
-      phase?: number
-      isReturn?: boolean
-      court?: string
-      period?: string
-      wasRescheduled?: boolean
-      rescheduleReason?: string
-    }[]
-  }[]
+  schedulePreview?: PreviewDay[]
   categories: CategoryResult[]
-  games: GameEntry[]
+  games: SimulationGame[]
   conflictsResolved?: {
     categoryName: string
     phase: number
@@ -124,6 +141,56 @@ type SimulationResult = {
   }
 }
 
+type ReviewTab = 'date' | 'category' | 'round'
+
+const stepTrail: Step[] = ['diagnosis', 'preview', 'review']
+
+const issueStyles = {
+  error: {
+    bg: 'bg-[var(--red-light)]',
+    border: 'border-red-200',
+    text: 'text-[var(--red)]',
+    label: 'Erro',
+  },
+  warning: {
+    bg: 'bg-[var(--yellow-light)]',
+    border: 'border-yellow-200',
+    text: 'text-[var(--yellow-dark)]',
+    label: 'Atencao',
+  },
+  info: {
+    bg: 'bg-[var(--verde-light)]',
+    border: 'border-green-200',
+    text: 'text-[var(--verde)]',
+    label: 'Info',
+  },
+} as const
+
+const surfaceCard = 'rounded-[28px] border border-[var(--border)] bg-white/95 shadow-[var(--shadow-md)]'
+const nestedCard = 'rounded-2xl border border-[var(--border)] bg-[var(--gray-l)]/75 shadow-sm'
+const statCard = 'rounded-2xl border border-[var(--border)] bg-white/90 p-3 text-center shadow-sm'
+const secondaryButton =
+  'flex-1 h-11 rounded-xl border border-[var(--border)] bg-white text-[10px] font-black uppercase tracking-widest text-[var(--gray)] transition-all hover:border-[var(--verde)] hover:text-[var(--black)]'
+const primaryButton =
+  'flex-1 h-11 rounded-xl bg-[var(--yellow)] text-[var(--black)] text-[10px] font-black uppercase tracking-widest transition-all hover:bg-[var(--yellow-dark)] inline-flex items-center justify-center gap-2 shadow-sm'
+
+function formatLongDate(value: string) {
+  return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  })
+}
+
+function formatShortDate(value: string) {
+  return new Date(value).toLocaleDateString('pt-BR', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    timeZone: 'America/Sao_Paulo',
+  })
+}
+
 export function AISchedulingModal({
   championshipId,
   championshipName,
@@ -134,23 +201,64 @@ export function AISchedulingModal({
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [simulation, setSimulation] = useState<SimulationResult | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
-  const [previewTab, setPreviewTab] = useState<'date' | 'category' | 'round'>('date')
+  const [previewTab, setPreviewTab] = useState<ReviewTab>('date')
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const [chatLoading, setChatLoading] = useState(false)
 
-  // Step 1: Validar configurações
+  const flatPreviewSlots = useMemo(() => {
+    if (!simulation?.schedulePreview) return []
+
+    return simulation.schedulePreview.flatMap((day) =>
+      day.timeSlots.map((slot) => ({
+        ...slot,
+        date: day.date,
+      }))
+    )
+  }, [simulation])
+
+  const categoryGroups = useMemo(() => {
+    if (!simulation) return []
+
+    return simulation.categories.map((category) => ({
+      ...category,
+      slots: flatPreviewSlots
+        .filter((slot) => slot.categoryId === category.id)
+        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
+    }))
+  }, [flatPreviewSlots, simulation])
+
+  const roundGroups = useMemo(() => {
+    const groups = new Map<number, Array<PreviewSlot & { date: string }>>()
+
+    flatPreviewSlots.forEach((slot) => {
+      const key = slot.round ?? 1
+      if (!groups.has(key)) groups.set(key, [])
+      groups.get(key)!.push(slot)
+    })
+
+    return Array.from(groups.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([round, slots]) => ({
+        round,
+        slots: slots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)),
+      }))
+  }, [flatPreviewSlots])
+
   const handleStart = async () => {
     setStep('validating')
     setErrorMsg('')
+
     try {
       const res = await fetch('/api/scheduling/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ championshipId })
+        body: JSON.stringify({ championshipId }),
       })
+
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao validar configurações')
+      if (!res.ok) throw new Error(data.error || 'Erro ao validar configuracoes')
+
       setValidation(data)
       setStep('diagnosis')
     } catch (err: any) {
@@ -159,20 +267,22 @@ export function AISchedulingModal({
     }
   }
 
-  // Step 2: Simular calendário (só chamado após diagnóstico positivo)
   const handleSimulate = async () => {
     setStep('simulating')
     setErrorMsg('')
+
     try {
       const res = await fetch('/api/scheduling/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ championshipId })
+        body: JSON.stringify({ championshipId }),
       })
+
       if (!res.ok) {
         const data = await res.json()
         throw new Error(data.error || 'Erro ao simular agendamento')
       }
+
       const data = await res.json()
       setSimulation(data)
       setStep('preview')
@@ -182,23 +292,26 @@ export function AISchedulingModal({
     }
   }
 
-  // Step 3: Aplicar calendário
   const handleApply = async () => {
     if (!simulation) return
+
     setStep('applying')
+
     try {
       const res = await fetch('/api/scheduling/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           championshipId,
-          games: simulation.games ?? []
-        })
+          games: simulation.games ?? [],
+        }),
       })
+
       if (!res.ok) {
         const data = await res.json()
-        throw new Error(data.error || 'Erro ao aplicar o calendário')
+        throw new Error(data.error || 'Erro ao aplicar o calendario')
       }
+
       setStep('done')
     } catch (err: any) {
       setErrorMsg(err.message)
@@ -208,237 +321,235 @@ export function AISchedulingModal({
 
   const handleChat = async () => {
     if (!chatInput.trim() || chatLoading) return
-  
+
     const userMsg = chatInput.trim()
     setChatInput('')
-    setChatMessages(prev => [...prev, { role: 'user', content: userMsg }])
+    setChatMessages((prev) => [...prev, { role: 'user', content: userMsg }])
     setChatLoading(true)
-  
+
     try {
-      // Montar contexto do calendário atual para a IA
-      const context = `Calendário atual: ${simulation?.totalGames} jogos em ${simulation?.totalDays} dias.
-  Categorias: ${simulation?.categories?.map((c: any) => `${c.name} (${c.gamesCount} jogos)`).join(', ')}.
-  ${simulation?.summary}
-  
-  Pergunta do administrador: ${userMsg}
-  
-  Responda de forma prática e direta sobre como otimizar este calendário de basquete.
-  Se sugerir uma mudança, explique exatamente o que deve ser ajustado nas configurações ou no calendário.`
-  
-      let aiResponse = ''
-  
+      const context = `Calendario atual: ${simulation?.totalGames} jogos em ${simulation?.totalDays} dias.
+Categorias: ${simulation?.categories?.map((c) => `${c.name} (${c.gamesCount} jogos)`).join(', ')}.
+${simulation?.summary}
+
+Pergunta do administrador: ${userMsg}
+
+Responda de forma pratica e direta sobre como otimizar este calendario de basquete.
+Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configuracoes ou no calendario.`
+
       const res = await fetch('/api/scheduling/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMsg,
           context,
-          championshipId
-        })
+          championshipId,
+        }),
       })
-  
+
       if (res.ok) {
         const data = await res.json()
-        aiResponse = data.response
+        setChatMessages((prev) => [...prev, { role: 'ai', content: data.response }])
       } else {
-        aiResponse = 'Não consegui processar sua solicitação. Tente reformular.'
+        setChatMessages((prev) => [
+          ...prev,
+          { role: 'ai', content: 'Nao consegui processar sua solicitacao. Tente reformular.' },
+        ])
       }
-  
-      setChatMessages(prev => [...prev, { role: 'ai', content: aiResponse }])
-    } catch (err) {
-      setChatMessages(prev => [...prev, {
-        role: 'ai',
-        content: 'Erro ao conectar com a IA. Verifique sua conexão.'
-      }])
+    } catch {
+      setChatMessages((prev) => [
+        ...prev,
+        { role: 'ai', content: 'Erro ao conectar com a IA. Verifique sua conexao.' },
+      ])
     } finally {
       setChatLoading(false)
     }
   }
 
-  const issueColors = {
-    error: { bg: 'bg-red-500/5', border: 'border-red-500/20', text: 'text-red-400', label: '✗ Erro' },
-    warning: { bg: 'bg-yellow-500/5', border: 'border-yellow-500/20', text: 'text-yellow-400', label: '⚠ Atenção' },
-    info: { bg: 'bg-blue-500/5', border: 'border-blue-500/20', text: 'text-blue-400', label: 'ℹ Info' },
-  }
+  const renderStat = (label: string, value: string | number) => (
+    <div className={statCard}>
+      <p className="fgb-label text-[var(--gray)] mb-1" style={{ fontSize: 8 }}>
+        {label}
+      </p>
+      <p className="text-xl font-black text-[var(--black)]">{value}</p>
+    </div>
+  )
+
+  const renderRescheduledBadge = (reason?: string) => (
+    <span
+      title={reason || 'Jogo reagendado por restricao'}
+      className="inline-flex items-center rounded-full border border-yellow-200 bg-[var(--yellow-light)] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-[var(--yellow-dark)]"
+    >
+      Reagendado
+    </span>
+  )
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 animate-in fade-in duration-300">
-      <div className="w-full max-w-2xl bg-[#0F0F0F] border border-white/10 rounded-[40px] overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
-
-        {/* Header */}
-        <div className="flex items-center justify-between p-8 border-b border-white/5 bg-white/[0.02] flex-shrink-0">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(8,14,10,0.48)] p-4 backdrop-blur-sm animate-in fade-in duration-300">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[40px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,249,250,0.97)_100%)] shadow-[var(--shadow-premium)]">
+        <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--gray-l)]/70 p-8">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[var(--amarelo)]/20 flex items-center justify-center border border-[var(--amarelo)]/20 shadow-lg shadow-orange-600/10">
-              <Sparkles className="w-6 h-6 text-[var(--amarelo)]" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-200 bg-[var(--yellow-light)] shadow-sm">
+              <Sparkles className="h-6 w-6 text-[var(--yellow-dark)]" />
             </div>
             <div>
-              <h3 className="text-2xl font-black italic uppercase text-white tracking-tight leading-none">
-                Organizar com IA
-              </h3>
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mt-2">
+              <h3 className="fgb-display text-2xl text-[var(--black)] leading-none">Organizar com IA</h3>
+              <p className="fgb-label mt-2 text-[var(--gray)]" style={{ fontSize: 10 }}>
                 {championshipName}
               </p>
             </div>
           </div>
-          {/* Step indicator */}
-          <div className="flex items-center gap-2 mr-4">
-            {(['diagnosis', 'preview', 'review'] as Step[]).map((s, i) => (
-              <div key={s} className={`w-1.5 h-1.5 rounded-full transition-all ${
-                step === s ? 'bg-[var(--amarelo)] w-3' :
-                ['preview', 'review', 'applying', 'done'].includes(step) && i < (['diagnosis', 'preview', 'review']).indexOf(step) ? 'bg-[var(--amarelo)]/50' :
-                'bg-white/10'
-              }`} />
+
+          <div className="mr-4 flex items-center gap-2">
+            {stepTrail.map((trailStep, index) => (
+              <div
+                key={trailStep}
+                className={`h-1.5 rounded-full transition-all ${
+                  step === trailStep
+                    ? 'w-4 bg-[var(--yellow)]'
+                    : stepTrail.indexOf(step) > index
+                      ? 'w-2 bg-[var(--yellow)]/45'
+                      : 'w-2 bg-[var(--border)]'
+                }`}
+              />
             ))}
           </div>
+
           <button
             onClick={onClose}
-            className="w-10 h-10 rounded-2xl hover:bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-all border border-transparent hover:border-white/10"
+            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--gray)] transition-all hover:border-red-200 hover:bg-[var(--red-light)] hover:text-[var(--red)]"
           >
-            <X className="w-5 h-5" />
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-8">
-
-          {/* ——— IDLE ——— */}
           {step === 'idle' && (
-            <div className="text-center space-y-6 animate-in zoom-in-95 duration-500">
-              <div className="relative inline-block">
-                <div className="absolute inset-0 bg-[var(--amarelo)] blur-[40px] opacity-20 animate-pulse" />
-                <div className="relative w-20 h-20 rounded-3xl bg-gradient-to-br from-[var(--amarelo)] to-[var(--orange-dark)] flex items-center justify-center mx-auto shadow-2xl">
-                  <Sparkles className="w-10 h-10 text-white" />
+            <div className="space-y-6 text-center animate-in zoom-in-95 duration-500">
+              <div className={`mx-auto max-w-xl p-8 ${surfaceCard}`}>
+                <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-[28px] border border-yellow-200 bg-[radial-gradient(circle_at_top,rgba(245,194,0,0.32),rgba(255,255,255,0.95))] shadow-sm">
+                  <Sparkles className="h-10 w-10 text-[var(--yellow-dark)]" />
+                </div>
+                <p className="fgb-display text-3xl text-[var(--black)]">Pronto para organizar</p>
+                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--gray)]">
+                  A IA vai analisar as configuracoes, validar a viabilidade e montar um calendario de fim de semana com as restricoes do campeonato.
+                </p>
+
+                <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {[
+                    { title: 'Diagnostico', text: 'Le a configuracao e mede riscos antes de gerar.' },
+                    { title: 'Conflitos', text: 'Detecta bloqueios, atletas multi-cat e janelas criticas.' },
+                    { title: 'Calendario', text: 'Distribui jogos por fase com revisao antes de aplicar.' },
+                  ].map((item) => (
+                    <div key={item.title} className={nestedCard}>
+                      <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 9 }}>
+                        {item.title}
+                      </p>
+                      <p className="mt-2 text-xs leading-relaxed text-[var(--gray)]">{item.text}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div>
-                <p className="text-white font-black italic uppercase text-xl tracking-tight mb-2">
-                  Organizar com IA
-                </p>
-                <p className="text-slate-500 text-sm leading-relaxed max-w-sm mx-auto">
-                  A IA vai analisar as configurações, verificar a viabilidade e gerar o calendário com jogos nos fins de semana.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-2 max-w-xs mx-auto">
-                {[
-                  { icon: '📋', label: 'Analisa configs' },
-                  { icon: '⚠️', label: 'Detecta problemas' },
-                  { icon: '📅', label: 'Gera calendário' },
-                ].map((item, i) => (
-                  <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
-                    <p className="text-xl mb-1">{item.icon}</p>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={handleStart}
-                className="w-full max-w-xs mx-auto block bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-white font-black text-[10px] uppercase tracking-widest h-12 rounded-xl transition-all shadow-lg shadow-orange-600/20 active:scale-95"
-              >
-                Iniciar Análise →
+
+              <button onClick={handleStart} className={`${primaryButton} mx-auto max-w-xs`}>
+                Iniciar analise
+                <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
           )}
 
-          {/* ——— VALIDATING ——— */}
           {step === 'validating' && (
-            <div className="text-center space-y-4 py-16 animate-in fade-in duration-300">
-              <Loader2 className="w-10 h-10 text-[var(--amarelo)] animate-spin mx-auto" />
-              <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                Analisando configurações...
+            <div className="py-16 text-center">
+              <Loader2 className="mx-auto h-10 w-10 animate-spin text-[var(--yellow-dark)]" />
+              <p className="fgb-display mt-4 text-xl text-[var(--black)]">Analisando configuracoes</p>
+              <p className="fgb-label mt-2 text-[var(--gray)]" style={{ fontSize: 9 }}>
+                Verificando viabilidade do campeonato
               </p>
-              <p className="text-xs text-slate-500">Verificando viabilidade do campeonato</p>
             </div>
           )}
 
-          {/* ——— DIAGNOSIS ——— */}
           {step === 'diagnosis' && validation && (
             <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-
-              {/* Mensagem principal */}
-              <div className={`rounded-2xl p-4 ${validation.viable
-                ? 'bg-green-500/10 border border-green-500/20'
-                : 'bg-red-500/10 border border-red-500/20'}`}>
+              <div
+                className={`${surfaceCard} p-5 ${
+                  validation.viable
+                    ? 'border-green-200 bg-[var(--verde-light)]/60'
+                    : 'border-red-200 bg-[var(--red-light)]/70'
+                }`}
+              >
                 <div className="flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                    validation.viable ? 'bg-green-500/20' : 'bg-red-500/20'}`}>
-                    {validation.viable
-                      ? <CheckCircle2 className="w-4 h-4 text-green-400" />
-                      : <AlertCircle className="w-4 h-4 text-red-400" />}
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-2xl ${
+                      validation.viable ? 'bg-white text-[var(--verde)]' : 'bg-white text-[var(--red)]'
+                    }`}
+                  >
+                    {validation.viable ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
                   </div>
                   <div>
-                    <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
-                      validation.viable ? 'text-green-400' : 'text-red-400'}`}>
-                      {validation.viable ? 'Campeonato Viável' : 'Problemas Encontrados'}
+                    <p className={`fgb-label mb-1 ${validation.viable ? 'text-[var(--verde)]' : 'text-[var(--red)]'}`}>
+                      {validation.viable ? 'Campeonato viavel' : 'Problemas encontrados'}
                     </p>
-                    <p className="text-xs text-slate-300 leading-relaxed">{validation.aiMessage}</p>
+                    <p className="text-sm leading-relaxed text-[var(--black)]">{validation.aiMessage}</p>
                   </div>
                 </div>
               </div>
 
-              <div className={`rounded-2xl border p-4 ${
-                validation.fieldControlType === 'centralizado'
-                  ? 'border-orange-500/20 bg-orange-500/10'
-                  : 'border-blue-500/20 bg-blue-500/10'
-              }`}>
-                <p className="text-[9px] font-black uppercase tracking-widest text-white">
-                  {validation.fieldControlType === 'centralizado'
-                    ? 'Campeonato CENTRALIZADO'
-                    : 'Campeonato ALTERNADO'}
-                </p>
-                <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                  {validation.fieldControlImpact}
-                </p>
-              </div>
-
-              {/* Resumo do campeonato */}
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-1">Jogos</p>
-                  <p className="text-xl font-black text-white">{validation.summary.totalGames}</p>
-                </div>
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-1">Dias Est.</p>
-                  <p className="text-xl font-black text-white">{validation.summary.estimatedDays || '—'}</p>
-                </div>
-                <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3 text-center">
-                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-1">Categorias</p>
-                  <p className="text-xl font-black text-white">{validation.summary.totalCategories}</p>
+              <div
+                className={`${surfaceCard} p-4 ${
+                  validation.fieldControlType === 'centralizado'
+                    ? 'bg-[var(--yellow-light)]/80'
+                    : 'bg-[var(--verde-light)]/80'
+                }`}
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="fgb-admin-pill">
+                    {validation.fieldControlType === 'centralizado'
+                      ? 'Campeonato centralizado'
+                      : 'Campeonato alternado'}
+                  </span>
+                  <p className="text-sm leading-relaxed text-[var(--gray-d)]">{validation.fieldControlImpact}</p>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.03] p-4">
-                <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)]">
-                  Restrições de Datas
-                </p>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-center">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Bloqueios</p>
-                    <p className="mt-1 text-lg font-black text-white">{validation.summary.totalBlockedDates}</p>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {renderStat('Jogos', validation.summary.totalGames)}
+                {renderStat('Dias estimados', validation.summary.estimatedDays || '—')}
+                {renderStat('Categorias', validation.summary.totalCategories)}
+              </div>
+
+              <div className={`${surfaceCard} p-5`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="fgb-display text-xl text-[var(--black)]">Restricoes de datas</p>
+                    <p className="mt-1 text-sm text-[var(--gray)]">
+                      Total de bloqueios, atletas multi-categoria e impacto por fase.
+                    </p>
                   </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-center">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Atletas Multi-Cat</p>
-                    <p className="mt-1 text-lg font-black text-white">{validation.summary.multiCatAthletes}</p>
-                  </div>
-                  <div className="rounded-xl border border-white/[0.06] bg-black/20 p-3 text-center">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Fases</p>
-                    <p className="mt-1 text-lg font-black text-white">{validation.summary.phases}</p>
-                  </div>
+                  <TriangleAlert className="h-5 w-5 text-[var(--yellow-dark)]" />
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {renderStat('Bloqueios', validation.summary.totalBlockedDates)}
+                  {renderStat('Atletas multi-cat', validation.summary.multiCatAthletes)}
+                  {renderStat('Fases', validation.summary.phases)}
                 </div>
 
                 {validation.warnings.length > 0 && (
-                  <div className="mt-3 space-y-2">
+                  <div className="mt-4 space-y-3">
                     {validation.warnings.map((warning, index) => (
-                      <div key={`${warning.field}-${index}`} className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-yellow-400">
-                          {warning.type === 'info' ? 'Info' : 'Atenção'}
+                      <div key={`${warning.field}-${index}`} className={`${nestedCard} p-4`}>
+                        <p className="fgb-label text-[var(--yellow-dark)]" style={{ fontSize: 9 }}>
+                          {warning.type === 'info' ? 'Informacao' : 'Ponto de atencao'}
                         </p>
-                        <p className="mt-1 text-[11px] leading-snug text-slate-300">{warning.message}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">{warning.message}</p>
                         {warning.suggestion && (
-                          <p className="mt-1 text-[10px] italic text-slate-500">{warning.suggestion}</p>
+                          <p className="mt-2 text-xs italic text-[var(--gray)]">{warning.suggestion}</p>
                         )}
                         {warning.athletes && warning.athletes.length > 0 && (
-                          <p className="mt-1 text-[10px] text-slate-400">
-                            {warning.athletes.map((athlete) => `${athlete.name} (${athlete.categories.join(', ')})`).join(' · ')}
+                          <p className="mt-2 text-xs leading-relaxed text-[var(--gray-d)]">
+                            {warning.athletes
+                              .map((athlete) => `${athlete.name} (${athlete.categories.join(', ')})`)
+                              .join(' · ')}
                           </p>
                         )}
                       </div>
@@ -447,19 +558,19 @@ export function AISchedulingModal({
                 )}
               </div>
 
-              {/* Lista de issues */}
               {validation.issues.length > 0 && (
-                <div className="space-y-2 max-h-52 overflow-y-auto custom-scrollbar pr-1">
-                  {validation.issues.map((issue, i) => {
-                    const colors = issueColors[issue.type]
+                <div className="space-y-2">
+                  {validation.issues.map((issue, index) => {
+                    const style = issueStyles[issue.type]
+
                     return (
-                      <div key={i} className={`rounded-xl p-3 border ${colors.bg} ${colors.border}`}>
-                        <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${colors.text}`}>
-                          {colors.label}
+                      <div key={`${issue.field}-${index}`} className={`rounded-2xl border p-4 ${style.bg} ${style.border}`}>
+                        <p className={`fgb-label ${style.text}`} style={{ fontSize: 9 }}>
+                          {style.label}
                         </p>
-                        <p className="text-[11px] text-slate-300 mb-1 leading-snug">{issue.message}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">{issue.message}</p>
                         {issue.suggestion && (
-                          <p className="text-[10px] text-slate-500 italic">Sugestão: {issue.suggestion}</p>
+                          <p className="mt-2 text-xs italic text-[var(--gray)]">Sugestao: {issue.suggestion}</p>
                         )}
                       </div>
                     )
@@ -467,497 +578,405 @@ export function AISchedulingModal({
                 </div>
               )}
 
-              {/* Ações */}
               <div className="flex gap-3 pt-1">
-                <button
-                  onClick={onClose}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
-                >
-                  {validation.viable ? 'Cancelar' : 'Ir para Configurações'}
+                <button onClick={onClose} className={secondaryButton}>
+                  {validation.viable ? 'Cancelar' : 'Fechar'}
                 </button>
 
                 {validation.viable ? (
-                  <button
-                    onClick={handleSimulate}
-                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20 active:scale-95"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    Gerar Calendário →
+                  <button onClick={handleSimulate} className={primaryButton}>
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Gerar calendario
                   </button>
                 ) : (
-                  <button
-                    onClick={() => setStep('idle')}
-                    className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
-                  >
-                    ← Recomeçar
+                  <button onClick={() => setStep('idle')} className={secondaryButton}>
+                    Recomeçar
                   </button>
                 )}
               </div>
             </div>
           )}
 
-          {/* ——— SIMULATING ——— */}
           {step === 'simulating' && (
-            <div className="text-center space-y-6 py-16 animate-in fade-in duration-300">
-              <div className="relative w-16 h-16 mx-auto">
-                <Loader2 className="w-16 h-16 text-[var(--amarelo)] animate-spin" />
-                <Sparkles className="w-6 h-6 text-[var(--amarelo)] absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="py-16 text-center">
+              <div className="relative mx-auto h-16 w-16">
+                <Loader2 className="h-16 w-16 animate-spin text-[var(--yellow-dark)]" />
+                <Sparkles className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 text-[var(--yellow-dark)]" />
               </div>
-              <div className="space-y-2">
-                <p className="text-lg font-black italic uppercase text-white tracking-tight animate-pulse">
-                  Gerando calendário...
-                </p>
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">
-                  Distribuindo jogos em blocos de fins de semana
-                </p>
-              </div>
+              <p className="fgb-display mt-5 text-2xl text-[var(--black)]">Gerando calendario</p>
+              <p className="fgb-label mt-2 text-[var(--gray)]" style={{ fontSize: 9 }}>
+                Distribuindo jogos em blocos de fim de semana
+              </p>
             </div>
           )}
 
-          {/* ——— PREVIEW ——— */}
           {step === 'preview' && simulation && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-5 duration-500">
-
-              {/* Resumo principal */}
-              <div className="bg-green-500/10 border border-green-500/20 rounded-2xl p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-green-400 mb-1">
-                  Calendário gerado com sucesso
-                </p>
-                <p className="text-xl font-black text-white">{pluralizeJogos(simulation.totalGames)}</p>
-                <p className="text-xs text-slate-400 mt-1">{simulation.summary}</p>
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className={`${surfaceCard} border-green-200 bg-[var(--verde-light)]/60 p-5`}>
+                <p className="fgb-label text-[var(--verde)]">Calendario gerado</p>
+                <p className="mt-2 text-2xl font-black text-[var(--black)]">{pluralizeJogos(simulation.totalGames)}</p>
+                <p className="mt-2 text-sm text-[var(--gray-d)]">{simulation.summary}</p>
               </div>
 
-              {/* Mini stats */}
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { label: 'Jogos', value: simulation.totalGames },
-                  { label: 'Dias', value: simulation.totalDays },
-                  { label: 'Categorias', value: simulation.categories?.length },
-                  { 
-                    label: 'Jogos/Dia', 
-                    value: calculateCalendarSummary({
-                      totalGames: simulation.totalGames,
-                      totalDays: simulation.totalDays
-                    }).gamesPerDayDisplay 
-                  },
-                ].map((s, i) => (
-                  <div key={i} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-2 text-center">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-600 mb-0.5">{s.label}</p>
-                    <p className="text-sm font-black text-white">{s.value}</p>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {renderStat('Jogos', simulation.totalGames)}
+                {renderStat('Dias', simulation.totalDays)}
+                {renderStat('Categorias', simulation.categories.length)}
+                {renderStat(
+                  'Jogos por dia',
+                  calculateCalendarSummary({
+                    totalGames: simulation.totalGames,
+                    totalDays: simulation.totalDays,
+                  }).gamesPerDayDisplay
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {simulation.categories.map((category) => (
+                  <div key={category.id} className={`${nestedCard} p-4`}>
+                    <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 9 }}>
+                      {category.name}
+                    </p>
+                    <p className="mt-2 text-lg font-black text-[var(--black)]">{pluralizeJogos(category.gamesCount)}</p>
+                    <p className="mt-1 text-xs text-[var(--gray)]">{category.teams} equipes</p>
                   </div>
                 ))}
               </div>
 
-              {/* Cards por categoria */}
-              <div className="grid grid-cols-2 gap-2">
-                {simulation.categories?.map((cat: any) => (
-                  <div key={cat.id} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)] mb-1 truncate">
-                      {cat.name}
-                    </p>
-                    <p className="text-sm font-black text-white">{pluralizeJogos(cat.gamesCount)}</p>
-
-                    <p className="text-[9px] text-slate-500">{cat.teams} equipes</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sugestão IA */}
-              {simulation.aiOptimization?.available && (
-                <div className="bg-[var(--amarelo)]/5 border border-[var(--amarelo)]/20 rounded-2xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[var(--amarelo)]" />
-                    <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)]">
-                      Sugestão IA · {simulation.aiOptimization.provider}
+              {simulation.aiOptimization?.available && simulation.aiOptimization.suggestion && (
+                <div className={`${surfaceCard} bg-[var(--yellow-light)]/70 p-5`}>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-[var(--yellow-dark)]" />
+                    <p className="fgb-label text-[var(--yellow-dark)]">
+                      Sugestao IA · {simulation.aiOptimization.provider}
                     </p>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed">
+                  <p className="mt-3 text-sm leading-relaxed text-[var(--gray-d)]">
                     {simulation.aiOptimization.suggestion}
                   </p>
                 </div>
               )}
 
-              {/* Ações */}
-              <div className="flex gap-3 pt-2">
-                <button
-                  onClick={() => setStep('diagnosis')}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
-                >
-                  Regerar
+              <div className="flex gap-3 pt-1">
+                <button onClick={() => setStep('diagnosis')} className={secondaryButton}>
+                  Voltar ao diagnostico
                 </button>
-                <button
-                  onClick={() => setStep('review')}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all"
-                >
-                  Ver Calendário Completo →
+                <button onClick={() => setStep('review')} className={primaryButton}>
+                  Ver calendario completo
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* ——— REVIEW ——— */}
           {step === 'review' && simulation && (
-            <div className="space-y-3 animate-in fade-in duration-300">
-              {/* Header */}
-              <div className="flex items-center justify-between">
+            <div className="space-y-4 animate-in fade-in duration-300">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-sm font-black italic uppercase text-white tracking-tight">
-                    Calendário Completo
-                  </p>
-                  <p className="text-[10px] text-slate-500 mt-0.5">
+                  <p className="fgb-display text-2xl text-[var(--black)]">Calendario completo</p>
+                  <p className="mt-2 text-sm text-[var(--gray)]">
                     {pluralizeJogos(simulation.totalGames)} · {pluralizeDias(simulation.totalDays)}
-                    {(simulation.totalBlockedDates || 0) > 0 && ` · ${simulation.totalBlockedDates} restrições`}
+                    {(simulation.totalBlockedDates || 0) > 0 && ` · ${simulation.totalBlockedDates} restricoes`}
                   </p>
                 </div>
-                <button
-                  onClick={() => setStep('preview')}
-                  className="text-[9px] font-black uppercase tracking-widest text-slate-500 hover:text-white transition-colors"
-                >
-                  ← Voltar
+                <button onClick={() => setStep('preview')} className="fgb-btn-soft h-10 px-4 text-[9px]">
+                  Voltar
                 </button>
               </div>
 
               {simulation.unresolvableConflicts && simulation.unresolvableConflicts.length > 0 && (
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400">
-                    Conflitos não resolvíveis
-                  </p>
-                  <div className="mt-3 space-y-3">
+                <div className={`${surfaceCard} border-red-200 bg-[var(--red-light)]/70 p-5`}>
+                  <p className="fgb-display text-xl text-[var(--red)]">Conflitos nao resolviveis</p>
+                  <div className="mt-4 space-y-3">
                     {simulation.unresolvableConflicts.map((conflict, index) => (
-                      <div key={`${conflict.phase}-${index}`} className="rounded-xl border border-red-500/20 bg-black/20 p-3">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                      <div key={`${conflict.phase}-${index}`} className="rounded-2xl border border-red-200 bg-white/80 p-4">
+                        <p className="fgb-label text-[var(--red)]">
                           {conflict.groupCategories.join(' + ')} · Fase {conflict.phase}
                         </p>
-                        <p className="mt-1 text-[11px] text-slate-300">{conflict.message}</p>
-                        <p className="mt-1 text-[10px] text-slate-400">{conflict.suggestion}</p>
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">{conflict.message}</p>
+                        <p className="mt-2 text-xs leading-relaxed text-[var(--gray)]">{conflict.suggestion}</p>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <button className="rounded-xl border border-red-500/20 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-300">
-                      Estender período
-                    </button>
-                    <button className="rounded-xl border border-red-500/20 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-300">
-                      Verificar equipes
-                    </button>
-                    <button className="rounded-xl border border-red-500/20 px-3 py-2 text-[9px] font-black uppercase tracking-widest text-red-300">
-                      Continuar mesmo assim
-                    </button>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <button className="fgb-btn-soft h-10 px-4 text-[9px]">Estender periodo</button>
+                    <button className="fgb-btn-soft h-10 px-4 text-[9px]">Verificar equipes</button>
+                    <button className="fgb-btn-soft h-10 px-4 text-[9px]">Continuar mesmo assim</button>
                   </div>
                 </div>
               )}
 
-              {/* Abas de visualização */}
-              <div className="flex gap-1 bg-white/[0.03] border border-white/[0.06] rounded-xl p-1">
-                {[
-                  { key: 'date', label: '📅 Por Data' },
-                  { key: 'category', label: '🏆 Por Categoria' },
-                  { key: 'round', label: '🔄 Por Rodada' },
-                ].map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setPreviewTab(tab.key as any)}
-                    className={`flex-1 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                      previewTab === tab.key
-                        ? 'bg-[var(--amarelo)] text-white'
-                        : 'text-slate-500 hover:text-white'
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
+              <div className={`${surfaceCard} p-2`}>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { key: 'date', label: 'Por data' },
+                    { key: 'category', label: 'Por categoria' },
+                    { key: 'round', label: 'Por rodada' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setPreviewTab(tab.key as ReviewTab)}
+                      className={`h-11 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                        previewTab === tab.key
+                          ? 'bg-[var(--yellow)] text-[var(--black)]'
+                          : 'bg-white text-[var(--gray)] hover:text-[var(--black)]'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              {/* Conteúdo da aba */}
-              <div className="max-h-64 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-
-                {/* ABA: POR DATA */}
-                {previewTab === 'date' && simulation.schedulePreview?.map((day: any, i: number) => (
-                  <div key={i} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white">
-                          {new Date(day.date + 'T12:00:00').toLocaleDateString('pt-BR', {
-                            weekday: 'long', day: '2-digit', month: 'long'
-                          })}
-                        </p>
+              <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
+                {previewTab === 'date' &&
+                  simulation.schedulePreview?.map((day, index) => (
+                    <div key={`${day.date}-${index}`} className={`${surfaceCard} overflow-hidden`}>
+                      <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--gray-l)]/80 px-4 py-3">
+                        <div>
+                          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>
+                            {day.dayOfWeek}
+                          </p>
+                          <p className="mt-1 text-sm font-black uppercase tracking-wide text-[var(--black)]">
+                            {formatLongDate(day.date)}
+                          </p>
+                        </div>
+                        <span className="fgb-admin-pill">{pluralizeJogos(day.gamesCount)}</span>
                       </div>
-                      <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
-                        {pluralizeJogos(day.gamesCount)}
-                      </span>
-                    </div>
-                    <div className="divide-y divide-white/[0.04]">
-                      {day.timeSlots?.map((slot: any, j: number) => (
-                        <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                          <span className="text-[10px] font-black text-[var(--amarelo)] w-10 flex-shrink-0">
-                            {slot.time}
-                          </span>
-                          <div className="flex-1">
-                            <p className="text-[11px] font-medium text-white">
-                              {slot.homeTeamName} × {slot.awayTeamName}
-                            </p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400">
-                                {slot.categoryName} · Rod. {slot.round}
-                              </span>
-                              {slot.wasRescheduled && (
-                                <span
-                                  title={slot.rescheduleReason || 'Jogo reagendado por bloqueio'}
-                                  className="text-[8px] font-black uppercase bg-yellow-500/15 border border-yellow-500/20 px-2 py-0.5 rounded-lg text-yellow-300"
-                                >
-                                  Reagendado
+
+                      <div className="divide-y divide-[var(--border)]/70">
+                        {day.timeSlots.map((slot, slotIndex) => (
+                          <div key={`${slot.time}-${slotIndex}`} className="flex items-start gap-3 px-4 py-3">
+                            <div className="min-w-14 rounded-xl bg-[var(--yellow-light)] px-2 py-1 text-center text-[10px] font-black text-[var(--yellow-dark)]">
+                              {slot.time}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-[var(--black)]">
+                                {slot.homeTeamName} × {slot.awayTeamName}
+                              </p>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <span className="inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em] text-[var(--gray-d)]">
+                                  {slot.categoryName} · Rod. {slot.round}
                                 </span>
-                              )}
-                              {slot.court && (
-                                <span className="text-[9px] text-slate-500 italic">
-                                  {slot.court}
-                                </span>
-                              )}
+                                {slot.period && (
+                                  <span className="inline-flex rounded-full border border-green-200 bg-[var(--verde-light)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em] text-[var(--verde)]">
+                                    {slot.period}
+                                  </span>
+                                )}
+                                {slot.wasRescheduled && renderRescheduledBadge(slot.rescheduleReason)}
+                                {slot.court && <span className="text-xs italic text-[var(--gray)]">{slot.court}</span>}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
 
-                {/* ABA: POR CATEGORIA */}
-                {previewTab === 'category' && simulation.categories?.map((cat: any) => (
-                  <div key={cat.id} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-[var(--amarelo)]">
-                        {cat.name}
-                      </p>
-                      <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
-                        {pluralizeJogos(cat.gamesCount)} · {cat.teams} equipes
-                      </span>
-                    </div>
-                    <div className="divide-y divide-white/[0.04]">
-                      {cat.games?.map((game: any, j: number) => (
-                        <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                          <span className="text-[10px] font-black text-[var(--amarelo)] w-10 flex-shrink-0">
-                            {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
-                            })}
-                          </span>
-                          <div className="flex-1">
-                             <p className="text-[11px] font-medium text-white">
-                               {game.homeTeamName} × {game.awayTeamName}
-                             </p>
-                             <div className="flex items-center gap-2 mt-0.5">
-                               <span className="text-[9px] text-slate-500">Rod. {game.round}</span>
-                               <span className="text-[9px] text-slate-400 italic">
-                                 {new Date(game.dateTime).toLocaleDateString('pt-BR', {
-                                   weekday: 'short', day: '2-digit', month: 'short'
-                                 })}
-                               </span>
-                               {game.wasRescheduled && (
-                                 <span
-                                   title={game.rescheduleReason || 'Jogo reagendado por bloqueio'}
-                                   className="text-[8px] font-black uppercase bg-yellow-500/15 border border-yellow-500/20 px-2 py-0.5 rounded-lg text-yellow-300"
-                                 >
-                                   Reagendado
-                                 </span>
-                               )}
-                             </div>
+                {previewTab === 'category' &&
+                  categoryGroups.map((category) => (
+                    <div key={category.id} className={`${surfaceCard} overflow-hidden`}>
+                      <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--gray-l)]/80 px-4 py-3">
+                        <p className="fgb-display text-xl text-[var(--black)]">{category.name}</p>
+                        <span className="fgb-admin-pill">
+                          {pluralizeJogos(category.gamesCount)} · {category.teams} equipes
+                        </span>
+                      </div>
+
+                      <div className="divide-y divide-[var(--border)]/70">
+                        {category.slots.length === 0 ? (
+                          <div className="px-4 py-5 text-sm text-[var(--gray)]">
+                            Nenhum jogo listado para esta categoria no preview.
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                {/* ABA: POR RODADA */}
-                {previewTab === 'round' && (() => {
-                  const gamesByRound = new Map<number, any[]>()
-                  simulation.games?.forEach((g: any) => {
-                    if (!gamesByRound.has(g.round)) gamesByRound.set(g.round, [])
-                    gamesByRound.get(g.round)!.push(g)
-                  })
-                  return Array.from(gamesByRound.entries())
-                    .sort(([a], [b]) => a - b)
-                    .map(([round, games]) => (
-                      <div key={round} className="bg-[#141414] border border-white/[0.08] rounded-2xl overflow-hidden">
-                        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/[0.05] bg-white/[0.02]">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-white">
-                            Rodada {round}
-                          </p>
-                          <span className="text-[9px] font-black uppercase text-slate-500 bg-white/[0.04] px-2 py-0.5 rounded-full">
-                            {pluralizeJogos(games.length)}
-                          </span>
-                        </div>
-                        {/* Data do bloco */}
-                        <div className="px-4 py-2 bg-[var(--amarelo)]/5 border-b border-white/[0.04]">
-                          <p className="text-[9px] text-[var(--amarelo)] font-black uppercase tracking-widest">
-                            📅 {new Date(games[0].dateTime).toLocaleDateString('pt-BR', {
-                              weekday: 'long', day: '2-digit', month: 'long'
-                            })}
-                          </p>
-                        </div>
-                        <div className="divide-y divide-white/[0.04]">
-                          {games.map((game: any, j: number) => {
-                            const cat = simulation.categories?.find((c: any) => c.id === game.categoryId)
-                            return (
-                              <div key={j} className="px-4 py-2 flex items-center gap-3 hover:bg-white/[0.02] transition-colors">
-                                <span className="text-[10px] font-black text-[var(--amarelo)] w-10 flex-shrink-0">
-                                  {new Date(game.dateTime).toLocaleTimeString('pt-BR', {
-                                    hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo'
-                                  })}
-                                </span>
-                                <div className="flex-1">
-                                  <p className="text-[11px] font-medium text-white">
-                                    {game.homeTeamName} × {game.awayTeamName}
-                                  </p>
-                                  <span className="text-[9px] font-black uppercase bg-white/[0.04] border border-white/[0.06] px-2 py-0.5 rounded-lg text-slate-400 flex-shrink-0">
-                                    {cat?.name || ''}
-                                  </span>
+                        ) : (
+                          category.slots.map((slot, index) => (
+                            <div key={`${slot.date}-${slot.time}-${index}`} className="flex items-start gap-3 px-4 py-3">
+                              <div className="min-w-14 rounded-xl bg-[var(--yellow-light)] px-2 py-1 text-center text-[10px] font-black text-[var(--yellow-dark)]">
+                                {slot.time}
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-[var(--black)]">
+                                  {slot.homeTeamName} × {slot.awayTeamName}
+                                </p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-[var(--gray)]">
+                                  <span>{formatLongDate(slot.date)}</span>
+                                  <span>Rod. {slot.round}</span>
+                                  {slot.wasRescheduled && renderRescheduledBadge(slot.rescheduleReason)}
                                 </div>
                               </div>
-                            )
-                          })}
-                        </div>
+                            </div>
+                          ))
+                        )}
                       </div>
-                    ))
-                })()}
+                    </div>
+                  ))}
 
+                {previewTab === 'round' &&
+                  roundGroups.map((group) => (
+                    <div key={group.round} className={`${surfaceCard} overflow-hidden`}>
+                      <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--gray-l)]/80 px-4 py-3">
+                        <p className="fgb-display text-xl text-[var(--black)]">Rodada {group.round}</p>
+                        <span className="fgb-admin-pill">{pluralizeJogos(group.slots.length)}</span>
+                      </div>
+
+                      {group.slots[0] && (
+                        <div className="border-b border-[var(--border)] bg-[var(--yellow-light)]/70 px-4 py-2">
+                          <p className="fgb-label text-[var(--yellow-dark)]" style={{ fontSize: 9 }}>
+                            {formatLongDate(group.slots[0].date)}
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="divide-y divide-[var(--border)]/70">
+                        {group.slots.map((slot, index) => (
+                          <div key={`${slot.date}-${slot.time}-${index}`} className="flex items-start gap-3 px-4 py-3">
+                            <div className="min-w-14 rounded-xl bg-[var(--yellow-light)] px-2 py-1 text-center text-[10px] font-black text-[var(--yellow-dark)]">
+                              {slot.time}
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-semibold text-[var(--black)]">
+                                {slot.homeTeamName} × {slot.awayTeamName}
+                              </p>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <span className="inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.14em] text-[var(--gray-d)]">
+                                  {slot.categoryName}
+                                </span>
+                                <span className="text-xs text-[var(--gray)]">{formatShortDate(slot.date)}</span>
+                                {slot.wasRescheduled && renderRescheduledBadge(slot.rescheduleReason)}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
               </div>
 
-              {/* Chat com IA para otimização */}
-              <div className="bg-[#141414] border border-white/[0.08] rounded-2xl p-4 space-y-3">
+              <div className={`${surfaceCard} p-5`}>
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-3.5 h-3.5 text-[var(--amarelo)]" />
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--amarelo)]">
-                    Otimizar com IA
-                  </p>
+                  <Sparkles className="h-4 w-4 text-[var(--yellow-dark)]" />
+                  <p className="fgb-label text-[var(--yellow-dark)]">Otimizar com IA</p>
                 </div>
 
-                {/* Histórico de mensagens */}
                 {chatMessages.length > 0 && (
-                  <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                    {chatMessages.map((msg: any, i: number) => (
-                      <div key={i} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[85%] rounded-xl px-3 py-2 text-[10px] leading-relaxed ${
-                          msg.role === 'user'
-                            ? 'bg-[var(--amarelo)]/20 text-white'
-                            : 'bg-white/[0.05] text-slate-300'
-                        }`}>
-                          {msg.content}
+                  <div className="mt-4 max-h-36 space-y-2 overflow-y-auto">
+                    {chatMessages.map((message, index) => (
+                      <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        <div
+                          className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                            message.role === 'user'
+                              ? 'bg-[var(--yellow-light)] text-[var(--black)]'
+                              : 'bg-[var(--verde-light)] text-[var(--black)]'
+                          }`}
+                        >
+                          {message.content}
                         </div>
                       </div>
                     ))}
+
                     {chatLoading && (
-                      <div className="flex gap-2 justify-start">
-                        <div className="bg-white/[0.05] rounded-xl px-3 py-2 text-[10px] text-slate-400">
-                          <Loader2 className="w-3 h-3 animate-spin" />
+                      <div className="flex justify-start">
+                        <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-sm text-[var(--gray)]">
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         </div>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Input de chat */}
-                <div className="flex gap-2">
+                <div className="mt-4 flex gap-2">
                   <input
                     type="text"
                     value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && !chatLoading && handleChat()}
-                    placeholder="Ex: junte Sub 12 e Sub 13 no mesmo dia..."
-                    className="flex-1 bg-white/[0.03] border border-white/[0.08] rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-[var(--amarelo)]/30"
+                    onChange={(event) => setChatInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !chatLoading) handleChat()
+                    }}
+                    placeholder="Ex: combine categorias proximas no mesmo fim de semana"
+                    className="flex-1 rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--black)] outline-none transition-all placeholder:text-slate-400 focus:border-[var(--yellow)]"
                   />
                   <button
                     onClick={handleChat}
                     disabled={chatLoading || !chatInput.trim()}
-                    className="w-10 h-10 bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl flex items-center justify-center flex-shrink-0 transition-all disabled:opacity-40"
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--yellow)] text-[var(--black)] transition-all hover:bg-[var(--yellow-dark)] disabled:cursor-not-allowed disabled:opacity-40"
                   >
-                    <ArrowRight className="w-4 h-4 text-white" />
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
 
-                <p className="text-[9px] text-slate-600">
-                  Sugestões: "combine categorias próximas" · "separe masculino e feminino"
+                <p className="mt-3 text-xs text-[var(--gray)]">
+                  Sugestoes: "combine categorias proximas" · "separe masculino e feminino"
                 </p>
               </div>
 
-              {/* Ações finais */}
               <div className="flex gap-3 pt-1">
-                <button
-                  onClick={() => setStep('idle')}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
-                >
+                <button onClick={() => setStep('idle')} className={secondaryButton}>
                   Regerar
                 </button>
-                <button
-                  onClick={handleApply}
-                  className="flex-1 h-11 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all inline-flex items-center justify-center gap-2 shadow-lg shadow-orange-600/20"
-                >
-                  ✓ Aprovar e Aplicar
+                <button onClick={handleApply} className={primaryButton}>
+                  Aprovar e aplicar
                 </button>
               </div>
             </div>
           )}
 
-          {/* ——— APPLYING ——— */}
           {step === 'applying' && (
-            <div className="text-center space-y-6 py-16">
-              <Loader2 className="w-14 h-14 text-[var(--amarelo)] animate-spin mx-auto" />
-              <div className="space-y-2">
-                <p className="text-lg font-black italic uppercase text-white tracking-tight">Efetivando...</p>
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Gravando jogos no banco de dados</p>
-              </div>
+            <div className="py-16 text-center">
+              <Loader2 className="mx-auto h-14 w-14 animate-spin text-[var(--yellow-dark)]" />
+              <p className="fgb-display mt-5 text-2xl text-[var(--black)]">Efetivando</p>
+              <p className="fgb-label mt-2 text-[var(--gray)]" style={{ fontSize: 9 }}>
+                Gravando jogos no banco de dados
+              </p>
             </div>
           )}
 
-          {/* ——— DONE ——— */}
           {step === 'done' && (
-            <div className="space-y-6 py-10 animate-in zoom-in-95 duration-500">
-              <div className="text-center">
-                <div className="w-24 h-24 rounded-[40px] bg-green-500/20 border border-green-500/20 flex items-center justify-center mx-auto shadow-2xl shadow-green-500/10 mb-6">
-                  <CheckCircle2 className="w-12 h-12 text-green-500" />
-                </div>
-                <p className="text-2xl font-black italic uppercase text-white tracking-tight">Calendário Aplicado!</p>
-                <p className="text-sm text-slate-400 font-medium mt-2">Os jogos foram criados com sucesso no banco de dados.</p>
+            <div className="space-y-6 py-10 text-center animate-in zoom-in-95 duration-500">
+              <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-[32px] border border-green-200 bg-[var(--verde-light)] shadow-sm">
+                <CheckCircle2 className="h-12 w-12 text-[var(--verde)]" />
               </div>
+              <div>
+                <p className="fgb-display text-3xl text-[var(--black)]">Calendario aplicado</p>
+                <p className="mt-3 text-sm text-[var(--gray)]">
+                  Os jogos foram criados com sucesso no banco de dados.
+                </p>
+              </div>
+
               <div className="flex gap-3">
-                <button
-                  onClick={onClose}
-                  className="flex-1 h-12 text-[10px] font-black uppercase tracking-widest text-slate-400 bg-white/[0.03] border border-white/[0.08] rounded-xl hover:text-white transition-all"
-                >
+                <button onClick={onClose} className={secondaryButton}>
                   Fechar
                 </button>
                 <button
-                  onClick={() => { onApplied(); onClose() }}
-                  className="flex-1 h-12 text-[10px] font-black uppercase tracking-widest text-white bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] rounded-xl transition-all flex items-center justify-center gap-2"
+                  onClick={() => {
+                    onApplied()
+                    onClose()
+                  }}
+                  className={primaryButton}
                 >
-                  Ver Jogos <ArrowRight className="w-3.5 h-3.5" />
+                  Ver jogos
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>
           )}
 
-          {/* ——— ERROR ——— */}
           {step === 'error' && (
-            <div className="py-10 space-y-6 animate-in fade-in duration-300">
-              <div className="bg-red-500/5 border border-red-500/20 rounded-[32px] p-10 flex flex-col items-center gap-6 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center">
-                  <AlertCircle className="w-8 h-8 text-red-500" />
+            <div className="space-y-6 py-10 animate-in fade-in duration-300">
+              <div className={`${surfaceCard} border-red-200 bg-[var(--red-light)]/70 p-10 text-center`}>
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-[var(--red)] shadow-sm">
+                  <AlertCircle className="h-8 w-8" />
                 </div>
-                <div>
-                  <h4 className="text-xl font-black italic uppercase text-red-500 tracking-tight mb-2">
-                    Falha na Operação
-                  </h4>
-                  <p className="text-sm text-slate-400 max-w-sm font-medium">{errorMsg}</p>
+                <div className="mt-5">
+                  <h4 className="fgb-display text-2xl text-[var(--red)]">Falha na operacao</h4>
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-[var(--gray-d)]">{errorMsg}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setStep('idle')}
-                className="w-full h-14 bg-white/5 hover:bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-2xl transition-all border border-white/10"
-              >
-                Tentar Novamente
+
+              <button onClick={() => setStep('idle')} className={`${secondaryButton} w-full`}>
+                Tentar novamente
               </button>
             </div>
           )}
-
         </div>
       </div>
     </div>

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/db'
 import { authOptions } from '@/lib/auth'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 type ValidationIssue = {
   type: 'error' | 'warning' | 'info'
@@ -62,27 +63,29 @@ export async function POST(request: Request) {
 
     const { championshipId } = await request.json()
 
-    const championship = await prisma.championship.findUnique({
-      where: { id: championshipId },
-      include: {
-        categories: {
-          include: {
-            registrations: {
-              where: { registration: { status: 'CONFIRMED' } },
-              include: {
-                registration: {
-                  include: {
-                    team: true,
-                    blockedDates: true,
-                    athletePlayers: true,
+    const championship = await withDatabaseSchemaRetry(() =>
+      prisma.championship.findUnique({
+        where: { id: championshipId },
+        include: {
+          categories: {
+            include: {
+              registrations: {
+                where: { registration: { status: 'CONFIRMED' } },
+                include: {
+                  registration: {
+                    include: {
+                      team: true,
+                      blockedDates: true,
+                      athletePlayers: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    })
+      })
+    )
 
     if (!championship) {
       return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })

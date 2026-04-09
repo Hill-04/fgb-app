@@ -216,6 +216,84 @@ body {
   border-color: rgba(255,255,255,0.7);
   color: #fff;
 }
+.fgb-btn-outline {
+  background: rgba(255,255,255,0.88);
+  color: var(--black);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+}
+.fgb-btn-outline:hover {
+  border-color: var(--verde);
+  color: var(--verde);
+  background: var(--white);
+  transform: translateY(-1px);
+}
+.fgb-btn-soft {
+  background: linear-gradient(135deg, rgba(255,255,255,0.94) 0%, rgba(248,249,250,0.98) 100%);
+  color: var(--gray-d);
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.fgb-btn-soft:hover {
+  color: var(--black);
+  border-color: var(--yellow);
+  background: var(--yellow-light);
+}
+.fgb-surface {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(252,252,252,0.98) 100%);
+  border: 1px solid rgba(255,255,255,0.85);
+  box-shadow: var(--shadow-premium);
+  backdrop-filter: blur(14px);
+}
+.fgb-surface-muted {
+  background:
+    radial-gradient(circle at top right, rgba(245,194,0,0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(244,244,244,0.92) 100%);
+  border: 1px solid rgba(226,226,226,0.9);
+  box-shadow: var(--shadow-md);
+}
+.fgb-admin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.9);
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gray-d);
+}
 
 /* DROPDOWN */
 .fgb-dropdown {

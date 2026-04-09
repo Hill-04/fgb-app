@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { authOptions } from '@/lib/auth'
 import { recalculateStandings } from '@/lib/standings'
 import { isDateBlockedByRanges } from '@/lib/scheduling/availability'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 async function getRegistrationForCategory(teamId: string, categoryId: string) {
   return prisma.registration.findFirst({
@@ -24,6 +25,7 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const { id } = await params
 
   const game = await prisma.game.findUnique({
@@ -46,6 +48,7 @@ export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const session = await getServerSession(authOptions)
   if (!session || !(session.user as any).isAdmin) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
@@ -149,6 +152,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const session = await getServerSession(authOptions)
   if (!session || !(session.user as any).isAdmin) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })

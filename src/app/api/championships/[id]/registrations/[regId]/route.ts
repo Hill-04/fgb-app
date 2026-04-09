@@ -1,11 +1,13 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string; regId: string }> }
 ) {
   const { regId } = await params
+  await ensureDatabaseSchema()
   const {
     teamId,
     categoryIds,
@@ -81,6 +83,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; regId: string }> }
 ) {
   const { regId } = await params
+  await ensureDatabaseSchema()
   
   try {
     await prisma.athleteCategory.deleteMany({ where: { registrationId: regId } })

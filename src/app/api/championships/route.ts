@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -15,17 +16,20 @@ function codeToName(code: string): string {
 
 export async function GET() {
   try {
+    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     const isAdmin = (session?.user as any)?.isAdmin
 
-    const championships = await (prisma.championship.findMany({
-      where: (isAdmin ? {} : { isSimulation: false }) as any,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        categories: true,
-        _count: { select: { registrations: true } },
-      },
-    }) as any)
+    const championships = await withDatabaseSchemaRetry(() =>
+      (prisma.championship.findMany({
+        where: (isAdmin ? {} : { isSimulation: false }) as any,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          categories: true,
+          _count: { select: { registrations: true } },
+        },
+      }) as any)
+    )
     return NextResponse.json(championships)
   } catch (error) {
     console.error('Error fetching championships:', error)
@@ -35,6 +39,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await ensureDatabaseSchema()
     const body = await request.json()
     const {
       name, year, sex, minTeamsPerCat, categories: selectedCodes,

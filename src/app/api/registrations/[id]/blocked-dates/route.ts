@@ -1,16 +1,20 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const { id } = await params
 
-  const dates = await prisma.blockedDate.findMany({
-    where: { registrationId: id },
-    orderBy: { startDate: 'asc' },
-  })
+  const dates = await withDatabaseSchemaRetry(() =>
+    prisma.blockedDate.findMany({
+      where: { registrationId: id },
+      orderBy: { startDate: 'asc' },
+    })
+  )
 
   return NextResponse.json(dates)
 }
@@ -19,13 +23,16 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const { id } = await params
   const { startDate, endDate, reason, affectsAllCats } = await request.json()
 
-  const registration = await prisma.registration.findUnique({
-    where: { id },
-    include: { championship: true },
-  })
+  const registration = await withDatabaseSchemaRetry(() =>
+    prisma.registration.findUnique({
+      where: { id },
+      include: { championship: true },
+    })
+  )
 
   if (!registration) {
     return NextResponse.json({ error: 'Inscrição não encontrada' }, { status: 404 })
@@ -81,6 +88,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await ensureDatabaseSchema()
   const { id } = await params
   const { dateId } = await request.json()
 

@@ -53,10 +53,10 @@ export function DashboardErrorActions({ championshipId }: { championshipId: stri
         <button
           onClick={handleFixDb}
           disabled={loading || success}
-          className={`flex items-center gap-2 px-6 h-12 rounded-xl border font-black text-[10px] uppercase tracking-widest transition-all ${
+          className={`flex items-center gap-2 px-6 h-12 rounded-2xl border font-black text-[10px] uppercase tracking-widest transition-all shadow-sm ${
             success 
-              ? 'bg-green-500/20 border-green-500/40 text-green-400' 
-              : 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/40 text-[var(--amarelo)] hover:bg-[var(--amarelo)] hover:text-white'
+              ? 'bg-[var(--verde-light)] border-green-200 text-[var(--verde)]' 
+              : 'bg-[var(--yellow-light)] border-yellow-200 text-[var(--yellow-dark)] hover:border-[var(--yellow)] hover:bg-[var(--yellow)] hover:text-[var(--black)]'
           }`}
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
@@ -66,7 +66,7 @@ export function DashboardErrorActions({ championshipId }: { championshipId: stri
         <button
           onClick={handleDelete}
           disabled={loading}
-          className="flex items-center gap-2 px-6 h-12 rounded-xl bg-red-600/10 border border-red-500/40 text-red-500 font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-900/10"
+          className="flex items-center gap-2 px-6 h-12 rounded-2xl bg-[var(--red-light)] border border-red-200 text-[var(--red)] font-black text-[10px] uppercase tracking-widest hover:bg-[var(--red)] hover:text-white transition-all shadow-sm"
         >
           <Trash2 className="w-4 h-4" />
           Excluir Campeonato (Emergência)
@@ -74,13 +74,13 @@ export function DashboardErrorActions({ championshipId }: { championshipId: stri
       </div>
 
       {error && (
-        <p className="text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-500/10 p-4 rounded-xl border border-red-500/20 max-w-md mx-auto">
+        <p className="text-[var(--red)] text-[10px] font-black uppercase tracking-widest bg-[var(--red-light)] p-4 rounded-2xl border border-red-200 max-w-md mx-auto">
           {error}
         </p>
       )}
 
       {success && (
-        <p className="text-green-400 text-[10px] font-black uppercase tracking-widest animate-pulse">
+        <p className="text-[var(--verde)] text-[10px] font-black uppercase tracking-widest animate-pulse">
           Recarregando dashboard...
         </p>
       )}

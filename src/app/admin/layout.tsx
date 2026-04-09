@@ -3,6 +3,7 @@ import { redirect } from "next/navigation"
 import { authOptions } from "@/lib/auth"
 import { SideNav } from "@/components/SideNav"
 import { AIAssistantBubble } from "@/components/AIAssistantBubble"
+import { ensureDatabaseSchema } from "@/lib/db-patch"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
@@ -10,6 +11,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!session || !(session.user as any).isAdmin) {
     redirect('/login')
   }
+
+  await ensureDatabaseSchema()
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen relative overflow-hidden" style={{ background: 'var(--bg-admin)', color: 'var(--black)' }}>

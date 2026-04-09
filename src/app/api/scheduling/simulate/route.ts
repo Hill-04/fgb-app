@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateChampionshipSchedule } from '@/lib/scheduling/roundRobin'
 import { optimizeSchedule } from '@/lib/scheduling/aiOptimizer'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +14,7 @@ export async function POST(request: Request) {
     }
 
     const { championshipId } = await request.json()
+    await ensureDatabaseSchema()
 
     if (!championshipId) {
       return NextResponse.json(
