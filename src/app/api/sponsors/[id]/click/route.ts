@@ -1,15 +1,21 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
+    await ensureDatabaseSchema()
+    const { id } = await params
     const body = await req.json().catch(() => ({}))
     const source = body?.source ? String(body.source) : null
     const referrer = body?.referrer ? String(body.referrer) : null
 
     await prisma.sponsorClick.create({
       data: {
-        sponsorId: params.id,
+        sponsorId: id,
         source,
         referrer,
       }
