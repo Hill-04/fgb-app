@@ -412,7 +412,7 @@ export default function MatchesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="fgb-display text-3xl text-[var(--black)] leading-none">Jogos</h2>
           <p className="fgb-label mt-1 text-[var(--gray)]" style={{ fontSize: 10, letterSpacing: 2 }}>
@@ -421,7 +421,7 @@ export default function MatchesPage() {
         </div>
         <button
           onClick={() => openCreateModal()}
-          className="flex h-11 items-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[#E66000]"
+          className="flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[#E66000]"
         >
           <Plus className="h-4 w-4" />
           Novo jogo
@@ -444,7 +444,7 @@ export default function MatchesPage() {
             .sort(([left], [right]) => left.localeCompare(right))
             .map(([date, dayGames]) => (
               <div key={date} className="space-y-4">
-                <div className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-white px-5 py-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-white px-5 py-4 shadow-sm">
                   <div className="flex flex-wrap items-center gap-3 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
                     <span className="text-[var(--black)]">{formatDateLabel(dayGames[0].dateTime)}</span>
                     <span>Fase {Math.min(...dayGames.map((game) => game.phase || 1))}</span>
@@ -452,7 +452,7 @@ export default function MatchesPage() {
                   </div>
                   <button
                     onClick={() => openCreateModal(date)}
-                    className="flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] px-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
+                    className="flex h-10 w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-[var(--border)] px-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
                   >
                     <Plus className="h-4 w-4" />
                     Adicionar

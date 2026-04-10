@@ -134,7 +134,42 @@ export default async function AdminStandingsPage({
                 </div>
               ) : (
                 <>
-                  <div className="overflow-x-auto">
+                  <div className="md:hidden px-6 py-6 space-y-4">
+                    {catGroup.standings.map((row: any, index: number) => (
+                      <div key={row.id} className="rounded-2xl border border-[var(--border)] bg-white p-4 shadow-sm">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs font-black text-[var(--gray)]">#{index + 1}</p>
+                            <p className="text-sm font-black text-[var(--black)]">{row.team.name}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-[10px] text-[var(--gray)]">PTS</p>
+                            <p className="text-2xl font-black text-[var(--black)] leading-none">{row.points}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 grid grid-cols-4 gap-2 text-[10px] text-[var(--gray)]">
+                          <div className="rounded-xl bg-[var(--gray-l)] px-2 py-2 text-center">
+                            <p className="font-black text-[var(--black)]">{row.played}</p>
+                            <p>J</p>
+                          </div>
+                          <div className="rounded-xl bg-[var(--gray-l)] px-2 py-2 text-center">
+                            <p className="font-black text-green-600">{row.wins}</p>
+                            <p>V</p>
+                          </div>
+                          <div className="rounded-xl bg-[var(--gray-l)] px-2 py-2 text-center">
+                            <p className="font-black text-red-600">{row.losses}</p>
+                            <p>D</p>
+                          </div>
+                          <div className="rounded-xl bg-[var(--gray-l)] px-2 py-2 text-center">
+                            <p className="font-black text-[var(--black)]">{row.pointsFor - row.pointsAg}</p>
+                            <p>SC</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[var(--border)] text-[10px] font-black text-[var(--gray)] uppercase tracking-widest bg-[var(--gray-l)]">
