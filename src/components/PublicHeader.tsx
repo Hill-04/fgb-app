@@ -27,6 +27,7 @@ const navItems = [
       { label: 'Normas do Estadual',   href: '/campeonatos/normas' },
     ]
   },
+  { label: 'Competicoes',  href: '/competicoes' },
   { label: 'Calendario',    href: '/calendario' },
   { label: 'Noticias',      href: '/noticias' },
   { label: 'Videos',        href: '/videos' },

@@ -64,6 +64,7 @@ export function PublicFooter() {
             </p>
             {[
               { label: 'Todos os Campeonatos', href: '/campeonatos' },
+              { label: 'Competicoes',         href: '/competicoes' },
               { label: 'Estadual Feminino',    href: '/campeonatos?filtro=feminino' },
               { label: 'Estadual Masculino',   href: '/campeonatos?filtro=masculino' },
               { label: 'Cestinhas',            href: '/campeonatos/cestinhas' },

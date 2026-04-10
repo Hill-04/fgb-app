@@ -55,6 +55,9 @@ export default async function NoticiasPage() {
                   <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
                     {item.excerpt || 'Acompanhe os destaques e resultados do basquete gaucho.'}
                   </p>
+                  <a href={`/noticias/${item.slug}`} className="fgb-label mt-3 inline-flex" style={{ color: 'var(--verde)' }}>
+                    Ler noticia →
+                  </a>
                 </div>
               </article>
             ))}

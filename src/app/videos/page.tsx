@@ -55,6 +55,9 @@ export default async function VideosPage() {
                   <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
                     {video.description || 'Assista aos melhores momentos do basquete gaucho.'}
                   </p>
+                  <a href={`/videos/${video.slug}`} className="fgb-label mt-3 inline-flex" style={{ color: 'var(--red)' }}>
+                    Assistir video →
+                  </a>
                 </div>
               </article>
             ))}
