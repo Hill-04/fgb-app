@@ -37,7 +37,6 @@ export default async function HomePage() {
     },
   }).catch(() => [])
 
-  // Live / upcoming games today
   const today = new Date()
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
   const todayEnd = new Date(todayStart.getTime() + 86400000)
@@ -57,7 +56,6 @@ export default async function HomePage() {
     },
   }).catch(() => [])
 
-  // All unique categories across active championships for filter bar
   const allCategories = await prisma.championshipCategory.findMany({
     where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false } },
     distinct: ['name'],
@@ -65,7 +63,6 @@ export default async function HomePage() {
     orderBy: { name: 'asc' },
   }).catch(() => [])
 
-  // Featured championship (most active/ongoing)
   const featuredChampionship = await prisma.championship.findFirst({
     where: { status: 'ONGOING', isSimulation: false },
     orderBy: { createdAt: 'desc' },
@@ -102,20 +99,14 @@ export default async function HomePage() {
   return (
     <>
       <PublicHeader />
-
       <main>
-        {/* ──────────────────────────────────────
-            HERO
-        ────────────────────────────────────── */}
         <section className="fgb-hero">
-          {/* Glow verde no fundo */}
           <div style={{
             position:'absolute', left:-80, top:-80, width:400, height:400,
             background:'radial-gradient(circle,rgba(27,115,64,0.2) 0%,transparent 70%)',
             pointerEvents:'none', zIndex:1
           }} />
 
-          {/* Left — conteúdo */}
           <div className="fgb-hero-left" style={{ padding: '60px 40px', position: 'relative', zIndex: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <p className="fgb-label fgb-anim-up" style={{ color: 'var(--yellow)', marginBottom: 16 }}>
               FGB · Season 2026 · Plataforma Oficial
@@ -142,7 +133,6 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right — stats grid */}
           <div className="fgb-hero-right" style={{ position: 'relative', zIndex: 2 }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, background: '#1a1a1a', height: '100%' }}>
               {[
@@ -164,10 +154,8 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* TRICOLOR HERO STRIP */}
         <div className="fgb-hero-tricolor" />
 
-        {/* PORTAL FGB â€” ACESSO RÃPIDO AOS CANAIS */}
         <section className="fgb-section">
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -177,36 +165,36 @@ export default async function HomePage() {
                   Portal <span className="verde">FGB</span>
                 </h2>
               </div>
-              <Link href="/fgb/notas" className="fgb-section-link">Notas Oficiais â†’</Link>
+              <Link href="/fgb/notas" className="fgb-section-link">Notas Oficiais →</Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {[
                 {
                   title: 'Notas Oficiais',
-                  desc: 'Comunicados, resoluÃ§Ãµes, tabelas e convocaÃ§Ãµes.',
+                  desc: 'Comunicados, resoluções, tabelas e convocações.',
                   href: '/fgb/notas',
                   accent: 'var(--red)',
                   image: GALLERY_IMAGES[0],
                 },
                 {
                   title: 'Informativos',
-                  desc: 'Boletins tÃ©cnicos, regulamentos e comunicados.',
+                  desc: 'Boletins técnicos, regulamentos e comunicados.',
                   href: '/fgb/regulamento',
                   accent: 'var(--yellow)',
                   image: GALLERY_IMAGES[1],
                 },
                 {
-                  title: 'SeleÃ§Ã£o GaÃºcha',
-                  desc: 'ConvocaÃ§Ãµes e atividades oficiais das seleÃ§Ãµes.',
+                  title: 'Seleção Gaúcha',
+                  desc: 'Convocações e atividades oficiais das seleções.',
                   href: '/selecao-gaucha',
                   accent: 'var(--verde)',
                   image: GALLERY_IMAGES[2],
                 },
                 {
-                  title: 'CalendÃ¡rio',
-                  desc: 'CalendÃ¡rio geral de competiÃ§Ãµes e fases.',
-                  href: '/campeonatos',
+                  title: 'Calendário',
+                  desc: 'Calendário geral de competições e fases.',
+                  href: '/calendario',
                   accent: 'var(--primary)',
                   image: GALLERY_IMAGES[3],
                 },
@@ -219,7 +207,7 @@ export default async function HomePage() {
                 },
                 {
                   title: 'Galeria de Fotos',
-                  desc: 'Momentos marcantes do basquete gaÃºcho.',
+                  desc: 'Momentos marcantes do basquete gaúcho.',
                   href: '/galeria',
                   accent: 'var(--verde-dark)',
                   image: GALLERY_IMAGES[5],
@@ -238,7 +226,7 @@ export default async function HomePage() {
                     </span>
                     <h3 className="fgb-display mb-2" style={{ fontSize: 16, color: '#fff' }}>{item.title}</h3>
                     <p className="fgb-label" style={{ color: 'rgba(255,255,255,0.65)', textTransform: 'none', letterSpacing: 0 }}>{item.desc}</p>
-                    <span className="fgb-label mt-3 inline-flex" style={{ color: item.accent }}>Acessar â†’</span>
+                    <span className="fgb-label mt-3 inline-flex" style={{ color: item.accent }}>Acessar →</span>
                   </div>
                 </Link>
               ))}
@@ -246,9 +234,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ──────────────────────────────────────
-            BARRA DE JOGOS AO VIVO / HOJE (#4)
-        ────────────────────────────────────── */}
         {liveGames.length > 0 && (
           <div style={{ background: 'var(--black2)', borderBottom: '2px solid var(--red)' }}>
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4 overflow-x-auto fgb-hide-scrollbar">
@@ -260,7 +245,7 @@ export default async function HomePage() {
                 <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 9, letterSpacing: '0.2em' }}>JOGOS DE HOJE</span>
               </div>
               <div className="h-4 w-px bg-white/10 flex-shrink-0" />
-              {liveGames.map((game, i) => (
+              {liveGames.map((game) => (
                 <div key={game.id} className="flex items-center gap-3 flex-shrink-0 px-4 py-1.5 rounded-full" style={{ background: game.status === 'ONGOING' ? 'rgba(204,16,22,0.15)' : 'rgba(255,255,255,0.05)', border: game.status === 'ONGOING' ? '1px solid rgba(204,16,22,0.3)' : '1px solid rgba(255,255,255,0.08)' }}>
                   {game.status === 'ONGOING' && (
                     <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 8, letterSpacing: '0.15em' }}>● AO VIVO</span>
@@ -277,9 +262,6 @@ export default async function HomePage() {
           </div>
         )}
 
-        {/* ──────────────────────────────────────
-            DESTAQUE — CAMPEONATO PRINCIPAL (#6)
-        ────────────────────────────────────── */}
         {featuredChampionship && (
           <section style={{ background: 'var(--verde)', borderBottom: '4px solid var(--verde-dark)' }}>
             <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 items-center">
@@ -327,9 +309,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ──────────────────────────────────────
-            CAMPEONATOS ATIVOS
-        ────────────────────────────────────── */}
         <section className="fgb-section">
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -342,7 +321,6 @@ export default async function HomePage() {
               <Link href="/campeonatos" className="fgb-section-link">Ver todos →</Link>
             </div>
 
-            {/* Filtro por Categoria (#5) */}
             {allCategories.length > 0 && (
               <div className="flex items-center gap-2 overflow-x-auto fgb-hide-scrollbar mb-6 pb-1">
                 <Link href="/campeonatos" className="fgb-badge fgb-badge-verde flex-shrink-0">
@@ -360,7 +338,6 @@ export default async function HomePage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {championships.map((c) => (
                   <Link key={c.id} href={`/campeonatos/${c.id}`} className="fgb-card admin-card-verde">
-                    {/* Thumbnail */}
                     <div className="relative flex items-center justify-center overflow-hidden" style={{ height: 100, background: 'var(--black2)' }}>
                       <span className="fgb-display" style={{ fontSize: 64, color: 'rgba(255,255,255,0.03)', letterSpacing: '-0.04em', userSelect: 'none' }}>
                         {c.name.substring(0, 3).toUpperCase()}
@@ -375,7 +352,6 @@ export default async function HomePage() {
                       </div>
                     </div>
 
-                    {/* Conteúdo */}
                     <div style={{ padding: '16px 18px' }}>
                       <p className="fgb-label mb-1" style={{ color: 'var(--gray)' }}>
                         FGB · {c.categories.length} categorias
@@ -406,10 +382,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-
-        {/* ──────────────────────────────────────
-            ÚLTIMOS RESULTADOS
-        ────────────────────────────────────── */}
         {recentGames.length > 0 && (
           <section className="fgb-section fgb-section-alt" style={{ borderTop: '1px solid var(--border)' }}>
             <div className="max-w-7xl mx-auto">
@@ -447,9 +419,6 @@ export default async function HomePage() {
           </section>
         )}
 
-        {/* ──────────────────────────────────────
-            STRIP DE STATS — AMARELO
-        ────────────────────────────────────── */}
         <section className="fgb-stats-strip">
           {[
             { n: '1952', l: 'Fundação' },
@@ -464,10 +433,6 @@ export default async function HomePage() {
           ))}
         </section>
 
-
-        {/* ──────────────────────────────────────
-            ACESSO RÁPIDO
-        ────────────────────────────────────── */}
         <section className="fgb-section">
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -494,17 +459,12 @@ export default async function HomePage() {
           </div>
         </section>
 
-
-        {/* ──────────────────────────────────────
-            CESTINHAS STRIP — VERDE
-        ────────────────────────────────────── */}
         <section className="fgb-scorers-strip max-w-7xl mx-auto">
           <div className="fgb-scorer-label">
             <div className="fgb-scorer-label-eyb">Temporada 2026</div>
             <div className="fgb-scorer-label-h">Top <em>Cestinhas</em></div>
           </div>
           <div className="flex overflow-x-auto gap-4 fgb-hide-scrollbar" style={{ paddingBottom: '4px' }}>
-            {/* Fake data for structure */}
             {[
               { rank: 1, src: 'LA', name: 'Lucas Almeida', pts: '24.5' },
               { rank: 2, src: 'MB', name: 'Marcos Bolt', pts: '22.1' },
@@ -523,10 +483,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-
-        {/* ──────────────────────────────────────
-            SOBRE A FGB
-        ────────────────────────────────────── */}
         <section className="fgb-section fgb-section-verde" style={{ borderTop: '1px solid rgba(27,115,64,0.1)' }}>
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -553,8 +509,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-
-        {/* ATUALIZAÇÕES OFICIAIS */}
         <section className="fgb-section fgb-section-alt" style={{ borderTop: '1px solid var(--border)' }}>
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -589,7 +543,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* GALERIA GAÚCHA */}
         <section className="fgb-section">
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -611,7 +564,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* CLUBES E ESCUDOS */}
         <section className="fgb-section fgb-section-verde" style={{ borderTop: '1px solid rgba(27,115,64,0.12)' }}>
           <div className="max-w-7xl mx-auto">
             <div className="fgb-section-header">
@@ -646,9 +598,6 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ──────────────────────────────────────
-            CTA FINAL — VERDE
-        ────────────────────────────────────── */}
         <section className="fgb-cta">
           <div className="fgb-cta-pattern" />
           <div className="fgb-cta-inner max-w-7xl mx-auto">
@@ -667,7 +616,6 @@ export default async function HomePage() {
           </div>
         </section>
       </main>
-
       <PublicFooter />
     </>
   )

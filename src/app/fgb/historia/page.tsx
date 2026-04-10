@@ -3,15 +3,15 @@ import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 
 export const metadata: Metadata = {
-  title: 'História da Federação — FGB',
-  description: 'Conheça a história da Federação Gaúcha de Basketball, fundada em 18 de abril de 1952 em Porto Alegre, Rio Grande do Sul.',
+  title: 'Historia da Federacao — FGB',
+  description: 'Conheca a historia da Federacao Gaucha de Basketball, fundada em 18 de abril de 1952 em Porto Alegre, Rio Grande do Sul.',
 }
 
 const clubesFundadores = [
-  'Grêmio Foot-Ball Porto Alegrense', 'Sport Club Internacional', 'SOGIPA', 'Juventude', 'Americano F.C.',
-  'Caxias do Sul', 'Pelotas', 'Santa Maria', 'Rio Grande', 'Passo Fundo', 'Novo Hamburgo', 'São Leopoldo',
-  'Canoas', 'Cachoeira do Sul', 'Bagé', 'Uruguaiana', 'Santa Cruz do Sul', 'Lajeado', 'Cruz Alta',
-  'Erechim', 'Bento Gonçalves', 'Caxias',
+  'Gremio Foot-Ball Porto Alegrense', 'Sport Club Internacional', 'SOGIPA', 'Juventude', 'Americano F.C.',
+  'Caxias do Sul', 'Pelotas', 'Santa Maria', 'Rio Grande', 'Passo Fundo', 'Novo Hamburgo', 'Sao Leopoldo',
+  'Canoas', 'Cachoeira do Sul', 'Bage', 'Uruguaiana', 'Santa Cruz do Sul', 'Lajeado', 'Cruz Alta',
+  'Erechim', 'Bento Goncalves', 'Caxias',
 ]
 
 export default function HistoriaPage() {
@@ -23,31 +23,30 @@ export default function HistoriaPage() {
         <div className="fgb-page-header-bg" />
         <div className="max-w-4xl mx-auto px-4 sm:px-6 relative text-center">
           <div className="fgb-page-header-eyebrow">FGB · Desde 1952</div>
-          <h1 className="fgb-page-header-title">História da Federação</h1>
+          <h1 className="fgb-page-header-title">Historia da Federacao</h1>
           <p className="fgb-page-header-sub mx-auto">
-            A Federação Gaúcha de Basketball foi fundada em 18 de abril de 1952, em Porto Alegre,
-            pelo 1º Presidente Sr. José Carlos Daut, com apoio de 22 clubes fundadores.
+            A Federacao Gaucha de Basketball foi fundada em 18 de abril de 1952, em Porto Alegre,
+            pelo 1º Presidente Sr. Jose Carlos Daut, com apoio de 22 clubes fundadores.
           </p>
         </div>
       </div>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-14">
-        {/* Timeline */}
         <section className="mb-14">
           <div className="fgb-section-header">
             <div>
               <div className="fgb-accent fgb-accent-verde" />
-              <h2 className="fgb-section-title">Marco <span className="verde">Histórico</span></h2>
+              <h2 className="fgb-section-title">Marco <span className="verde">Historico</span></h2>
             </div>
           </div>
           
           <div className="space-y-4">
             {[
-              { year: '1934–1935', icon: '🏆', title: 'Bi-campeões Nacionais', desc: 'O Rio Grande do Sul conquistou o título brasileiro por dois anos consecutivos.', highlight: true },
-              { year: '1952', icon: '🏛️', title: 'Fundação da FGB', desc: 'Em 18 de abril, em Porto Alegre, é fundada a Federação.', highlight: false },
-              { year: '1960–1980', icon: '📈', title: 'Expansão do Basquete', desc: 'Décadas de crescimento com novos clubes em todo o RS.', highlight: false },
-              { year: '2000+', icon: '🚀', title: 'Era Moderna', desc: 'Modernização da gestão e consolidação de campeonatos base.', highlight: false },
-              { year: '2026', icon: '💻', title: 'Plataforma Digital', desc: 'Sistema lançado para elevar a experiência dos clubes.', highlight: false },
+              { year: '1934-1935', icon: '🏆', title: 'Bi-campeoes Nacionais', desc: 'O Rio Grande do Sul conquistou o titulo brasileiro por dois anos consecutivos.', highlight: true },
+              { year: '1952', icon: '🏛️', title: 'Fundacao da FGB', desc: 'Em 18 de abril, em Porto Alegre, e fundada a Federacao.', highlight: false },
+              { year: '1960-1980', icon: '📈', title: 'Expansao do Basquete', desc: 'Decadas de crescimento com novos clubes em todo o RS.', highlight: false },
+              { year: '2000+', icon: '🚀', title: 'Era Moderna', desc: 'Modernizacao da gestao e consolidacao de campeonatos de base.', highlight: false },
+              { year: '2026', icon: '💻', title: 'Plataforma Digital', desc: 'Sistema lancado para elevar a experiencia dos clubes.', highlight: false },
             ].map((item, i) => (
               <div key={i} className={`fgb-card p-6 flex items-start gap-5 ${item.highlight ? 'admin-card-yellow' : ''}`}>
                 <span className="text-3xl flex-shrink-0">{item.icon}</span>
@@ -64,7 +63,6 @@ export default function HistoriaPage() {
           </div>
         </section>
 
-        {/* Clubes Fundadores */}
         <section className="fgb-section fgb-section-alt rounded-lg mb-14" style={{ padding: '32px' }}>
           <div className="fgb-accent fgb-accent-red mx-auto mb-3" />
           <h2 className="fgb-display text-center text-[24px] mb-8">22 Clubes Fundadores</h2>

@@ -67,7 +67,8 @@ export function PublicFooter() {
               { label: 'Estadual Feminino',    href: '/campeonatos?filtro=feminino' },
               { label: 'Estadual Masculino',   href: '/campeonatos?filtro=masculino' },
               { label: 'Cestinhas',            href: '/campeonatos/cestinhas' },
-              { label: 'Seleção Gaúcha',       href: '/selecao-gaucha' },
+              { label: 'Calendario',           href: '/calendario' },
+              { label: 'Selecao Gaucha',       href: '/selecao-gaucha' },
               { label: 'Galeria de Fotos',     href: '/galeria' },
             ].map(l => <Link key={l.href} href={l.href} className="fgb-footer-link">{l.label}</Link>)}
           </div>

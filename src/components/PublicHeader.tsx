@@ -27,7 +27,10 @@ const navItems = [
       { label: 'Normas do Estadual',   href: '/campeonatos/normas' },
     ]
   },
-  { label: 'Seleção Gaúcha', href: '/selecao-gaucha' },
+  { label: 'Calendario',    href: '/calendario' },
+  { label: 'Noticias',      href: '/noticias' },
+  { label: 'Videos',        href: '/videos' },
+  { label: 'Selecao Gaucha', href: '/selecao-gaucha' },
   { label: 'Galeria',        href: '/galeria' },
 ]
 
