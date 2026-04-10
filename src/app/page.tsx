@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { SponsorsStrip } from '@/components/public/SponsorsStrip'
 
 const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
 const GALLERY_IMAGES = [
@@ -94,6 +95,13 @@ export default async function HomePage() {
     orderBy: { createdAt: 'desc' },
     take: 12,
     select: { id: true, name: true, logoUrl: true },
+  }).catch(() => [])
+
+  const sponsors = await prisma.sponsor.findMany({
+    where: { isActive: true },
+    orderBy: { createdAt: 'desc' },
+    take: 12,
+    select: { id: true, name: true, logoUrl: true, websiteUrl: true },
   }).catch(() => [])
 
   return (
@@ -597,6 +605,8 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        <SponsorsStrip sponsors={sponsors} />
 
         <section className="fgb-cta">
           <div className="fgb-cta-pattern" />

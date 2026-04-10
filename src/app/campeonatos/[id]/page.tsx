@@ -81,7 +81,7 @@ export default async function CampeonatoPublicPage({ params }: Props) {
         <div className="fgb-page-header-bg" />
         <div className="max-w-6xl mx-auto px-4 sm:px-6 relative text-center">
           <div className="fgb-page-header-eyebrow">
-            <Link href="/" className="hover:text-white transition-colors">Início</Link> · 
+            <Link href="/" className="hover:text-white transition-colors">Início</Link> ·
             <Link href="/campeonatos" className="hover:text-white transition-colors"> Campeonatos</Link>
           </div>
           <div className="flex justify-center items-center gap-3 mb-4">
@@ -99,7 +99,6 @@ export default async function CampeonatoPublicPage({ params }: Props) {
       </div>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
-        {/* Stats Strip */}
         <div className="fgb-stats-strip rounded overflow-hidden mb-14 shadow-sm" style={{ border: '1px solid var(--border)' }}>
           {[
             { value: championship._count.registrations, label: 'Equipes' },
@@ -114,9 +113,16 @@ export default async function CampeonatoPublicPage({ params }: Props) {
           ))}
         </div>
 
-        {/* Categorias e Classificação */}
+        <div className="flex flex-wrap gap-2 mb-10">
+          {championship.categories.map((cat) => (
+            <a key={cat.id} href={`#cat-${cat.id}`} className="fgb-badge fgb-badge-outline">
+              {cat.name}
+            </a>
+          ))}
+        </div>
+
         {championship.categories.map((cat) => (
-          <section key={cat.id} className="mb-14">
+          <section key={cat.id} id={`cat-${cat.id}`} className="mb-14">
             <div className="fgb-section-header">
               <div>
                 <div className="fgb-accent fgb-accent-verde" />
@@ -160,7 +166,6 @@ export default async function CampeonatoPublicPage({ params }: Props) {
           </section>
         ))}
 
-        {/* Últimos Resultados */}
         {recentGames.length > 0 && (
           <section className="mb-14">
             <div className="fgb-section-header">
@@ -188,7 +193,6 @@ export default async function CampeonatoPublicPage({ params }: Props) {
           </section>
         )}
 
-        {/* Próximos jogos */}
         {upcomingGames.length > 0 && (
           <section className="mb-14">
             <div className="fgb-section-header">

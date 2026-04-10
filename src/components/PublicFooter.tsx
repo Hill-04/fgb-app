@@ -83,6 +83,7 @@ export function PublicFooter() {
             {[
               { label: 'Entrar na Plataforma', href: '/login', external: false },
               { label: 'Cadastrar Equipe',     href: '/register', external: false },
+              { label: 'Patrocinadores',       href: '/patrocinadores', external: false },
               { label: 'Facebook',  href: 'https://www.facebook.com/fgb.basquetegaucho', external: true },
               { label: 'Instagram', href: 'https://www.instagram.com/fg_basquete/', external: true },
               { label: 'WhatsApp',  href: 'https://api.whatsapp.com/send?phone=555432233858', external: true },

@@ -31,6 +31,7 @@ const navItems = [
   { label: 'Calendario',    href: '/calendario' },
   { label: 'Noticias',      href: '/noticias' },
   { label: 'Videos',        href: '/videos' },
+  { label: 'Patrocinadores', href: '/patrocinadores' },
   { label: 'Selecao Gaucha', href: '/selecao-gaucha' },
   { label: 'Galeria',        href: '/galeria' },
 ]

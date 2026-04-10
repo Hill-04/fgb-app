@@ -28,8 +28,8 @@ function getStatusBadge(status: string) {
 }
 
 function getSexIcon(sex: string) {
-  if (sex === 'feminino') return '♀️'
-  if (sex === 'masculino') return '♂️'
+  if (sex === 'feminino') return '♀'
+  if (sex === 'masculino') return '♂'
   return '⚥'
 }
 
@@ -153,7 +153,6 @@ export default async function CampeonatosPage() {
           emptyMsg="Nenhum campeonato finalizado."
         />
 
-        {/* Área restrita CTA */}
         <div className="mt-12 fgb-cta" style={{ padding: '40px 24px', borderRadius: 8 }}>
           <div className="fgb-cta-pattern" />
           <div className="fgb-cta-inner flex flex-col md:flex-row items-center justify-between gap-6">
