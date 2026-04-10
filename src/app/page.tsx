@@ -6,6 +6,14 @@ import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 
 const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
+const GALLERY_IMAGES = [
+  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436798402_17959816394740627_7133097296869973522_n.jpg',
+  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436953622_17959816355740627_4207539994510205825_n.jpg',
+  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436783444_17959816358740627_458700201676952614_n.jpg',
+  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436770135_17959816367740627_7240870606236286883_n.jpg',
+  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436799064_17959816340740627_3850140963121385520_n.jpg',
+  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436783538_17959816376740627_400857416916956698_n.jpg',
+]
 
 export default async function HomePage() {
   const championships = await prisma.championship.findMany({
@@ -84,6 +92,13 @@ export default async function HomePage() {
     },
   }).catch(() => null)
 
+  const featuredTeams = await prisma.team.findMany({
+    where: { OR: [{ logoUrl: { not: null } }, { name: { not: '' } }] },
+    orderBy: { createdAt: 'desc' },
+    take: 12,
+    select: { id: true, name: true, logoUrl: true },
+  }).catch(() => [])
+
   return (
     <>
       <PublicHeader />
@@ -151,6 +166,85 @@ export default async function HomePage() {
 
         {/* TRICOLOR HERO STRIP */}
         <div className="fgb-hero-tricolor" />
+
+        {/* PORTAL FGB â€” ACESSO RÃPIDO AOS CANAIS */}
+        <section className="fgb-section">
+          <div className="max-w-7xl mx-auto">
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-verde" />
+                <h2 className="fgb-section-title">
+                  Portal <span className="verde">FGB</span>
+                </h2>
+              </div>
+              <Link href="/fgb/notas" className="fgb-section-link">Notas Oficiais â†’</Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                {
+                  title: 'Notas Oficiais',
+                  desc: 'Comunicados, resoluÃ§Ãµes, tabelas e convocaÃ§Ãµes.',
+                  href: '/fgb/notas',
+                  accent: 'var(--red)',
+                  image: GALLERY_IMAGES[0],
+                },
+                {
+                  title: 'Informativos',
+                  desc: 'Boletins tÃ©cnicos, regulamentos e comunicados.',
+                  href: '/fgb/regulamento',
+                  accent: 'var(--yellow)',
+                  image: GALLERY_IMAGES[1],
+                },
+                {
+                  title: 'SeleÃ§Ã£o GaÃºcha',
+                  desc: 'ConvocaÃ§Ãµes e atividades oficiais das seleÃ§Ãµes.',
+                  href: '/selecao-gaucha',
+                  accent: 'var(--verde)',
+                  image: GALLERY_IMAGES[2],
+                },
+                {
+                  title: 'CalendÃ¡rio',
+                  desc: 'CalendÃ¡rio geral de competiÃ§Ãµes e fases.',
+                  href: '/campeonatos',
+                  accent: 'var(--primary)',
+                  image: GALLERY_IMAGES[3],
+                },
+                {
+                  title: 'Campeonatos',
+                  desc: 'Estaduais, categorias de base e torneios oficiais.',
+                  href: '/campeonatos',
+                  accent: 'var(--secondary)',
+                  image: GALLERY_IMAGES[4],
+                },
+                {
+                  title: 'Galeria de Fotos',
+                  desc: 'Momentos marcantes do basquete gaÃºcho.',
+                  href: '/galeria',
+                  accent: 'var(--verde-dark)',
+                  image: GALLERY_IMAGES[5],
+                },
+              ].map((item) => (
+                <Link key={item.title} href={item.href} className="fgb-card group relative overflow-hidden">
+                  <div className="absolute inset-0">
+                    <Image src={item.image} alt={item.title} fill className="object-cover opacity-30 group-hover:opacity-40 transition-opacity" unoptimized />
+                    <div className="absolute inset-0" style={{
+                      background: 'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%)'
+                    }} />
+                  </div>
+                  <div className="relative p-5">
+                    <span className="fgb-badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: 'none', marginBottom: 12 }}>
+                      {item.title}
+                    </span>
+                    <h3 className="fgb-display mb-2" style={{ fontSize: 16, color: '#fff' }}>{item.title}</h3>
+                    <p className="fgb-label" style={{ color: 'rgba(255,255,255,0.65)', textTransform: 'none', letterSpacing: 0 }}>{item.desc}</p>
+                    <span className="fgb-label mt-3 inline-flex" style={{ color: item.accent }}>Acessar â†’</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
 
         {/* ──────────────────────────────────────
             BARRA DE JOGOS AO VIVO / HOJE (#4)
@@ -459,6 +553,98 @@ export default async function HomePage() {
           </div>
         </section>
 
+
+        {/* ATUALIZAÇÕES OFICIAIS */}
+        <section className="fgb-section fgb-section-alt" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="max-w-7xl mx-auto">
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-red" />
+                <h2 className="fgb-section-title">
+                  Atualizações <span className="red">Oficiais</span>
+                </h2>
+              </div>
+              <a href="https://basquetegaucho.com.br/notas-oficiais/" target="_blank" rel="noopener noreferrer" className="fgb-section-link">
+                Ver no site oficial →
+              </a>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {[
+                { title: 'Nota Oficial de Pesar', type: 'Notas Oficiais', date: '2025' },
+                { title: 'Classificação Final — Estadual de Base 2025', type: 'Informativos', date: '2025' },
+                { title: 'Boletim Sul Brasileiro de Clubes 2025', type: 'Notas Oficiais', date: '2025' },
+              ].map((item) => (
+                <div key={item.title} className="fgb-card p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="fgb-badge fgb-badge-outline">{item.type}</span>
+                    <span className="fgb-label" style={{ color: 'var(--gray)' }}>{item.date}</span>
+                  </div>
+                  <h3 className="fgb-display text-[16px] text-[var(--black)] mb-2">{item.title}</h3>
+                  <p className="fgb-label" style={{ color: 'var(--gray)', textTransform: 'none', letterSpacing: 0 }}>
+                    Comunicado oficial publicado pela FGB.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* GALERIA GAÚCHA */}
+        <section className="fgb-section">
+          <div className="max-w-7xl mx-auto">
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-yellow" />
+                <h2 className="fgb-section-title">
+                  Galeria <span className="yellow">Gaúcha</span>
+                </h2>
+              </div>
+              <Link href="/galeria" className="fgb-section-link">Ver todas →</Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+              {GALLERY_IMAGES.map((src, i) => (
+                <div key={src} className={`relative overflow-hidden rounded-lg ${i === 0 ? 'md:col-span-2 md:row-span-2' : ''}`} style={{ aspectRatio: '1 / 1' }}>
+                  <Image src={src} alt="FGB Galeria" fill className="object-cover hover:scale-105 transition-transform duration-500" unoptimized />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CLUBES E ESCUDOS */}
+        <section className="fgb-section fgb-section-verde" style={{ borderTop: '1px solid rgba(27,115,64,0.12)' }}>
+          <div className="max-w-7xl mx-auto">
+            <div className="fgb-section-header">
+              <div>
+                <div className="fgb-accent fgb-accent-verde" />
+                <h2 className="fgb-section-title">
+                  Clubes & <span className="verde">Escudos</span>
+                </h2>
+              </div>
+              <Link href="/campeonatos" className="fgb-section-link">Ver clubes →</Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+              {featuredTeams.length > 0 ? featuredTeams.map((team) => (
+                <div key={team.id} className="fgb-card p-4 flex flex-col items-center text-center">
+                  <div className="relative w-16 h-16 rounded-full bg-white shadow-sm border border-[var(--border)] overflow-hidden flex items-center justify-center mb-3">
+                    {team.logoUrl ? (
+                      <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
+                    ) : (
+                      <span className="fgb-display" style={{ fontSize: 18, color: 'var(--verde-dark)' }}>
+                        {team.name.slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                  <p className="fgb-label" style={{ color: 'var(--black)', textTransform: 'none', letterSpacing: 0 }}>{team.name}</p>
+                </div>
+              )) : (
+                <div className="col-span-full text-center fgb-label" style={{ color: 'var(--gray)' }}>
+                  Em breve, escudos e clubes cadastrados.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* ──────────────────────────────────────
             CTA FINAL — VERDE
