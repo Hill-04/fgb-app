@@ -74,7 +74,6 @@ export function PublicHeader() {
       {/* HEADER PRINCIPAL */}
       <header className={`fgb-header ${scrolled ? 'scrolled' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-[60px] flex items-center justify-between">
-
           {/* LOGO */}
           <Link href="/" className="flex items-center gap-3 flex-shrink-0">
             <div className="relative w-9 h-9">
@@ -166,7 +165,6 @@ export function PublicHeader() {
       {/* TICKER VERMELHO */}
       <div className="fgb-ticker">
         <div className="fgb-ticker-track">
-          {/* Duplicar 2× para loop infinito */}
           {[1, 2].map(pass => (
             <span key={pass} style={{ display: 'inline-flex', gap: 0 }}>
               <span className="fgb-ticker-item">
