@@ -66,7 +66,7 @@ export function ChampionshipCard({
   return (
     <Link
       href={href}
-      className="group relative block overflow-hidden rounded-[28px] border border-white/80 bg-white/95 p-6 shadow-[var(--shadow-premium)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[var(--yellow)]/50"
+      className="group relative block overflow-hidden rounded-[28px] border border-white/80 bg-white/95 p-5 sm:p-6 shadow-[var(--shadow-premium)] transition-all duration-300 hover:-translate-y-1.5 hover:border-[var(--yellow)]/50"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,194,0,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(27,115,64,0.1),transparent_28%)] opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
 
@@ -98,7 +98,7 @@ export function ChampionshipCard({
         </div>
 
         <div className="mb-5">
-          <h3 className="fgb-display text-[2rem] leading-none text-[var(--black)] transition-colors duration-300 group-hover:text-[var(--verde)]">
+          <h3 className="fgb-display text-[1.7rem] sm:text-[2rem] leading-none text-[var(--black)] transition-colors duration-300 group-hover:text-[var(--verde)]">
             {name}
           </h3>
           <p className="mt-3 max-w-[28rem] text-sm leading-relaxed text-[var(--gray)]">
@@ -106,7 +106,7 @@ export function ChampionshipCard({
           </p>
         </div>
 
-        <div className="mb-5 grid grid-cols-2 gap-3">
+        <div className="mb-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="rounded-2xl border border-[var(--border)] bg-white/80 p-3 shadow-sm">
             <div className="mb-2 flex items-center gap-2 text-[var(--verde)]">
               <Users2 className="h-4 w-4" />
@@ -156,7 +156,7 @@ export function ChampionshipCard({
           {categories.slice(0, 5).map((cat) => (
             <span
               key={cat.id}
-              className="inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.15em] text-[var(--gray-d)] transition-colors group-hover:border-[var(--yellow)]/30 group-hover:bg-[var(--yellow-light)]"
+              className="inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-3 py-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-[0.15em] text-[var(--gray-d)] transition-colors group-hover:border-[var(--yellow)]/30 group-hover:bg-[var(--yellow-light)]"
             >
               {cat.name}
             </span>

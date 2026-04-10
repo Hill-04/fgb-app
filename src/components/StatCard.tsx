@@ -55,8 +55,8 @@ export function StatCard({
       <div className={cn("absolute top-0 left-0 w-full h-1.5", borderAccents[accent])} />
       <div className={cn("absolute top-0 right-0 w-24 h-24 blur-[40px] opacity-10 rounded-full -mr-12 -mt-12 transition-opacity group-hover:opacity-20", iconBgs[accent])} />
 
-      <div className="p-7 flex flex-col h-full relative z-10">
-        <div className="flex justify-between items-start mb-6">
+      <div className="p-5 sm:p-6 md:p-7 flex flex-col h-full relative z-10">
+        <div className="flex justify-between items-start mb-5 sm:mb-6">
           <div className="space-y-1">
             <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: '0.15em' }}>
               {label}
@@ -69,7 +69,7 @@ export function StatCard({
           </div>
           {icon && (
             <div className={cn(
-              "p-3 rounded-2xl flex items-center justify-center transition-all duration-300",
+              "p-2.5 sm:p-3 rounded-2xl flex items-center justify-center transition-all duration-300",
               "shadow-sm group-hover:shadow-md group-hover:scale-110 group-hover:rotate-3",
               iconBgs[accent]
             )}>
@@ -79,10 +79,10 @@ export function StatCard({
         </div>
 
         <div className="mt-auto">
-          <p className="fgb-display text-5xl text-[var(--black)] leading-none tracking-tight">
+          <p className="fgb-display text-4xl sm:text-5xl text-[var(--black)] leading-none tracking-tight">
             {value}
           </p>
-          <div className="w-10 h-1 bg-[var(--border)] mt-4 rounded-full transition-all duration-500 group-hover:w-20 group-hover:bg-[var(--verde)]" />
+          <div className="w-8 sm:w-10 h-1 bg-[var(--border)] mt-4 rounded-full transition-all duration-500 group-hover:w-16 sm:group-hover:w-20 group-hover:bg-[var(--verde)]" />
         </div>
       </div>
     </div>
