@@ -40,6 +40,10 @@ model Team {
   standings     Standing[]
   members       TeamMembership[]
   playerStats   PlayerStat[]
+  athletes      Athlete[]
+  seasonRankings SeasonRanking[]
+  bidEntriesFrom AthleteBidEntry[] @relation("BidTeamFrom")
+  bidEntriesTo   AthleteBidEntry[] @relation("BidTeamTo")
 }
 
 model Gym {
@@ -93,6 +97,7 @@ model Championship {
   documents      Document[]
   games          Game[]
   registrations  Registration[]
+  bidEntries     AthleteBidEntry[]
 }
 
 model ChampionshipCategory {
@@ -212,6 +217,7 @@ model Game {
   category       ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   championship   Championship         @relation(fields: [championshipId], references: [id], onDelete: Cascade)
   playerStats    PlayerStat[]
+  refereeAssignments RefereeAssignment[]
 }
 
 model Standing {
@@ -232,6 +238,149 @@ model Standing {
   team       Team                 @relation(fields: [teamId], references: [id])
 
   @@unique([teamId, categoryId])
+}
+
+model Athlete {
+  id         String   @id @default(uuid())
+  name       String
+  birthDate  DateTime?
+  document   String?
+  sex        String?
+  photoUrl   String?
+  status     String   @default("ACTIVE")
+  teamId     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  team       Team?    @relation(fields: [teamId], references: [id])
+  cards      AthleteIdCard[]
+  bidEntries AthleteBidEntry[]
+
+  @@index([teamId])
+  @@index([document])
+}
+
+model AthleteIdCard {
+  id         String   @id @default(uuid())
+  athleteId  String
+  cardNumber String   @unique
+  qrToken    String   @unique
+  issuedAt   DateTime @default(now())
+  expiresAt  DateTime?
+  status     String   @default("ACTIVE")
+  createdAt  DateTime @default(now())
+  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@index([athleteId])
+}
+
+model AthleteBidEntry {
+  id             String   @id @default(uuid())
+  athleteId      String
+  championshipId String?
+  teamFromId     String?
+  teamToId       String?
+  type           String   @default("REGISTRATION")
+  status         String   @default("PENDING")
+  reason         String?
+  createdAt      DateTime @default(now())
+  athlete        Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  championship   Championship? @relation(fields: [championshipId], references: [id], onDelete: SetNull)
+  teamFrom       Team?    @relation("BidTeamFrom", fields: [teamFromId], references: [id], onDelete: SetNull)
+  teamTo         Team?    @relation("BidTeamTo", fields: [teamToId], references: [id], onDelete: SetNull)
+
+  @@index([athleteId])
+  @@index([championshipId])
+}
+
+model Referee {
+  id            String   @id @default(uuid())
+  name          String
+  licenseNumber String?
+  phone         String?
+  email         String?
+  city          String?
+  status        String   @default("ACTIVE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  assignments   RefereeAssignment[]
+}
+
+model RefereeAssignment {
+  id         String   @id @default(uuid())
+  gameId     String
+  refereeId  String
+  role       String   @default("MAIN")
+  status     String   @default("ASSIGNED")
+  notes      String?
+  createdAt  DateTime @default(now())
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  referee    Referee  @relation(fields: [refereeId], references: [id], onDelete: Cascade)
+
+  @@index([gameId])
+  @@index([refereeId])
+}
+
+model Sponsor {
+  id         String   @id @default(uuid())
+  name       String
+  logoUrl    String?
+  websiteUrl String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  clicks     SponsorClick[]
+}
+
+model SponsorClick {
+  id         String   @id @default(uuid())
+  sponsorId  String
+  source     String?
+  referrer   String?
+  createdAt  DateTime @default(now())
+  sponsor    Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+
+  @@index([sponsorId])
+}
+
+model NewsPost {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  excerpt     String?
+  content     String
+  coverUrl    String?
+  status      String   @default("DRAFT")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VideoPost {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String?
+  videoUrl    String
+  coverUrl    String?
+  status      String   @default("DRAFT")
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SeasonRanking {
+  id        String   @id @default(uuid())
+  teamId    String
+  season    Int
+  points    Int      @default(0)
+  wins      Int      @default(0)
+  losses    Int      @default(0)
+  games     Int      @default(0)
+  updatedAt DateTime @updatedAt
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, season])
+  @@index([season])
 }
 
 model Document {

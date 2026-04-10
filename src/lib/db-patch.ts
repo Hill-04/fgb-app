@@ -65,6 +65,149 @@ const schemaPatches: SchemaPatch[] = [
     );`,
     critical: true,
   },
+  {
+    kind: 'table',
+    table: 'Athlete',
+    sql: `CREATE TABLE IF NOT EXISTS Athlete (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      birthDate DATETIME,
+      document TEXT,
+      sex TEXT,
+      photoUrl TEXT,
+      status TEXT DEFAULT 'ACTIVE',
+      teamId TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'AthleteIdCard',
+    sql: `CREATE TABLE IF NOT EXISTS AthleteIdCard (
+      id TEXT PRIMARY KEY,
+      athleteId TEXT NOT NULL,
+      cardNumber TEXT UNIQUE,
+      qrToken TEXT UNIQUE,
+      issuedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expiresAt DATETIME,
+      status TEXT DEFAULT 'ACTIVE',
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'AthleteBidEntry',
+    sql: `CREATE TABLE IF NOT EXISTS AthleteBidEntry (
+      id TEXT PRIMARY KEY,
+      athleteId TEXT NOT NULL,
+      championshipId TEXT,
+      teamFromId TEXT,
+      teamToId TEXT,
+      type TEXT DEFAULT 'REGISTRATION',
+      status TEXT DEFAULT 'PENDING',
+      reason TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'Referee',
+    sql: `CREATE TABLE IF NOT EXISTS Referee (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      licenseNumber TEXT,
+      phone TEXT,
+      email TEXT,
+      city TEXT,
+      status TEXT DEFAULT 'ACTIVE',
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'RefereeAssignment',
+    sql: `CREATE TABLE IF NOT EXISTS RefereeAssignment (
+      id TEXT PRIMARY KEY,
+      gameId TEXT NOT NULL,
+      refereeId TEXT NOT NULL,
+      role TEXT DEFAULT 'MAIN',
+      status TEXT DEFAULT 'ASSIGNED',
+      notes TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'Sponsor',
+    sql: `CREATE TABLE IF NOT EXISTS Sponsor (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      logoUrl TEXT,
+      websiteUrl TEXT,
+      isActive INTEGER DEFAULT 1,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'SponsorClick',
+    sql: `CREATE TABLE IF NOT EXISTS SponsorClick (
+      id TEXT PRIMARY KEY,
+      sponsorId TEXT NOT NULL,
+      source TEXT,
+      referrer TEXT,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'NewsPost',
+    sql: `CREATE TABLE IF NOT EXISTS NewsPost (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      slug TEXT UNIQUE,
+      excerpt TEXT,
+      content TEXT NOT NULL,
+      coverUrl TEXT,
+      status TEXT DEFAULT 'DRAFT',
+      publishedAt DATETIME,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'VideoPost',
+    sql: `CREATE TABLE IF NOT EXISTS VideoPost (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      slug TEXT UNIQUE,
+      description TEXT,
+      videoUrl TEXT NOT NULL,
+      coverUrl TEXT,
+      status TEXT DEFAULT 'DRAFT',
+      publishedAt DATETIME,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
+  {
+    kind: 'table',
+    table: 'SeasonRanking',
+    sql: `CREATE TABLE IF NOT EXISTS SeasonRanking (
+      id TEXT PRIMARY KEY,
+      teamId TEXT NOT NULL,
+      season INTEGER NOT NULL,
+      points INTEGER DEFAULT 0,
+      wins INTEGER DEFAULT 0,
+      losses INTEGER DEFAULT 0,
+      games INTEGER DEFAULT 0,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+  },
 
   { kind: 'column', table: 'Game', column: 'court', sql: 'ALTER TABLE Game ADD COLUMN court TEXT;', critical: true },
   { kind: 'column', table: 'Game', column: 'round', sql: 'ALTER TABLE Game ADD COLUMN round INTEGER DEFAULT 1;', critical: true },

@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User, FlaskConical,
+  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Medal, Gavel,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -27,9 +27,15 @@ const adminNavGroups = [
     ],
   },
   {
-    label: 'Ferramentas',
+    label: 'Módulos',
     items: [
-      { href: '/admin/simulation',    label: 'Simulação',    icon: FlaskConical },
+      { href: '/admin/simulation',    label: 'Simulação',     icon: FlaskConical },
+      { href: '/admin/athletes',      label: 'Atletas (BID)', icon: Users },
+      { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
+      { href: '/admin/sponsors',      label: 'Patrocinadores', icon: Trophy },
+      { href: '/admin/news',          label: 'Notícias',      icon: Newspaper },
+      { href: '/admin/videos',        label: 'Vídeos',        icon: Video },
+      { href: '/admin/ranking',       label: 'Ranking',       icon: Medal },
     ],
   },
   {
