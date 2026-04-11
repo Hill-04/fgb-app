@@ -18,6 +18,7 @@ async function createVideo(formData: FormData) {
   const description = String(formData.get('description') || '').trim()
   const videoUrl = String(formData.get('videoUrl') || '').trim()
   const coverUrl = String(formData.get('coverUrl') || '').trim()
+  const publishNow = formData.get('publishNow') === 'on'
   if (!title || !videoUrl) return
 
   await prisma.videoPost.create({
@@ -27,10 +28,35 @@ async function createVideo(formData: FormData) {
       description: description || null,
       videoUrl,
       coverUrl: coverUrl || null,
-      status: 'DRAFT',
+      status: publishNow ? 'PUBLISHED' : 'DRAFT',
+      publishedAt: publishNow ? new Date() : null,
     }
   })
   revalidatePath('/admin/videos')
+  revalidatePath('/videos')
+  revalidatePath('/')
+}
+
+async function togglePublish(formData: FormData) {
+  'use server'
+  const id = String(formData.get('id') || '')
+  const status = String(formData.get('status') || '')
+  if (!id) return
+
+  const nextStatus = status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED'
+  await prisma.videoPost.update({
+    where: { id },
+    data: {
+      status: nextStatus,
+      publishedAt: nextStatus === 'PUBLISHED' ? new Date() : null,
+    }
+  })
+
+  const video = await prisma.videoPost.findUnique({ where: { id } })
+  revalidatePath('/admin/videos')
+  revalidatePath('/videos')
+  revalidatePath('/')
+  if (video?.slug) revalidatePath(`/videos/${video.slug}`)
 }
 
 export default async function AdminVideosPage() {
@@ -40,7 +66,7 @@ export default async function AdminVideosPage() {
     return (
       <div className="space-y-6 pb-12">
         <div>
-          <h1 className="fgb-display text-3xl text-[var(--black)]">Vídeos</h1>
+          <h1 className="fgb-display text-3xl text-[var(--black)]">Videos</h1>
           <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>
             Highlights, entrevistas e clips oficiais.
           </p>
@@ -48,33 +74,47 @@ export default async function AdminVideosPage() {
 
         <div className="fgb-card p-5">
           <form action={createVideo} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <input name="title" placeholder="Título" className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm md:col-span-2" />
-            <input name="videoUrl" placeholder="URL do vídeo" className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm md:col-span-2" />
+            <input name="title" placeholder="Titulo" className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm md:col-span-2" />
+            <input name="videoUrl" placeholder="URL do video" className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm md:col-span-2" />
             <input name="coverUrl" placeholder="Capa (opcional)" className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm md:col-span-2" />
-            <textarea name="description" placeholder="Descrição (opcional)" className="min-h-[100px] rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm md:col-span-2" />
-            <button type="submit" className="fgb-btn-primary h-10 rounded-xl md:col-span-2">Salvar vídeo</button>
+            <textarea name="description" placeholder="Descricao (opcional)" className="min-h-[100px] rounded-xl border border-[var(--border)] bg-white px-3 py-2 text-sm md:col-span-2" />
+            <label className="flex items-center gap-2 text-sm text-[var(--gray)] md:col-span-2">
+              <input type="checkbox" name="publishNow" className="accent-[var(--verde)]" />
+              Publicar agora
+            </label>
+            <button type="submit" className="fgb-btn-primary h-10 rounded-xl md:col-span-2">Salvar video</button>
           </form>
         </div>
 
         <div className="fgb-card overflow-hidden">
           <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--gray-l)]">
-            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Biblioteca de vídeos</p>
+            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Biblioteca de videos</p>
           </div>
           <div className="divide-y divide-[var(--border)] bg-white">
             {videos.length === 0 ? (
-              <div className="p-10 text-center text-sm text-[var(--gray)]">Nenhum vídeo cadastrado.</div>
+              <div className="p-10 text-center text-sm text-[var(--gray)]">Nenhum video cadastrado.</div>
             ) : (
               videos.map((video) => (
-                <div key={video.id} className="p-6 flex items-center gap-4">
-                  <div className="w-16 h-10 rounded-md bg-[var(--gray-l)] border border-[var(--border)] overflow-hidden">
-                    {video.coverUrl ? (
-                      <img src={video.coverUrl} alt={video.title} className="w-full h-full object-cover" />
-                    ) : null}
+                <div key={video.id} className="p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-10 rounded-md bg-[var(--gray-l)] border border-[var(--border)] overflow-hidden">
+                      {video.coverUrl ? (
+                        <img src={video.coverUrl} alt={video.title} className="w-full h-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-[var(--black)]">{video.title}</p>
+                      <p className="text-[11px] text-[var(--gray)]">{video.videoUrl}</p>
+                      <p className="text-[11px] text-[var(--gray)]">Status: {video.status}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-black text-[var(--black)]">{video.title}</p>
-                    <p className="text-[11px] text-[var(--gray)]">{video.videoUrl}</p>
-                  </div>
+                  <form action={togglePublish}>
+                    <input type="hidden" name="id" value={video.id} />
+                    <input type="hidden" name="status" value={video.status} />
+                    <button type="submit" className="fgb-btn-secondary h-9 px-4">
+                      {video.status === 'PUBLISHED' ? 'Retirar do ar' : 'Publicar'}
+                    </button>
+                  </form>
                 </div>
               ))
             )}
@@ -87,7 +127,7 @@ export default async function AdminVideosPage() {
     return (
       <div className="fgb-card p-10 text-center">
         <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
-          Erro ao carregar vídeos.
+          Erro ao carregar videos.
         </p>
       </div>
     )
