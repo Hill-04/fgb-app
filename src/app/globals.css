@@ -436,6 +436,22 @@ a, button {
   animation: fgb-pulse 1.4s ease-in-out infinite;
 }
 
+/* â”€â”€ RESPONSIVE TABLES (ADMIN) â”€â”€ */
+.fgb-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.fgb-table {
+  width: 100%;
+  min-width: 720px;
+}
+@media (max-width: 768px) {
+  .fgb-table {
+    font-size: 12px;
+  }
+}
+
 /* ── STRIP TRICOLOR (stats strip amarelo) ───────────────── */
 .fgb-stats-strip {
   background: var(--yellow);

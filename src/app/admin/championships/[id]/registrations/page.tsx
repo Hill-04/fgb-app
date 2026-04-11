@@ -334,7 +334,8 @@ export default function RegistrationsPage() {
       </div>
 
       <div className="fgb-card overflow-hidden bg-white shadow-sm">
-        <table className="w-full">
+        <div className="fgb-table-wrap">
+          <table className="fgb-table w-full">
           <thead className="bg-[var(--gray-l)]">
             <tr className="border-b border-[var(--border)]">
               <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Equipe</th>
@@ -408,7 +409,8 @@ export default function RegistrationsPage() {
               </tr>
             ))}
           </tbody>
-        </table>
+          </table>
+        </div>
         {registrations.length === 0 && (
           <div className="p-16 text-center">
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">

@@ -119,7 +119,8 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
          <div className="lg:col-span-12">
             <Section title="Inscrições e Categorias Selecionadas" subtitle="Visão detalhada de cada equipe na competição">
                <div className="bg-[#111] border border-white/5 rounded-3xl overflow-hidden mt-6">
-                  <table className="w-full text-left">
+                  <div className="fgb-table-wrap">
+                     <table className="fgb-table w-full text-left">
                      <thead className="bg-white/5 border-b border-white/5">
                         <tr>
                            <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Equipe</th>
@@ -172,7 +173,8 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
                            ))
                         )}
                      </tbody>
-                  </table>
+                     </table>
+                  </div>
                </div>
             </Section>
          </div>

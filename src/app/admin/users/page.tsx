@@ -178,8 +178,8 @@ export default function UsersManagementPage() {
       </div>
 
       <div className="fgb-card p-0 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
+        <div className="fgb-table-wrap">
+          <table className="fgb-table w-full text-sm text-left">
             <thead className="bg-[var(--gray-l)] fgb-label text-[var(--gray)]">
               <tr>
                 <th className="px-8 py-5">Perfil</th>

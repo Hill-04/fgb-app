@@ -114,37 +114,39 @@ export default async function AdminReportsPage() {
                   <p className="text-[var(--gray)] italic text-sm font-sans">Nenhum jogo registrado ainda.</p>
                 </div>
               ) : (
-                <table className="w-full text-left">
-                  <thead className="bg-[var(--gray-l)] border-b border-[var(--border)] fgb-label text-[var(--gray)]">
-                    <tr>
-                      <th className="px-8 py-5">Partida</th>
-                      <th className="px-8 py-5">Placar</th>
-                      <th className="px-8 py-5 text-right">Data</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[var(--border)]">
-                    {recentGames.map((game) => (
-                      <tr key={game.id} className="hover:bg-[var(--gray-l)] transition-colors">
-                        <td className="px-8 py-6">
-                          <div className="flex flex-col">
-                            <span className="font-bold text-[var(--black)] text-sm tracking-tight font-sans">{game.homeTeam.name} vs {game.awayTeam.name}</span>
-                            <span className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 10 }}>{game.category.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-6">
-                          <span className="inline-flex items-center gap-2 bg-[var(--gray-l)] px-3 py-1.5 rounded-xl border border-[var(--border)] fgb-display text-[var(--black)]">
-                            {game.homeScore ?? 0} <span className="text-[var(--gray)] font-sans font-normal mx-1">-</span> {game.awayScore ?? 0}
-                          </span>
-                        </td>
-                        <td className="px-8 py-6 text-right">
-                          <span className="text-xs font-bold text-[var(--gray)] font-sans">
-                            {new Date(game.dateTime).toLocaleDateString('pt-BR')}
-                          </span>
-                        </td>
+                <div className="fgb-table-wrap">
+                  <table className="fgb-table w-full text-left">
+                    <thead className="bg-[var(--gray-l)] border-b border-[var(--border)] fgb-label text-[var(--gray)]">
+                      <tr>
+                        <th className="px-8 py-5">Partida</th>
+                        <th className="px-8 py-5">Placar</th>
+                        <th className="px-8 py-5 text-right">Data</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border)]">
+                      {recentGames.map((game) => (
+                        <tr key={game.id} className="hover:bg-[var(--gray-l)] transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-[var(--black)] text-sm tracking-tight font-sans">{game.homeTeam.name} vs {game.awayTeam.name}</span>
+                              <span className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 10 }}>{game.category.name}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6">
+                            <span className="inline-flex items-center gap-2 bg-[var(--gray-l)] px-3 py-1.5 rounded-xl border border-[var(--border)] fgb-display text-[var(--black)]">
+                              {game.homeScore ?? 0} <span className="text-[var(--gray)] font-sans font-normal mx-1">-</span> {game.awayScore ?? 0}
+                            </span>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <span className="text-xs font-bold text-[var(--gray)] font-sans">
+                              {new Date(game.dateTime).toLocaleDateString('pt-BR')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </div>
           </div>

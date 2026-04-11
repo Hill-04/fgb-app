@@ -169,8 +169,8 @@ export default async function AdminStandingsPage({
                     ))}
                   </div>
 
-                  <div className="hidden md:block overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
+                  <div className="hidden md:block fgb-table-wrap">
+                    <table className="fgb-table w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-[var(--border)] text-[10px] font-black text-[var(--gray)] uppercase tracking-widest bg-[var(--gray-l)]">
                           <th className="px-8 py-5 text-center w-20">POS</th>
