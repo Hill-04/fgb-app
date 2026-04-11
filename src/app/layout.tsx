@@ -16,21 +16,30 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'FGB — Federação Gaúcha de Basketball',
-  description: 'Sistema oficial de gestão de campeonatos da Federação Gaúcha de Basketball. Fundada em 18 de abril de 1952 em Porto Alegre, Rio Grande do Sul.',
-  keywords: ['basquete', 'basketball', 'FGB', 'Federação Gaúcha', 'Rio Grande do Sul', 'campeonato', 'estadual', 'Caxias do Sul'],
-  authors: [{ name: 'Federação Gaúcha de Basketball' }],
+  title: 'FGB — Federacao Gaucha de Basketball',
+  description: 'Sistema oficial de gestao de campeonatos da Federacao Gaucha de Basketball. Fundada em 18 de abril de 1952 em Porto Alegre, Rio Grande do Sul.',
+  keywords: ['basquete', 'basketball', 'FGB', 'Federacao Gaucha', 'Rio Grande do Sul', 'campeonato', 'estadual', 'Caxias do Sul'],
+  authors: [{ name: 'Federacao Gaucha de Basketball' }],
   openGraph: {
-    title: 'FGB — Federação Gaúcha de Basketball',
-    description: 'Gestão oficial de campeonatos de basquete do Rio Grande do Sul. Fundada em 1952.',
+    title: 'FGB — Federacao Gaucha de Basketball',
+    description: 'Gestao oficial de campeonatos de basquete do Rio Grande do Sul. Fundada em 1952.',
     locale: 'pt_BR',
     type: 'website',
-    siteName: 'FGB - Federação Gaúcha de Basketball',
+    siteName: 'FGB - Federacao Gaucha de Basketball',
+    images: [
+      {
+        url: 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png',
+        width: 1200,
+        height: 630,
+        alt: 'FGB',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'FGB — Federação Gaúcha de Basketball',
-    description: 'Gestão oficial de campeonatos de basquete do Rio Grande do Sul.',
+    title: 'FGB — Federacao Gaucha de Basketball',
+    description: 'Gestao oficial de campeonatos de basquete do Rio Grande do Sul.',
+    images: ['https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'],
   },
 };
 

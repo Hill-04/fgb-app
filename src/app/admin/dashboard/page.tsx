@@ -55,6 +55,39 @@ export default async function FederationDashboardPage() {
       }
     })
 
+    const pendingRegistrations = await prisma.registration.count({
+      where: {
+        status: 'PENDING',
+        championship: { status: { not: 'ARCHIVED' } },
+      },
+    })
+
+    const closingSoon = await prisma.championship.findMany({
+      where: {
+        status: 'REGISTRATION_OPEN',
+        regDeadline: { lte: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+      },
+      select: { id: true, name: true, regDeadline: true },
+      orderBy: { regDeadline: 'asc' },
+      take: 3,
+    })
+
+    const gamesMissingVenue = await prisma.game.count({
+      where: {
+        status: 'SCHEDULED',
+        championship: { status: { not: 'ARCHIVED' } },
+        OR: [{ venue: null }, { venue: '' }],
+      },
+    })
+
+    const finishedWithoutScore = await prisma.game.count({
+      where: {
+        status: 'FINISHED',
+        championship: { status: { not: 'ARCHIVED' } },
+        OR: [{ homeScore: null }, { awayScore: null }],
+      },
+    })
+
     return (
       <div className="space-y-8 pb-10">
         <div className="flex flex-col gap-4">
@@ -188,6 +221,40 @@ export default async function FederationDashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Alertas Operacionais */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="fgb-badge fgb-badge-yellow">ALERTAS</span>
+            <h3 className="fgb-display text-sm text-[var(--black)]">Acoes Prioritarias</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="fgb-card p-5">
+              <p className="fgb-label text-[var(--gray)] mb-2">Inscricoes pendentes</p>
+              <p className="fgb-display text-2xl text-[var(--black)]">{pendingRegistrations}</p>
+              <Link href="/admin/championships?info=registrations" className="fgb-label text-[var(--verde)] mt-2 inline-flex">Revisar →</Link>
+            </div>
+            <div className="fgb-card p-5">
+              <p className="fgb-label text-[var(--gray)] mb-2">Prazo encerrando</p>
+              <p className="fgb-display text-2xl text-[var(--black)]">{closingSoon.length}</p>
+              <div className="text-[11px] text-[var(--gray)]">
+                {closingSoon.length === 0 ? 'Nenhum prazo na semana' : closingSoon.map((c) => (
+                  <div key={c.id}>{c.name}</div>
+                ))}
+              </div>
+            </div>
+            <div className="fgb-card p-5">
+              <p className="fgb-label text-[var(--gray)] mb-2">Jogos sem local</p>
+              <p className="fgb-display text-2xl text-[var(--black)]">{gamesMissingVenue}</p>
+              <Link href="/admin/championships" className="fgb-label text-[var(--red)] mt-2 inline-flex">Corrigir →</Link>
+            </div>
+            <div className="fgb-card p-5">
+              <p className="fgb-label text-[var(--gray)] mb-2">Resultados incompletos</p>
+              <p className="fgb-display text-2xl text-[var(--black)]">{finishedWithoutScore}</p>
+              <Link href="/admin/championships" className="fgb-label text-[var(--orange)] mt-2 inline-flex">Atualizar →</Link>
+            </div>
+          </div>
+        </div>
       </div>
     )
   } catch (error: any) {
@@ -200,4 +267,3 @@ export default async function FederationDashboardPage() {
     )
   }
 }
-
