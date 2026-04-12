@@ -10,7 +10,8 @@ export default async function OrganizationPage({
 }) {
   const { id } = await params
 
-  const championship = await prisma.championship.findUnique({
+  try {
+    const championship = await prisma.championship.findUnique({
     where: { id },
     select: {
       id: true,
@@ -23,7 +24,7 @@ export default async function OrganizationPage({
     }
   })
 
-  const categoriesWithTeams = await prisma.championshipCategory.findMany({
+    const categoriesWithTeams = await prisma.championshipCategory.findMany({
     where: { championshipId: id },
     include: {
       _count: {
@@ -191,4 +192,14 @@ export default async function OrganizationPage({
       </div>
     </div>
   )
+  } catch (error) {
+    console.error('[ADMIN ORGANIZATION ERROR]', error)
+    return (
+      <div className="fgb-card p-10 text-center">
+        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+          Erro ao carregar organizacao.
+        </p>
+      </div>
+    )
+  }
 }

@@ -235,9 +235,10 @@ model Standing {
   diff       Int                  @default(0)
   updatedAt  DateTime             @updatedAt
   category   ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  team       Team                 @relation(fields: [teamId], references: [id])
+  team       Team                 @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, categoryId])
+  @@index([categoryId])
 }
 
 model Athlete {

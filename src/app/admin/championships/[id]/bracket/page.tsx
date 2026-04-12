@@ -8,6 +8,7 @@ export default async function BracketPage({
 }) {
   const { id } = await params
 
+  try {
   const championship = await prisma.championship.findUnique({
     where: { id },
     select: { hasPlayoffs: true, playoffTeams: true, name: true }
@@ -171,4 +172,14 @@ export default async function BracketPage({
       </div>
     </div>
   )
+  } catch (error) {
+    console.error('[ADMIN BRACKET ERROR]', error)
+    return (
+      <div className="fgb-card p-10 text-center">
+        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+          Erro ao carregar bracket.
+        </p>
+      </div>
+    )
+  }
 }

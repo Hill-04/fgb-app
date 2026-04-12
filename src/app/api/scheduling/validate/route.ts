@@ -58,10 +58,13 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions)
     if (!session || !(session.user as any).isAdmin) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
     }
 
     const { championshipId } = await request.json()
+    if (!championshipId) {
+      return NextResponse.json({ error: 'championshipId obrigatorio' }, { status: 400 })
+    }
 
     const championship = await withDatabaseSchemaRetry(() =>
       prisma.championship.findUnique({
@@ -88,7 +91,7 @@ export async function POST(request: Request) {
     )
 
     if (!championship) {
-      return NextResponse.json({ error: 'Campeonato não encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Campeonato nao encontrado' }, { status: 404 })
     }
 
     const issues: ValidationIssue[] = []
@@ -103,15 +106,15 @@ export async function POST(request: Request) {
         issues.push({
           type: 'error',
           field: `categoria.${category.name}`,
-          message: `${category.name}: apenas ${teamCount} equipe(s). Mínimo: 2.`,
+          message: `${category.name}: apenas ${teamCount} equipe(s). Minimo: 2.`,
           suggestion: 'Adicione mais equipes ou desative esta categoria.',
         })
       } else if (teamCount < championship.minTeamsPerCat) {
         issues.push({
           type: 'warning',
           field: `minTeams.${category.name}`,
-          message: `${category.name}: ${teamCount} equipes, mínimo configurado: ${championship.minTeamsPerCat}.`,
-          suggestion: `Adicione ${championship.minTeamsPerCat - teamCount} equipe(s) ou reduza o mínimo.`,
+          message: `${category.name}: ${teamCount} equipes, minimo configurado: ${championship.minTeamsPerCat}.`,
+          suggestion: `Adicione ${championship.minTeamsPerCat - teamCount} equipe(s) ou reduza o minimo.`,
         })
       }
     }
@@ -153,9 +156,9 @@ export async function POST(request: Request) {
           issues.push({
             type: 'error',
             field: `datas.${category.name}`,
-            message: `${category.name}: apenas ${freeWeekends} fim(ns) de semana onde TODAS as ${registrations.length} equipes estão livres. Necessário: ${requiredWeekends}.`,
+            message: `${category.name}: apenas ${freeWeekends} fim(ns) de semana onde TODAS as ${registrations.length} equipes estao livres. Necessario: ${requiredWeekends}.`,
             suggestion:
-              'Campeonato centralizado exige que todas as equipes estejam presentes. Estenda o período ou negocie as datas bloqueadas.',
+              'Campeonato centralizado exige que todas as equipes estejam presentes. Estenda o periodo ou negocie as datas bloqueadas.',
           })
         }
       }
@@ -177,8 +180,8 @@ export async function POST(request: Request) {
           warnings.push({
             type: 'warning',
             field: `bloqueio.${registration.registration.team.name}`,
-            message: `${registration.registration.team.name} (${category.name}): ${Math.round(blockedPct)}% do período bloqueado.`,
-            suggestion: 'Esta equipe pode comprometer a organização. Verificar com o responsável.',
+            message: `${registration.registration.team.name} (${category.name}): ${Math.round(blockedPct)}% do periodo bloqueado.`,
+            suggestion: 'Esta equipe pode comprometer a organizacao. Verificar com o responsavel.',
           })
         }
       }
@@ -211,7 +214,7 @@ export async function POST(request: Request) {
       warnings.push({
         type: 'info',
         field: 'atletas',
-        message: `${multiCategoryAthletes.length} atleta(s) em múltiplas categorias. A IA ajustará os horários automaticamente.`,
+        message: `${multiCategoryAthletes.length} atleta(s) em multiplas categorias. A IA ajustara os horarios automaticamente.`,
         athletes: multiCategoryAthletes.map(([name, categories]) => ({ name, categories })),
       })
     }
@@ -220,8 +223,8 @@ export async function POST(request: Request) {
       issues.push({
         type: 'error',
         field: 'startDate',
-        message: 'Data de início não definida.',
-        suggestion: 'Defina a data de início nas Configurações.',
+        message: 'Data de inicio nao definida.',
+        suggestion: 'Defina a data de inicio nas Configuracoes.',
       })
     }
 
@@ -265,11 +268,11 @@ export async function POST(request: Request) {
 
     let aiMessage = ''
     if (hasErrors) {
-      aiMessage = `Encontrei ${issues.filter((issue) => issue.type === 'error').length} problema(s) que impedem a organização. Corrija antes de continuar.`
+      aiMessage = `Encontrei ${issues.filter((issue) => issue.type === 'error').length} problema(s) que impedem a organizacao. Corrija antes de continuar.`
     } else if (issues.length > 0 || warnings.length > 0) {
-      aiMessage = `O campeonato é viável com ${issues.length + warnings.length} ponto(s) de atenção. Você pode continuar ou ajustar.`
+      aiMessage = `O campeonato e viavel com ${issues.length + warnings.length} ponto(s) de atencao. Voce pode continuar ou ajustar.`
     } else {
-      aiMessage = `Tudo certo! ${totalGames} jogos distribuídos em aprox. ${estimatedDays} dia(s). ${totalBlockedCount} restrição(ões) de data serão consideradas.`
+      aiMessage = `Tudo certo! ${totalGames} jogos distribuidos em aprox. ${estimatedDays} dia(s). ${totalBlockedCount} restricao(oes) de data serao consideradas.`
     }
 
     return NextResponse.json({
@@ -279,7 +282,7 @@ export async function POST(request: Request) {
       fieldControlType: isCentralized ? 'centralizado' : 'alternado',
       fieldControlImpact: isCentralized
         ? 'Todas as equipes precisam estar presentes em cada fase. Um bloqueio invalida o dia inteiro.'
-        : 'Apenas o confronto específico é afetado por um bloqueio.',
+        : 'Apenas o confronto especifico e afetado por um bloqueio.',
       summary: {
         totalTeams: championship.categories.reduce((accumulator, category) => accumulator + category.registrations.length, 0),
         totalCategories: championship.categories.length,
@@ -294,8 +297,12 @@ export async function POST(request: Request) {
       },
       aiMessage,
     })
-  } catch (error: any) {
-    console.error('[Scheduling Validate Error]', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error) {
+    console.error('[C-02][Scheduling Validate Error]', error)
+    return NextResponse.json(
+      { error: 'Erro interno ao validar campeonato', details: String(error) },
+      { status: 500 }
+    )
   }
 }
+
