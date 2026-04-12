@@ -1,104 +1,71 @@
+import { prisma } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { prisma } from '@/lib/db'
+import { formatChampionshipStatus } from '@/lib/utils'
 import { ChampionshipTabs } from './ChampionshipTabs'
 
 export default async function ChampionshipLayout({
   children,
-  params
+  params,
 }: {
   children: React.ReactNode
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
 
-  const championship = await prisma.championship.findUnique({
-    where: { id },
-    select: { id: true, name: true, status: true }
-  }).catch(() => null)
+  try {
+    const championship = await prisma.championship.findUnique({
+      where: { id },
+      select: { id: true, name: true, status: true }
+    })
 
-  if (!championship) notFound()
+    if (!championship) notFound()
 
-  return (
-    <div>
-      <div style={{
-        background: '#fff',
-        borderBottom: '1px solid var(--border)',
-        padding: '16px 24px 0'
-      }}>
-        <Link
-          href="/admin/championships"
-          className="fgb-label"
-          style={{ color: 'var(--gray)', marginBottom: 4, display: 'inline-flex' }}
-        >
-          Campeonato
-        </Link>
-        <h1 className="fgb-heading" style={{ fontSize: 20, marginBottom: 12 }}>
-          {championship.name}
-        </h1>
+    const statusBadge: Record<string, string> = {
+      DRAFT: 'fgb-badge fgb-badge-outline',
+      REGISTRATION_OPEN: 'fgb-badge fgb-badge-verde',
+      REGISTRATION_CLOSED: 'fgb-badge fgb-badge-yellow',
+      ORGANIZING: 'fgb-badge fgb-badge-outline',
+      ONGOING: 'fgb-badge fgb-badge-verde',
+      FINISHED: 'fgb-badge fgb-badge-outline',
+      ARCHIVED: 'fgb-badge fgb-badge-outline',
+    }
 
-        <StatusPipeline status={championship.status} />
+    return (
+      <div className="space-y-0 pb-10">
+        <div className="fgb-card rounded-none border-x-0 border-t-0 px-6 py-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <Link
+              href="/admin/championships"
+              className="fgb-label text-[var(--gray)] hover:text-[var(--verde)] transition-colors"
+              style={{ fontSize: 10 }}
+            >
+              ← Todos os Campeonatos
+            </Link>
+            <h1 className="fgb-display text-2xl text-[var(--black)] mt-1">
+              {championship.name}
+            </h1>
+          </div>
+          <span className={statusBadge[championship.status] || statusBadge.DRAFT}>
+            {formatChampionshipStatus(championship.status)}
+          </span>
+        </div>
 
-        <div style={{ display: 'flex', gap: 0, marginTop: 12, overflowX: 'auto' }}>
-          <ChampionshipTabs id={championship.id} status={championship.status} />
+        <ChampionshipTabs id={id} status={championship.status} />
+
+        <div className="px-6 pt-6">
+          {children}
         </div>
       </div>
-
-      <div>{children}</div>
-    </div>
-  )
+    )
+  } catch (error) {
+    console.error('[CHAMPIONSHIP LAYOUT ERROR]', error)
+    return (
+      <div className="fgb-card p-10 text-center">
+        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+          Erro ao carregar o campeonato. Tente novamente.
+        </p>
+      </div>
+    )
+  }
 }
-
-function StatusPipeline({ status }: { status: string }) {
-  const stages = [
-    { key: 'DRAFT',               label: 'Rascunho' },
-    { key: 'REGISTRATION_OPEN',   label: 'Inscricoes' },
-    { key: 'REGISTRATION_CLOSED', label: 'Encerrado' },
-    { key: 'ORGANIZING',          label: 'Organizando' },
-    { key: 'ACTIVE',              label: 'Em andamento' },
-    { key: 'FINISHED',            label: 'Encerrado' },
-  ]
-  const currentIdx = stages.findIndex(s => s.key === status)
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-      {stages.map((stage, i) => {
-        const isDone = i < currentIdx
-        const isCurrent = i === currentIdx
-        return (
-          <div key={stage.key} style={{ display: 'flex', alignItems: 'center' }}>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '3px 10px',
-              background: isCurrent ? 'var(--verde)' : isDone ? 'var(--verde-light)' : 'var(--gray-l)',
-              borderRadius: 4
-            }}>
-              {isCurrent && (
-                <span style={{
-                  width: 6, height: 6, borderRadius: '50%',
-                  background: '#fff',
-                  animation: 'fgb-dot-pulse 2s ease-in-out infinite'
-                }} />
-              )}
-              <span style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 9, fontWeight: 700,
-                textTransform: 'uppercase', letterSpacing: '0.1em',
-                color: isCurrent ? '#fff' : isDone ? 'var(--verde)' : 'var(--gray)'
-              }}>
-                {stage.label}
-              </span>
-            </div>
-            {i < stages.length - 1 && (
-              <div style={{
-                width: 16, height: 1,
-                background: isDone ? 'var(--verde)' : 'var(--border)'
-              }} />
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-

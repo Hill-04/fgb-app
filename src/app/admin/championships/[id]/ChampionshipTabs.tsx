@@ -8,8 +8,19 @@ interface Tab {
   label: string
   href: string
   icon: React.ElementType
-  requiresStatus?: string[] | null
+  alwaysActive?: boolean
+  requiresStatus?: string[]
   badge?: string
+}
+
+const statusLabels: Record<string, string> = {
+  DRAFT: 'Criação',
+  REGISTRATION_OPEN: 'Inscrições',
+  REGISTRATION_CLOSED: 'Inscrições',
+  ORGANIZING: 'Organização',
+  ONGOING: 'Em andamento',
+  ACTIVE: 'Em andamento',
+  FINISHED: 'Encerrado',
 }
 
 export function ChampionshipTabs({ id, status }: { id: string; status: string }) {
@@ -17,61 +28,63 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
 
   const tabs: Tab[] = [
     {
-      label: 'Visao Geral',
+      label: 'Visão Geral',
       href: `/admin/championships/${id}`,
       icon: LayoutDashboard,
-      requiresStatus: null,
+      alwaysActive: true,
     },
     {
-      label: 'Configuracoes',
+      label: 'Configurações',
       href: `/admin/championships/${id}/settings`,
       icon: Settings,
-      requiresStatus: null,
+      alwaysActive: true,
     },
     {
-      label: 'Inscricoes',
+      label: 'Inscrições',
       href: `/admin/championships/${id}/registrations`,
       icon: Users,
-      requiresStatus: null,
+      alwaysActive: true,
     },
     {
       label: 'Organizar IA',
-      href: `/admin/championships/${id}/organize`,
+      href: `/admin/championships/${id}/organization`,
       icon: Sparkles,
+      requiresStatus: ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'ORGANIZING'],
       badge: 'IA',
-      requiresStatus: ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'ORGANIZING', 'ACTIVE'],
     },
     {
       label: 'Jogos',
       href: `/admin/championships/${id}/matches`,
       icon: Calendar,
-      requiresStatus: ['ORGANIZING', 'ACTIVE', 'FINISHED'],
+      requiresStatus: ['ORGANIZING', 'ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
-      label: 'Classificacao',
+      label: 'Classificação',
       href: `/admin/championships/${id}/standings`,
       icon: BarChart2,
-      requiresStatus: ['ACTIVE', 'FINISHED'],
+      requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
       label: 'Documentos',
       href: `/admin/championships/${id}/documents`,
       icon: FileText,
-      requiresStatus: null,
+      alwaysActive: true,
     },
   ]
 
   return (
     <div className="flex items-center gap-0 border-b border-[var(--border)] overflow-x-auto shrink-0 no-scrollbar bg-white">
-      {tabs.map((tab) => {
+      {tabs.map((tab, index) => {
         const isActive = tab.href === `/admin/championships/${id}`
           ? pathname === tab.href
           : pathname.startsWith(tab.href)
 
-        const isEnabled = !tab.requiresStatus || tab.requiresStatus.includes(status)
-        const disabledTitle = tab.requiresStatus
-          ? `Disponivel quando campeonato estiver em: ${tab.requiresStatus.join(', ')}`
-          : undefined
+        const isEnabled = tab.alwaysActive || !tab.requiresStatus || tab.requiresStatus.includes(status)
+        const previousLabel = tabs[Math.max(0, index - 1)]?.label
+        const reasonLabel = statusLabels[status] || 'a etapa anterior'
+        const disabledTitle = previousLabel
+          ? `Esta aba estará disponível após ${previousLabel}.`
+          : `Esta aba estará disponível após ${reasonLabel}.`
 
         return (
           <Link
@@ -82,7 +95,7 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
             }}
             aria-disabled={!isEnabled}
             title={!isEnabled ? disabledTitle : undefined}
-            className={`championship-tab group flex items-center gap-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest whitespace-nowrap border-b-2 transition-all ${
+            className={`group flex items-center gap-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest whitespace-nowrap border-b-2 transition-all ${
               isActive
                 ? 'text-[var(--verde)] border-[var(--verde)] bg-[var(--verde)]/5'
                 : 'text-[var(--gray)] border-transparent hover:text-[var(--black)] hover:border-[var(--border)]'

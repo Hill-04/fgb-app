@@ -19,33 +19,32 @@ type ManagePageProps = {
 export default async function ChampionshipManagePage({ params }: ManagePageProps) {
   const { id } = await params
 
-  try {
-    const championship = await prisma.championship.findUnique({
-      where: { id },
-      include: {
-        categories: {
-          include: {
-            _count: { select: { registrations: true } }
+  const championship = await prisma.championship.findUnique({
+    where: { id },
+    include: {
+      categories: {
+        include: {
+          _count: { select: { registrations: true } }
+        }
+      },
+      registrations: {
+        include: {
+          team: true,
+          categories: {
+            include: { category: true }
           }
         },
-        registrations: {
-          include: {
-            team: true,
-            categories: {
-              include: { category: true }
-            }
-          },
-          orderBy: { registeredAt: 'desc' }
-        }
+        orderBy: { registeredAt: 'desc' }
       }
-    })
+    }
+  })
 
-    if (!championship) notFound()
+  if (!championship) notFound()
 
-    const minTeams = championship.minTeamsPerCat
+  const minTeams = championship.minTeamsPerCat
 
-    return (
-      <div className="space-y-10">
+  return (
+    <div className="space-y-10">
       <div className="animate-fade-in flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">
@@ -210,16 +209,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
           </Card>
         </div>
       </div>
-      </div>
-    )
-  } catch (error) {
-    console.error('[ADMIN CHAMPIONSHIP MANAGE ERROR]', error)
-    return (
-      <div className="fgb-card p-10 text-center">
-        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
-          Erro ao carregar gerenciamento do campeonato.
-        </p>
-      </div>
-    )
-  }
+    </div>
+  )
 }
+

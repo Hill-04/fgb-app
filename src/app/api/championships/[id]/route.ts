@@ -42,10 +42,6 @@ export async function GET(
       ] as const
     })
 
-    if (!championship) {
-      return NextResponse.json({ error: 'Nao encontrado' }, { status: 404 })
-    }
-
     return NextResponse.json({ ...championship, deletionCounts: counts })
   } catch (error) {
     console.error('Error fetching championship:', error)

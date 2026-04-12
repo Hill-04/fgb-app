@@ -563,12 +563,6 @@ a, button {
   color: var(--yellow);
 }
 
-/* Championship tabs */
-.championship-tab:hover {
-  color: var(--verde) !important;
-  border-bottom-color: var(--verde) !important;
-}
-
 /* ── CTA FINAL ──────────────────────────────────────────── */
 .fgb-cta {
   background: var(--verde);

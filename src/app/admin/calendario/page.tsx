@@ -1,124 +1,192 @@
 import { prisma } from '@/lib/db'
+import { Badge } from '@/components/Badge'
+import { CalendarDays } from 'lucide-react'
+import { format } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 export const dynamic = 'force-dynamic'
 
-export default async function CalendarioGlobal() {
-  const games = await prisma.game.findMany({
-    where: { status: { not: 'CANCELLED' } },
-    include: {
-      homeTeam: { select: { name: true } },
-      awayTeam: { select: { name: true } },
-      category: {
-        select: {
-          name: true,
-          championship: { select: { id: true, name: true, status: true } }
-        }
-      }
-    },
-    orderBy: { dateTime: 'asc' }
-  }).catch(() => [])
+const STATUS_OPTIONS = [
+  { value: '', label: 'Todos' },
+  { value: 'SCHEDULED', label: 'Agendado' },
+  { value: 'FINISHED', label: 'Finalizado' },
+  { value: 'POSTPONED', label: 'Adiado' },
+]
 
-  type GameRow = (typeof games)[number]
+export default async function AdminCalendarPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ championshipId?: string; categoryId?: string; status?: string }>
+}) {
+  const params = await searchParams
+  const selectedChampionship = params.championshipId ?? ''
+  const selectedCategory = params.categoryId ?? ''
+  const selectedStatus = params.status ?? ''
 
-  const byDate = games.reduce((acc, g) => {
-    const key = new Date(g.dateTime).toISOString().split('T')[0]
-    if (!acc[key]) acc[key] = []
-    acc[key].push(g)
-    return acc
-  }, {} as Record<string, GameRow[]>)
+  try {
+    const championships = await prisma.championship.findMany({
+      where: { status: { not: 'ARCHIVED' } },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, name: true }
+    })
 
-  const dates = Object.keys(byDate).sort()
+    const categories = selectedChampionship
+      ? await prisma.championshipCategory.findMany({
+          where: { championshipId: selectedChampionship },
+          orderBy: { name: 'asc' },
+          select: { id: true, name: true }
+        })
+      : []
 
-  return (
-    <div style={{ padding: 24 }}>
-      <div className="fgb-section-header">
-        <div>
-          <div className="fgb-accent fgb-accent-verde" />
-          <h1 className="fgb-section-title">Calendario <span className="verde">Geral</span></h1>
+    const games = await prisma.game.findMany({
+      where: {
+        ...(selectedStatus
+          ? { status: selectedStatus as any }
+          : { status: { not: 'CANCELLED' } }),
+        ...(selectedChampionship
+          ? { category: { championshipId: selectedChampionship } }
+          : {}),
+        ...(selectedCategory ? { categoryId: selectedCategory } : {}),
+      },
+      include: {
+        homeTeam: true,
+        awayTeam: true,
+        category: { include: { championship: { select: { id: true, name: true } } } },
+      },
+      orderBy: { dateTime: 'asc' }
+    })
+
+    const grouped = games.reduce((acc, game) => {
+      const key = format(game.dateTime, 'yyyy-MM-dd')
+      if (!acc[key]) acc[key] = []
+      acc[key].push(game)
+      return acc
+    }, {} as Record<string, typeof games>)
+
+    const dates = Object.keys(grouped).sort((a, b) => a.localeCompare(b))
+
+    return (
+      <div className="space-y-6 pb-12">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Visão Geral</span>
+              <span className="fgb-badge fgb-badge-verde">CALENDÁRIO</span>
+            </div>
+            <h1 className="fgb-display text-3xl text-[var(--black)]">Calendário Geral</h1>
+            <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>
+              {format(new Date(), "MMMM 'de' yyyy", { locale: ptBR })}
+            </p>
+          </div>
+          <div className="fgb-card px-4 py-3 flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-[var(--verde)]" />
+            <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Consulta somente</span>
+          </div>
         </div>
+
+        <form className="fgb-card p-4 grid grid-cols-1 md:grid-cols-3 gap-3" method="GET">
+          <div className="flex flex-col gap-2">
+            <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Campeonato</label>
+            <select
+              name="championshipId"
+              defaultValue={selectedChampionship}
+              className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-xs font-bold text-[var(--black)]"
+            >
+              <option value="">Todos</option>
+              {championships.map((champ) => (
+                <option key={champ.id} value={champ.id}>{champ.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Categoria</label>
+            <select
+              name="categoryId"
+              defaultValue={selectedCategory}
+              className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-xs font-bold text-[var(--black)]"
+            >
+              <option value="">Todas</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Status</label>
+            <select
+              name="status"
+              defaultValue={selectedStatus}
+              className="h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-xs font-bold text-[var(--black)]"
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div className="md:col-span-3 flex items-center justify-end">
+            <button type="submit" className="fgb-btn-primary h-10 px-6 rounded-xl">Filtrar</button>
+          </div>
+        </form>
+
+        {dates.length === 0 ? (
+          <div className="fgb-card p-16 text-center">
+            <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+              Nenhum jogo agendado ainda.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            {dates.map((dateKey) => {
+              const dateLabel = format(new Date(`${dateKey}T00:00:00`), "EEEE, dd 'de' MMMM", { locale: ptBR })
+              const dayGames = grouped[dateKey]
+              return (
+                <div key={dateKey} className="fgb-card overflow-hidden">
+                  <div className="px-6 py-4 border-b border-[var(--border)] flex items-center justify-between bg-[var(--gray-l)]">
+                    <div>
+                      <p className="fgb-display text-sm text-[var(--black)]">{dateLabel}</p>
+                      <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 9 }}>
+                        {dayGames.length} jogo(s)
+                      </p>
+                    </div>
+                    <Badge variant="purple" size="sm">Consulta</Badge>
+                  </div>
+                  <div className="divide-y divide-[var(--border)] bg-white">
+                    {dayGames.map((game) => (
+                      <div key={game.id} className="px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-black text-[var(--black)] tabular-nums">
+                            {format(game.dateTime, 'HH:mm')}
+                          </span>
+                          <div>
+                            <p className="text-sm font-black text-[var(--black)]">
+                              {game.homeTeam.name} <span className="opacity-40 font-medium px-1">×</span> {game.awayTeam.name}
+                            </p>
+                            <p className="fgb-label text-[var(--gray)] mt-1" style={{ fontSize: 9 }}>
+                              {game.category.name} · {game.category.championship.name}
+                            </p>
+                          </div>
+                        </div>
+                        <Badge variant={game.status === 'FINISHED' ? 'success' : 'purple'} size="sm">
+                          {game.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
-
-      {dates.length === 0 && (
-        <p className="fgb-label" style={{ color: 'var(--gray)', padding: '32px 0' }}>
-          Nenhum jogo agendado ainda.
+    )
+  } catch (error) {
+    console.error('[ADMIN CALENDAR ERROR]', error)
+    return (
+      <div className="fgb-card p-16 text-center">
+        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+          Erro ao carregar jogos.
         </p>
-      )}
-
-      {dates.map(date => (
-        <div key={date} style={{ marginBottom: 24 }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12,
-            padding: '8px 0', marginBottom: 8,
-            borderBottom: '2px solid var(--black)'
-          }}>
-            <h2 className="fgb-heading" style={{ fontSize: 16 }}>
-              {new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', {
-                weekday: 'long', day: '2-digit', month: 'long', year: 'numeric'
-              })}
-            </h2>
-            <span className="fgb-label" style={{ color: 'var(--gray)' }}>
-              {byDate[date].length} jogo(s)
-            </span>
-          </div>
-
-          <div style={{ background: '#fff', border: '1px solid var(--border)' }}>
-            {byDate[date].map((g, i) => (
-              <div key={g.id} style={{
-                display: 'flex', alignItems: 'center',
-                padding: '10px 16px', gap: 12,
-                borderBottom: i < byDate[date].length - 1 ? '1px solid var(--border)' : 'none'
-              }}>
-                <span className="fgb-label" style={{ width: 52, flexShrink: 0, color: 'var(--gray)' }}>
-                  {new Date(g.dateTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-                <span className="fgb-label" style={{
-                  width: 80, flexShrink: 0, fontSize: 9,
-                  color: 'var(--verde)',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-                }}>
-                  {g.category.name}
-                </span>
-                <span className="fgb-heading" style={{ flex: 1, fontSize: 13 }}>
-                  {g.homeTeam.name}
-                </span>
-                <span className="fgb-label" style={{ color: 'var(--gray)' }}>×</span>
-                <span className="fgb-heading" style={{ flex: 1, fontSize: 13 }}>
-                  {g.awayTeam.name}
-                </span>
-                <span className="fgb-label" style={{
-                  fontSize: 9, color: 'var(--gray)',
-                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  maxWidth: 140
-                }}>
-                  {g.category.championship.name}
-                </span>
-                <StatusBadge status={g.status} />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; bg: string; color: string }> = {
-    SCHEDULED: { label: 'Agendado', bg: 'var(--gray-l)', color: 'var(--gray)' },
-    FINISHED: { label: 'Finalizado', bg: 'var(--verde-light)', color: 'var(--verde)' },
-    CANCELLED: { label: 'Cancelado', bg: 'var(--red-light)', color: 'var(--red)' },
-    POSTPONED: { label: 'Adiado', bg: 'var(--yellow-light)', color: 'var(--yellow-dark)' },
+      </div>
+    )
   }
-  const item = map[status] ?? { label: status, bg: 'var(--gray-l)', color: 'var(--gray)' }
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 5,
-      fontFamily: 'var(--font-display)', fontSize: 9, fontWeight: 700,
-      textTransform: 'uppercase', letterSpacing: '0.1em',
-      padding: '3px 10px',
-      background: item.bg, color: item.color
-    }}>
-      {item.label}
-    </span>
-  )
 }

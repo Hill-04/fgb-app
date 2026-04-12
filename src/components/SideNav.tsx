@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User,
+  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Medal, Gavel,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -19,22 +19,29 @@ type SideNavProps = {
 
 const adminNavGroups = [
   {
-    label: 'Visao Geral',
+    label: 'Principal',
     items: [
-      { href: '/admin/dashboard',  label: 'Dashboard',  icon: LayoutDashboard },
-      { href: '/admin/calendario', label: 'Calendario', icon: CalendarDays },
+      { href: '/admin/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
+      { href: '/admin/championships', label: 'Campeonatos',  icon: Trophy },
+      { href: '/admin/calendario',    label: 'Calendario',   icon: CalendarDays },
     ],
   },
   {
-    label: 'Campeonatos',
+    label: 'Modulos',
     items: [
-      { href: '/admin/championships', label: 'Campeonatos', icon: Trophy },
+      { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
+      { href: '/admin/athletes',      label: 'Atletas (BID)', icon: Users },
+      { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
+      { href: '/admin/sponsors',      label: 'Patrocinadores', icon: Trophy },
+      { href: '/admin/news',          label: 'Noticias',      icon: Newspaper },
+      { href: '/admin/videos',        label: 'Videos',        icon: Video },
+      { href: '/admin/ranking',       label: 'Ranking',       icon: Medal },
     ],
   },
   {
     label: 'Sistema',
     items: [
-      { href: '/admin/settings', label: 'Configuracoes', icon: Settings },
+      { href: '/admin/settings',      label: 'Configuracoes', icon: Settings },
     ],
   },
 ]
@@ -159,3 +166,4 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
     </div>
   )
 }
+
