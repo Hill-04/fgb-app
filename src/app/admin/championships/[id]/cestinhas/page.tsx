@@ -20,37 +20,34 @@ export default async function AdminCestinhasPage({
     const { id } = await params
     const { categoryId } = await searchParams
 
-    // Fetch categories for filter
     const categories = await prisma.championshipCategory.findMany({
       where: { championshipId: id },
       orderBy: { name: 'asc' }
     })
 
-    // Fetch REAL player statistics
     const stats = await prisma.playerStat.groupBy({
       by: ['userId', 'teamId'],
-      where: { 
-        game: { 
+      where: {
+        game: {
           championshipId: id,
           categoryId: categoryId || undefined,
           status: 'FINISHED'
-        } 
+        }
       },
       _sum: { points: true },
       _count: { gameId: true },
     })
 
-    // Fetch user and team details for the stats
     const playerDetails = await Promise.all(stats.map(async (s) => {
       const [user, team, membership] = await Promise.all([
         prisma.user.findUnique({ where: { id: s.userId }, select: { name: true } }),
         prisma.team.findUnique({ where: { id: s.teamId }, select: { name: true } }),
-        prisma.teamMembership.findUnique({ 
-          where: { userId: s.userId }, 
-          select: { number: true } 
+        prisma.teamMembership.findUnique({
+          where: { userId: s.userId },
+          select: { number: true }
         })
       ])
-      
+
       const points = s._sum.points || 0
       const games = s._count.gameId || 0
 
@@ -65,16 +62,12 @@ export default async function AdminCestinhasPage({
       }
     }))
 
-    // Sort by points desc
     const sortedScorers = playerDetails.sort((a, b) => b.points - a.points)
-    const topScorers = sortedScorers.slice(0, 10) // Show top 10
-
-    // Categories filter for the UI
+    const topScorers = sortedScorers.slice(0, 10)
     const activeCategory = categories.find(c => c.id === categoryId)
 
     return (
       <div className="space-y-8 pb-20 font-sans">
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h1 className="fgb-display text-3xl text-[var(--black)] leading-none">Top Cestinhas</h1>
@@ -83,7 +76,7 @@ export default async function AdminCestinhasPage({
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <select 
+            <select
               onChange={(e) => window.location.href = `/admin/championships/${id}/cestinhas?categoryId=${e.target.value}`}
               defaultValue={categoryId || ""}
               className="h-10 px-4 rounded-xl border border-[var(--border)] bg-white text-xs font-bold focus:outline-none focus:border-[var(--verde)]"
@@ -95,9 +88,9 @@ export default async function AdminCestinhasPage({
             </select>
             <div className="relative hidden md:block">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--gray)]" />
-              <input 
-                type="text" 
-                placeholder="Buscar atleta..." 
+              <input
+                type="text"
+                placeholder="Buscar atleta..."
                 className="pl-10 pr-4 h-10 w-48 rounded-full bg-[var(--gray-l)] border border-[var(--border)] text-[var(--black)] text-sm focus:outline-none focus:border-[var(--verde)] transition-all font-bold"
               />
             </div>
@@ -107,18 +100,16 @@ export default async function AdminCestinhasPage({
         {topScorers.length === 0 ? (
           <div className="fgb-card bg-white p-20 text-center">
             <UserIcon className="w-12 h-12 text-[var(--gray)] mx-auto mb-4 opacity-30" />
-            <h3 className="fgb-display text-lg text-[var(--black)] mb-2">Sem estatísticas registradas</h3>
+            <h3 className="fgb-display text-lg text-[var(--black)] mb-2">Sem estatisticas registradas</h3>
             <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
-              As pontuações aparecerão aqui após o registro dos resultados dos jogos.
+              As pontuacoes aparecerao aqui apos o registro dos resultados dos jogos.
             </p>
           </div>
         ) : (
           <>
-            {/* Podium for top 3 */}
             <div className="fgb-card bg-white p-8 overflow-hidden shadow-sm flex flex-col md:flex-row items-end justify-center gap-4 pt-16 relative">
               <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--amarelo)]/10 blur-[100px] rounded-full pointer-events-none -z-10" />
 
-              {/* 2nd Place */}
               {topScorers[1] && (
                 <div className="flex flex-col items-center z-10 hidden md:flex">
                   <div className="w-16 h-16 rounded-full bg-slate-100 border-4 border-white flex items-center justify-center shadow-lg mb-4 z-20 overflow-hidden">
@@ -134,7 +125,6 @@ export default async function AdminCestinhasPage({
                 </div>
               )}
 
-              {/* 1st Place */}
               {topScorers[0] && (
                 <div className="flex flex-col items-center z-20">
                   <div className="w-24 h-24 rounded-full bg-[var(--amarelo)]/20 border-4 border-white flex items-center justify-center shadow-xl mb-4 relative z-30">
@@ -151,7 +141,6 @@ export default async function AdminCestinhasPage({
                 </div>
               )}
 
-              {/* 3rd Place */}
               {topScorers[2] && (
                 <div className="flex flex-col items-center z-10 hidden md:flex">
                   <div className="w-16 h-16 rounded-full bg-orange-50 border-4 border-white flex items-center justify-center shadow-lg mb-4 z-20 overflow-hidden">
@@ -168,7 +157,6 @@ export default async function AdminCestinhasPage({
               )}
             </div>
 
-            {/* Leaderboard Table */}
             <div className="fgb-card bg-white mt-8 overflow-hidden shadow-sm">
               <div className="fgb-table-wrap">
                 <table className="fgb-table w-full text-left border-collapse">
@@ -178,7 +166,7 @@ export default async function AdminCestinhasPage({
                       <th className="px-8 py-5">ATLETA</th>
                       <th className="px-8 py-5">EQUIPE</th>
                       <th className="px-4 py-5 text-center">J</th>
-                      <th className="px-4 py-5 text-center">MÉDIA</th>
+                      <th className="px-4 py-5 text-center">MEDIA</th>
                       <th className="px-8 py-5 text-right font-bold text-[var(--black)]">Total PTS</th>
                     </tr>
                   </thead>
@@ -226,3 +214,4 @@ export default async function AdminCestinhasPage({
     )
   }
 }
+

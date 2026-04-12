@@ -23,25 +23,25 @@ const adminNavGroups = [
     items: [
       { href: '/admin/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
       { href: '/admin/championships', label: 'Campeonatos',  icon: Trophy },
-      { href: '/admin/calendario',    label: 'Calendário',   icon: CalendarDays },
+      { href: '/admin/calendario',    label: 'Calendario',   icon: CalendarDays },
     ],
   },
   {
-    label: 'Módulos',
+    label: 'Modulos',
     items: [
-      { href: '/admin/simulation',    label: 'Simulação',     icon: FlaskConical },
+      { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
       { href: '/admin/athletes',      label: 'Atletas (BID)', icon: Users },
       { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
       { href: '/admin/sponsors',      label: 'Patrocinadores', icon: Trophy },
-      { href: '/admin/news',          label: 'Notícias',      icon: Newspaper },
-      { href: '/admin/videos',        label: 'Vídeos',        icon: Video },
+      { href: '/admin/news',          label: 'Noticias',      icon: Newspaper },
+      { href: '/admin/videos',        label: 'Videos',        icon: Video },
       { href: '/admin/ranking',       label: 'Ranking',       icon: Medal },
     ],
   },
   {
     label: 'Sistema',
     items: [
-      { href: '/admin/settings',      label: 'Configurações', icon: Settings },
+      { href: '/admin/settings',      label: 'Configuracoes', icon: Settings },
     ],
   },
 ]
@@ -51,10 +51,10 @@ const teamNavGroups = [
     label: 'Equipe',
     items: [
       { href: '/team/dashboard',      label: 'Painel',        icon: Home },
-      { href: '/team/registrations',  label: 'Inscrições',    icon: ClipboardList },
+      { href: '/team/registrations',  label: 'Inscricoes',    icon: ClipboardList },
       { href: '/team/championships',  label: 'Campeonatos',   icon: Trophy },
       { href: '/team/matches',        label: 'Jogos',         icon: Calendar },
-      { href: '/team/standings',      label: 'Classificação', icon: BarChart2 },
+      { href: '/team/standings',      label: 'Classificacao', icon: BarChart2 },
     ],
   },
   {
@@ -62,7 +62,7 @@ const teamNavGroups = [
     items: [
       { href: '/team/profile',        label: 'Meu Perfil',    icon: User },
       { href: '/team/documents',      label: 'Documentos',    icon: FileText },
-      { href: '/team/notifications',  label: 'Notificações',  icon: Bell },
+      { href: '/team/notifications',  label: 'Notificacoes',  icon: Bell },
       { href: '/team/chat',           label: 'Chat',          icon: MessageSquare },
     ],
   },
@@ -72,7 +72,7 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
   const pathname = usePathname()
   const isTeam = role === 'TEAM'
   const navGroups = isTeam ? teamNavGroups : adminNavGroups
-  const label2 = isTeam ? (teamName ?? 'Equipe') : 'Painel de Gestão'
+  const label2 = isTeam ? (teamName ?? 'Equipe') : 'Painel de Gestao'
   const label1 = isTeam ? 'FGB Equipe' : 'FGB Admin'
 
   return (
@@ -90,12 +90,14 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
       }}
       className={className ?? 'hidden md:flex'}
     >
-      {/* Logo */}
       <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div className="relative flex-shrink-0" style={{ width: 32, height: 32 }}>
           <Image
             src="https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png"
-            alt="FGB" fill className="object-contain" unoptimized
+            alt="FGB"
+            fill
+            className="object-contain"
+            unoptimized
           />
         </div>
         <div>
@@ -108,10 +110,8 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
         </div>
       </div>
 
-      {/* Tricolor stripe */}
       <div style={{ height: 3, background: 'linear-gradient(to right,#1B7340 33%,#F5C200 33% 66%,#CC1016 66%)', flexShrink: 0 }} />
 
-      {/* Nav Groups */}
       <nav style={{ flex: 1, overflowY: 'auto', padding: '12px 0' }}>
         {navGroups.map(group => (
           <div key={group.label} style={{ marginBottom: 8 }}>
@@ -152,7 +152,6 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
         ))}
       </nav>
 
-      {/* Footer sidebar */}
       <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
         <a
           href="/"
@@ -161,9 +160,10 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
           style={{ display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-display,Arial)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'rgba(255,255,255,0.3)', textDecoration: 'none' }}
         >
           <Globe size={12} />
-          Ver site público
+          Ver site publico
         </a>
       </div>
     </div>
   )
 }
+

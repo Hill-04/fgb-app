@@ -44,8 +44,8 @@ export default async function AdminReportsPage() {
       <div className="space-y-10 max-w-7xl mx-auto pb-10">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h1 className="fgb-display text-5xl text-[var(--black)] leading-none italic mb-2">Relatórios Centrais</h1>
-            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Inteligência de Dados e Documentação Oficial FGB</p>
+            <h1 className="fgb-display text-5xl text-[var(--black)] leading-none italic mb-2">Relatorios Centrais</h1>
+            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Inteligencia de Dados e Documentacao Oficial FGB</p>
           </div>
           <button className="inline-flex items-center gap-2 fgb-btn-outline h-12 px-6">
             <Download className="w-4 h-4" />
@@ -53,7 +53,6 @@ export default async function AdminReportsPage() {
           </button>
         </div>
 
-        {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {kpis.map((kpi, i) => (
             <div key={i} className="bg-[var(--gray-l)] border border-[var(--border)] rounded-[32px] overflow-hidden relative group p-8">
@@ -68,11 +67,10 @@ export default async function AdminReportsPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left */}
           <div className="lg:col-span-8 space-y-8">
             <div>
-              <h2 className="fgb-display text-xl text-[var(--black)] mb-1">Distribuição por Categoria</h2>
-              <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Engajamento técnico por faixa etária</p>
+              <h2 className="fgb-display text-xl text-[var(--black)] mb-1">Distribuicao por Categoria</h2>
+              <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Engajamento tecnico por faixa etaria</p>
             </div>
             <div className="fgb-card p-8">
               {latestChampionship ? (
@@ -98,14 +96,14 @@ export default async function AdminReportsPage() {
               ) : (
                 <div className="text-center py-8">
                   <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                  <p className="text-[var(--gray)] italic text-sm font-sans">Nenhum dado de campeonato disponível.</p>
-                  <p className="fgb-label text-[var(--gray)] mt-2" style={{ textTransform: 'none', letterSpacing: 0 }}>Crie um campeonato em Admin → Campeonatos</p>
+                  <p className="text-[var(--gray)] italic text-sm font-sans">Nenhum dado de campeonato disponivel.</p>
+                  <p className="fgb-label text-[var(--gray)] mt-2" style={{ textTransform: 'none', letterSpacing: 0 }}>Crie um campeonato em Admin / Campeonatos</p>
                 </div>
               )}
             </div>
 
             <div>
-              <h2 className="fgb-display text-xl text-[var(--black)] mb-1">Últimos Confrontos</h2>
+              <h2 className="fgb-display text-xl text-[var(--black)] mb-1">Ultimos Confrontos</h2>
               <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Logs de placares em tempo real</p>
             </div>
             <div className="fgb-card p-0 overflow-hidden">
@@ -151,7 +149,6 @@ export default async function AdminReportsPage() {
             </div>
           </div>
 
-          {/* Right */}
           <div className="lg:col-span-4 space-y-8">
             <div className="fgb-card admin-card-verde p-8">
               <div className="flex items-center justify-between mb-8">
@@ -163,7 +160,9 @@ export default async function AdminReportsPage() {
                 </span>
               </div>
               <h3 className="fgb-display text-2xl text-[var(--black)] mb-2">PDF Mensal</h3>
-              <p className="fgb-label text-[var(--gray)] mb-8" style={{ textTransform: 'none', letterSpacing: 0, lineHeight: 1.5 }}>Gere o documento oficial consolidado de todas as partidas do mês para envio à presidência da federação.</p>
+              <p className="fgb-label text-[var(--gray)] mb-8" style={{ textTransform: 'none', letterSpacing: 0, lineHeight: 1.5 }}>
+                Gere o documento oficial consolidado de todas as partidas do mes para envio a presidencia da federacao.
+              </p>
               <button className="w-full fgb-btn-primary h-14">
                 Gerar Documento (PDF)
               </button>
@@ -179,8 +178,8 @@ export default async function AdminReportsPage() {
               <div className="space-y-6">
                 {[
                   { label: 'Sedes Confirmadas', value: 8, total: 10, color: 'bg-blue-500' },
-                  { label: 'Relatórios Médicos', value: 4, total: 10, color: 'bg-[var(--red)]' },
-                  { label: 'Taxas de Inscrição', value: 10, total: 10, color: 'bg-[var(--verde)]' },
+                  { label: 'Relatorios Medicos', value: 4, total: 10, color: 'bg-[var(--red)]' },
+                  { label: 'Taxas de Inscricao', value: 10, total: 10, color: 'bg-[var(--verde)]' },
                 ].map((item, i) => (
                   <div key={i} className="space-y-2">
                     <div className="flex justify-between fgb-label text-[var(--gray)] text-[10px]">
@@ -202,8 +201,8 @@ export default async function AdminReportsPage() {
     return (
       <div className="space-y-10 max-w-7xl mx-auto">
         <div>
-          <h1 className="fgb-display text-5xl text-[var(--black)] leading-none italic mb-2">Relatórios Centrais</h1>
-          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Inteligência de Dados e Documentação Oficial FGB</p>
+          <h1 className="fgb-display text-5xl text-[var(--black)] leading-none italic mb-2">Relatorios Centrais</h1>
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Inteligencia de Dados e Documentacao Oficial FGB</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {['Equipes', 'Campeonatos', 'Jogos', 'Atletas'].map(label => (
@@ -215,7 +214,9 @@ export default async function AdminReportsPage() {
         </div>
         <div className="fgb-card p-16 text-center bg-[var(--gray-l)]">
           <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-          <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>Данные relatórios serão exibidos assim que houver campeonatos e jogos registrados.</p>
+          <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+            Dados de relatorios serao exibidos assim que houver campeonatos e jogos registrados.
+          </p>
         </div>
       </div>
     )

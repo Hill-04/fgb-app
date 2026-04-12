@@ -41,12 +41,12 @@ export default async function AdminChampionshipsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Gestão</span>
-              <span className="fgb-badge fgb-badge-verde">FEDERAÇÃO</span>
+              <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Gestao</span>
+              <span className="fgb-badge fgb-badge-verde">FEDERACAO</span>
             </div>
             <h1 className="fgb-display text-3xl text-[var(--black)]">Campeonatos</h1>
             <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>
-              Gestão de Competições da Federação Gaúcha de Basketball
+              Gestao de competicoes da Federacao Gaucha de Basketball
             </p>
           </div>
           <div className="flex gap-3">
@@ -126,3 +126,4 @@ export default async function AdminChampionshipsPage() {
     )
   }
 }
+
