@@ -311,7 +311,7 @@ export default function RegistrationsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 px-4 sm:px-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="fgb-display text-4xl text-[var(--black)] leading-none">Inscricoes</h2>

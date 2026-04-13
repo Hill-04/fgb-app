@@ -4,11 +4,11 @@ import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     await ensureDatabaseSchema()
-    const { id } = await params
+    const { id } = params
     const body = await req.json().catch(() => ({}))
     const source = body?.source ? String(body.source) : null
     const referrer = body?.referrer ? String(body.referrer) : null

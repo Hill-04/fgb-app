@@ -411,7 +411,7 @@ export default function MatchesPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 px-4 sm:px-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="fgb-display text-3xl text-[var(--black)] leading-none">Jogos</h2>

@@ -37,7 +37,7 @@ export default async function AdminChampionshipsPage() {
     })
 
     return (
-      <div className="space-y-8 pb-20 animate-in fade-in duration-700">
+      <div className="space-y-8 pb-20 animate-in fade-in duration-700 px-4 sm:px-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -126,4 +126,3 @@ export default async function AdminChampionshipsPage() {
     )
   }
 }
-
