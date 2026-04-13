@@ -47,6 +47,9 @@ export default async function ChampionshipDetailsPage({
     const registrationCount = await prisma.registration.count({
       where: { championshipId: id, status: 'CONFIRMED' }
     })
+    const pendingRegistrations = await prisma.registration.count({
+      where: { championshipId: id, status: 'PENDING' }
+    })
     const categoryCount = championship.categories.length
     const minTeams = championship.minTeamsPerCat || 3
     const firstCategory = championship.categories[0]
@@ -302,6 +305,21 @@ export default async function ChampionshipDetailsPage({
                         Gerenciar →
                       </Link>
                     </div>
+                  </div>
+                )}
+
+                {pendingRegistrations > 0 && (
+                  <div className="mt-3 flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3">
+                    <div>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-orange-700">Inscrições pendentes</p>
+                      <p className="text-[10px] text-orange-700">{pendingRegistrations} equipe(s) aguardando validação</p>
+                    </div>
+                    <Link
+                      href={`/admin/championships/${activeChampionshipId}/registrations`}
+                      className="text-[9px] font-black uppercase tracking-widest text-[var(--black)] bg-white border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-[var(--amarelo)] hover:border-[var(--amarelo)] transition-all flex-shrink-0 shadow-sm"
+                    >
+                      Revisar →
+                    </Link>
                   </div>
                 )}
 

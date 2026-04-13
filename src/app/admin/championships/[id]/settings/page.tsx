@@ -176,6 +176,28 @@ export default function ChampionshipSettingsPage({
     }
   }
 
+  const handleOpenRegistrations = async () => {
+    if (!form) return
+    setSaving('open')
+    try {
+      const res = await fetch(`/api/championships/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'REGISTRATION_OPEN' })
+      })
+      if (res.ok) {
+        setForm((current) => current ? ({ ...current, status: 'REGISTRATION_OPEN' }) : current)
+        showToast('Inscrições abertas no site!')
+      } else {
+        showToast('Erro ao abrir inscrições', 'error')
+      }
+    } catch (error) {
+      showToast('Erro de conexão', 'error')
+    } finally {
+      setSaving(null)
+    }
+  }
+
   const handleArchive = async () => {
     if (!confirm('Deseja realmente ARQUIVAR este campeonato?')) return
     try {
@@ -216,7 +238,7 @@ export default function ChampionshipSettingsPage({
       
       {/* SEÇÃO 1: Informações Gerais */}
       <div className="fgb-card bg-white p-8 space-y-6 shadow-sm">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
              <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100">
                 <Settings className="w-5 h-5 text-orange-600" />
@@ -230,13 +252,32 @@ export default function ChampionshipSettingsPage({
                 </p>
              </div>
           </div>
-          <button
-            onClick={() => handleSave('general')}
-            disabled={saving === 'general'}
-            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
-          >
-            {saving === 'general' ? 'Salvando...' : 'Salvar'}
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={`/campeonatos/${id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 h-10 rounded-xl border border-[var(--border)] bg-white text-[10px] font-black uppercase tracking-widest text-[var(--gray)] hover:text-[var(--black)] hover:border-[var(--black)] transition-all shadow-sm"
+            >
+              Ver no site
+            </a>
+            {form.status !== 'REGISTRATION_OPEN' && (
+              <button
+                onClick={handleOpenRegistrations}
+                disabled={saving === 'open'}
+                className="bg-[var(--verde)] hover:bg-[var(--verde-dark)] text-white font-black text-[10px] uppercase tracking-widest px-5 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+              >
+                {saving === 'open' ? 'Abrindo...' : 'Abrir inscrições'}
+              </button>
+            )}
+            <button
+              onClick={() => handleSave('general')}
+              disabled={saving === 'general'}
+              className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+            >
+              {saving === 'general' ? 'Salvando...' : 'Salvar'}
+            </button>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <FieldGroup label="Nome do Campeonato">
