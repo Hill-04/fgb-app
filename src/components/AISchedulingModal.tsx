@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react'
 import { pluralizeDias, pluralizeJogos } from '@/utils/pluralize'
-import { calculateCalendarSummary } from '@/lib/calendar/summary'
 import {
   AlertCircle,
   ArrowRight,
@@ -69,7 +68,6 @@ type Step =
   | 'validating'
   | 'diagnosis'
   | 'simulating'
-  | 'preview'
   | 'review'
   | 'applying'
   | 'done'
@@ -144,7 +142,7 @@ type SimulationResult = {
 
 type ReviewTab = 'date' | 'category' | 'round'
 
-const stepTrail: Step[] = ['diagnosis', 'preview', 'review']
+const stepTrail: Step[] = ['diagnosis', 'review', 'done']
 
 const issueStyles = {
   error: {
@@ -216,7 +214,6 @@ export function AISchedulingModal({
         return 2
       case 'simulating':
         return 4
-      case 'preview':
       case 'review':
         return 5
       case 'applying':
@@ -266,29 +263,7 @@ export function AISchedulingModal({
       }))
   }, [flatPreviewSlots])
 
-  const handleStart = async () => {
-    setStep('validating')
-    setErrorMsg('')
-
-    try {
-      const res = await fetch('/api/scheduling/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ championshipId }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao validar configuracoes')
-
-      setValidation(data)
-      setStep('diagnosis')
-    } catch (err: any) {
-      setErrorMsg(err.message)
-      setStep('error')
-    }
-  }
-
-  const handleSimulate = async () => {
+  const runSimulation = async () => {
     setStep('simulating')
     setErrorMsg('')
 
@@ -306,11 +281,41 @@ export function AISchedulingModal({
 
       const data = await res.json()
       setSimulation(data)
-      setStep('preview')
+      setStep('review')
     } catch (err: any) {
       setErrorMsg(err.message)
       setStep('error')
     }
+  }
+
+  const handleStart = async () => {
+    setStep('validating')
+    setErrorMsg('')
+
+    try {
+      const res = await fetch('/api/scheduling/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ championshipId }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erro ao validar configuracoes')
+
+      setValidation(data)
+      if (data.viable) {
+        await runSimulation()
+      } else {
+        setStep('diagnosis')
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message)
+      setStep('error')
+    }
+  }
+
+  const handleSimulate = async () => {
+    await runSimulation()
   }
 
   const handleApply = async () => {
@@ -479,7 +484,7 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
               </div>
 
               <button onClick={handleStart} className={`${primaryButton} mx-auto max-w-xs`}>
-                Iniciar analise
+                Organizar agora
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </div>
@@ -606,20 +611,13 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
               )}
 
               <div className="flex gap-3 pt-1">
-                <button onClick={onClose} className={secondaryButton}>
-                  {validation.viable ? 'Cancelar' : 'Fechar'}
+                <button onClick={() => setStep('idle')} className={secondaryButton}>
+                  Ajustar configuracoes
                 </button>
-
-                {validation.viable ? (
-                  <button onClick={handleSimulate} className={primaryButton}>
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Gerar calendario
-                  </button>
-                ) : (
-                  <button onClick={() => setStep('idle')} className={secondaryButton}>
-                    Recomeçar
-                  </button>
-                )}
+                <button onClick={handleSimulate} className={primaryButton}>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Simular mesmo assim
+                </button>
               </div>
             </div>
           )}
@@ -637,65 +635,6 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
             </div>
           )}
 
-          {step === 'preview' && simulation && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className={`${surfaceCard} border-green-200 bg-[var(--verde-light)]/60 p-5`}>
-                <p className="fgb-label text-[var(--verde)]">Calendario gerado</p>
-                <p className="mt-2 text-2xl font-black text-[var(--black)]">{pluralizeJogos(simulation.totalGames)}</p>
-                <p className="mt-2 text-sm text-[var(--gray-d)]">{simulation.summary}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {renderStat('Jogos', simulation.totalGames)}
-                {renderStat('Dias', simulation.totalDays)}
-                {renderStat('Categorias', simulation.categories.length)}
-                {renderStat(
-                  'Jogos por dia',
-                  calculateCalendarSummary({
-                    totalGames: simulation.totalGames,
-                    totalDays: simulation.totalDays,
-                  }).gamesPerDayDisplay
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                {simulation.categories.map((category) => (
-                  <div key={category.id} className={`${nestedCard} p-4`}>
-                    <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 9 }}>
-                      {category.name}
-                    </p>
-                    <p className="mt-2 text-lg font-black text-[var(--black)]">{pluralizeJogos(category.gamesCount)}</p>
-                    <p className="mt-1 text-xs text-[var(--gray)]">{category.teams} equipes</p>
-                  </div>
-                ))}
-              </div>
-
-              {simulation.aiOptimization?.available && simulation.aiOptimization.suggestion && (
-                <div className={`${surfaceCard} bg-[var(--yellow-light)]/70 p-5`}>
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-[var(--yellow-dark)]" />
-                    <p className="fgb-label text-[var(--yellow-dark)]">
-                      Sugestao IA · {simulation.aiOptimization.provider}
-                    </p>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-[var(--gray-d)]">
-                    {simulation.aiOptimization.suggestion}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex gap-3 pt-1">
-                <button onClick={() => setStep('diagnosis')} className={secondaryButton}>
-                  Voltar ao diagnostico
-                </button>
-                <button onClick={() => setStep('review')} className={primaryButton}>
-                  Ver calendario completo
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
           {step === 'review' && simulation && (
             <div className="space-y-4 animate-in fade-in duration-300">
               <div className="flex items-start justify-between gap-3">
@@ -706,8 +645,8 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                     {(simulation.totalBlockedDates || 0) > 0 && ` · ${simulation.totalBlockedDates} restricoes`}
                   </p>
                 </div>
-                <button onClick={() => setStep('preview')} className="fgb-btn-soft h-10 px-4 text-[9px]">
-                  Voltar
+                <button onClick={() => setStep('diagnosis')} className="fgb-btn-soft h-10 px-4 text-[9px]">
+                  Ver diagnostico
                 </button>
               </div>
 
