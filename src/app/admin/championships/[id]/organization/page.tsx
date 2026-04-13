@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { Sparkles, Users, Calendar, ArrowRight, ShieldCheck, AlertTriangle } from 'lucide-react'
-import { AISchedulingButton } from '../AISchedulingButton'
+import { Sparkles, Users, Calendar, ArrowRight, ShieldCheck, AlertTriangle, Wand2 } from 'lucide-react'
+import { AISchedulingModal } from '@/components/AISchedulingModal'
 
 export default async function OrganizationPage({
   params,
@@ -65,12 +65,6 @@ export default async function OrganizationPage({
             Logistica, calendario e viabilidade por categoria
           </p>
         </div>
-        
-        <AISchedulingButton
-          championshipId={id}
-          championshipName={championship.name}
-          disabled={!hasAnyReady}
-        />
       </div>
 
       {/* Alerta de Viabilidade */}
@@ -122,6 +116,57 @@ export default async function OrganizationPage({
           >
             Ver pendencias <ArrowRight className="w-3 h-3" />
           </Link>
+        </div>
+      )}
+
+      {hasAnyReady && (
+        <div className="space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)]">Planejamento com IA</p>
+              <h3 className="fgb-display text-2xl text-[var(--black)] mt-2">Organizacao automatica</h3>
+              <p className="text-sm text-[var(--gray)] mt-1">
+                A IA monta o calendario completo dentro das regras e janelas configuradas.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="fgb-badge fgb-badge-verde">IA</span>
+              <span className="fgb-badge fgb-badge-outline">Planejamento</span>
+            </div>
+          </div>
+
+          <AISchedulingModal
+            championshipId={id}
+            championshipName={championship.name}
+            onClose={() => {}}
+            onApplied={() => {}}
+            variant="page"
+          />
+
+          <div className="fgb-card bg-white p-6 border border-[var(--border)] rounded-[28px]">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)]">Gestao e otimizacao</p>
+                <h4 className="text-lg font-black text-[var(--black)] mt-2">Ajustes finos apos planejamento</h4>
+                <p className="text-sm text-[var(--gray)] mt-1">
+                  Depois de aplicar o calendario, use a IA para otimizar datas ou ajuste manualmente.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                  <Wand2 className="h-3.5 w-3.5" />
+                  Otimizar com IA
+                </button>
+                <Link
+                  href={`/admin/championships/${id}/matches`}
+                  className="flex items-center gap-2 rounded-xl bg-[var(--amarelo)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
+                >
+                  Ajustar manualmente
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

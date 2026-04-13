@@ -22,6 +22,7 @@ type AISchedulingModalProps = {
   championshipName: string
   onClose: () => void
   onApplied: () => void
+  variant?: 'modal' | 'page'
 }
 
 type CategoryResult = {
@@ -206,6 +207,7 @@ export function AISchedulingModal({
   championshipName,
   onClose,
   onApplied,
+  variant = 'modal',
 }: AISchedulingModalProps) {
   const [step, setStep] = useState<Step>('idle')
   const [validation, setValidation] = useState<ValidationResult | null>(null)
@@ -435,10 +437,24 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
     </span>
   )
 
+  const isModal = variant === 'modal'
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(8,14,10,0.48)] p-4 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[40px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,249,250,0.97)_100%)] shadow-[var(--shadow-premium)]">
-        <div className="flex items-center justify-between border-b border-[var(--border)] bg-[var(--gray-l)]/70 p-8">
+    <div
+      className={
+        isModal
+          ? 'fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(8,14,10,0.48)] p-4 backdrop-blur-sm animate-in fade-in duration-300'
+          : 'w-full'
+      }
+    >
+      <div
+        className={
+          isModal
+            ? 'flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-[40px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,249,250,0.97)_100%)] shadow-[var(--shadow-premium)]'
+            : 'flex w-full flex-col overflow-hidden rounded-[32px] border border-[var(--border)] bg-white shadow-[var(--shadow-md)]'
+        }
+      >
+        <div className={`flex items-center justify-between border-b border-[var(--border)] bg-[var(--gray-l)]/70 ${isModal ? 'p-8' : 'p-6'}`}>
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-yellow-200 bg-[var(--yellow-light)] shadow-sm">
               <Sparkles className="h-6 w-6 text-[var(--yellow-dark)]" />
@@ -466,15 +482,17 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
             ))}
           </div>
 
-          <button
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--gray)] transition-all hover:border-red-200 hover:bg-[var(--red-light)] hover:text-[var(--red)]"
-          >
-            <X className="h-5 w-5" />
-          </button>
+          {isModal && (
+            <button
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border)] bg-white text-[var(--gray)] transition-all hover:border-red-200 hover:bg-[var(--red-light)] hover:text-[var(--red)]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className={`flex-1 overflow-y-auto ${isModal ? 'p-8' : 'p-6 md:p-8'}`}>
           <div className={`${surfaceCard} mb-6 p-4`}>
             <p className="fgb-label text-[var(--gray)] mb-3" style={{ fontSize: 9 }}>
               Pipeline da IA
