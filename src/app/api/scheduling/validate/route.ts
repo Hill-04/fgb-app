@@ -132,6 +132,8 @@ export async function POST(request: Request) {
     const blockFormat = (championship.blockFormat || 'SAT_SUN') as BlockFormat
     const slotDurationMinutes = championship.slotDurationMinutes || 75
     const numberOfCourts = Math.max(1, championship.numberOfCourts || 1)
+    const maxGamesPerTeamPerDay = Math.max(1, championship.maxGamesPerTeamPerDay || 2)
+    const scheduleOptimizationMode = championship.scheduleOptimizationMode || 'compact'
     const slotsRegularDay = getSlotsPerDay(
       championship.dayStartTime || '08:00',
       championship.regularDayEndTime || '19:00',
@@ -150,6 +152,15 @@ export async function POST(request: Request) {
       regularDayCapacity,
       extendedDayCapacity
     )
+
+    if ((championship.turns || 1) > maxGamesPerTeamPerDay) {
+      issues.push({
+        type: 'error',
+        field: 'capacity.teamDailyLimit',
+        message: `O limite de ${maxGamesPerTeamPerDay} jogo(s) por equipe no dia é incompatível com ${championship.turns || 1} turno(s).`,
+        suggestion: 'Aumente o limite diário por equipe ou reduza o número de turnos.',
+      })
+    }
 
     for (const category of championship.categories) {
       const teamCount = category.registrations.length
@@ -420,6 +431,8 @@ export async function POST(request: Request) {
           extendedDayEndTime: championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
           slotDurationMinutes,
           minRestSlotsPerTeam: championship.minRestSlotsPerTeam || 1,
+          maxGamesPerTeamPerDay,
+          scheduleOptimizationMode,
           numberOfCourts,
           slotsRegularDay,
           slotsExtendedDay,

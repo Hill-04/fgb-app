@@ -39,6 +39,8 @@ type Championship = {
   extendedDayEndTime: string
   slotDurationMinutes: number
   minRestSlotsPerTeam: number
+  maxGamesPerTeamPerDay: number
+  scheduleOptimizationMode: string
   blockFormat: BlockFormat
 }
 
@@ -143,6 +145,8 @@ export default function ChampionshipSettingsPage({
         extendedDayEndTime: form.extendedDayEndTime,
         slotDurationMinutes: Number(form.slotDurationMinutes),
         minRestSlotsPerTeam: Number(form.minRestSlotsPerTeam),
+        maxGamesPerTeamPerDay: Number(form.maxGamesPerTeamPerDay),
+        scheduleOptimizationMode: form.scheduleOptimizationMode,
         blockFormat: form.blockFormat
       }
     } else if (section === 'playoffs') {
@@ -429,6 +433,39 @@ export default function ChampionshipSettingsPage({
               value={form.numberOfCourts ?? 1} 
               onChange={(val) => setForm(p => p ? ({...p, numberOfCourts: val}) : null)}
             />
+            <FieldGroup label="Máx. jogos por equipe no dia">
+              <input
+                type="number"
+                min={1}
+                max={6}
+                value={form.maxGamesPerTeamPerDay ?? 2}
+                onChange={e => setForm(p => p ? ({...p, maxGamesPerTeamPerDay: Number(e.target.value)}) : null)}
+                className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)]"
+              />
+            </FieldGroup>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <FieldGroup label="Modo de otimização da IA">
+              <select
+                value={form.scheduleOptimizationMode ?? 'compact'}
+                onChange={e => setForm(p => p ? ({...p, scheduleOptimizationMode: e.target.value}) : null)}
+                className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
+              >
+                <option value="compact" className="bg-white">Compacto: termina o quanto antes</option>
+                <option value="balanced" className="bg-white">Equilibrado: distribui melhor a carga</option>
+              </select>
+            </FieldGroup>
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)]/70 p-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+                Estratégia atual
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">
+                {form.scheduleOptimizationMode === 'balanced'
+                  ? 'A IA prioriza reduzir desgaste e evita usar sexta cedo demais quando houver espaço no sábado e domingo.'
+                  : 'A IA prioriza encerrar cada fase o quanto antes, ocupando os primeiros horários disponíveis.'}
+              </p>
+            </div>
           </div>
           
           <TimeWindowField 

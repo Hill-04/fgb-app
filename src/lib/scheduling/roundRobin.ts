@@ -110,6 +110,8 @@ type SchedulingConfig = {
   extendedDayEndTime: string
   slotDurationMinutes: number
   minRestSlotsPerTeam: number
+  maxGamesPerTeamPerDay: number
+  optimizationMode: string
   blockFormat: string
 }
 
@@ -438,6 +440,22 @@ function getPhaseDays(weekendStart: Date, blockFormat: string) {
   return [addDays(weekendStart, -1), new Date(weekendStart), addDays(weekendStart, 1)]
 }
 
+function orderPhaseDays(phaseDays: Date[], optimizationMode: string, blockFormat: string) {
+  if (optimizationMode !== 'balanced') {
+    return phaseDays
+  }
+
+  if (blockFormat !== 'FRI_SAT_SUN') {
+    return phaseDays
+  }
+
+  const saturday = phaseDays.find((day) => day.getUTCDay() === 6)
+  const sunday = phaseDays.find((day) => day.getUTCDay() === 0)
+  const friday = phaseDays.find((day) => day.getUTCDay() === 5)
+
+  return [saturday, sunday, friday].filter(Boolean) as Date[]
+}
+
 function buildDaySlots(day: Date, gameDuration: number) {
   const slots: Array<{ start: Date; period: string }> = []
   const morningEnd = addMinutes(createUtcDate(day, AFTERNOON_START_UTC, 0), -LUNCH_BREAK_MIN)
@@ -627,6 +645,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
     extendedDayEndTime: championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
     slotDurationMinutes: gameDuration,
     minRestSlotsPerTeam: Math.max(0, championship.minRestSlotsPerTeam || 0),
+    maxGamesPerTeamPerDay: Math.max(1, championship.maxGamesPerTeamPerDay || 2),
+    optimizationMode: championship.scheduleOptimizationMode || 'compact',
     blockFormat: championship.blockFormat || 'SAT_SUN',
   }
   const minTeamRestMinutes = schedulingConfig.minRestSlotsPerTeam * gameDuration
@@ -719,6 +739,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const unresolvableConflicts: UnresolvableConflict[] = []
   const conflictsResolved: ConflictResolved[] = []
   const dayGamesMap = new Map<string, ScheduledGame[]>()
+  const teamGamesPerDay = new Map<string, number>()
   const athleteSchedule = new Map<string, ScheduledInterval[]>()
   const coachSchedule = new Map<string, ScheduledInterval[]>()
   const teamSchedule = new Map<string, ScheduledInterval[]>()
@@ -785,7 +806,11 @@ export async function generateChampionshipSchedule(championshipId: string) {
 
       groupLastWeekend.set(groupKey, weekendStart)
       globalCursor = addDays(weekendStart, 7)
-      const phaseDays = getPhaseDays(weekendStart, schedulingConfig.blockFormat)
+      const phaseDays = orderPhaseDays(
+        getPhaseDays(weekendStart, schedulingConfig.blockFormat),
+        schedulingConfig.optimizationMode,
+        schedulingConfig.blockFormat
+      )
 
       for (const bundle of bundles) {
         const homeTeamName = teamNameMap.get(bundle.homeTeamId) || 'Mandante'
@@ -808,8 +833,17 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const dateKey = toDateKey(day)
           const existingDayGames = dayGamesMap.get(dateKey) || []
           const categoriesInDay = new Set(existingDayGames.map((game) => game.categoryId))
+          const homeGamesCount = teamGamesPerDay.get(`${bundle.homeTeamId}:${dateKey}`) || 0
+          const awayGamesCount = teamGamesPerDay.get(`${bundle.awayTeamId}:${dateKey}`) || 0
 
           if (categoriesInDay.size >= MAX_CATS_PER_DAY && !categoriesInDay.has(bundle.categoryId)) {
+            continue
+          }
+
+          if (
+            homeGamesCount >= schedulingConfig.maxGamesPerTeamPerDay ||
+            awayGamesCount >= schedulingConfig.maxGamesPerTeamPerDay
+          ) {
             continue
           }
 
@@ -1017,6 +1051,14 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const currentGames = dayGamesMap.get(dateKey) || []
           currentGames.push(game)
           dayGamesMap.set(dateKey, currentGames)
+          teamGamesPerDay.set(
+            `${game.homeTeamId}:${dateKey}`,
+            (teamGamesPerDay.get(`${game.homeTeamId}:${dateKey}`) || 0) + 1
+          )
+          teamGamesPerDay.set(
+            `${game.awayTeamId}:${dateKey}`,
+            (teamGamesPerDay.get(`${game.awayTeamId}:${dateKey}`) || 0) + 1
+          )
 
           const start = new Date(game.dateTime)
           const end = addMinutes(start, gameDuration)

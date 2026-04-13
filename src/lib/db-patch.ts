@@ -245,6 +245,8 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'column', table: 'Championship', column: 'relegationDown', sql: 'ALTER TABLE Championship ADD COLUMN relegationDown INTEGER DEFAULT 0;', critical: true },
   { kind: 'column', table: 'Championship', column: 'promotionUp', sql: 'ALTER TABLE Championship ADD COLUMN promotionUp INTEGER DEFAULT 0;', critical: true },
   { kind: 'column', table: 'Championship', column: 'hasRelegation', sql: 'ALTER TABLE Championship ADD COLUMN hasRelegation INTEGER DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'Championship', column: 'maxGamesPerTeamPerDay', sql: 'ALTER TABLE Championship ADD COLUMN maxGamesPerTeamPerDay INTEGER DEFAULT 2;', critical: true },
+  { kind: 'column', table: 'Championship', column: 'scheduleOptimizationMode', sql: "ALTER TABLE Championship ADD COLUMN scheduleOptimizationMode TEXT DEFAULT 'compact';", critical: true },
 
   { kind: 'column', table: 'ChampionshipCategory', column: 'isViable', sql: 'ALTER TABLE ChampionshipCategory ADD COLUMN isViable INTEGER DEFAULT 0;', critical: true },
 

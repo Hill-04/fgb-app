@@ -72,6 +72,8 @@ type ValidationResult = {
       extendedDayEndTime: string
       slotDurationMinutes: number
       minRestSlotsPerTeam: number
+      maxGamesPerTeamPerDay: number
+      scheduleOptimizationMode: string
       numberOfCourts: number
       slotsRegularDay: number
       slotsExtendedDay: number
@@ -636,6 +638,14 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                   {renderStat('Slots regulares', validation.summary.capacity.slotsRegularDay)}
                   {renderStat('Slots sabado', validation.summary.capacity.slotsExtendedDay)}
                   {renderStat('Descanso minimo', `${validation.summary.capacity.minRestSlotsPerTeam} slot`)}
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {renderStat('Max. por equipe/dia', validation.summary.capacity.maxGamesPerTeamPerDay)}
+                  {renderStat(
+                    'Modo IA',
+                    validation.summary.capacity.scheduleOptimizationMode === 'balanced' ? 'Equilibrado' : 'Compacto'
+                  )}
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--gray-l)]/80 p-4">
