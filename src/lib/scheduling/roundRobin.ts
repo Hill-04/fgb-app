@@ -397,27 +397,44 @@ function getPhaseDays(weekendStart: Date) {
   return [new Date(weekendStart), addDays(weekendStart, 1), addDays(weekendStart, -1)]
 }
 
-function candidateSingleSlots(day: Date) {
-  return [
-    { start: createUtcDate(day, DAY_START_HOUR, 0), period: 'manhã' },
-    { start: createUtcDate(day, DAY_START_HOUR + 1, 15), period: 'manhã' },
-    { start: createUtcDate(day, DAY_START_HOUR + 2, 30), period: 'manhã' },
-    { start: createUtcDate(day, AFTERNOON_START_UTC, 0), period: 'tarde' },
-    { start: createUtcDate(day, AFTERNOON_START_UTC + 1, 15), period: 'tarde' },
-  ]
+function buildDaySlots(day: Date, gameDuration: number) {
+  const slots: Array<{ start: Date; period: string }> = []
+  const morningEnd = addMinutes(createUtcDate(day, AFTERNOON_START_UTC, 0), -LUNCH_BREAK_MIN)
+  let cursor = createUtcDate(day, DAY_START_HOUR, 0)
+
+  while (addMinutes(cursor, gameDuration) <= morningEnd) {
+    slots.push({ start: cursor, period: 'manhã' })
+    cursor = addMinutes(cursor, gameDuration)
+  }
+
+  const dayEnd = createUtcDate(day, DAY_END_HOUR, 0)
+  cursor = createUtcDate(day, AFTERNOON_START_UTC, 0)
+
+  while (
+    cursor <= createUtcDate(day, LAST_GAME_START_UTC, 0) &&
+    addMinutes(cursor, gameDuration) <= dayEnd
+  ) {
+    slots.push({ start: cursor, period: 'tarde' })
+    cursor = addMinutes(cursor, gameDuration)
+  }
+
+  return slots
 }
 
-function candidateTurnPairs(day: Date) {
-  return [
-    {
-      ida: { start: createUtcDate(day, DAY_START_HOUR, 0), period: 'manhã' },
-      volta: { start: createUtcDate(day, AFTERNOON_START_UTC, 0), period: 'tarde' },
-    },
-    {
-      ida: { start: createUtcDate(day, DAY_START_HOUR + 1, 15), period: 'manhã' },
-      volta: { start: createUtcDate(day, AFTERNOON_START_UTC + 1, 15), period: 'tarde' },
-    },
-  ]
+function candidateSingleSlots(day: Date, gameDuration: number) {
+  return buildDaySlots(day, gameDuration)
+}
+
+function candidateTurnPairs(day: Date, gameDuration: number) {
+  const slots = buildDaySlots(day, gameDuration)
+  const morning = slots.filter((slot) => slot.period === 'manhã')
+  const afternoon = slots.filter((slot) => slot.period === 'tarde')
+  const count = Math.min(morning.length, afternoon.length)
+
+  return Array.from({ length: count }).map((_, index) => ({
+    ida: morning[index],
+    volta: afternoon[index],
+  }))
 }
 
 function withinAllowedWindow(start: Date) {
@@ -450,7 +467,8 @@ function createGameOutput(
   fieldControl: string,
   wasRescheduled: boolean,
   rescheduleReason?: string,
-  blockedByTeamId?: string
+  blockedByTeamId?: string,
+  court?: string
 ): ScheduledGame {
   const actualHomeTeamName = isReturn ? awayTeamName : homeTeamName
   const actualAwayTeamName = isReturn ? homeTeamName : awayTeamName
@@ -473,6 +491,7 @@ function createGameOutput(
     dateTime: start.toISOString(),
     period,
     venue,
+    court,
     location: venue,
     city: 'A definir',
     wasRescheduled,
@@ -515,6 +534,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const hasPlayoffs = championship.hasPlayoffs || false
   const playoffTeams = championship.playoffTeams || 4
   const minTeamsPerCat = championship.minTeamsPerCat || 2
+  const maxCourts = Math.max(1, championship.numberOfCourts || 1)
+  const gameDuration = championship.slotDurationMinutes || GAME_DURATION_MIN
 
   const startDate = championship.startDate
     ? new Date(championship.startDate)
@@ -701,23 +722,25 @@ export async function generateChampionshipSchedule(championshipId: string) {
           }
 
           if (turns >= 2) {
-            for (const slotPair of candidateTurnPairs(day)) {
+            for (const slotPair of candidateTurnPairs(day, gameDuration)) {
               if (!withinAllowedWindow(slotPair.ida.start) || !withinAllowedWindow(slotPair.volta.start)) {
                 continue
               }
 
-              const idaEnd = addMinutes(slotPair.ida.start, GAME_DURATION_MIN)
-              const voltaEnd = addMinutes(slotPair.volta.start, GAME_DURATION_MIN)
+              const idaEnd = addMinutes(slotPair.ida.start, gameDuration)
+              const voltaEnd = addMinutes(slotPair.volta.start, gameDuration)
               const candidateIntervals = [
                 { start: slotPair.ida.start, end: idaEnd },
                 { start: slotPair.volta.start, end: voltaEnd },
               ]
 
-              const occupied = existingDayGames.some((game) => {
-                const start = new Date(game.dateTime)
-                return candidateIntervals.some((interval) => interval.start.getTime() === start.getTime())
-              })
-              if (occupied) {
+              const timeCounts = candidateIntervals.map((interval) => ({
+                start: interval.start,
+                count: existingDayGames.filter(
+                  (game) => new Date(game.dateTime).getTime() === interval.start.getTime()
+                ).length,
+              }))
+              if (timeCounts.some((slot) => slot.count >= maxCourts)) {
                 continue
               }
 
@@ -762,7 +785,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     fieldControl,
                     wasRescheduled,
                     rescheduleReason,
-                    encounteredBlockedTeamId
+                    encounteredBlockedTeamId,
+                    `Quadra ${timeCounts[0].count + 1}`
                   ),
                   createGameOutput(
                     bundle,
@@ -774,7 +798,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     fieldControl,
                     wasRescheduled,
                     rescheduleReason,
-                    encounteredBlockedTeamId
+                    encounteredBlockedTeamId,
+                    `Quadra ${timeCounts[1].count + 1}`
                   ),
                 ],
                 wasRescheduled,
@@ -784,14 +809,16 @@ export async function generateChampionshipSchedule(championshipId: string) {
               break
             }
           } else {
-            for (const slot of candidateSingleSlots(day)) {
+            for (const slot of candidateSingleSlots(day, gameDuration)) {
               if (!withinAllowedWindow(slot.start)) {
                 continue
               }
 
-              const candidateEnd = addMinutes(slot.start, GAME_DURATION_MIN)
-              const occupied = existingDayGames.some((game) => new Date(game.dateTime).getTime() === slot.start.getTime())
-              if (occupied) {
+              const candidateEnd = addMinutes(slot.start, gameDuration)
+              const slotCount = existingDayGames.filter(
+                (game) => new Date(game.dateTime).getTime() === slot.start.getTime()
+              ).length
+              if (slotCount >= maxCourts) {
                 continue
               }
 
@@ -832,7 +859,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     fieldControl,
                     wasRescheduled,
                     rescheduleReason,
-                    encounteredBlockedTeamId
+                    encounteredBlockedTeamId,
+                    `Quadra ${slotCount + 1}`
                   ),
                 ],
                 wasRescheduled,
@@ -863,7 +891,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
           dayGamesMap.set(dateKey, currentGames)
 
           const start = new Date(game.dateTime)
-          const end = addMinutes(start, GAME_DURATION_MIN)
+          const end = addMinutes(start, gameDuration)
 
           for (const athleteKey of athleteKeys) {
             const intervals = athleteSchedule.get(athleteKey) || []
