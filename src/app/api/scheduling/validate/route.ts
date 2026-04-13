@@ -19,6 +19,8 @@ type ValidationWarning = {
   athletes?: Array<{ name: string; categories: string[] }>
 }
 
+type BlockFormat = 'SAT_ONLY' | 'SAT_SUN' | 'FRI_SAT_SUN'
+
 function startOfUtcDay(date: Date) {
   const normalized = new Date(date)
   normalized.setUTCHours(0, 0, 0, 0)
@@ -52,6 +54,38 @@ function getWeekendStarts(startDate: Date, endDate: Date) {
   }
 
   return weekends
+}
+
+function timeToMinutes(value: string) {
+  const [hour, minute] = value.split(':').map(Number)
+  return (Number.isFinite(hour) ? hour : 0) * 60 + (Number.isFinite(minute) ? minute : 0)
+}
+
+function getSlotsPerDay(startTime: string, endTime: string, slotDurationMinutes: number) {
+  const start = timeToMinutes(startTime)
+  const end = timeToMinutes(endTime)
+
+  if (slotDurationMinutes <= 0 || end <= start) {
+    return 0
+  }
+
+  return Math.max(0, Math.floor((end - start) / slotDurationMinutes) + 1)
+}
+
+function getCompetitionDaysPerPhase(blockFormat: BlockFormat) {
+  if (blockFormat === 'SAT_ONLY') return 1
+  if (blockFormat === 'SAT_SUN') return 2
+  return 3
+}
+
+function getPhaseCapacityGames(
+  blockFormat: BlockFormat,
+  regularDayCapacity: number,
+  extendedDayCapacity: number
+) {
+  if (blockFormat === 'SAT_ONLY') return extendedDayCapacity
+  if (blockFormat === 'SAT_SUN') return extendedDayCapacity + regularDayCapacity
+  return extendedDayCapacity + regularDayCapacity * 2
 }
 
 export async function POST(request: Request) {
@@ -95,6 +129,27 @@ export async function POST(request: Request) {
     const warnings: ValidationWarning[] = []
     const fieldControl = championship.fieldControl || 'alternado'
     const isCentralized = fieldControl === 'fixo' || fieldControl === 'neutro'
+    const blockFormat = (championship.blockFormat || 'SAT_SUN') as BlockFormat
+    const slotDurationMinutes = championship.slotDurationMinutes || 75
+    const numberOfCourts = Math.max(1, championship.numberOfCourts || 1)
+    const slotsRegularDay = getSlotsPerDay(
+      championship.dayStartTime || '08:00',
+      championship.regularDayEndTime || '19:00',
+      slotDurationMinutes
+    )
+    const slotsExtendedDay = getSlotsPerDay(
+      championship.dayStartTime || '08:00',
+      championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
+      slotDurationMinutes
+    )
+    const regularDayCapacity = slotsRegularDay * numberOfCourts
+    const extendedDayCapacity = slotsExtendedDay * numberOfCourts
+    const competitionDaysPerPhase = getCompetitionDaysPerPhase(blockFormat)
+    const phaseCapacityGames = getPhaseCapacityGames(
+      blockFormat,
+      regularDayCapacity,
+      extendedDayCapacity
+    )
 
     for (const category of championship.categories) {
       const teamCount = category.registrations.length
@@ -118,6 +173,9 @@ export async function POST(request: Request) {
 
     const categoriesWithTeams = championship.categories.filter(
       (category) => category.registrations.length >= 2
+    )
+    const categoriesReadyForScheduling = championship.categories.filter(
+      (category) => category.registrations.length >= Math.max(2, championship.minTeamsPerCat || 2)
     )
 
     if (categoriesWithTeams.length === 0) {
@@ -276,8 +334,16 @@ export async function POST(request: Request) {
       const pairs = (teamCount * (teamCount - 1)) / 2
       return accumulator + pairs * (championship.turns || 1)
     }, 0)
-
-    const estimatedDays = Math.ceil(totalGames / 8)
+    const maxGamesPerPhase = Math.ceil(totalGames / Math.max(1, championship.phases || 1))
+    const estimatedDays = Math.ceil(
+      totalGames /
+        Math.max(
+          1,
+          blockFormat === 'SAT_ONLY'
+            ? extendedDayCapacity
+            : Math.ceil(phaseCapacityGames / Math.max(1, competitionDaysPerPhase))
+        )
+    )
     const totalBlockedCount = championship.categories.reduce(
       (accumulator, category) =>
         accumulator +
@@ -288,6 +354,35 @@ export async function POST(request: Request) {
         ),
       0
     )
+    const totalWeekendWindows = availableWeekends.length
+    const totalPotentialGames = endDate ? totalWeekendWindows * phaseCapacityGames : null
+
+    if (phaseCapacityGames <= 0) {
+      issues.push({
+        type: 'error',
+        field: 'capacity.window',
+        message: 'A janela de horario configurada nao gera slots suficientes para jogos.',
+        suggestion: 'Amplie o horario do dia, aumente o numero de quadras ou ajuste a duracao dos slots.',
+      })
+    }
+
+    if (maxGamesPerPhase > phaseCapacityGames) {
+      issues.push({
+        type: 'error',
+        field: 'capacity.phase',
+        message: `Cada fase comporta no maximo ${phaseCapacityGames} jogo(s), mas o campeonato precisa de ate ${maxGamesPerPhase} por fase.`,
+        suggestion: 'Reduza a quantidade de fases, aumente quadras ou amplie a janela de competicao.',
+      })
+    }
+
+    if (totalPotentialGames !== null && totalGames > totalPotentialGames) {
+      issues.push({
+        type: 'error',
+        field: 'capacity.total',
+        message: `A capacidade teorica do periodo e ${totalPotentialGames} jogo(s), mas o campeonato precisa de ${totalGames}.`,
+        suggestion: 'Estenda a data final, reduza fases ou aumente a capacidade diaria.',
+      })
+    }
 
     let aiMessage = ''
     if (hasErrors) {
@@ -309,6 +404,7 @@ export async function POST(request: Request) {
       summary: {
         totalTeams: championship.categories.reduce((accumulator, category) => accumulator + category.registrations.length, 0),
         totalCategories: championship.categories.length,
+        readyCategories: categoriesReadyForScheduling.length,
         totalGames,
         estimatedDays,
         totalBlockedDates: totalBlockedCount,
@@ -317,6 +413,24 @@ export async function POST(request: Request) {
         phases: championship.phases || 1,
         format: championship.format || 'todos_contra_todos',
         hasPlayoffs: championship.hasPlayoffs || false,
+        capacity: {
+          blockFormat,
+          dayStartTime: championship.dayStartTime || '08:00',
+          regularDayEndTime: championship.regularDayEndTime || '19:00',
+          extendedDayEndTime: championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
+          slotDurationMinutes,
+          minRestSlotsPerTeam: championship.minRestSlotsPerTeam || 1,
+          numberOfCourts,
+          slotsRegularDay,
+          slotsExtendedDay,
+          maxGamesRegularDay: regularDayCapacity,
+          maxGamesExtendedDay: extendedDayCapacity,
+          competitionDaysPerPhase,
+          maxGamesPerPhase: phaseCapacityGames,
+          requiredGamesPerPhase: maxGamesPerPhase,
+          totalWeekendWindows,
+          totalPotentialGames,
+        },
       },
       aiMessage,
     })

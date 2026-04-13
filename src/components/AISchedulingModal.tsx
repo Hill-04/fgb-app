@@ -56,6 +56,7 @@ type ValidationResult = {
   summary: {
     totalTeams: number
     totalCategories: number
+    readyCategories: number
     totalGames: number
     estimatedDays: number
     totalBlockedDates: number
@@ -64,6 +65,24 @@ type ValidationResult = {
     phases: number
     format: string
     hasPlayoffs: boolean
+    capacity: {
+      blockFormat: string
+      dayStartTime: string
+      regularDayEndTime: string
+      extendedDayEndTime: string
+      slotDurationMinutes: number
+      minRestSlotsPerTeam: number
+      numberOfCourts: number
+      slotsRegularDay: number
+      slotsExtendedDay: number
+      maxGamesRegularDay: number
+      maxGamesExtendedDay: number
+      competitionDaysPerPhase: number
+      maxGamesPerPhase: number
+      requiredGamesPerPhase: number
+      totalWeekendWindows: number
+      totalPotentialGames: number | null
+    }
   }
   aiMessage: string
 }
@@ -588,10 +607,53 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
                 {renderStat('Jogos', validation.summary.totalGames)}
                 {renderStat('Dias estimados', validation.summary.estimatedDays || '—')}
                 {renderStat('Categorias', validation.summary.totalCategories)}
+                {renderStat('Categorias prontas', validation.summary.readyCategories)}
+              </div>
+
+              <div className={`${surfaceCard} p-5`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="fgb-display text-xl text-[var(--black)]">Capacidade da janela</p>
+                    <p className="mt-1 text-sm text-[var(--gray)]">
+                      A IA calculou a capacidade real por dia e por fase com base nas configuracoes do campeonato.
+                    </p>
+                  </div>
+                  <Calendar className="h-5 w-5 text-[var(--verde)]" />
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  {renderStat('Sabado', validation.summary.capacity.maxGamesExtendedDay)}
+                  {renderStat('Dia regular', validation.summary.capacity.maxGamesRegularDay)}
+                  {renderStat('Por fase', validation.summary.capacity.maxGamesPerPhase)}
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {renderStat('Quadras', validation.summary.capacity.numberOfCourts)}
+                  {renderStat('Slots regulares', validation.summary.capacity.slotsRegularDay)}
+                  {renderStat('Slots sabado', validation.summary.capacity.slotsExtendedDay)}
+                  {renderStat('Descanso minimo', `${validation.summary.capacity.minRestSlotsPerTeam} slot`)}
+                </div>
+
+                <div className="mt-4 rounded-2xl border border-[var(--border)] bg-[var(--gray-l)]/80 p-4">
+                  <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>
+                    Janela configurada
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">
+                    {validation.summary.capacity.dayStartTime} às {validation.summary.capacity.regularDayEndTime} em dias regulares,
+                    sábado até {validation.summary.capacity.extendedDayEndTime}, slots de {validation.summary.capacity.slotDurationMinutes} min,
+                    bloco {validation.summary.capacity.blockFormat} e até {validation.summary.capacity.totalWeekendWindows} fim(ns) de semana úteis no período.
+                  </p>
+                  <p className="mt-2 text-xs leading-relaxed text-[var(--gray)]">
+                    Demanda atual: {validation.summary.capacity.requiredGamesPerPhase} jogo(s) por fase.
+                    Capacidade da fase: {validation.summary.capacity.maxGamesPerPhase} jogo(s).
+                    {validation.summary.capacity.totalPotentialGames !== null &&
+                      ` Capacidade teórica total do período: ${validation.summary.capacity.totalPotentialGames} jogo(s).`}
+                  </p>
+                </div>
               </div>
 
               <div className={`${surfaceCard} p-5`}>
