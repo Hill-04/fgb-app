@@ -29,7 +29,7 @@ export default async function TeamChampionshipsPage() {
     }) as any)
 
     return (
-      <div className="space-y-10 max-w-5xl mx-auto font-sans">
+      <div className="space-y-10 max-w-5xl mx-auto font-sans px-4 sm:px-6">
         <div className="animate-fade-in border-b border-[var(--border)] pb-8">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center border border-orange-100">
@@ -140,7 +140,7 @@ export default async function TeamChampionshipsPage() {
     )
   } catch (error: any) {
     return (
-      <div className="space-y-10 max-w-5xl mx-auto font-sans">
+      <div className="space-y-10 max-w-5xl mx-auto font-sans px-4 sm:px-6">
         <div className="animate-fade-in border-b border-[var(--border)] pb-8">
           <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight uppercase italic">Campeonatos</h1>
         </div>

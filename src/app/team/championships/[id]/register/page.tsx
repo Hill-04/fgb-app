@@ -33,7 +33,7 @@ export default async function ChampionshipRegisterPage({
 
   if (!championship) {
     return (
-      <div className="space-y-4 font-sans">
+      <div className="space-y-4 font-sans max-w-5xl mx-auto px-4 sm:px-6">
         <h1 className="text-4xl font-black text-[var(--black)] uppercase italic">Erro</h1>
         <p className="text-red-500 font-medium">Campeonato não encontrado.</p>
       </div>
@@ -42,7 +42,7 @@ export default async function ChampionshipRegisterPage({
 
   if (championship.status !== 'REGISTRATION_OPEN') {
     return (
-      <div className="space-y-4 font-sans">
+      <div className="space-y-4 font-sans max-w-5xl mx-auto px-4 sm:px-6">
         <h1 className="text-4xl font-black text-[var(--black)] uppercase italic">Inscrições Fechadas</h1>
         <p className="text-[var(--gray)] font-medium">Este campeonato não está aceitando inscrições no momento.</p>
       </div>
@@ -57,7 +57,7 @@ export default async function ChampionshipRegisterPage({
 
   if (!team) {
     return (
-      <div className="space-y-4 font-sans">
+      <div className="space-y-4 font-sans max-w-5xl mx-auto px-4 sm:px-6">
         <h1 className="text-4xl font-black text-[var(--black)] uppercase italic">Erro</h1>
         <p className="text-red-500 font-medium">Equipe não encontrada.</p>
       </div>
@@ -74,7 +74,7 @@ export default async function ChampionshipRegisterPage({
 
   if (existingRegistration) {
     return (
-      <div className="space-y-6 font-sans">
+      <div className="space-y-6 font-sans max-w-5xl mx-auto px-4 sm:px-6">
         <div>
           <h1 className="text-4xl font-black text-[var(--black)] mb-2 uppercase italic">
             Inscrição Já Realizada
@@ -108,7 +108,7 @@ export default async function ChampionshipRegisterPage({
   })
 
   return (
-    <div className="space-y-8 font-sans">
+    <div className="space-y-8 font-sans max-w-5xl mx-auto px-4 sm:px-6">
       {/* Header */}
       <div>
         <h1 className="text-4xl font-display font-black text-[var(--black)] mb-2 uppercase italic tracking-tight">
