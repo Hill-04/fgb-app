@@ -34,12 +34,6 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
       alwaysActive: true,
     },
     {
-      label: 'Configurações',
-      href: `/admin/championships/${id}/settings`,
-      icon: Settings,
-      alwaysActive: true,
-    },
-    {
       label: 'Inscrições',
       href: `/admin/championships/${id}/registrations`,
       icon: Users,
@@ -68,6 +62,12 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
       label: 'Documentos',
       href: `/admin/championships/${id}/documents`,
       icon: FileText,
+      alwaysActive: true,
+    },
+    {
+      label: 'Configurações',
+      href: `/admin/championships/${id}/settings`,
+      icon: Settings,
       alwaysActive: true,
     },
   ]
