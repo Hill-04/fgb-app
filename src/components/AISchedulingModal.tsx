@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { pluralizeDias, pluralizeJogos } from '@/utils/pluralize'
 import {
   AlertCircle,
@@ -8,6 +8,10 @@ import {
   CheckCircle2,
   Loader2,
   Sparkles,
+  Users,
+  Zap,
+  ShieldCheck,
+  Calendar,
   TriangleAlert,
   X,
 } from 'lucide-react'
@@ -173,6 +177,13 @@ const secondaryButton =
 const primaryButton =
   'flex-1 h-11 rounded-xl bg-[var(--yellow)] text-[var(--black)] text-[10px] font-black uppercase tracking-widest transition-all hover:bg-[var(--yellow-dark)] inline-flex items-center justify-center gap-2 shadow-sm'
 
+const simSteps = [
+  { label: 'Validando inscricoes', icon: ShieldCheck },
+  { label: 'Calculando categorias', icon: Users },
+  { label: 'Montando confrontos', icon: Calendar },
+  { label: 'Otimizando logistica', icon: Zap },
+]
+
 function formatLongDate(value: string) {
   return new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -204,6 +215,7 @@ export function AISchedulingModal({
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const [chatLoading, setChatLoading] = useState(false)
+  const [simStepIndex, setSimStepIndex] = useState(0)
 
   const pipelineStep = useMemo(() => {
     switch (step) {
@@ -222,6 +234,19 @@ export function AISchedulingModal({
       default:
         return 1
     }
+  }, [step])
+
+  useEffect(() => {
+    if (step !== 'simulating') {
+      setSimStepIndex(0)
+      return
+    }
+
+    const timer = setInterval(() => {
+      setSimStepIndex((current) => (current + 1) % simSteps.length)
+    }, 1100)
+
+    return () => clearInterval(timer)
   }, [step])
 
   const flatPreviewSlots = useMemo(() => {
@@ -623,15 +648,57 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
           )}
 
           {step === 'simulating' && (
-            <div className="py-16 text-center">
-              <div className="relative mx-auto h-16 w-16">
-                <Loader2 className="h-16 w-16 animate-spin text-[var(--yellow-dark)]" />
-                <Sparkles className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 text-[var(--yellow-dark)]" />
+            <div className="space-y-8 py-10">
+              <div className="text-center">
+                <div className="relative mx-auto h-16 w-16">
+                  <Loader2 className="h-16 w-16 animate-spin text-[var(--yellow-dark)]" />
+                  <Sparkles className="absolute left-1/2 top-1/2 h-6 w-6 -translate-x-1/2 -translate-y-1/2 text-[var(--yellow-dark)]" />
+                </div>
+                <p className="fgb-display mt-5 text-2xl text-[var(--black)]">Gerando calendario</p>
+                <p className="fgb-label mt-2 text-[var(--gray)]" style={{ fontSize: 9 }}>
+                  A IA esta organizando horarios, quadras e fases
+                </p>
               </div>
-              <p className="fgb-display mt-5 text-2xl text-[var(--black)]">Gerando calendario</p>
-              <p className="fgb-label mt-2 text-[var(--gray)]" style={{ fontSize: 9 }}>
-                Distribuindo jogos em blocos de fim de semana
-              </p>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {simSteps.map((simStep, index) => {
+                  const isActive = simStepIndex === index
+                  const isDone = simStepIndex > index
+                  const Icon = simStep.icon
+                  return (
+                    <div
+                      key={simStep.label}
+                      className={`flex items-center gap-3 rounded-2xl border px-4 py-3 transition-all ${
+                        isActive
+                          ? 'border-[var(--amarelo)] bg-[var(--yellow-light)]/70 shadow-sm'
+                          : isDone
+                            ? 'border-green-200 bg-[var(--verde-light)]/60'
+                            : 'border-[var(--border)] bg-white'
+                      }`}
+                    >
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                          isActive
+                            ? 'bg-[var(--amarelo)] text-[var(--black)]'
+                            : isDone
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-[var(--gray-l)] text-[var(--gray)]'
+                        }`}
+                      >
+                        {isDone ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+                          Etapa {index + 1}
+                        </p>
+                        <p className={`text-sm font-semibold ${isActive ? 'text-[var(--black)]' : 'text-[var(--gray)]'}`}>
+                          {simStep.label}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
 
