@@ -142,7 +142,12 @@ function toDateKey(date: Date) {
 }
 
 function toTimeLabel(date: Date) {
-  return date.toISOString().slice(11, 16)
+  return date.toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'America/Sao_Paulo',
+  })
 }
 
 function createUtcDate(day: Date, hour: number, minute: number) {
@@ -430,7 +435,7 @@ function getPhaseDays(weekendStart: Date, blockFormat: string) {
     return [new Date(weekendStart), addDays(weekendStart, 1)]
   }
 
-  return [new Date(weekendStart), addDays(weekendStart, 1), addDays(weekendStart, -1)]
+  return [addDays(weekendStart, -1), new Date(weekendStart), addDays(weekendStart, 1)]
 }
 
 function buildDaySlots(day: Date, gameDuration: number) {
