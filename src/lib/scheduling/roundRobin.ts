@@ -104,6 +104,15 @@ type ConflictResolved = {
   reason: string
 }
 
+type SchedulingConfig = {
+  dayStartTime: string
+  regularDayEndTime: string
+  extendedDayEndTime: string
+  slotDurationMinutes: number
+  minRestSlotsPerTeam: number
+  blockFormat: string
+}
+
 function parseAgeGroup(name: string) {
   const match = name.match(/(\d+)/)
   return match ? Number(match[1]) : 0
@@ -140,6 +149,26 @@ function createUtcDate(day: Date, hour: number, minute: number) {
   const result = new Date(day)
   result.setUTCHours(hour, minute, 0, 0)
   return result
+}
+
+function parseClockTime(value: string) {
+  const [hour, minute] = value.split(':').map(Number)
+  return {
+    hour: Number.isFinite(hour) ? hour : 0,
+    minute: Number.isFinite(minute) ? minute : 0,
+  }
+}
+
+function createUtcDateFromLocalTime(day: Date, time: string) {
+  const { hour, minute } = parseClockTime(time)
+  const utcHour = hour + 3
+  const result = new Date(day)
+  result.setUTCHours(utcHour, minute, 0, 0)
+  return result
+}
+
+function getLocalHour(time: string) {
+  return parseClockTime(time).hour
 }
 
 function createVenueName(fieldControl: string, homeTeamName: string) {
@@ -367,19 +396,18 @@ function findAvailableWeekend(
   groupTeamIds: string[],
   blockedMap: Map<string, TeamBlockedRange[]>,
   fieldControl: string,
+  blockFormat: string,
   maxAttempts = 20
 ) {
   let candidate = nextSaturday(from)
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const candidateSunday = addDays(candidate, 1)
     let blocked = false
 
     if (fieldControl === 'fixo' || fieldControl === 'neutro') {
-      blocked = groupTeamIds.some(
-        (teamId) =>
-          isDateBlockedForTeam(candidate, teamId, blockedMap) ||
-          isDateBlockedForTeam(candidateSunday, teamId, blockedMap)
+      const candidateDays = getPhaseDays(candidate, blockFormat)
+      blocked = groupTeamIds.some((teamId) =>
+        candidateDays.some((candidateDay) => isDateBlockedForTeam(candidateDay, teamId, blockedMap))
       )
     }
 
@@ -393,7 +421,15 @@ function findAvailableWeekend(
   return null
 }
 
-function getPhaseDays(weekendStart: Date) {
+function getPhaseDays(weekendStart: Date, blockFormat: string) {
+  if (blockFormat === 'SAT_ONLY') {
+    return [new Date(weekendStart)]
+  }
+
+  if (blockFormat === 'SAT_SUN') {
+    return [new Date(weekendStart), addDays(weekendStart, 1)]
+  }
+
   return [new Date(weekendStart), addDays(weekendStart, 1), addDays(weekendStart, -1)]
 }
 
@@ -440,6 +476,50 @@ function candidateTurnPairs(day: Date, gameDuration: number) {
 function withinAllowedWindow(start: Date) {
   const hour = start.getUTCHours() + start.getUTCMinutes() / 60
   return hour >= DAY_START_HOUR && hour <= DAY_END_HOUR && hour <= LAST_GAME_START_UTC + 0.25
+}
+
+function getConfiguredDayEndTime(day: Date, config: SchedulingConfig) {
+  return day.getUTCDay() === 6 ? config.extendedDayEndTime : config.regularDayEndTime
+}
+
+function buildConfiguredDaySlots(day: Date, config: SchedulingConfig) {
+  const slots: Array<{ start: Date; period: string }> = []
+  const start = createUtcDateFromLocalTime(day, config.dayStartTime)
+  const end = createUtcDateFromLocalTime(day, getConfiguredDayEndTime(day, config))
+  let cursor = new Date(start)
+
+  while (addMinutes(cursor, config.slotDurationMinutes) <= end) {
+    const localHour = (cursor.getUTCHours() + 21) % 24
+    slots.push({
+      start: new Date(cursor),
+      period: localHour < 12 ? 'manha' : 'tarde',
+    })
+    cursor = addMinutes(cursor, config.slotDurationMinutes)
+  }
+
+  return slots
+}
+
+function candidateConfiguredSingleSlots(day: Date, config: SchedulingConfig) {
+  return buildConfiguredDaySlots(day, config)
+}
+
+function candidateConfiguredTurnPairs(day: Date, config: SchedulingConfig) {
+  const slots = buildConfiguredDaySlots(day, config)
+  const morning = slots.filter((slot) => slot.period === 'manha')
+  const afternoon = slots.filter((slot) => slot.period === 'tarde')
+  const count = Math.min(morning.length, afternoon.length)
+
+  return Array.from({ length: count }).map((_, index) => ({
+    ida: morning[index],
+    volta: afternoon[index],
+  }))
+}
+
+function withinConfiguredAllowedWindow(start: Date, day: Date, config: SchedulingConfig) {
+  const dayStart = createUtcDateFromLocalTime(day, config.dayStartTime)
+  const dayEnd = createUtcDateFromLocalTime(day, getConfiguredDayEndTime(day, config))
+  return start >= dayStart && start <= dayEnd
 }
 
 function bundleAthleteKeys(
@@ -536,6 +616,15 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const minTeamsPerCat = championship.minTeamsPerCat || 2
   const maxCourts = Math.max(1, championship.numberOfCourts || 1)
   const gameDuration = championship.slotDurationMinutes || GAME_DURATION_MIN
+  const schedulingConfig: SchedulingConfig = {
+    dayStartTime: championship.dayStartTime || '08:00',
+    regularDayEndTime: championship.regularDayEndTime || '19:00',
+    extendedDayEndTime: championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
+    slotDurationMinutes: gameDuration,
+    minRestSlotsPerTeam: Math.max(0, championship.minRestSlotsPerTeam || 0),
+    blockFormat: championship.blockFormat || 'SAT_SUN',
+  }
+  const minTeamRestMinutes = schedulingConfig.minRestSlotsPerTeam * gameDuration
 
   const startDate = championship.startDate
     ? new Date(championship.startDate)
@@ -627,6 +716,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const dayGamesMap = new Map<string, ScheduledGame[]>()
   const athleteSchedule = new Map<string, ScheduledInterval[]>()
   const coachSchedule = new Map<string, ScheduledInterval[]>()
+  const teamSchedule = new Map<string, ScheduledInterval[]>()
   const groupLastWeekend = new Map<string, Date>()
   let globalCursor = nextSaturday(startDate)
 
@@ -669,7 +759,13 @@ export async function generateChampionshipSchedule(championshipId: string) {
         (latest, current) => (current > latest ? current : latest),
         groupGapAnchor
       )
-      const weekendStart = findAvailableWeekend(fromDate, teamIds, blockedMap, fieldControl)
+      const weekendStart = findAvailableWeekend(
+        fromDate,
+        teamIds,
+        blockedMap,
+        fieldControl,
+        schedulingConfig.blockFormat
+      )
 
       if (!weekendStart || (regularSeasonEndDate && weekendStart > regularSeasonEndDate)) {
         const suggestedEndDate = addDays(regularSeasonEndDate || fromDate, 21).toLocaleDateString('pt-BR')
@@ -684,7 +780,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
 
       groupLastWeekend.set(groupKey, weekendStart)
       globalCursor = addDays(weekendStart, 7)
-      const phaseDays = getPhaseDays(weekendStart)
+      const phaseDays = getPhaseDays(weekendStart, schedulingConfig.blockFormat)
 
       for (const bundle of bundles) {
         const homeTeamName = teamNameMap.get(bundle.homeTeamId) || 'Mandante'
@@ -722,8 +818,11 @@ export async function generateChampionshipSchedule(championshipId: string) {
           }
 
           if (turns >= 2) {
-            for (const slotPair of candidateTurnPairs(day, gameDuration)) {
-              if (!withinAllowedWindow(slotPair.ida.start) || !withinAllowedWindow(slotPair.volta.start)) {
+            for (const slotPair of candidateConfiguredTurnPairs(day, schedulingConfig)) {
+              if (
+                !withinConfiguredAllowedWindow(slotPair.ida.start, day, schedulingConfig) ||
+                !withinConfiguredAllowedWindow(slotPair.volta.start, day, schedulingConfig)
+              ) {
                 continue
               }
 
@@ -762,6 +861,19 @@ export async function generateChampionshipSchedule(championshipId: string) {
                 )
               )
               if (coachConflict) {
+                continue
+              }
+
+              const teamConflict = [bundle.homeTeamId, bundle.awayTeamId].some((teamId) =>
+                (teamSchedule.get(teamId) || []).some((interval) =>
+                  candidateIntervals.some(
+                    (candidate) =>
+                      overlaps(candidate.start, candidate.end, interval) ||
+                      !hasMinGap(candidate.start, candidate.end, interval, minTeamRestMinutes)
+                  )
+                )
+              )
+              if (teamConflict) {
                 continue
               }
 
@@ -809,8 +921,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
               break
             }
           } else {
-            for (const slot of candidateSingleSlots(day, gameDuration)) {
-              if (!withinAllowedWindow(slot.start)) {
+            for (const slot of candidateConfiguredSingleSlots(day, schedulingConfig)) {
+              if (!withinConfiguredAllowedWindow(slot.start, day, schedulingConfig)) {
                 continue
               }
 
@@ -836,6 +948,17 @@ export async function generateChampionshipSchedule(championshipId: string) {
                 (coachSchedule.get(coachKey) || []).some((interval) => overlaps(slot.start, candidateEnd, interval))
               )
               if (coachConflict) {
+                continue
+              }
+
+              const teamConflict = [bundle.homeTeamId, bundle.awayTeamId].some((teamId) =>
+                (teamSchedule.get(teamId) || []).some(
+                  (interval) =>
+                    overlaps(slot.start, candidateEnd, interval) ||
+                    !hasMinGap(slot.start, candidateEnd, interval, minTeamRestMinutes)
+                )
+              )
+              if (teamConflict) {
                 continue
               }
 
@@ -903,6 +1026,12 @@ export async function generateChampionshipSchedule(championshipId: string) {
             const intervals = coachSchedule.get(coachKey) || []
             intervals.push({ start, end })
             coachSchedule.set(coachKey, intervals)
+          }
+
+          for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+            const intervals = teamSchedule.get(teamId) || []
+            intervals.push({ start, end })
+            teamSchedule.set(teamId, intervals)
           }
         }
 
