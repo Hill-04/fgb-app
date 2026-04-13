@@ -49,7 +49,7 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
       label: 'Organizar IA',
       href: `/admin/championships/${id}/organization`,
       icon: Sparkles,
-      requiresStatus: ['REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'ORGANIZING'],
+      alwaysActive: true,
       badge: 'IA',
     },
     {
