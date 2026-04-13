@@ -116,6 +116,32 @@ export async function POST(request: Request) {
       }
     }
 
+    const categoriesWithTeams = championship.categories.filter(
+      (category) => category.registrations.length >= 2
+    )
+
+    if (categoriesWithTeams.length === 0) {
+      issues.push({
+        type: 'error',
+        field: 'categorias',
+        message: 'Nenhuma categoria possui o minimo de 2 equipes confirmadas.',
+        suggestion: 'Adicione equipes ou aguarde novas inscricoes antes de organizar.',
+      })
+    }
+
+    for (let index = issues.length - 1; index >= 0; index -= 1) {
+      const issue = issues[index]
+      if (issue.field.startsWith('categoria.')) {
+        warnings.push({
+          type: 'warning',
+          field: issue.field,
+          message: `${issue.message} Esta categoria sera ignorada na organizacao.`,
+          suggestion: issue.suggestion,
+        })
+        issues.splice(index, 1)
+      }
+    }
+
     const startDate = championship.startDate
       ? new Date(championship.startDate)
       : new Date(Date.now() + 21 * 24 * 60 * 60 * 1000)

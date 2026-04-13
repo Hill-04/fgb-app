@@ -42,14 +42,14 @@ export default async function OrganizationPage({
     orderBy: { name: 'asc' }
   })
 
-  if (!championship) return <div>Campeonato não encontrado</div>
+  if (!championship) return <div>Campeonato nao encontrado</div>
 
   const minTeams = championship.minTeamsPerCat || 3
 
   const categoriesReady = categoriesWithTeams.filter(
     cat => cat._count.registrations >= minTeams
   )
-  const allReady = categoriesReady.length === categoriesWithTeams.length
+  const hasAnyReady = categoriesReady.length > 0
   
   const categoriesMissing = categoriesWithTeams.filter(cat => cat._count.registrations < minTeams)
 
@@ -59,40 +59,32 @@ export default async function OrganizationPage({
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-[var(--gray-l)] p-8 rounded-[32px] border border-[var(--border)]">
         <div>
           <h2 className="fgb-display text-4xl text-[var(--black)] leading-none">
-            Organização
+            Organizacao
           </h2>
           <p className="fgb-label text-[var(--gray)] mt-2" style={{ fontSize: 10, letterSpacing: 2 }}>
-            Logística, Calendário e Viabilidade por Categoria
+            Logistica, calendario e viabilidade por categoria
           </p>
         </div>
         
-        {allReady ? (
-          <AISchedulingButton
-            championshipId={id}
-            championshipName={championship.name}
-          />
-        ) : (
-          <div className="flex items-center gap-3 px-6 h-12 bg-white border border-[var(--border)] rounded-2xl opacity-60 backdrop-blur-sm cursor-not-allowed">
-            <Sparkles className="w-4 h-4 text-[var(--gray)]" />
-            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">
-              Gerador IA Bloqueado
-            </span>
-          </div>
-        )}
+        <AISchedulingButton
+          championshipId={id}
+          championshipName={championship.name}
+          disabled={!hasAnyReady}
+        />
       </div>
 
       {/* Alerta de Viabilidade */}
-      {!allReady && (
+      {!hasAnyReady && (
         <div className="bg-orange-50 border border-orange-200 rounded-[28px] p-8 flex flex-col md:flex-row items-start md:items-center gap-6 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
           <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0 border border-orange-300">
             <AlertTriangle className="w-6 h-6 text-orange-600" />
           </div>
           <div className="flex-1">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 mb-2">
-              Ação Requerida: Categorias Incompletas
+              Acao requerida: categorias incompletas
             </p>
             <p className="text-sm text-[var(--gray)] font-medium leading-relaxed">
-              O agendamento automático está bloqueado pois {categoriesMissing.length} categoria(s) ainda não atingiram o mínimo de {minTeams} equipes confirmadas.
+              Nenhuma categoria atingiu o minimo de {minTeams} equipes confirmadas. A organizacao so sera possivel quando ao menos uma categoria estiver pronta.
             </p>
             <div className="flex flex-wrap gap-2 mt-4">
                {categoriesMissing.map(cat => (
@@ -106,7 +98,29 @@ export default async function OrganizationPage({
             href={`/admin/championships/${id}/registrations`}
             className="px-6 h-11 bg-white border border-[var(--border)] hover:bg-[var(--amarelo)] hover:border-[#E66000] text-[var(--black)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 whitespace-nowrap shadow-sm"
           >
-            Gerenciar Inscrições <ArrowRight className="w-3.5 h-3.5" />
+            Gerenciar inscricoes <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        </div>
+      )}
+
+      {hasAnyReady && categoriesMissing.length > 0 && (
+        <div className="bg-white border border-[var(--border)] rounded-[24px] p-6 flex flex-col md:flex-row items-start md:items-center gap-5">
+          <div className="w-12 h-12 rounded-2xl bg-[var(--gray-l)] flex items-center justify-center flex-shrink-0 border border-[var(--border)]">
+            <Sparkles className="w-5 h-5 text-[var(--gray)]" />
+          </div>
+          <div className="flex-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)] mb-2">
+              Organizacao parcial liberada
+            </p>
+            <p className="text-sm text-[var(--gray)] font-medium leading-relaxed">
+              A IA vai organizar apenas as categorias que ja atingiram o minimo. As demais permanecem pendentes.
+            </p>
+          </div>
+          <Link
+            href={`/admin/championships/${id}/registrations`}
+            className="px-5 h-10 bg-[var(--gray-l)] border border-[var(--border)] text-[var(--black)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 whitespace-nowrap"
+          >
+            Ver pendencias <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
       )}

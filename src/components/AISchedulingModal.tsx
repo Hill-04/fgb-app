@@ -12,6 +12,7 @@ import {
   TriangleAlert,
   X,
 } from 'lucide-react'
+import { ChampionshipAIPipeline } from '@/app/admin/championships/[id]/ChampionshipAIPipeline'
 
 type AISchedulingModalProps = {
   championshipId: string
@@ -205,6 +206,26 @@ export function AISchedulingModal({
   const [chatInput, setChatInput] = useState('')
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const [chatLoading, setChatLoading] = useState(false)
+
+  const pipelineStep = useMemo(() => {
+    switch (step) {
+      case 'idle':
+      case 'validating':
+        return 1
+      case 'diagnosis':
+        return 2
+      case 'simulating':
+        return 4
+      case 'preview':
+      case 'review':
+        return 5
+      case 'applying':
+      case 'done':
+        return 6
+      default:
+        return 1
+    }
+  }, [step])
 
   const flatPreviewSlots = useMemo(() => {
     if (!simulation?.schedulePreview) return []
@@ -424,6 +445,12 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
         </div>
 
         <div className="flex-1 overflow-y-auto p-8">
+          <div className={`${surfaceCard} mb-6 p-4`}>
+            <p className="fgb-label text-[var(--gray)] mb-3" style={{ fontSize: 9 }}>
+              Pipeline da IA
+            </p>
+            <ChampionshipAIPipeline currentStep={pipelineStep} />
+          </div>
           {step === 'idle' && (
             <div className="space-y-6 text-center animate-in zoom-in-95 duration-500">
               <div className={`mx-auto max-w-xl p-8 ${surfaceCard}`}>

@@ -514,6 +514,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const fieldControl = championship.fieldControl || 'alternado'
   const hasPlayoffs = championship.hasPlayoffs || false
   const playoffTeams = championship.playoffTeams || 4
+  const minTeamsPerCat = championship.minTeamsPerCat || 2
 
   const startDate = championship.startDate
     ? new Date(championship.startDate)
@@ -564,7 +565,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
         }
       }),
     }))
-    .filter((category) => category.teams.length >= 2)
+    .filter((category) => category.teams.length >= minTeamsPerCat)
 
   if (categories.length === 0) {
     throw new Error('Nenhuma categoria com equipes suficientes para gerar calendário')
