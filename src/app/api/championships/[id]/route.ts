@@ -58,7 +58,7 @@ export async function PATCH(
     const body = await request.json()
     const {
       name, year, sex, minTeamsPerCat, categories: selectedCodes,
-      format, turns, phases, fieldControl, tiebreakers,
+      format, turns, phases, fieldControl, tiebreakers, status,
       hasRelegation, relegationDown, promotionUp,
       hasPlayoffs, playoffTeams, playoffFormat, hasThirdPlace,
       hasBlocks, regDeadline, startDate, endDate,
@@ -77,6 +77,7 @@ export async function PATCH(
           ...(format && { format }),
           ...(turns !== undefined && { turns: Number(turns) }),
           ...(phases !== undefined && { phases: Number(phases) }),
+          ...(status && { status }),
           ...(fieldControl && { fieldControl }),
           ...(tiebreakers && { tiebreakers: Array.isArray(tiebreakers) ? tiebreakers.join(',') : tiebreakers }),
           ...(hasRelegation !== undefined && { hasRelegation: Boolean(hasRelegation) }),

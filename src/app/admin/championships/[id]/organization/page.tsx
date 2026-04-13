@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { Sparkles, Users, Calendar, ArrowRight, ShieldCheck, AlertTriangle, Wand2 } from 'lucide-react'
-import { AISchedulingModal } from '@/components/AISchedulingModal'
+import { OrganizationPlannerClient } from './OrganizationPlannerClient'
 
 export default async function OrganizationPage({
   params,
@@ -135,12 +135,9 @@ export default async function OrganizationPage({
             </div>
           </div>
 
-          <AISchedulingModal
+          <OrganizationPlannerClient
             championshipId={id}
             championshipName={championship.name}
-            onClose={() => {}}
-            onApplied={() => {}}
-            variant="page"
           />
 
           <div className="fgb-card bg-white p-6 border border-[var(--border)] rounded-[28px]">

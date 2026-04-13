@@ -438,6 +438,8 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
   )
 
   const isModal = variant === 'modal'
+  const successPrimaryLabel = isModal ? 'Ver jogos' : 'Ir para jogos'
+  const successSecondaryLabel = isModal ? 'Fechar' : 'Nova analise'
 
   return (
     <div
@@ -995,7 +997,7 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
 
               <div className="flex gap-3">
                 <button onClick={onClose} className={secondaryButton}>
-                  Fechar
+                  {successSecondaryLabel}
                 </button>
                 <button
                   onClick={() => {
@@ -1004,7 +1006,7 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                   }}
                   className={primaryButton}
                 >
-                  Ver jogos
+                  {successPrimaryLabel}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
