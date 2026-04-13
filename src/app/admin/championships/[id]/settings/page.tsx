@@ -457,10 +457,11 @@ export default function ChampionshipSettingsPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <FieldGroup label="Modo de otimização da IA">
               <select
-                value={form.scheduleOptimizationMode ?? 'compact'}
+                value={form.scheduleOptimizationMode ?? 'less_travel'}
                 onChange={e => setForm(p => p ? ({...p, scheduleOptimizationMode: e.target.value}) : null)}
                 className="w-full bg-[var(--gray-l)] border border-[var(--border)] h-12 rounded-xl px-4 text-sm font-bold text-[var(--black)] focus:outline-none focus:border-[var(--verde)] appearance-none"
               >
+                <option value="less_travel" className="bg-white">Menos viagens: concentra o máximo por etapa</option>
                 <option value="compact" className="bg-white">Compacto: termina o quanto antes</option>
                 <option value="balanced" className="bg-white">Equilibrado: distribui melhor a carga</option>
               </select>
@@ -472,7 +473,9 @@ export default function ChampionshipSettingsPage({
               <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">
                 {form.scheduleOptimizationMode === 'balanced'
                   ? 'A IA prioriza reduzir desgaste e evita usar sexta cedo demais quando houver espaço no sábado e domingo.'
-                  : 'A IA prioriza encerrar cada fase o quanto antes, ocupando os primeiros horários disponíveis.'}
+                  : form.scheduleOptimizationMode === 'compact'
+                    ? 'A IA prioriza encerrar cada fase o quanto antes, ocupando os primeiros horários disponíveis.'
+                    : 'A IA prioriza menos viagens, agrupando o máximo de jogos por etapa e usando sexta apenas quando necessário.'}
               </p>
             </div>
           </div>

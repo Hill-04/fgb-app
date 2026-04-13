@@ -98,7 +98,14 @@ export async function PATCH(
           ...(slotDurationMinutes !== undefined && { slotDurationMinutes: Number(slotDurationMinutes) }),
           ...(minRestSlotsPerTeam !== undefined && { minRestSlotsPerTeam: Number(minRestSlotsPerTeam) }),
           ...(maxGamesPerTeamPerDay !== undefined && { maxGamesPerTeamPerDay: Number(maxGamesPerTeamPerDay) }),
-          ...(scheduleOptimizationMode && { scheduleOptimizationMode }),
+          ...(scheduleOptimizationMode && {
+            scheduleOptimizationMode:
+              scheduleOptimizationMode === 'compact'
+                ? 'compact'
+                : scheduleOptimizationMode === 'balanced'
+                  ? 'balanced'
+                  : 'less_travel',
+          }),
           ...(blockFormat && { blockFormat }),
         },
       })

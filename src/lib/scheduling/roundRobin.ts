@@ -115,6 +115,10 @@ type SchedulingConfig = {
   blockFormat: string
 }
 
+type SchedulingOverrides = {
+  optimizationMode?: string
+}
+
 function parseAgeGroup(name: string) {
   const match = name.match(/(\d+)/)
   return match ? Number(match[1]) : 0
@@ -474,7 +478,7 @@ function getPhaseDays(weekendStart: Date, blockFormat: string) {
 }
 
 function orderPhaseDays(phaseDays: Date[], optimizationMode: string, blockFormat: string) {
-  if (optimizationMode !== 'balanced') {
+  if (optimizationMode === 'compact') {
     return phaseDays
   }
 
@@ -486,7 +490,15 @@ function orderPhaseDays(phaseDays: Date[], optimizationMode: string, blockFormat
   const sunday = phaseDays.find((day) => day.getUTCDay() === 0)
   const friday = phaseDays.find((day) => day.getUTCDay() === 5)
 
-  return [saturday, sunday, friday].filter(Boolean) as Date[]
+  if (optimizationMode === 'less_travel') {
+    return [saturday, sunday, friday].filter(Boolean) as Date[]
+  }
+
+  return [saturday, friday, sunday].filter(Boolean) as Date[]
+}
+
+function getDailyTeamCountKey(teamId: string, categoryId: string, dateKey: string) {
+  return `${teamId}:${categoryId}:${dateKey}`
 }
 
 function buildDaySlots(day: Date, gameDuration: number) {
@@ -636,7 +648,7 @@ function createGameOutput(
   }
 }
 
-export async function generateChampionshipSchedule(championshipId: string) {
+export async function generateChampionshipSchedule(championshipId: string, overrides: SchedulingOverrides = {}) {
   const championship = await prisma.championship.findUnique({
     where: { id: championshipId },
     include: {
@@ -679,7 +691,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     slotDurationMinutes: gameDuration,
     minRestSlotsPerTeam: Math.max(0, championship.minRestSlotsPerTeam || 0),
     maxGamesPerTeamPerDay: Math.max(1, championship.maxGamesPerTeamPerDay || 2),
-    optimizationMode: championship.scheduleOptimizationMode || 'compact',
+    optimizationMode: overrides.optimizationMode || championship.scheduleOptimizationMode || 'less_travel',
     blockFormat: championship.blockFormat || 'SAT_SUN',
   }
   const minTeamRestMinutes = schedulingConfig.minRestSlotsPerTeam * gameDuration
@@ -879,8 +891,10 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const dateKey = toDateKey(day)
           const existingDayGames = dayGamesMap.get(dateKey) || []
           const categoriesInDay = new Set(existingDayGames.map((game) => game.categoryId))
-          const homeGamesCount = teamGamesPerDay.get(`${bundle.homeTeamId}:${dateKey}`) || 0
-          const awayGamesCount = teamGamesPerDay.get(`${bundle.awayTeamId}:${dateKey}`) || 0
+          const homeGamesCount =
+            teamGamesPerDay.get(getDailyTeamCountKey(bundle.homeTeamId, bundle.categoryId, dateKey)) || 0
+          const awayGamesCount =
+            teamGamesPerDay.get(getDailyTeamCountKey(bundle.awayTeamId, bundle.categoryId, dateKey)) || 0
 
           if (categoriesInDay.size >= MAX_CATS_PER_DAY && !categoriesInDay.has(bundle.categoryId)) {
             continue
@@ -1098,12 +1112,12 @@ export async function generateChampionshipSchedule(championshipId: string) {
           currentGames.push(game)
           dayGamesMap.set(dateKey, currentGames)
           teamGamesPerDay.set(
-            `${game.homeTeamId}:${dateKey}`,
-            (teamGamesPerDay.get(`${game.homeTeamId}:${dateKey}`) || 0) + 1
+            getDailyTeamCountKey(game.homeTeamId, game.categoryId, dateKey),
+            (teamGamesPerDay.get(getDailyTeamCountKey(game.homeTeamId, game.categoryId, dateKey)) || 0) + 1
           )
           teamGamesPerDay.set(
-            `${game.awayTeamId}:${dateKey}`,
-            (teamGamesPerDay.get(`${game.awayTeamId}:${dateKey}`) || 0) + 1
+            getDailyTeamCountKey(game.awayTeamId, game.categoryId, dateKey),
+            (teamGamesPerDay.get(getDailyTeamCountKey(game.awayTeamId, game.categoryId, dateKey)) || 0) + 1
           )
 
           const start = new Date(game.dateTime)
@@ -1195,6 +1209,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     schedulePreview,
     conflictsResolved,
     unresolvableConflicts,
+    selectedOptimizationMode: schedulingConfig.optimizationMode,
     summary: `${scheduledGames.length} jogos · ${schedulePreview.length} dias · ${groups.length} grupos · ${phases} fases`,
   }
 }

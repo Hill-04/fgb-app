@@ -91,7 +91,7 @@ model Championship {
   slotDurationMinutes         Int                    @default(75)
   minRestSlotsPerTeam         Int                    @default(1)
   maxGamesPerTeamPerDay       Int                    @default(2)
-  scheduleOptimizationMode    String                 @default("compact")
+  scheduleOptimizationMode    String                 @default("less_travel")
   blockFormat                 String                 @default("SAT_SUN")
   isSimulation                Boolean                @default(false)
   blocks         Block[]

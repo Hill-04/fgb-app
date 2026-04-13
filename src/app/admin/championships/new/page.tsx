@@ -22,7 +22,7 @@ const defaultForm = () => ({
   name: '', year: new Date().getFullYear().toString(), sex: 'masculino',
   minTeamsPerCat: '3', categories: [] as string[],
   format: 'todos_contra_todos', turns: '1', phases: '1', fieldControl: 'alternado',
-  maxGamesPerTeamPerDay: '2', scheduleOptimizationMode: 'compact',
+  maxGamesPerTeamPerDay: '2', scheduleOptimizationMode: 'less_travel',
   tiebreakers: ['pontos', 'saldo', 'confronto_direto', 'pontos_marcados'],
   hasRelegation: false, relegationDown: '0', promotionUp: '0',
   hasPlayoffs: false, playoffTeams: '4', playoffFormat: 'melhor_de_1', hasThirdPlace: true,
@@ -226,12 +226,13 @@ export default function NewChampionshipPage() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <SectionLabel>Máx. jogos por equipe/dia</SectionLabel>
+          <SectionLabel>Máx. jogos por equipe/categoria no dia</SectionLabel>
           <Input type="number" min="1" max="6" value={form.maxGamesPerTeamPerDay} onChange={e => setField('maxGamesPerTeamPerDay', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
         </div>
         <div className="space-y-2">
           <SectionLabel>Modo de otimização da IA</SectionLabel>
           <select value={form.scheduleOptimizationMode} onChange={e => setField('scheduleOptimizationMode', e.target.value)} className="w-full bg-[#121212] border border-white/10 h-11 rounded-xl text-white px-3">
+            <option value="less_travel">Menos viagens: concentra o máximo por etapa</option>
             <option value="compact">Compacto: termina o quanto antes</option>
             <option value="balanced">Equilibrado: distribui melhor a carga</option>
           </select>
@@ -242,7 +243,9 @@ export default function NewChampionshipPage() {
         <p className="mt-2 text-sm leading-relaxed text-slate-300">
           {form.scheduleOptimizationMode === 'balanced'
             ? 'A IA vai distribuir melhor a carga entre os dias disponíveis, preservando mais descanso quando houver espaço.'
-            : 'A IA vai preencher os primeiros horários disponíveis para encerrar cada fase o quanto antes, respeitando bloqueios e descanso mínimo.'}
+            : form.scheduleOptimizationMode === 'compact'
+              ? 'A IA vai preencher os primeiros horários disponíveis para encerrar cada fase o quanto antes, respeitando bloqueios e descanso mínimo.'
+              : 'A IA vai priorizar menos deslocamentos, concentrando o máximo de jogos viáveis em cada viagem e deixando a sexta como último recurso.'}
         </p>
       </div>
     </div>

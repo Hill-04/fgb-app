@@ -164,9 +164,11 @@ type SimulationResult = {
     suggestion: string | null
     error?: string
   }
+  selectedOptimizationMode?: string
 }
 
 type ReviewTab = 'date' | 'category' | 'round'
+type OptimizationScenario = 'less_travel' | 'compact' | 'balanced'
 
 const stepTrail: Step[] = ['diagnosis', 'review', 'done']
 
@@ -239,6 +241,7 @@ export function AISchedulingModal({
   const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'ai'; content: string }[]>([])
   const [chatLoading, setChatLoading] = useState(false)
   const [simStepIndex, setSimStepIndex] = useState(0)
+  const [selectedScenario, setSelectedScenario] = useState<OptimizationScenario>('less_travel')
 
   const pipelineStep = useMemo(() => {
     switch (step) {
@@ -311,15 +314,16 @@ export function AISchedulingModal({
       }))
   }, [flatPreviewSlots])
 
-  const runSimulation = async () => {
+  const runSimulation = async (scenario: OptimizationScenario = selectedScenario) => {
     setStep('simulating')
     setErrorMsg('')
+    setSelectedScenario(scenario)
 
     try {
       const res = await fetch('/api/scheduling/simulate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ championshipId }),
+        body: JSON.stringify({ championshipId, optimizationMode: scenario }),
       })
 
       if (!res.ok) {
@@ -352,7 +356,9 @@ export function AISchedulingModal({
 
       setValidation(data)
       if (data.viable) {
-        await runSimulation()
+        await runSimulation(
+          (data.summary?.capacity?.scheduleOptimizationMode as OptimizationScenario) || 'less_travel'
+        )
       } else {
         setStep('diagnosis')
       }
@@ -362,8 +368,8 @@ export function AISchedulingModal({
     }
   }
 
-  const handleSimulate = async () => {
-    await runSimulation()
+  const handleSimulate = async (scenario?: OptimizationScenario) => {
+    await runSimulation(scenario || selectedScenario)
   }
 
   const handleApply = async () => {
@@ -457,6 +463,30 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
       Reagendado
     </span>
   )
+
+  const scenarioCards: Array<{
+    key: OptimizationScenario
+    label: string
+    description: string
+    recommended?: boolean
+  }> = [
+    {
+      key: 'less_travel',
+      label: 'Menos viagens',
+      description: 'Prioriza concentrar o maximo de jogos por etapa e deixa a sexta como ultimo recurso.',
+      recommended: true,
+    },
+    {
+      key: 'compact',
+      label: 'Compacto',
+      description: 'Termina as fases o quanto antes, ocupando os primeiros horarios disponiveis.',
+    },
+    {
+      key: 'balanced',
+      label: 'Equilibrado',
+      description: 'Distribui melhor a carga entre os dias quando houver espaco na janela do campeonato.',
+    },
+  ]
 
   const isModal = variant === 'modal'
   const successPrimaryLabel = isModal ? 'Ver jogos' : 'Ir para jogos'
@@ -641,10 +671,14 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {renderStat('Max. por equipe/dia', validation.summary.capacity.maxGamesPerTeamPerDay)}
+                  {renderStat('Max. por equipe/categoria', validation.summary.capacity.maxGamesPerTeamPerDay)}
                   {renderStat(
                     'Modo IA',
-                    validation.summary.capacity.scheduleOptimizationMode === 'balanced' ? 'Equilibrado' : 'Compacto'
+                    validation.summary.capacity.scheduleOptimizationMode === 'balanced'
+                      ? 'Equilibrado'
+                      : validation.summary.capacity.scheduleOptimizationMode === 'compact'
+                        ? 'Compacto'
+                        : 'Menos viagens'
                   )}
                 </div>
 
@@ -731,7 +765,7 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                 <button onClick={() => setStep('idle')} className={secondaryButton}>
                   Ajustar configuracoes
                 </button>
-                <button onClick={handleSimulate} className={primaryButton}>
+                <button onClick={() => handleSimulate()} className={primaryButton}>
                   <Sparkles className="h-3.5 w-3.5" />
                   Simular mesmo assim
                 </button>
@@ -830,6 +864,51 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                   </div>
                 </div>
               )}
+
+              <div className={`${surfaceCard} p-5`}>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="fgb-display text-xl text-[var(--black)]">Cenarios de geracao</p>
+                    <p className="mt-2 text-sm text-[var(--gray)]">
+                      Refaça o preview com a estrategia que melhor atende a operacao da federacao.
+                    </p>
+                  </div>
+                  <span className="fgb-admin-pill">
+                    Atual: {selectedScenario === 'balanced' ? 'Equilibrado' : selectedScenario === 'compact' ? 'Compacto' : 'Menos viagens'}
+                  </span>
+                </div>
+
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {scenarioCards.map((scenario) => {
+                    const active = selectedScenario === scenario.key
+                    return (
+                      <button
+                        key={scenario.key}
+                        onClick={() => handleSimulate(scenario.key)}
+                        className={`rounded-2xl border p-4 text-left transition-all ${
+                          active
+                            ? 'border-[var(--yellow)] bg-[var(--yellow-light)]/70 shadow-sm'
+                            : 'border-[var(--border)] bg-white hover:border-[var(--yellow)]/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                            {scenario.label}
+                          </p>
+                          {scenario.recommended && (
+                            <span className="rounded-full bg-[var(--verde-light)] px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em] text-[var(--verde)]">
+                              Recomendado
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-3 text-xs leading-relaxed text-[var(--gray)]">
+                          {scenario.description}
+                        </p>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
 
               <div className={`${surfaceCard} p-2`}>
                 <div className="grid grid-cols-3 gap-2">

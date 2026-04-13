@@ -77,7 +77,11 @@ export async function POST(request: Request) {
           hasBlocks: Boolean(hasBlocks),
           minTeamsPerCat: Number(minTeamsPerCat) || 3,
           maxGamesPerTeamPerDay: Math.max(1, Number(maxGamesPerTeamPerDay) || 2),
-          scheduleOptimizationMode: scheduleOptimizationMode === 'balanced' ? 'balanced' : 'compact',
+          scheduleOptimizationMode: scheduleOptimizationMode === 'compact'
+            ? 'compact'
+            : scheduleOptimizationMode === 'balanced'
+              ? 'balanced'
+              : 'less_travel',
           regDeadline: isValidDate(regDeadline) ? new Date(regDeadline) : new Date(),
           startDate: isValidDate(startDate) ? new Date(startDate) : null,
           endDate: isValidDate(endDate) ? new Date(endDate) : null,
