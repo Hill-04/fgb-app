@@ -21,6 +21,23 @@ type ValidationWarning = {
 
 type BlockFormat = 'SAT_ONLY' | 'SAT_SUN' | 'FRI_SAT_SUN'
 
+function usesRoundRobinCycle(format: string) {
+  return format !== 'eliminatoria' && format !== 'eliminatorio'
+}
+
+function getCategoryGamesPerPhase(teamCount: number, turns: number, format: string) {
+  if (teamCount < 2) {
+    return 0
+  }
+
+  if (usesRoundRobinCycle(format)) {
+    const pairs = (teamCount * (teamCount - 1)) / 2
+    return pairs * turns
+  }
+
+  return Math.floor(teamCount / 2) * turns
+}
+
 function startOfUtcDay(date: Date) {
   const normalized = new Date(date)
   normalized.setUTCHours(0, 0, 0, 0)
@@ -336,16 +353,22 @@ export async function POST(request: Request) {
     }
 
     const hasErrors = issues.some((issue) => issue.type === 'error')
-    const totalGames = championship.categories.reduce((accumulator, category) => {
-      const teamCount = category.registrations.length
-      if (teamCount < 2) {
-        return accumulator
-      }
-
-      const pairs = (teamCount * (teamCount - 1)) / 2
-      return accumulator + pairs * (championship.turns || 1)
+    const gamesPerPhase = championship.categories.reduce((accumulator, category) => {
+      return (
+        accumulator +
+        getCategoryGamesPerPhase(
+          category.registrations.length,
+          championship.turns || 1,
+          championship.format || 'todos_contra_todos'
+        )
+      )
     }, 0)
-    const maxGamesPerPhase = Math.ceil(totalGames / Math.max(1, championship.phases || 1))
+    const totalGames =
+      gamesPerPhase *
+      (usesRoundRobinCycle(championship.format || 'todos_contra_todos')
+        ? Math.max(1, championship.phases || 1)
+        : 1)
+    const maxGamesPerPhase = gamesPerPhase
     const estimatedDays = Math.ceil(
       totalGames /
         Math.max(

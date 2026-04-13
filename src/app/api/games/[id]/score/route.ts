@@ -1,14 +1,30 @@
 import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/db'
+import { authOptions } from '@/lib/auth'
 import { recalculateStandings } from '@/lib/standings'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await ensureDatabaseSchema()
+
+    const session = await getServerSession(authOptions)
+    if (!session || !(session.user as any).isAdmin) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+    }
+
     const { id } = await params
     const { homeScore, awayScore, status, playerStats } = await request.json()
+    const parsedHomeScore = Number(homeScore)
+    const parsedAwayScore = Number(awayScore)
+
+    if (!Number.isFinite(parsedHomeScore) || !Number.isFinite(parsedAwayScore)) {
+      return NextResponse.json({ error: 'Placar inválido' }, { status: 400 })
+    }
 
     const game = await prisma.game.findUnique({ where: { id } })
     if (!game) {
@@ -18,8 +34,8 @@ export async function PATCH(
     await prisma.game.update({
       where: { id },
       data: {
-        homeScore,
-        awayScore,
+        homeScore: parsedHomeScore,
+        awayScore: parsedAwayScore,
         status: status || 'FINISHED',
       },
     })
@@ -35,8 +51,8 @@ export async function PATCH(
             gameId: id,
             teamId: playerStat.teamId,
             userId: playerStat.userId,
-            points: playerStat.points || 0,
-            fouls: playerStat.fouls || 0,
+            points: Number(playerStat.points) || 0,
+            fouls: Number(playerStat.fouls) || 0,
           })),
         })
       }
@@ -49,6 +65,6 @@ export async function PATCH(
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('[Score API Error]', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Erro ao registrar resultado' }, { status: 500 })
   }
 }

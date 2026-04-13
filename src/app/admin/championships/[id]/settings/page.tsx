@@ -427,6 +427,15 @@ export default function ChampionshipSettingsPage({
           </FieldGroup>
         </div>
 
+        <div className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)]/70 p-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+            Regra das fases
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--black)]">
+            Em formatos de todos contra todos, cada fase replica o ciclo completo da categoria. Ex.: 3 fases significa 3 encontros distribuídos entre as mesmas equipes, com intervalo equilibrado entre as etapas.
+          </p>
+        </div>
+
         <div className="pt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <CourtsField 

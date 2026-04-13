@@ -218,6 +218,12 @@ export default function NewChampionshipPage() {
           <Input type="number" min="1" value={form.phases} onChange={e => setField('phases', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
         </div>
       </div>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Como a fase funciona</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">
+          Em formatos de todos contra todos, cada fase repete o ciclo completo da categoria. Ex.: 3 fases = cada equipe reencontra as demais 3 vezes, com espaçamento equilibrado entre as etapas.
+        </p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <SectionLabel>Máx. jogos por equipe/dia</SectionLabel>

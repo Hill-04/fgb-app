@@ -32,6 +32,7 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
   
   // Store player stats: { userId: { points: number, fouls: number, teamId: string } }
   const [playerStats, setPlayerStats] = useState<Record<string, { points: number, fouls: number, teamId: string }>>({})
+  const [errorMessage, setErrorMessage] = useState('')
   
   const router = useRouter()
 
@@ -79,6 +80,7 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
   const handleSave = async () => {
     if (homeScore === '' || awayScore === '') return
     setLoading(true)
+    setErrorMessage('')
     try {
       // Format player stats for API
       const statsArray = Object.entries(playerStats).map(([userId, stats]) => ({
@@ -99,6 +101,9 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
       if (res.ok) {
         setShowModal(false)
         router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({ error: 'Erro ao salvar resultado' }))
+        setErrorMessage(data.error || 'Erro ao salvar resultado')
       }
     } finally {
       setLoading(false)
@@ -259,6 +264,12 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
                       </div>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {errorMessage && (
+                <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+                  {errorMessage}
                 </div>
               )}
             </div>

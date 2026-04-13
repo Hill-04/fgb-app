@@ -135,6 +135,12 @@ function addDays(date: Date, amount: number) {
   return next
 }
 
+function startOfUtcDay(date: Date) {
+  const normalized = new Date(date)
+  normalized.setUTCHours(0, 0, 0, 0)
+  return normalized
+}
+
 function addMinutes(date: Date, amount: number) {
   return new Date(date.getTime() + amount * 60_000)
 }
@@ -258,6 +264,10 @@ function generateEliminationPairs(teams: TeamInfo[], categoryId: string, categor
   return pairs
 }
 
+function usesRoundRobinCycle(format: string) {
+  return format !== 'eliminatoria' && format !== 'eliminatorio'
+}
+
 function reorderPairsForRest(pairs: UniquePair[]) {
   const remaining = [...pairs]
   const ordered: UniquePair[] = []
@@ -304,6 +314,29 @@ function reservePlayoffWindow(endDate: Date | null, hasPlayoffs: boolean, playof
 
   const reservedWeekends = playoffTeams > 4 ? 2 : 1
   return addDays(endDate, -(reservedWeekends * 7))
+}
+
+function buildPhaseAnchors(startDate: Date, endDate: Date | null, phases: number) {
+  const start = startOfUtcDay(startDate)
+
+  if (phases <= 1) {
+    return [start]
+  }
+
+  if (!endDate) {
+    return Array.from({ length: phases }, (_, index) => addDays(start, index * 7))
+  }
+
+  const end = startOfUtcDay(endDate)
+  if (end <= start) {
+    return Array.from({ length: phases }, (_, index) => addDays(start, index * 7))
+  }
+
+  const totalMs = end.getTime() - start.getTime()
+  return Array.from({ length: phases }, (_, index) => {
+    const ratio = phases <= 1 ? 0 : index / phases
+    return startOfUtcDay(new Date(start.getTime() + totalMs * ratio))
+  })
 }
 
 function buildAthleteMaps(categories: CategoryInfo[]) {
@@ -717,24 +750,41 @@ export async function generateChampionshipSchedule(championshipId: string) {
   )
   const { athleteKeysByCategoryTeam } = buildAthleteMaps(categories)
   const teamToCoach = buildCoachMap(categories)
-
-  const pairsByCategory = new Map<string, UniquePair[]>()
-  let maxPairs = 0
+  const phasePairsByCategory = new Map<string, Map<number, UniquePair[]>>()
+  const roundRobinByPhase = usesRoundRobinCycle(format)
+  const phaseAnchors = buildPhaseAnchors(startDate, regularSeasonEndDate, phases)
 
   for (const category of categories) {
     const basePairs =
-      format === 'eliminatoria'
+      !roundRobinByPhase
         ? generateEliminationPairs(category.teams, category.id, category.name)
         : generateRoundRobinPairs(category.teams, category.id, category.name)
     const orderedPairs = reorderPairsForRest(basePairs)
-    pairsByCategory.set(category.id, orderedPairs)
-    maxPairs = Math.max(maxPairs, orderedPairs.length)
+    const perPhase = new Map<number, UniquePair[]>()
+
+    if (roundRobinByPhase) {
+      for (let phase = 1; phase <= phases; phase += 1) {
+        perPhase.set(
+          phase,
+          orderedPairs.map((pair) => ({
+            ...pair,
+          }))
+        )
+      }
+    } else {
+      const pairsPerPhase = Math.max(1, Math.ceil(orderedPairs.length / phases))
+      for (let phase = 1; phase <= phases; phase += 1) {
+        const startIndex = (phase - 1) * pairsPerPhase
+        perPhase.set(phase, orderedPairs.slice(startIndex, startIndex + pairsPerPhase))
+      }
+    }
+
+    phasePairsByCategory.set(category.id, perPhase)
   }
 
   const teamNameMap = new Map(categories.flatMap((category) => category.teams).map((team) => [team.id, team.name]))
   const categoryNameMap = new Map(categories.map((category) => [category.id, category.name]))
 
-  const pairsPerPhase = Math.max(1, Math.ceil(maxPairs / phases))
   const scheduledGames: ScheduledGame[] = []
   const unresolvableConflicts: UnresolvableConflict[] = []
   const conflictsResolved: ConflictResolved[] = []
@@ -747,18 +797,14 @@ export async function generateChampionshipSchedule(championshipId: string) {
   let globalCursor = nextSaturday(startDate)
 
   for (let phase = 1; phase <= phases; phase += 1) {
-    const phaseAnchor = new Date(startDate)
-    phaseAnchor.setUTCDate(phaseAnchor.getUTCDate() + (phase - 1) * 7)
+    const phaseAnchor = phaseAnchors[phase - 1] || addDays(startDate, (phase - 1) * 7)
 
     for (const group of groups) {
       const groupKey = group.map((category) => category.id).join('|')
       const teamIds = Array.from(new Set(group.flatMap((category) => category.teams.map((team) => team.id))))
-      const phaseStartIndex = (phase - 1) * pairsPerPhase
-      const phaseEndIndex = phaseStartIndex + pairsPerPhase
-
       const categoryQueues = new Map<string, MatchBundle[]>()
       for (const category of group) {
-        const phasePairs = (pairsByCategory.get(category.id) || []).slice(phaseStartIndex, phaseEndIndex)
+        const phasePairs = phasePairsByCategory.get(category.id)?.get(phase) || []
         categoryQueues.set(
           category.id,
           phasePairs.map((pair, index) => ({
