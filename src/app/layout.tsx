@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Barlow_Condensed, DM_Sans } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-import { ensureDatabaseSchema } from "@/lib/db-patch";
 
 const barlowCondensed = Barlow_Condensed({
   variable: "--font-display",
@@ -48,8 +47,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  await ensureDatabaseSchema();
-
   return (
     <html lang="pt-BR">
       <body className={`${dmSans.variable} ${barlowCondensed.variable} antialiased`} suppressHydrationWarning>

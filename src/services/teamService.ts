@@ -24,26 +24,24 @@ export class TeamService {
       const result = await prisma.$transaction(async (tx) => {
         const team = await tx.team.create({
           data: {
-            name: input.name,
-            logoUrl: input.logoUrl ?? null,
-            city: input.city,
-            state: input.state ?? 'RS',
-            phone: input.phone,
+            name: input.name.trim(),
+            logoUrl: input.logoUrl?.trim() ? input.logoUrl.trim() : null,
+            city: input.city.trim(),
+            state: (input.state ?? 'RS').trim().toUpperCase(),
+            phone: input.phone.trim(),
             sex: input.sex,
-            responsible: input.responsible,
+            responsible: input.responsible.trim(),
           }
         })
 
         if (input.hasGym && input.gym) {
           await tx.gym.create({
             data: {
-              name: input.gym.name,
-              address: input.gym.address,
-              city: input.gym.city,
-              capacity: typeof input.gym.capacity === 'string'
-                ? parseInt(input.gym.capacity as string)
-                : input.gym.capacity as number,
-              availability: input.gym.availability,
+              name: input.gym.name.trim(),
+              address: input.gym.address.trim(),
+              city: input.gym.city.trim(),
+              capacity: input.gym.capacity as number,
+              availability: input.gym.availability.trim(),
               canHost: input.gym.canHost ?? true,
               teamId: team.id
             }

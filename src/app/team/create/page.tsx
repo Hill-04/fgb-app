@@ -39,8 +39,33 @@ export default function CreateTeamPage() {
     e.preventDefault();
     setError('');
 
-    if (!formData.sex) {
-      setError('Selecione o sexo da equipe');
+    const normalized = {
+      ...formData,
+      name: formData.name.trim(),
+      city: formData.city.trim(),
+      responsible: formData.responsible.trim(),
+      phone: formData.phone.trim(),
+      logoUrl: formData.logoUrl.trim(),
+      gym: {
+        ...formData.gym,
+        name: formData.gym.name.trim(),
+        address: formData.gym.address.trim(),
+        city: formData.gym.city.trim(),
+      }
+    };
+
+    if (!normalized.sex) {
+      setError('Selecione o sexo da equipe.');
+      return;
+    }
+
+    if (!normalized.name || !normalized.city || !normalized.responsible || !normalized.phone) {
+      setError('Preencha todos os dados obrigatorios da equipe antes de continuar.');
+      return;
+    }
+
+    if (normalized.hasGym && (!normalized.gym.name || !normalized.gym.address || !normalized.gym.city || !normalized.gym.capacity)) {
+      setError('Preencha todos os dados do ginasio ou desative a opcao de ginasio proprio.');
       return;
     }
 
@@ -48,8 +73,8 @@ export default function CreateTeamPage() {
 
     try {
       const payload = {
-        ...formData,
-        gym: formData.hasGym ? formData.gym : null,
+        ...normalized,
+        gym: normalized.hasGym ? normalized.gym : null,
       };
 
       const res = await fetch('/api/teams/create', {
@@ -98,6 +123,16 @@ export default function CreateTeamPage() {
           <p className="text-[var(--gray)] font-medium">
             Preencha os dados da sua equipe. Você será automaticamente o Head Coach.
           </p>
+        </div>
+
+        <div className="mb-6 rounded-[1.5rem] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)] mb-3">Dados minimos obrigatorios</p>
+          <div className="grid sm:grid-cols-2 gap-3 text-sm text-[var(--gray)]">
+            <div>Nome da equipe, sexo, cidade e estado</div>
+            <div>Responsavel principal e telefone</div>
+            <div>Se houver ginasio: nome, endereco, cidade e capacidade</div>
+            <div>Ao concluir, sua conta vira Head Coach da equipe</div>
+          </div>
         </div>
 
         {error && (

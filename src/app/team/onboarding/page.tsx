@@ -74,6 +74,26 @@ export default function OnboardingPage() {
           </p>
         </div>
 
+        <div className="max-w-4xl mx-auto mb-10 rounded-[1.75rem] border border-[var(--border)] bg-white p-6 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)] mb-4">
+            Fluxo da conta
+          </p>
+          <div className="grid md:grid-cols-3 gap-4 text-sm text-[var(--gray)]">
+            <div className="rounded-2xl bg-gray-50 border border-[var(--border)] p-4">
+              <p className="font-black text-[var(--black)] mb-1">1. Escolha o caminho</p>
+              <p>Crie uma equipe nova ou solicite entrada em uma equipe existente.</p>
+            </div>
+            <div className="rounded-2xl bg-gray-50 border border-[var(--border)] p-4">
+              <p className="font-black text-[var(--black)] mb-1">2. Validacao</p>
+              <p>Somente equipes completas e aprovadas liberam acesso total ao portal da equipe.</p>
+            </div>
+            <div className="rounded-2xl bg-gray-50 border border-[var(--border)] p-4">
+              <p className="font-black text-[var(--black)] mb-1">3. Operacao</p>
+              <p>Depois disso voce acompanha campeonatos, jogos, documentos e inscricoes.</p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {/* Card: Criar Equipe */}
           <Link href="/team/create" className="group">

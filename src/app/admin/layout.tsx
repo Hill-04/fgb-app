@@ -4,7 +4,6 @@ import { authOptions } from "@/lib/auth"
 import { SideNav } from "@/components/SideNav"
 import { MobileHeader } from "@/components/MobileHeader"
 import { AIAssistantBubble } from "@/components/AIAssistantBubble"
-import { ensureDatabaseSchema } from "@/lib/db-patch"
 import { resolveUserContext } from "@/lib/access/resolve-user-context"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -18,8 +17,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   if (!context.isAdmin) {
     redirect(context.nextRoute)
   }
-
-  await ensureDatabaseSchema()
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen relative overflow-hidden" style={{ background: 'var(--bg-admin)', color: 'var(--black)' }}>
