@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { AlertTriangle, Loader2, MoreVertical, Pencil, Plus, RotateCcw, Trophy, XCircle } from 'lucide-react'
@@ -493,7 +494,10 @@ export default function MatchesPage() {
                           <summary className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border border-[var(--border)] text-[var(--gray)] list-none">
                             <MoreVertical className="h-4 w-4" />
                           </summary>
-                          <div className="absolute right-0 z-20 mt-2 flex w-56 flex-col rounded-2xl border border-[var(--border)] bg-white p-2 shadow-xl">
+                          <div className="absolute right-0 z-20 mt-2 flex w-64 flex-col rounded-2xl border border-[var(--border)] bg-white p-2 shadow-xl">
+                            <Link href={`/admin/games/${game.id}/pregame`} className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-[var(--black)] hover:bg-[var(--gray-l)]"><RotateCcw className="h-4 w-4" />Pré-jogo oficial</Link>
+                            <Link href={`/admin/games/${game.id}/live`} className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-[var(--black)] hover:bg-[var(--gray-l)]"><Trophy className="h-4 w-4" />Scout ao vivo</Link>
+                            <Link href={`/admin/games/${game.id}/review`} className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-[var(--black)] hover:bg-[var(--gray-l)]"><AlertTriangle className="h-4 w-4" />Revisão final</Link>
                             <button onClick={() => openEditModal(game)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-[var(--black)] hover:bg-[var(--gray-l)]"><Pencil className="h-4 w-4" />Editar data/hora/local</button>
                             <button onClick={() => openEditModal(game)} className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-[var(--black)] hover:bg-[var(--gray-l)]"><RotateCcw className="h-4 w-4" />Trocar confronto</button>
                             <button onClick={() => { setEditForm((current) => ({ ...current, homeScore: game.homeScore?.toString() || '', awayScore: game.awayScore?.toString() || '' })); openResultModal(game) }} className="flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-[var(--black)] hover:bg-[var(--gray-l)]"><Trophy className="h-4 w-4" />Registrar resultado</button>

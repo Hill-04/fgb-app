@@ -41,6 +41,10 @@ model Team {
   standings     Standing[]
   members       TeamMembership[]
   playerStats   PlayerStat[]
+  gameRosters   GameRoster[]
+  gameEvents    GameEvent[]
+  livePlayerStatLines GamePlayerStatLine[]
+  liveTeamStatLines   GameTeamStatLine[]
   athletes      Athlete[]
   seasonRankings SeasonRanking[]
   bidEntriesFrom AthleteBidEntry[] @relation("BidTeamFrom")
@@ -208,6 +212,15 @@ model Game {
   isReturn       Boolean              @default(false)
   period         String?
   status         String               @default("SCHEDULED")
+  liveStatus     String               @default("SCHEDULED")
+  currentPeriod  Int                  @default(0)
+  clockDisplay   String?
+  homeTimeoutsUsed Int                @default(0)
+  awayTimeoutsUsed Int                @default(0)
+  homeTeamFoulsCurrentPeriod Int      @default(0)
+  awayTeamFoulsCurrentPeriod Int      @default(0)
+  isLivePublished Boolean             @default(false)
+  officialReportId String?
   homeScore      Int?
   awayScore      Int?
   wasRescheduled Boolean              @default(false)
@@ -221,6 +234,219 @@ model Game {
   championship   Championship         @relation(fields: [championshipId], references: [id], onDelete: Cascade)
   playerStats    PlayerStat[]
   refereeAssignments RefereeAssignment[]
+  liveSessions   GameLiveSession[]
+  rosters        GameRoster[]
+  officials      GameOfficial[]
+  events         GameEvent[]
+  playerStatLines GamePlayerStatLine[]
+  teamStatLines  GameTeamStatLine[]
+  periodScores   GamePeriodScore[]
+  auditLogs      GameAuditLog[]
+  officialReport GameOfficialReport?
+}
+
+model GameLiveSession {
+  id                     String    @id @default(uuid())
+  gameId                 String
+  status                 String    @default("PRE_GAME_READY")
+  startedAt              DateTime?
+  endedAt                DateTime?
+  openedByUserId         String?
+  closedByUserId         String?
+  notes                  String?
+  publicVisibilityStatus String    @default("PRE_GAME")
+  currentPeriod          Int       @default(0)
+  clockStatus            String    @default("STOPPED")
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  game                   Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  events                 GameEvent[]
+
+  @@index([gameId])
+}
+
+model GameRoster {
+  id                 String   @id @default(uuid())
+  gameId             String
+  teamId             String
+  coachName          String?
+  assistantCoachName String?
+  isLocked           Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  game               Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  players            GameRosterPlayer[]
+
+  @@unique([gameId, teamId])
+  @@index([gameId])
+}
+
+model GameRosterPlayer {
+  id            String    @id @default(uuid())
+  gameRosterId  String
+  athleteId     String
+  jerseyNumber  Int?
+  isStarter     Boolean   @default(false)
+  isCaptain     Boolean   @default(false)
+  isAvailable   Boolean   @default(true)
+  isOnCourt     Boolean   @default(false)
+  status        String    @default("ACTIVE")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  gameRoster    GameRoster @relation(fields: [gameRosterId], references: [id], onDelete: Cascade)
+  athlete       Athlete    @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@unique([gameRosterId, athleteId])
+  @@index([gameRosterId])
+  @@index([athleteId])
+}
+
+model GameOfficial {
+  id           String   @id @default(uuid())
+  gameId        String
+  officialType  String
+  name          String
+  refereeId     String?
+  role          String
+  createdAt     DateTime @default(now())
+  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  referee       Referee? @relation(fields: [refereeId], references: [id], onDelete: SetNull)
+
+  @@index([gameId])
+}
+
+model GameEvent {
+  id                 String    @id @default(uuid())
+  gameId             String
+  liveSessionId      String
+  sequenceNumber     Int
+  period             Int
+  clockTime          String
+  eventType          String
+  teamId             String?
+  athleteId          String?
+  secondaryAthleteId String?
+  pointsDelta        Int?
+  payloadJson        String?
+  createdByUserId    String?
+  createdAt          DateTime  @default(now())
+  isReverted         Boolean   @default(false)
+  revertedAt         DateTime?
+  revertedByUserId   String?
+  correctionReason   String?
+  game               Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  liveSession        GameLiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
+  team               Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  athlete            Athlete?  @relation("GameEventAthlete", fields: [athleteId], references: [id], onDelete: SetNull)
+  secondaryAthlete   Athlete?  @relation("GameEventSecondaryAthlete", fields: [secondaryAthleteId], references: [id], onDelete: SetNull)
+
+  @@index([gameId, sequenceNumber])
+  @@index([liveSessionId])
+}
+
+model GamePlayerStatLine {
+  id                    String   @id @default(uuid())
+  gameId                 String
+  athleteId              String
+  teamId                 String
+  minutesPlayed          Int      @default(0)
+  points                 Int      @default(0)
+  fouls                  Int      @default(0)
+  assists                Int      @default(0)
+  reboundsOffensive      Int      @default(0)
+  reboundsDefensive      Int      @default(0)
+  reboundsTotal          Int      @default(0)
+  steals                 Int      @default(0)
+  blocks                 Int      @default(0)
+  turnovers              Int      @default(0)
+  twoPtMade              Int      @default(0)
+  twoPtAttempted         Int      @default(0)
+  threePtMade            Int      @default(0)
+  threePtAttempted       Int      @default(0)
+  freeThrowsMade         Int      @default(0)
+  freeThrowsAttempted    Int      @default(0)
+  plusMinus              Int?
+  isStarter              Boolean  @default(false)
+  fouledOut              Boolean  @default(false)
+  disqualified           Boolean  @default(false)
+  updatedAt              DateTime @updatedAt
+  game                   Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  athlete                Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  team                   Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, athleteId])
+  @@index([gameId])
+}
+
+model GameTeamStatLine {
+  id                 String   @id @default(uuid())
+  gameId             String
+  teamId             String
+  points             Int      @default(0)
+  fouls              Int      @default(0)
+  timeoutsUsed       Int      @default(0)
+  reboundsTotal      Int      @default(0)
+  assists            Int      @default(0)
+  steals             Int      @default(0)
+  turnovers          Int      @default(0)
+  blocks             Int      @default(0)
+  twoPtMade          Int      @default(0)
+  twoPtAttempted     Int      @default(0)
+  threePtMade        Int      @default(0)
+  threePtAttempted   Int      @default(0)
+  freeThrowsMade     Int      @default(0)
+  freeThrowsAttempted Int     @default(0)
+  updatedAt          DateTime @updatedAt
+  game               Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, teamId])
+  @@index([gameId])
+}
+
+model GamePeriodScore {
+  id         String   @id @default(uuid())
+  gameId      String
+  period      Int
+  homePoints  Int      @default(0)
+  awayPoints  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, period])
+  @@index([gameId])
+}
+
+model GameOfficialReport {
+  id               String   @id @default(uuid())
+  gameId            String   @unique
+  finalHomeScore    Int      @default(0)
+  finalAwayScore    Int      @default(0)
+  overtimeCount     Int      @default(0)
+  officialPdfUrl    String?
+  boxScoreJson      String?
+  playByPlayJson    String?
+  signedOffByUserId String?
+  finalizedAt       DateTime?
+  createdAt         DateTime @default(now())
+  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model GameAuditLog {
+  id            String   @id @default(uuid())
+  gameId         String
+  actionType     String
+  actorUserId    String?
+  targetEntity   String
+  targetEntityId String?
+  description    String
+  metaJson       String?
+  createdAt      DateTime @default(now())
+  game           Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  @@index([gameId, createdAt])
 }
 
 model Standing {
@@ -259,6 +485,10 @@ model Athlete {
   team         Team?     @relation(fields: [teamId], references: [id])
   cards        AthleteIdCard[]
   bidEntries   AthleteBidEntry[]
+  rosterEntries GameRosterPlayer[]
+  primaryEvents GameEvent[] @relation("GameEventAthlete")
+  secondaryEvents GameEvent[] @relation("GameEventSecondaryAthlete")
+  liveStatLines GamePlayerStatLine[]
 
   @@index([teamId])
   @@index([document])
@@ -308,6 +538,7 @@ model Referee {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   assignments   RefereeAssignment[]
+  gameOfficials GameOfficial[]
 }
 
 model RefereeAssignment {
