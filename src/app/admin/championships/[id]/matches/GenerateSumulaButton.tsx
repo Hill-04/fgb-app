@@ -57,6 +57,46 @@ export function GenerateSumulaButton({ gameId, gameLabel }: GenerateSumulaButton
       
       doc.line(15, 48, pageWidth - 15, 48)
       
+      // Build stat map: userId → stats
+      const statsMap: Record<string, any> = {}
+      if (game.playerStats) {
+        for (const s of game.playerStats) statsMap[s.userId] = s
+      }
+
+      // Árbitros
+      const mainRef = game.refereeAssignments?.find((a: any) => a.role === 'MAIN')?.referee?.name || ''
+      const auxRef  = game.refereeAssignments?.find((a: any) => a.role !== 'MAIN')?.referee?.name || ''
+
+      const isFinished = game.status === 'FINISHED'
+
+      // Roster builder — se o jogo está finalizado mostra stats, senão mostra células de falta
+      const buildRoster = (members: any[]) => members.map((m: any) => {
+        const s = statsMap[m.user?.id || m.userId]
+        if (isFinished && s) {
+          return [
+            m.number || '-',
+            m.user.name.toUpperCase(),
+            s.points ?? '',
+            s.threePoints ?? '',
+            s.assists ?? '',
+            s.rebounds ?? '',
+            s.blocks ?? '',
+            s.steals ?? '',
+            s.fouls ?? '',
+          ]
+        }
+        return [m.number || '-', m.user.name.toUpperCase(), '', '', '', '', '', '', '']
+      })
+
+      const rosterHead = [['Nº', 'NOME DO ATLETA', 'PTS', '3PT', 'AST', 'REB', 'BLK', 'STL', 'FLT']]
+      const rosterColStyles: Record<number, object> = {
+        0: { cellWidth: 8 },
+        1: { cellWidth: 'auto', halign: 'left' },
+        2: { cellWidth: 7 }, 3: { cellWidth: 7 }, 4: { cellWidth: 7 },
+        5: { cellWidth: 7 }, 6: { cellWidth: 7 }, 7: { cellWidth: 7 },
+        8: { cellWidth: 7 },
+      }
+
       // ════════════════════════════════════════════
       // EQUIPE A (HOME)
       // ════════════════════════════════════════════
@@ -64,95 +104,82 @@ export function GenerateSumulaButton({ gameId, gameLabel }: GenerateSumulaButton
       doc.setFillColor(240, 240, 240)
       doc.rect(15, 52, (pageWidth - 35) / 2, 8, 'F')
       doc.text(`EQUIPE A: ${game.homeTeam.name.toUpperCase()}`, 17, 57.5)
-      
-      const homeRoster = game.homeTeam.members.map((m: any) => [
-        m.number || '-',
-        m.user.name.toUpperCase(),
-        '', '', '', '', '' // Faltas
-      ])
-      
+
       autoTable(doc, {
         startY: 61,
         margin: { left: 15 },
         tableWidth: (pageWidth - 35) / 2,
-        head: [['Nº', 'NOME DO ATLETA', '1', '2', '3', '4', '5']],
-        body: homeRoster,
+        head: rosterHead,
+        body: buildRoster(game.homeTeam.members),
         styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
-        headStyles: { fillColor: [60, 60, 60], textColor: [255, 255, 255] },
-        columnStyles: {
-          0: { cellWidth: 8 },
-          1: { cellWidth: 'auto', halign: 'left' },
-          2: { cellWidth: 6 },
-          3: { cellWidth: 6 },
-          4: { cellWidth: 6 },
-          5: { cellWidth: 6 },
-          6: { cellWidth: 6 },
-        }
+        headStyles: { fillColor: [27, 115, 64], textColor: [255, 255, 255] },
+        columnStyles: rosterColStyles,
       })
-      
+
       // ════════════════════════════════════════════
       // EQUIPE B (AWAY)
       // ════════════════════════════════════════════
       const homeTableFinalY = (doc as any).lastAutoTable.finalY || 61
-      
+
       doc.setFont('helvetica', 'bold')
       doc.setFillColor(240, 240, 240)
       doc.rect(pageWidth / 2 + 2.5, 52, (pageWidth - 35) / 2, 8, 'F')
       doc.text(`EQUIPE B: ${game.awayTeam.name.toUpperCase()}`, pageWidth / 2 + 4.5, 57.5)
-      
-      const awayRoster = game.awayTeam.members.map((m: any) => [
-        m.number || '-',
-        m.user.name.toUpperCase(),
-        '', '', '', '', '' // Faltas
-      ])
-      
+
       autoTable(doc, {
         startY: 61,
         margin: { left: pageWidth / 2 + 2.5 },
         tableWidth: (pageWidth - 35) / 2,
-        head: [['Nº', 'NOME DO ATLETA', '1', '2', '3', '4', '5']],
-        body: awayRoster,
+        head: rosterHead,
+        body: buildRoster(game.awayTeam.members),
         styles: { fontSize: 7, cellPadding: 1, halign: 'center' },
         headStyles: { fillColor: [60, 60, 60], textColor: [255, 255, 255] },
-        columnStyles: {
-          0: { cellWidth: 8 },
-          1: { cellWidth: 'auto', halign: 'left' },
-          2: { cellWidth: 6 },
-          3: { cellWidth: 6 },
-          4: { cellWidth: 6 },
-          5: { cellWidth: 6 },
-          6: { cellWidth: 6 },
-        }
+        columnStyles: rosterColStyles,
       })
-      
+
       const awayTableFinalY = (doc as any).lastAutoTable.finalY || 61
       const maxY = Math.max(homeTableFinalY, awayTableFinalY)
-      
+
       // ════════════════════════════════════════════
-      // CONTROLE DE PONTUAÇÃO (PLACEHOLDER TABLE)
+      // PLACAR FINAL (se finalizado) ou tabela de controle
       // ════════════════════════════════════════════
-      doc.setFontSize(10)
-      doc.text('CONTAGEM DE PONTOS:', 15, maxY + 15)
-      
-      const scoresBody = Array.from({ length: 15 }, (_, i) => [
-        i + 1, '', '', i + 1, '', '', i + 1, '', ''
-      ])
-      
-      autoTable(doc, {
-        startY: maxY + 20,
-        head: [['A', 'M', 'B', 'A', 'M', 'B', 'A', 'M', 'B']],
-        body: scoresBody,
-        styles: { fontSize: 7, halign: 'center' },
-        theme: 'grid'
-      })
-      
-      // Rodapé / Assinaturas
-      const footerY = (doc as any).lastAutoTable.finalY + 20
-      doc.line(15, footerY, 75, footerY)
-      doc.text('Árbitro Principial', 25, footerY + 5)
-      
-      doc.line(pageWidth - 75, footerY, pageWidth - 15, footerY)
-      doc.text('Árbitro Auxiliar', pageWidth - 65, footerY + 5)
+      if (isFinished) {
+        doc.setFontSize(11)
+        doc.setFont('helvetica', 'bold')
+        doc.text('RESULTADO FINAL:', 15, maxY + 14)
+        doc.setFontSize(18)
+        doc.text(
+          `${game.homeTeam.name.toUpperCase()}  ${game.homeScore ?? '-'}  ×  ${game.awayScore ?? '-'}  ${game.awayTeam.name.toUpperCase()}`,
+          pageWidth / 2,
+          maxY + 26,
+          { align: 'center' }
+        )
+      } else {
+        doc.setFontSize(10)
+        doc.text('CONTROLE DE PONTUAÇÃO:', 15, maxY + 14)
+        const scoresBody = Array.from({ length: 12 }, (_, i) => [i + 1, '', '', i + 1, '', '', i + 1, '', ''])
+        autoTable(doc, {
+          startY: maxY + 19,
+          head: [['A', 'M', 'B', 'A', 'M', 'B', 'A', 'M', 'B']],
+          body: scoresBody,
+          styles: { fontSize: 7, halign: 'center' },
+          theme: 'grid',
+        })
+      }
+
+      // ════════════════════════════════════════════
+      // RODAPÉ / ASSINATURAS
+      // ════════════════════════════════════════════
+      const lastY = (doc as any).lastAutoTable?.finalY || maxY + 40
+      const footerY = lastY + 18
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+
+      doc.line(15, footerY, 85, footerY)
+      doc.text(`Árbitro Principal${mainRef ? ': ' + mainRef : ''}`, 17, footerY + 5)
+
+      doc.line(pageWidth - 85, footerY, pageWidth - 15, footerY)
+      doc.text(`Árbitro Auxiliar${auxRef ? ': ' + auxRef : ''}`, pageWidth - 83, footerY + 5)
       
       doc.save(`sumula-${game.homeTeam.name}-vs-${game.awayTeam.name}.pdf`)
       toast.success('Súmula gerada com sucesso!')

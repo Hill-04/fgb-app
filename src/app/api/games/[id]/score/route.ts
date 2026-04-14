@@ -51,8 +51,13 @@ export async function PATCH(
             gameId: id,
             teamId: playerStat.teamId,
             userId: playerStat.userId,
-            points: Number(playerStat.points) || 0,
-            fouls: Number(playerStat.fouls) || 0,
+            points:      Number(playerStat.points)      || 0,
+            fouls:       Number(playerStat.fouls)       || 0,
+            assists:     Number(playerStat.assists)     || 0,
+            rebounds:    Number(playerStat.rebounds)    || 0,
+            blocks:      Number(playerStat.blocks)      || 0,
+            steals:      Number(playerStat.steals)      || 0,
+            threePoints: Number(playerStat.threePoints) || 0,
           })),
         })
       }

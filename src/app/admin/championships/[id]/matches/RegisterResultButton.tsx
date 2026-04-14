@@ -30,8 +30,11 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
   const [homeScore, setHomeScore] = useState('')
   const [awayScore, setAwayScore] = useState('')
   
-  // Store player stats: { userId: { points: number, fouls: number, teamId: string } }
-  const [playerStats, setPlayerStats] = useState<Record<string, { points: number, fouls: number, teamId: string }>>({})
+  // Store player stats: { userId: { points, fouls, assists, rebounds, blocks, steals, threePoints, teamId } }
+  const [playerStats, setPlayerStats] = useState<Record<string, {
+    points: number; fouls: number; assists: number; rebounds: number
+    blocks: number; steals: number; threePoints: number; teamId: string
+  }>>({})
   const [errorMessage, setErrorMessage] = useState('')
   
   const router = useRouter()
@@ -51,12 +54,16 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
         setDetails(data)
         
         // Initialize stats maps
-        const initialStats: Record<string, { points: number, fouls: number, teamId: string }> = {}
+        const initialStats: Record<string, {
+          points: number; fouls: number; assists: number; rebounds: number
+          blocks: number; steals: number; threePoints: number; teamId: string
+        }> = {}
+        const emptyStats = { points: 0, fouls: 0, assists: 0, rebounds: 0, blocks: 0, steals: 0, threePoints: 0 }
         data.homeTeam.players.forEach((p: Player) => {
-          initialStats[p.id] = { points: 0, fouls: 0, teamId: data.homeTeam.id }
+          initialStats[p.id] = { ...emptyStats, teamId: data.homeTeam.id }
         })
         data.awayTeam.players.forEach((p: Player) => {
-          initialStats[p.id] = { points: 0, fouls: 0, teamId: data.awayTeam.id }
+          initialStats[p.id] = { ...emptyStats, teamId: data.awayTeam.id }
         })
         setPlayerStats(initialStats)
       }
@@ -65,7 +72,7 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
     }
   }
 
-  const handleStatChange = (userId: string, field: 'points' | 'fouls', value: string) => {
+  const handleStatChange = (userId: string, field: 'points' | 'fouls' | 'assists' | 'rebounds' | 'blocks' | 'steals' | 'threePoints', value: string) => {
     const numValue = parseInt(value) || 0
     setPlayerStats(prev => ({
       ...prev,
@@ -86,7 +93,10 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
       const statsArray = Object.entries(playerStats).map(([userId, stats]) => ({
         userId,
         ...stats
-      })).filter(s => s.points > 0 || s.fouls > 0)
+      })).filter(s =>
+        s.points > 0 || s.fouls > 0 || s.assists > 0 || s.rebounds > 0 ||
+        s.blocks > 0 || s.steals > 0 || s.threePoints > 0
+      )
 
       const res = await fetch(`/api/games/${gameId}/score`, {
         method: 'PATCH',
@@ -109,6 +119,16 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
       setLoading(false)
     }
   }
+
+  const STAT_FIELDS: { key: 'points' | 'fouls' | 'assists' | 'rebounds' | 'blocks' | 'steals' | 'threePoints'; label: string; color?: string }[] = [
+    { key: 'points',      label: 'PTS' },
+    { key: 'threePoints', label: '3PT' },
+    { key: 'assists',     label: 'AST' },
+    { key: 'rebounds',    label: 'REB' },
+    { key: 'blocks',      label: 'BLK' },
+    { key: 'steals',      label: 'STL' },
+    { key: 'fouls',       label: 'FLT', color: 'var(--red)' },
+  ]
 
   return (
     <>
@@ -183,87 +203,47 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
                   </div>
 
                   {/* Player Stats Section */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Home Players */}
-                    <div className="space-y-4">
+                  {[
+                    { team: details?.homeTeam, accent: 'var(--verde)' },
+                    { team: details?.awayTeam, accent: 'var(--red)' },
+                  ].map(({ team, accent }) => team && (
+                    <div key={team.id} className="space-y-3">
                       <div className="flex items-center gap-2 pb-2 border-b border-[var(--border)]">
-                        <Shield className="w-4 h-4 text-[var(--verde)]" />
-                        <h4 className="fgb-display text-xs text-[var(--black)] uppercase">{details?.homeTeam.name}</h4>
+                        <Shield className="w-4 h-4" style={{ color: accent }} />
+                        <h4 className="fgb-display text-xs text-[var(--black)] uppercase">{team.name}</h4>
                       </div>
-                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        {details?.homeTeam.players.map(player => (
-                          <div key={player.id} className="flex items-center justify-between p-3 bg-white border border-[var(--border)] rounded-xl hover:border-[var(--verde)] transition-all">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span className="w-6 text-xs font-black text-[var(--gray)]">#{player.number || '--'}</span>
-                              <p className="text-xs font-bold text-[var(--black)] truncate uppercase">{player.name}</p>
+                      {/* Header row */}
+                      <div className="flex items-center gap-1 px-3">
+                        <div className="flex-1 min-w-0" />
+                        {STAT_FIELDS.map(f => (
+                          <div key={f.key} className="w-10 text-center">
+                            <span className="text-[7px] font-black uppercase" style={{ color: f.color || 'var(--gray)' }}>{f.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
+                        {team.players.map(player => (
+                          <div key={player.id} className="flex items-center gap-1 p-2 bg-white border border-[var(--border)] rounded-xl hover:border-[var(--verde)]/40 transition-all">
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="w-6 shrink-0 text-[10px] font-black text-[var(--gray)]">#{player.number || '--'}</span>
+                              <p className="text-[10px] font-bold text-[var(--black)] truncate uppercase">{player.name}</p>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex flex-col items-center">
-                                <span className="text-[7px] font-black text-[var(--gray)] uppercase">PTS</span>
-                                <input 
-                                  type="number" 
-                                  value={playerStats[player.id]?.points || ''}
-                                  onChange={(e) => handleStatChange(player.id, 'points', e.target.value)}
-                                  placeholder="0"
-                                  className="w-10 h-8 text-center text-xs font-black border border-[var(--border)] rounded-lg focus:border-[var(--verde)] focus:outline-none"
-                                />
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span className="text-[7px] font-black text-[var(--gray)] uppercase text-[var(--red)]">FLT</span>
-                                <input 
-                                  type="number" 
-                                  value={playerStats[player.id]?.fouls || ''}
-                                  onChange={(e) => handleStatChange(player.id, 'fouls', e.target.value)}
-                                  placeholder="0"
-                                  className="w-10 h-8 text-center text-xs font-black border border-[var(--border)] rounded-lg focus:border-[var(--red)]/40 focus:outline-none"
-                                />
-                              </div>
-                            </div>
+                            {STAT_FIELDS.map(f => (
+                              <input
+                                key={f.key}
+                                type="number"
+                                min="0"
+                                value={playerStats[player.id]?.[f.key] || ''}
+                                onChange={(e) => handleStatChange(player.id, f.key, e.target.value)}
+                                placeholder="0"
+                                className="w-10 h-8 text-center text-xs font-black border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--verde)]"
+                              />
+                            ))}
                           </div>
                         ))}
                       </div>
                     </div>
-
-                    {/* Away Players */}
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-2 pb-2 border-b border-[var(--border)]">
-                        <Shield className="w-4 h-4 text-[var(--red)]" />
-                        <h4 className="fgb-display text-xs text-[var(--black)] uppercase">{details?.awayTeam.name}</h4>
-                      </div>
-                      <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                        {details?.awayTeam.players.map(player => (
-                          <div key={player.id} className="flex items-center justify-between p-3 bg-white border border-[var(--border)] rounded-xl hover:border-[var(--red)]/30 transition-all">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <span className="w-6 text-xs font-black text-[var(--gray)]">#{player.number || '--'}</span>
-                              <p className="text-xs font-bold text-[var(--black)] truncate uppercase">{player.name}</p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <div className="flex flex-col items-center">
-                                <span className="text-[7px] font-black text-[var(--gray)] uppercase">PTS</span>
-                                <input 
-                                  type="number" 
-                                  value={playerStats[player.id]?.points || ''}
-                                  onChange={(e) => handleStatChange(player.id, 'points', e.target.value)}
-                                  placeholder="0"
-                                  className="w-10 h-8 text-center text-xs font-black border border-[var(--border)] rounded-lg focus:border-[var(--red)]/60 focus:outline-none"
-                                />
-                              </div>
-                              <div className="flex flex-col items-center">
-                                <span className="text-[7px] font-black text-[var(--gray)] uppercase text-[var(--red)]">FLT</span>
-                                <input 
-                                  type="number" 
-                                  value={playerStats[player.id]?.fouls || ''}
-                                  onChange={(e) => handleStatChange(player.id, 'fouls', e.target.value)}
-                                  placeholder="0"
-                                  className="w-10 h-8 text-center text-xs font-black border border-[var(--border)] rounded-lg focus:border-[var(--red)]/40 focus:outline-none"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               )}
 

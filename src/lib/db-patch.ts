@@ -260,6 +260,15 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'Standing_teamId_categoryId_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS Standing_teamId_categoryId_key ON Standing(teamId, categoryId);' },
   { kind: 'sql', name: 'AthleteCategory_registrationId_idx', sql: 'CREATE INDEX IF NOT EXISTS AthleteCategory_registrationId_idx ON AthleteCategory(registrationId);' },
 
+  { kind: 'column', table: 'PlayerStat', column: 'assists',     sql: 'ALTER TABLE PlayerStat ADD COLUMN assists     INTEGER DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'PlayerStat', column: 'rebounds',    sql: 'ALTER TABLE PlayerStat ADD COLUMN rebounds    INTEGER DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'PlayerStat', column: 'blocks',      sql: 'ALTER TABLE PlayerStat ADD COLUMN blocks      INTEGER DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'PlayerStat', column: 'steals',      sql: 'ALTER TABLE PlayerStat ADD COLUMN steals      INTEGER DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'PlayerStat', column: 'threePoints', sql: 'ALTER TABLE PlayerStat ADD COLUMN threePoints INTEGER DEFAULT 0;', critical: true },
+
+  { kind: 'column', table: 'Athlete', column: 'position',     sql: 'ALTER TABLE Athlete ADD COLUMN position     TEXT;', critical: true },
+  { kind: 'column', table: 'Athlete', column: 'jerseyNumber', sql: 'ALTER TABLE Athlete ADD COLUMN jerseyNumber INTEGER;', critical: true },
+
   { kind: 'sql', name: 'Standing_pointsAgainst_backfill', sql: 'UPDATE Standing SET pointsAgainst = COALESCE(pointsAg, 0) WHERE pointsAgainst IS NULL OR pointsAgainst = 0;' },
   { kind: 'sql', name: 'Standing_diff_backfill', sql: 'UPDATE Standing SET diff = COALESCE(pointsFor, 0) - COALESCE(pointsAg, 0) WHERE diff IS NULL OR diff = 0;' },
   { kind: 'sql', name: 'Standing_updatedAt_backfill', sql: "UPDATE Standing SET updatedAt = CURRENT_TIMESTAMP WHERE updatedAt IS NULL OR updatedAt = '';" },

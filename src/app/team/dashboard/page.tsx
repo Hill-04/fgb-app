@@ -26,7 +26,11 @@ export default async function TeamDashboardPage() {
         gym: true,
         registrations: {
           include: {
-            championship: true,
+            championship: {
+              include: {
+                _count: { select: { registrations: { where: { status: 'CONFIRMED' } } } }
+              }
+            },
             categories: {
               include: {
                 category: true
@@ -203,7 +207,7 @@ export default async function TeamDashboardPage() {
                   return (
                     <Link
                       key={championship.id}
-                      href={isRegistered ? `/team/dashboard` : `/team/championships/${championship.id}/register`}
+                      href={isRegistered ? `/campeonatos/${championship.id}` : `/team/championships/${championship.id}/register`}
                       className={cn(
                         "fgb-card bg-white p-6 rounded-[2rem] flex flex-col justify-between hover:shadow-lg transition-all duration-500 group relative overflow-hidden",
                         isRegistered ? "border-green-200" : "border-[var(--border)] hover:border-orange-300"
@@ -300,7 +304,7 @@ export default async function TeamDashboardPage() {
                               <h3 className="font-display font-black text-xl text-[var(--black)] tracking-tight leading-tight italic uppercase">
                                 {registration.championship.name}
                               </h3>
-                              <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest mt-0.5">ESTADUAL 2026</p>
+                              <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest mt-0.5">TEMPORADA {registration.championship.year}</p>
                            </div>
                         </div>
                         <Badge
@@ -333,10 +337,12 @@ export default async function TeamDashboardPage() {
                                  <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-gray-200 shadow-sm" />
                                ))}
                             </div>
-                            <span className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest">12 Equipes</span>
+                            <span className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest">
+                              {(registration.championship as any)._count?.registrations ?? '—'} Equipes
+                            </span>
                          </div>
                          <Link
-                          href={`/team/championships/${registration.championship.id}`}
+                          href={`/campeonatos/${registration.championship.id}`}
                           className="px-6 py-2.5 rounded-xl bg-[var(--gray-l)] hover:bg-gray-100 text-[var(--black)] font-bold text-xs transition-all border border-[var(--border)] group-hover:border-orange-200 shadow-sm"
                         >
                           Ver Tabela →

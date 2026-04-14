@@ -28,11 +28,11 @@ export async function GET(
           include: {
             members: {
               where: { status: 'APPROVED' },
-              include: { 
-                user: { select: { name: true } } 
+              include: {
+                user: { select: { name: true } }
               },
               orderBy: [
-                { role: 'asc' }, // Coaches first, then players
+                { role: 'asc' },
                 { number: 'asc' }
               ]
             }
@@ -42,8 +42,8 @@ export async function GET(
           include: {
             members: {
               where: { status: 'APPROVED' },
-              include: { 
-                user: { select: { name: true } } 
+              include: {
+                user: { select: { name: true } }
               },
               orderBy: [
                 { role: 'asc' },
@@ -51,6 +51,21 @@ export async function GET(
               ]
             }
           }
+        },
+        playerStats: {
+          select: {
+            userId: true,
+            points: true,
+            fouls: true,
+            assists: true,
+            rebounds: true,
+            blocks: true,
+            steals: true,
+            threePoints: true,
+          }
+        },
+        refereeAssignments: {
+          include: { referee: { select: { name: true } } }
         }
       }
     })

@@ -34,7 +34,7 @@ export default async function AdminCestinhasPage({
           status: 'FINISHED'
         }
       },
-      _sum: { points: true },
+      _sum: { points: true, assists: true, rebounds: true, blocks: true, steals: true, threePoints: true },
       _count: { gameId: true },
     })
 
@@ -48,17 +48,24 @@ export default async function AdminCestinhasPage({
         })
       ])
 
-      const points = s._sum.points || 0
-      const games = s._count.gameId || 0
+      const points      = s._sum.points      || 0
+      const assists     = s._sum.assists     || 0
+      const rebounds    = s._sum.rebounds    || 0
+      const blocks      = s._sum.blocks      || 0
+      const steals      = s._sum.steals      || 0
+      const threePoints = s._sum.threePoints || 0
+      const games       = s._count.gameId    || 0
 
       return {
         id: s.userId,
         name: user?.name || 'Atleta',
         teamName: team?.name || 'Equipe',
         number: membership?.number || null,
-        points,
+        points, assists, rebounds, blocks, steals, threePoints,
         games,
-        avg: games > 0 ? points / games : 0
+        ppg: games > 0 ? points   / games : 0,
+        apg: games > 0 ? assists  / games : 0,
+        rpg: games > 0 ? rebounds / games : 0,
       }
     }))
 
@@ -162,39 +169,49 @@ export default async function AdminCestinhasPage({
                 <table className="fgb-table w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-[var(--border)] text-[10px] font-black text-[var(--gray)] uppercase tracking-widest bg-[var(--gray-l)]">
-                      <th className="px-8 py-5 text-center w-20">POS</th>
-                      <th className="px-8 py-5">ATLETA</th>
-                      <th className="px-8 py-5">EQUIPE</th>
-                      <th className="px-4 py-5 text-center">J</th>
-                      <th className="px-4 py-5 text-center">MEDIA</th>
-                      <th className="px-8 py-5 text-right font-bold text-[var(--black)]">Total PTS</th>
+                      <th className="px-4 py-4 text-center w-14">POS</th>
+                      <th className="px-4 py-4">ATLETA</th>
+                      <th className="px-4 py-4 hidden lg:table-cell">EQUIPE</th>
+                      <th className="px-3 py-4 text-center">J</th>
+                      <th className="px-3 py-4 text-center text-[var(--black)]">PTS</th>
+                      <th className="px-3 py-4 text-center">PPJ</th>
+                      <th className="px-3 py-4 text-center hidden md:table-cell">3PT</th>
+                      <th className="px-3 py-4 text-center hidden md:table-cell">AST</th>
+                      <th className="px-3 py-4 text-center hidden md:table-cell">REB</th>
+                      <th className="px-3 py-4 text-center hidden lg:table-cell">BLK</th>
+                      <th className="px-3 py-4 text-center hidden lg:table-cell">STL</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[var(--border)]">
                     {sortedScorers.map((scorer, index) => (
                       <tr key={scorer.id} className="hover:bg-[var(--gray-l)] transition-all group">
-                        <td className="px-8 py-5 text-center">
+                        <td className="px-4 py-4 text-center">
                           <span className="text-xs font-black text-[var(--gray)]">{index + 1}</span>
                         </td>
-                        <td className="px-8 py-5">
+                        <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center shrink-0">
                               <UserIcon className="w-4 h-4 text-[var(--gray)]" />
                             </div>
                             <div>
                               <p className="text-sm font-black text-[var(--black)] uppercase">{scorer.name}</p>
-                              <span className="text-[9px] font-bold text-[var(--gray)] uppercase">Camisa {scorer.number || '--'}</span>
+                              <span className="text-[9px] font-bold text-[var(--gray)] uppercase">#{scorer.number || '--'} · {scorer.teamName}</span>
                             </div>
                           </div>
                         </td>
-                        <td className="px-8 py-5">
+                        <td className="px-4 py-4 hidden lg:table-cell">
                           <span className="text-xs font-black text-[var(--gray)] uppercase">{scorer.teamName}</span>
                         </td>
-                        <td className="px-4 py-5 text-center text-xs font-black text-[var(--gray)] tabular-nums">{scorer.games}</td>
-                        <td className="px-4 py-5 text-center text-xs font-bold text-blue-600 tabular-nums">{scorer.avg.toFixed(1)}</td>
-                        <td className="px-8 py-5 text-right">
+                        <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums">{scorer.games}</td>
+                        <td className="px-3 py-4 text-center">
                           <span className="text-xl font-black text-[var(--black)] tabular-nums">{scorer.points}</span>
                         </td>
+                        <td className="px-3 py-4 text-center text-xs font-bold text-blue-600 tabular-nums">{scorer.ppg.toFixed(1)}</td>
+                        <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden md:table-cell">{scorer.threePoints}</td>
+                        <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden md:table-cell">{scorer.assists}</td>
+                        <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden md:table-cell">{scorer.rebounds}</td>
+                        <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden lg:table-cell">{scorer.blocks}</td>
+                        <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden lg:table-cell">{scorer.steals}</td>
                       </tr>
                     ))}
                   </tbody>

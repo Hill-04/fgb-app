@@ -243,19 +243,21 @@ model Standing {
 }
 
 model Athlete {
-  id         String   @id @default(uuid())
-  name       String
-  birthDate  DateTime?
-  document   String?
-  sex        String?
-  photoUrl   String?
-  status     String   @default("ACTIVE")
-  teamId     String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  team       Team?    @relation(fields: [teamId], references: [id])
-  cards      AthleteIdCard[]
-  bidEntries AthleteBidEntry[]
+  id           String    @id @default(uuid())
+  name         String
+  birthDate    DateTime?
+  document     String?
+  sex          String?
+  photoUrl     String?
+  position     String?
+  jerseyNumber Int?
+  status       String    @default("ACTIVE")
+  teamId       String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  team         Team?     @relation(fields: [teamId], references: [id])
+  cards        AthleteIdCard[]
+  bidEntries   AthleteBidEntry[]
 
   @@index([teamId])
   @@index([document])
@@ -440,13 +442,18 @@ model TeamMembership {
 }
 
 model PlayerStat {
-  id        String   @id @default(uuid())
-  gameId    String
-  teamId    String
-  userId    String
-  points    Int      @default(0)
-  fouls     Int      @default(0)
-  
+  id          String   @id @default(uuid())
+  gameId      String
+  teamId      String
+  userId      String
+  points      Int      @default(0)
+  fouls       Int      @default(0)
+  assists     Int      @default(0)
+  rebounds    Int      @default(0)
+  blocks      Int      @default(0)
+  steals      Int      @default(0)
+  threePoints Int      @default(0)
+
   game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
