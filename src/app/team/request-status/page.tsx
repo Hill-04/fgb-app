@@ -2,19 +2,38 @@
 
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { Clock, XCircle, CheckCircle, LogOut, ArrowLeft } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Clock, XCircle, CheckCircle, LogOut, ArrowLeft, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
+const POLL_INTERVAL_MS = 10_000 // check DB every 10 seconds
+
 export default function RequestStatusPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update } = useSession()
   const router = useRouter()
   const [cancelling, setCancelling] = useState(false)
   const [error, setError] = useState('')
+  const [checking, setChecking] = useState(false)
+  const pollerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const membershipStatus = (session?.user as any)?.membershipStatus
   const pendingTeamName = (session?.user as any)?.pendingTeamName
   const pendingTeamId = (session?.user as any)?.pendingTeamId
+
+  // Polls DB and refreshes JWT when status changes
+  const checkAndRefresh = async () => {
+    try {
+      const res = await fetch('/api/team/check-status')
+      if (!res.ok) return
+      const data = await res.json()
+      if (data.membershipStatus !== membershipStatus) {
+        // Status changed — refresh the JWT session
+        await update()
+      }
+    } catch {
+      // silent
+    }
+  }
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -32,6 +51,23 @@ export default function RequestStatusPage() {
       }
     }
   }, [status, membershipStatus, router])
+
+  // Start polling while PENDING
+  useEffect(() => {
+    if (membershipStatus === 'PENDING') {
+      pollerRef.current = setInterval(checkAndRefresh, POLL_INTERVAL_MS)
+    }
+    return () => {
+      if (pollerRef.current) clearInterval(pollerRef.current)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [membershipStatus])
+
+  const handleManualCheck = async () => {
+    setChecking(true)
+    await checkAndRefresh()
+    setTimeout(() => setChecking(false), 800)
+  }
 
   const handleCancel = async () => {
     if (!pendingTeamId) return
@@ -130,9 +166,10 @@ export default function RequestStatusPage() {
                   O responsável da equipe não aprovou sua entrada. Você pode tentar entrar em outra equipe ou criar a sua própria.
                 </p>
               ) : (
-                <p className="text-sm text-amber-700 text-center">
-                  O responsável da equipe precisa aprovar sua solicitação. Você será notificado assim que houver uma resposta.
-                </p>
+                <div className="text-sm text-amber-700 text-center space-y-1">
+                  <p>O responsável da equipe precisa aprovar sua solicitação.</p>
+                  <p className="text-[11px] text-amber-600 font-medium">Verificação automática a cada 10 segundos.</p>
+                </div>
               )}
             </div>
 
@@ -152,15 +189,26 @@ export default function RequestStatusPage() {
                   Voltar ao início
                 </Button>
               ) : (
-                <Button
-                  variant="outline"
-                  onClick={handleCancel}
-                  disabled={cancelling}
-                  className="w-full border-red-200 text-red-600 hover:bg-red-50 font-bold gap-2"
-                >
-                  <XCircle className="w-4 h-4" />
-                  {cancelling ? 'Cancelando...' : 'Cancelar solicitação'}
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={handleManualCheck}
+                    disabled={checking}
+                    className="w-full border-[var(--border)] text-[var(--black)] hover:bg-gray-50 font-bold gap-2"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
+                    {checking ? 'Verificando...' : 'Verificar aprovação'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="w-full border-red-200 text-red-600 hover:bg-red-50 font-bold gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    {cancelling ? 'Cancelando...' : 'Cancelar solicitação'}
+                  </Button>
+                </>
               )}
             </div>
           </div>

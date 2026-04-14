@@ -70,7 +70,7 @@ export const authOptions: NextAuthOptions = {
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id
         token.name = (user as any).name
@@ -83,6 +83,37 @@ export const authOptions: NextAuthOptions = {
         token.pendingTeamId = (user as any).pendingTeamId
         token.pendingTeamName = (user as any).pendingTeamName
       }
+
+      // Re-fetch membership when session is explicitly refreshed (e.g. after approval)
+      if (trigger === 'update' && token.id) {
+        const fresh = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          include: {
+            memberships: {
+              include: { team: true },
+              orderBy: { requestedAt: 'desc' },
+              take: 1,
+            }
+          }
+        })
+        if (fresh) {
+          const membership = fresh.memberships?.[0] ?? null
+          let membershipStatus: 'NO_TEAM' | 'PENDING' | 'ACTIVE' | 'REJECTED' = 'NO_TEAM'
+          if (membership) {
+            if (membership.status === 'ACTIVE') membershipStatus = 'ACTIVE'
+            else if (membership.status === 'PENDING') membershipStatus = 'PENDING'
+            else if (membership.status === 'REJECTED') membershipStatus = 'REJECTED'
+          }
+          const activeMembership = membership?.status === 'ACTIVE' ? membership : null
+          token.membershipStatus = membershipStatus
+          token.teamId = activeMembership?.team?.id ?? null
+          token.teamName = activeMembership?.team?.name ?? null
+          token.teamRole = activeMembership?.role ?? null
+          token.pendingTeamId = membership?.status === 'PENDING' ? membership.teamId : null
+          token.pendingTeamName = membership?.status === 'PENDING' ? (membership.team?.name ?? null) : null
+        }
+      }
+
       return token
     },
     async session({ session, token }) {
