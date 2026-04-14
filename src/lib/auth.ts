@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { prisma } from "@/lib/db"
 import bcrypt from "bcryptjs"
+import { resolveMembershipStatus } from "@/lib/access/resolve-user-context"
 
 export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
@@ -44,12 +45,7 @@ export const authOptions: NextAuthOptions = {
 
         // Resolver membershipStatus explicitamente (pega o mais recente)
         const membership = user.memberships?.[0] ?? null
-        let membershipStatus: 'NO_TEAM' | 'PENDING' | 'ACTIVE' | 'REJECTED' = 'NO_TEAM'
-        if (membership) {
-          if (membership.status === 'ACTIVE') membershipStatus = 'ACTIVE'
-          else if (membership.status === 'PENDING') membershipStatus = 'PENDING'
-          else if (membership.status === 'REJECTED') membershipStatus = 'REJECTED'
-        }
+        const membershipStatus = resolveMembershipStatus(membership)
 
         const activeMembership = membership?.status === 'ACTIVE' ? membership : null
 
@@ -98,12 +94,7 @@ export const authOptions: NextAuthOptions = {
         })
         if (fresh) {
           const membership = fresh.memberships?.[0] ?? null
-          let membershipStatus: 'NO_TEAM' | 'PENDING' | 'ACTIVE' | 'REJECTED' = 'NO_TEAM'
-          if (membership) {
-            if (membership.status === 'ACTIVE') membershipStatus = 'ACTIVE'
-            else if (membership.status === 'PENDING') membershipStatus = 'PENDING'
-            else if (membership.status === 'REJECTED') membershipStatus = 'REJECTED'
-          }
+          const membershipStatus = resolveMembershipStatus(membership)
           const activeMembership = membership?.status === 'ACTIVE' ? membership : null
           token.membershipStatus = membershipStatus
           token.teamId = activeMembership?.team?.id ?? null

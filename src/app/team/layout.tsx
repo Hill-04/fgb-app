@@ -4,37 +4,37 @@ import { authOptions } from "@/lib/auth"
 import { SideNav } from "@/components/SideNav"
 import { MobileHeader } from "@/components/MobileHeader"
 import { AIAssistantBubble } from "@/components/AIAssistantBubble"
+import { resolveUserContext } from "@/lib/access/resolve-user-context"
 
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
 
-  // Middleware já garante autenticação e membershipStatus=ACTIVE para rotas protegidas.
-  // Este check serve como fallback de segurança para SSR.
   if (!session) {
     redirect('/login')
   }
 
-  const membershipStatus = (session.user as any).membershipStatus
-  const isAdmin = (session.user as any).isAdmin
+  const context = resolveUserContext({
+    isAdmin: Boolean((session.user as any).isAdmin),
+    membershipStatus: (session.user as any).membershipStatus,
+    teamId: (session.user as any).teamId,
+    teamName: (session.user as any).teamName,
+    teamRole: (session.user as any).teamRole,
+    pendingTeamId: (session.user as any).pendingTeamId,
+    pendingTeamName: (session.user as any).pendingTeamName,
+  })
 
-  if (isAdmin) {
+  if (context.isAdmin) {
     redirect('/admin/dashboard')
   }
 
-  // Rotas públicas do portal (onboarding, create, join, request-status) não usam este layout.
-  // Aqui só chegam rotas do portal da equipe — exige membership ACTIVE.
-  if (membershipStatus !== 'ACTIVE') {
-    if (membershipStatus === 'PENDING') {
-      redirect('/team/request-status')
-    }
-    redirect('/team/onboarding')
+  if (context.membershipStatus !== 'ACTIVE') {
+    redirect(context.nextRoute)
   }
 
-  const teamName = (session.user as any).teamName || 'Equipe'
+  const teamName = context.teamName || 'Equipe'
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50 text-[var(--black)] selection:bg-orange-500/20 relative overflow-hidden font-sans">
-      {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#00000003_1px,transparent_1px),linear-gradient(to_bottom,#00000003_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
       </div>

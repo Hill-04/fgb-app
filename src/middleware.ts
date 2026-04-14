@@ -1,6 +1,7 @@
 import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
+import { resolveUserContext } from '@/lib/access/resolve-user-context'
 
 export default withAuth(
   function middleware(req: NextRequest & { nextauth: { token: any } }) {
@@ -11,63 +12,59 @@ export default withAuth(
       return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    const { role, membershipStatus, isAdmin } = token as {
-      role?: string
-      membershipStatus?: string
-      isAdmin?: boolean
-    }
+    const context = resolveUserContext({
+      isAdmin: Boolean(token.isAdmin),
+      membershipStatus: token.membershipStatus,
+      teamId: token.teamId ?? null,
+      teamName: token.teamName ?? null,
+      teamRole: token.teamRole ?? null,
+      pendingTeamId: token.pendingTeamId ?? null,
+      pendingTeamName: token.pendingTeamName ?? null,
+    })
 
-    // ── Admin routes ──────────────────────────────────────────────────────────
     if (pathname.startsWith('/admin')) {
-      if (!isAdmin) {
-        return NextResponse.redirect(new URL('/team/dashboard', req.url))
+      if (!context.isAdmin) {
+        return NextResponse.redirect(new URL(context.nextRoute, req.url))
       }
+
       return NextResponse.next()
     }
 
-    // ── Team routes ───────────────────────────────────────────────────────────
     if (pathname.startsWith('/team')) {
-      // Unauthenticated (no role) → login
-      if (!role) {
+      if (!context.isAuthenticated) {
         return NextResponse.redirect(new URL('/login', req.url))
       }
 
-      // Admin tentando acessar área de equipe → manda pro admin
-      if (isAdmin) {
+      if (context.isAdmin) {
         return NextResponse.redirect(new URL('/admin/dashboard', req.url))
       }
 
-      // Rotas que qualquer usuário autenticado pode acessar independente de equipe
       const publicTeamRoutes = [
         '/team/onboarding',
         '/team/create',
         '/team/join',
         '/team/request-status',
       ]
-      const isPublicTeamRoute = publicTeamRoutes.some(r => pathname.startsWith(r))
+
+      const isPublicTeamRoute = publicTeamRoutes.some((route) => pathname.startsWith(route))
 
       if (isPublicTeamRoute) {
-        // ACTIVE: onboarding → dashboard
-        if (membershipStatus === 'ACTIVE' && pathname.startsWith('/team/onboarding')) {
+        if (context.membershipStatus === 'ACTIVE' && pathname.startsWith('/team/onboarding')) {
           return NextResponse.redirect(new URL('/team/dashboard', req.url))
         }
-        // PENDING: create/join blocked (already have a pending request)
+
         if (
-          membershipStatus === 'PENDING' &&
+          context.membershipStatus === 'PENDING' &&
           (pathname.startsWith('/team/create') || pathname.startsWith('/team/join'))
         ) {
           return NextResponse.redirect(new URL('/team/request-status', req.url))
         }
+
         return NextResponse.next()
       }
 
-      // Rotas protegidas do portal da equipe — exige ACTIVE
-      if (membershipStatus !== 'ACTIVE') {
-        if (membershipStatus === 'PENDING') {
-          return NextResponse.redirect(new URL('/team/request-status', req.url))
-        }
-        // NO_TEAM ou REJECTED → onboarding
-        return NextResponse.redirect(new URL('/team/onboarding', req.url))
+      if (context.membershipStatus !== 'ACTIVE') {
+        return NextResponse.redirect(new URL(context.nextRoute, req.url))
       }
 
       return NextResponse.next()

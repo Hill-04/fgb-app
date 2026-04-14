@@ -5,12 +5,18 @@ import { SideNav } from "@/components/SideNav"
 import { MobileHeader } from "@/components/MobileHeader"
 import { AIAssistantBubble } from "@/components/AIAssistantBubble"
 import { ensureDatabaseSchema } from "@/lib/db-patch"
+import { resolveUserContext } from "@/lib/access/resolve-user-context"
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
+  const context = resolveUserContext(session?.user as any)
 
-  if (!session || !(session.user as any).isAdmin) {
+  if (!context.isAuthenticated) {
     redirect('/login')
+  }
+
+  if (!context.isAdmin) {
+    redirect(context.nextRoute)
   }
 
   await ensureDatabaseSchema()
