@@ -405,6 +405,12 @@ export async function runDatabasePatch() {
 }
 
 export async function ensureDatabaseSchema(force = false) {
+  // This patch system is SQLite-only — skip silently on PostgreSQL/Supabase
+  const dbUrl = process.env.DATABASE_URL ?? ''
+  if (!dbUrl.startsWith('file:')) {
+    return
+  }
+
   if (schemaEnsured && !force) {
     return
   }
