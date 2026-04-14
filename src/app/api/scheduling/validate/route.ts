@@ -150,7 +150,7 @@ export async function POST(request: Request) {
     const slotDurationMinutes = championship.slotDurationMinutes || 75
     const numberOfCourts = Math.max(1, championship.numberOfCourts || 1)
     const maxGamesPerTeamPerDay = Math.max(1, championship.maxGamesPerTeamPerDay || 2)
-    const scheduleOptimizationMode = championship.scheduleOptimizationMode || 'less_travel'
+    const scheduleOptimizationMode = 'less_travel'
     const slotsRegularDay = getSlotsPerDay(
       championship.dayStartTime || '08:00',
       championship.regularDayEndTime || '19:00',

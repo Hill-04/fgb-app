@@ -115,10 +115,6 @@ type SchedulingConfig = {
   blockFormat: string
 }
 
-type SchedulingOverrides = {
-  optimizationMode?: string
-}
-
 function parseAgeGroup(name: string) {
   const match = name.match(/(\d+)/)
   return match ? Number(match[1]) : 0
@@ -648,7 +644,7 @@ function createGameOutput(
   }
 }
 
-export async function generateChampionshipSchedule(championshipId: string, overrides: SchedulingOverrides = {}) {
+export async function generateChampionshipSchedule(championshipId: string) {
   const championship = await prisma.championship.findUnique({
     where: { id: championshipId },
     include: {
@@ -691,7 +687,7 @@ export async function generateChampionshipSchedule(championshipId: string, overr
     slotDurationMinutes: gameDuration,
     minRestSlotsPerTeam: Math.max(0, championship.minRestSlotsPerTeam || 0),
     maxGamesPerTeamPerDay: Math.max(1, championship.maxGamesPerTeamPerDay || 2),
-    optimizationMode: overrides.optimizationMode || championship.scheduleOptimizationMode || 'less_travel',
+    optimizationMode: 'less_travel',
     blockFormat: championship.blockFormat || 'SAT_SUN',
   }
   const minTeamRestMinutes = schedulingConfig.minRestSlotsPerTeam * gameDuration
@@ -1209,7 +1205,6 @@ export async function generateChampionshipSchedule(championshipId: string, overr
     schedulePreview,
     conflictsResolved,
     unresolvableConflicts,
-    selectedOptimizationMode: schedulingConfig.optimizationMode,
     summary: `${scheduledGames.length} jogos · ${schedulePreview.length} dias · ${groups.length} grupos · ${phases} fases`,
   }
 }

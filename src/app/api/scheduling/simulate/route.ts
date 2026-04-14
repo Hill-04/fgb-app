@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const { championshipId, optimizationMode } = await request.json()
+    const { championshipId } = await request.json()
     await ensureDatabaseSchema()
 
     if (!championshipId) {
@@ -24,9 +24,7 @@ export async function POST(request: Request) {
     }
 
     // 1. Gerar calendário base com round-robin (sempre funciona)
-    const schedule = await generateChampionshipSchedule(championshipId, {
-      optimizationMode,
-    })
+    const schedule = await generateChampionshipSchedule(championshipId)
 
     if (!schedule.success || schedule.totalGames === 0) {
       return NextResponse.json(
@@ -73,7 +71,6 @@ export async function POST(request: Request) {
       maxGamesPerDay: schedule.maxGamesPerDay,
       conflictsResolved: schedule.conflictsResolved,
       unresolvableConflicts: schedule.unresolvableConflicts,
-      selectedOptimizationMode: schedule.selectedOptimizationMode,
       phases: schedule.phases,
       schedulePreview: schedule.schedulePreview,
       categories: schedule.categories.map(c => ({
