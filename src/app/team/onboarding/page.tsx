@@ -13,10 +13,15 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login');
+      return;
     }
-    // Se tem equipe, redirecionar para dashboard
-    if (session?.user && (session.user as any).teamId) {
+    if (status !== 'authenticated') return;
+
+    const membershipStatus = (session?.user as any)?.membershipStatus;
+    if (membershipStatus === 'ACTIVE') {
       router.push('/team/dashboard');
+    } else if (membershipStatus === 'PENDING') {
+      router.push('/team/request-status');
     }
   }, [session, status, router]);
 
