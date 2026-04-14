@@ -15,11 +15,13 @@ type User = {
   email: string
   isAdmin: boolean
   createdAt: string
+  // API retorna o membership ativo mais recente como "membership" para compatibilidade
   membership?: {
     team: {
       name: string
     }
     role: string
+    status: string
   }
 }
 

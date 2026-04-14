@@ -5,19 +5,14 @@ import type { CreateTeamInput } from '@/schemas/teamSchema'
 export class TeamService {
   static async createTeam(userId: string, input: CreateTeamInput) {
     try {
-      // Check if user already has an active team
       const existingMembership = await prisma.teamMembership.findFirst({
-        where: {
-          userId,
-          status: 'ACTIVE'
-        }
+        where: { userId, status: { in: ['ACTIVE', 'PENDING'] } }
       })
 
       if (existingMembership) {
-        throw new Error('Você já pertence a uma equipe')
+        throw new Error('Você já pertence a uma equipe ou tem uma solicitação pendente')
       }
 
-      // Check if team name already exists
       const existingTeam = await prisma.team.findUnique({
         where: { name: input.name }
       })
@@ -26,21 +21,19 @@ export class TeamService {
         throw new Error('Já existe uma equipe com este nome')
       }
 
-      // Create team + membership + gym in transaction
       const result = await prisma.$transaction(async (tx) => {
-        // 1. Create team
         const team = await tx.team.create({
           data: {
             name: input.name,
-            logoUrl: input.logoUrl || null,
-            city: input.gym?.city || null,
-            state: 'RS',
-            phone: null,
-            sex: null
+            logoUrl: input.logoUrl ?? null,
+            city: input.city,
+            state: input.state ?? 'RS',
+            phone: input.phone,
+            sex: input.sex,
+            responsible: input.responsible,
           }
         })
 
-        // 2. Create gym if provided
         if (input.hasGym && input.gym) {
           await tx.gym.create({
             data: {
@@ -48,23 +41,23 @@ export class TeamService {
               address: input.gym.address,
               city: input.gym.city,
               capacity: typeof input.gym.capacity === 'string'
-                ? parseInt(input.gym.capacity)
-                : input.gym.capacity,
+                ? parseInt(input.gym.capacity as string)
+                : input.gym.capacity as number,
               availability: input.gym.availability,
-              canHost: true,
+              canHost: input.gym.canHost ?? true,
               teamId: team.id
             }
           })
         }
 
-        // 3. Create membership as HEAD_COACH
         const membership = await tx.teamMembership.create({
           data: {
             userId,
             teamId: team.id,
             role: 'HEAD_COACH',
             status: 'ACTIVE',
-            approvedAt: new Date()
+            approvedAt: new Date(),
+            updatedAt: new Date(),
           }
         })
 
@@ -85,9 +78,8 @@ export class TeamService {
     }
   }
 
-  static async joinTeam(userId: string, teamId: string) {
+  static async joinTeam(userId: string, teamId: string, role = 'STAFF_OTHER') {
     try {
-      // Check if user already has active membership
       const existingMembership = await prisma.teamMembership.findFirst({
         where: { userId, status: { in: ['ACTIVE', 'PENDING'] } }
       })
@@ -96,13 +88,13 @@ export class TeamService {
         throw new Error('Você já tem uma solicitação pendente ou está em uma equipe')
       }
 
-      // Create pending membership request
       const membership = await prisma.teamMembership.create({
         data: {
           userId,
           teamId,
-          role: 'AUXILIAR',
-          status: 'PENDING'
+          role,
+          status: 'PENDING',
+          updatedAt: new Date(),
         },
         include: {
           team: true,
@@ -121,9 +113,30 @@ export class TeamService {
     }
   }
 
+  static async cancelRequest(userId: string) {
+    try {
+      const membership = await prisma.teamMembership.findFirst({
+        where: { userId, status: 'PENDING' }
+      })
+
+      if (!membership) {
+        throw new Error('Nenhuma solicitação pendente encontrada')
+      }
+
+      await prisma.teamMembership.update({
+        where: { id: membership.id },
+        data: { status: 'CANCELLED', updatedAt: new Date() }
+      })
+
+      logger.info('Join request cancelled', { userId })
+    } catch (error) {
+      logger.error('Failed to cancel request', { userId, error })
+      throw error
+    }
+  }
+
   static async approveMember(teamId: string, userId: string, approverId: string) {
     try {
-      // Verify approver is HEAD_COACH or ADMIN
       const approverMembership = await prisma.teamMembership.findFirst({
         where: {
           userId: approverId,
@@ -137,14 +150,20 @@ export class TeamService {
         throw new Error('Você não tem permissão para aprovar membros')
       }
 
-      // Update membership to ACTIVE
+      const pending = await prisma.teamMembership.findFirst({
+        where: { userId, teamId, status: 'PENDING' }
+      })
+
+      if (!pending) {
+        throw new Error('Solicitação pendente não encontrada')
+      }
+
       const membership = await prisma.teamMembership.update({
-        where: {
-          userId
-        },
+        where: { id: pending.id },
         data: {
           status: 'ACTIVE',
-          approvedAt: new Date()
+          approvedAt: new Date(),
+          updatedAt: new Date(),
         }
       })
 
@@ -159,7 +178,6 @@ export class TeamService {
 
   static async rejectMember(teamId: string, userId: string, rejecterId: string) {
     try {
-      // Verify rejecter is HEAD_COACH or ADMIN
       const rejecterMembership = await prisma.teamMembership.findFirst({
         where: {
           userId: rejecterId,
@@ -173,14 +191,17 @@ export class TeamService {
         throw new Error('Você não tem permissão para recusar membros')
       }
 
-      // Update membership to REJECTED
+      const pending = await prisma.teamMembership.findFirst({
+        where: { userId, teamId, status: 'PENDING' }
+      })
+
+      if (!pending) {
+        throw new Error('Solicitação pendente não encontrada')
+      }
+
       const membership = await prisma.teamMembership.update({
-        where: {
-          userId
-        },
-        data: {
-          status: 'REJECTED'
-        }
+        where: { id: pending.id },
+        data: { status: 'REJECTED', updatedAt: new Date() }
       })
 
       logger.info('Member rejected', { teamId, userId, rejecterId })
@@ -201,6 +222,7 @@ export class TeamService {
           logoUrl: true,
           city: true,
           state: true,
+          sex: true,
           _count: {
             select: { members: true }
           }

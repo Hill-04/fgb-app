@@ -67,11 +67,14 @@ export async function POST(req: Request) {
         }
       })
 
-      await prisma.teamMembership.upsert({
-        where: { userId: user.id },
-        update: {},
-        create: { userId: user.id, teamId: team.id, role: 'ADMIN', status: 'ACTIVE' }
+      const existingSeedMembership = await prisma.teamMembership.findFirst({
+        where: { userId: user.id, teamId: team.id }
       })
+      if (!existingSeedMembership) {
+        await prisma.teamMembership.create({
+          data: { userId: user.id, teamId: team.id, role: 'ADMIN', status: 'ACTIVE', updatedAt: new Date() }
+        })
+      }
       teams.push(team)
     }
 

@@ -42,8 +42,8 @@ export default async function AdminCestinhasPage({
       const [user, team, membership] = await Promise.all([
         prisma.user.findUnique({ where: { id: s.userId }, select: { name: true } }),
         prisma.team.findUnique({ where: { id: s.teamId }, select: { name: true } }),
-        prisma.teamMembership.findUnique({
-          where: { userId: s.userId },
+        prisma.teamMembership.findFirst({
+          where: { userId: s.userId, status: 'ACTIVE' },
           select: { number: true }
         })
       ])

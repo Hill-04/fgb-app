@@ -88,17 +88,21 @@ async function main() {
     })
 
     // Ensure Membership
-    await prisma.teamMembership.upsert({
-      where: { userId: coach.id },
-      update: { teamId: team.id, role: 'HEAD_COACH', status: 'ACTIVE' },
-      create: {
-        userId: coach.id,
-        teamId: team.id,
-        role: 'HEAD_COACH',
-        status: 'ACTIVE',
-        approvedAt: new Date()
-      }
+    const existingCoachMembership = await prisma.teamMembership.findFirst({
+      where: { userId: coach.id, teamId: team.id }
     })
+    if (!existingCoachMembership) {
+      await prisma.teamMembership.create({
+        data: {
+          userId: coach.id,
+          teamId: team.id,
+          role: 'HEAD_COACH',
+          status: 'ACTIVE',
+          approvedAt: new Date(),
+          updatedAt: new Date(),
+        }
+      })
+    }
 
     console.log(`✅ Equipe configurada: ${team.name}`)
   }

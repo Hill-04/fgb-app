@@ -51,9 +51,10 @@ export class UserService {
       const user = await prisma.user.findUnique({
         where: { id: userId },
         include: {
-          membership: {
+          memberships: {
             where: { status: 'ACTIVE' },
-            include: { team: true }
+            include: { team: true },
+            take: 1,
           }
         }
       })
@@ -70,9 +71,10 @@ export class UserService {
       const user = await prisma.user.findUnique({
         where: { email },
         include: {
-          membership: {
+          memberships: {
             where: { status: 'ACTIVE' },
-            include: { team: true }
+            include: { team: true },
+            take: 1,
           }
         }
       })

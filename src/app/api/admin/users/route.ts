@@ -10,16 +10,24 @@ export async function GET() {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
     }
 
-    const users = await prisma.user.findMany({
+    const rawUsers = await prisma.user.findMany({
       include: {
-        membership: {
-          include: {
-            team: true
-          }
+        memberships: {
+          include: { team: true },
+          where: { status: { in: ['ACTIVE', 'PENDING'] } },
+          orderBy: { requestedAt: 'desc' },
+          take: 1,
         }
       },
       orderBy: { createdAt: 'desc' }
     })
+
+    // Normaliza para manter compatibilidade com a UI (campo "membership" singular)
+    const users = rawUsers.map(u => ({
+      ...u,
+      membership: u.memberships?.[0] ?? null,
+      memberships: undefined,
+    }))
 
     return NextResponse.json(users)
   } catch (error) {

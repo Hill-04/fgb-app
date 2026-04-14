@@ -18,10 +18,10 @@ export const authOptions: NextAuthOptions = {
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
           include: {
-            membership: {
-              include: {
-                team: true
-              }
+            memberships: {
+              include: { team: true },
+              orderBy: { requestedAt: 'desc' },
+              take: 1,
             }
           }
         })
@@ -31,7 +31,6 @@ export const authOptions: NextAuthOptions = {
           return null
         }
 
-        // Verificar senha (sempre bcrypt agora)
         const passwordMatch = await bcrypt.compare(credentials.password, user.password)
         if (!passwordMatch) {
           console.error(`[AUTH_ERROR] Password mismatch for: "${credentials.email}". Password length provided: ${credentials.password.length}`)
@@ -43,18 +42,29 @@ export const authOptions: NextAuthOptions = {
         const supremeAdminEmail = process.env.SUPREME_ADMIN_EMAIL
         const isAdmin = user.email === supremeAdminEmail ? true : user.isAdmin
 
-        // Filtrar membership ativo apenas
-        const activeMembership = user.membership?.status === 'ACTIVE' ? user.membership : null
+        // Resolver membershipStatus explicitamente (pega o mais recente)
+        const membership = user.memberships?.[0] ?? null
+        let membershipStatus: 'NO_TEAM' | 'PENDING' | 'ACTIVE' | 'REJECTED' = 'NO_TEAM'
+        if (membership) {
+          if (membership.status === 'ACTIVE') membershipStatus = 'ACTIVE'
+          else if (membership.status === 'PENDING') membershipStatus = 'PENDING'
+          else if (membership.status === 'REJECTED') membershipStatus = 'REJECTED'
+        }
+
+        const activeMembership = membership?.status === 'ACTIVE' ? membership : null
 
         return {
           id: user.id,
           name: user.name,
           email: user.email,
-          isAdmin: isAdmin,
-          role: isAdmin ? 'ADMIN' : 'TEAM', // Explicit role
-          teamId: activeMembership?.team?.id || null,
-          teamName: activeMembership?.team?.name || null,
-          teamRole: activeMembership?.role || null
+          isAdmin,
+          role: isAdmin ? 'ADMIN' : 'TEAM',
+          membershipStatus,
+          teamId: activeMembership?.team?.id ?? null,
+          teamName: activeMembership?.team?.name ?? null,
+          teamRole: activeMembership?.role ?? null,
+          pendingTeamId: membership?.status === 'PENDING' ? membership.teamId : null,
+          pendingTeamName: membership?.status === 'PENDING' ? (membership.team?.name ?? null) : null,
         }
       }
     })
@@ -66,9 +76,12 @@ export const authOptions: NextAuthOptions = {
         token.name = (user as any).name
         token.isAdmin = (user as any).isAdmin
         token.role = (user as any).role
+        token.membershipStatus = (user as any).membershipStatus
         token.teamId = (user as any).teamId
         token.teamName = (user as any).teamName
         token.teamRole = (user as any).teamRole
+        token.pendingTeamId = (user as any).pendingTeamId
+        token.pendingTeamName = (user as any).pendingTeamName
       }
       return token
     },
@@ -78,9 +91,12 @@ export const authOptions: NextAuthOptions = {
         ;(session.user as any).name = token.name
         ;(session.user as any).isAdmin = token.isAdmin
         ;(session.user as any).role = token.role
+        ;(session.user as any).membershipStatus = token.membershipStatus
         ;(session.user as any).teamId = token.teamId
         ;(session.user as any).teamName = token.teamName
         ;(session.user as any).teamRole = token.teamRole
+        ;(session.user as any).pendingTeamId = token.pendingTeamId
+        ;(session.user as any).pendingTeamName = token.pendingTeamName
       }
       return session
     }

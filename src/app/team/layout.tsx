@@ -8,8 +8,26 @@ import { AIAssistantBubble } from "@/components/AIAssistantBubble"
 export default async function TeamLayout({ children }: { children: React.ReactNode }) {
   const session = await getServerSession(authOptions)
 
-  if (!session || (session.user as any).role !== 'TEAM') {
+  // Middleware já garante autenticação e membershipStatus=ACTIVE para rotas protegidas.
+  // Este check serve como fallback de segurança para SSR.
+  if (!session) {
     redirect('/login')
+  }
+
+  const membershipStatus = (session.user as any).membershipStatus
+  const isAdmin = (session.user as any).isAdmin
+
+  if (isAdmin) {
+    redirect('/admin/dashboard')
+  }
+
+  // Rotas públicas do portal (onboarding, create, join, request-status) não usam este layout.
+  // Aqui só chegam rotas do portal da equipe — exige membership ACTIVE.
+  if (membershipStatus !== 'ACTIVE') {
+    if (membershipStatus === 'PENDING') {
+      redirect('/team/request-status')
+    }
+    redirect('/team/onboarding')
   }
 
   const teamName = (session.user as any).teamName || 'Equipe'

@@ -9,15 +9,15 @@ datasource db {
 }
 
 model User {
-  id          String          @id @default(uuid())
+  id          String           @id @default(uuid())
   name        String
-  email       String          @unique
+  email       String           @unique
   password    String
-  defaultRole String          @default("AUXILIAR")
-  isAdmin     Boolean         @default(false)
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  membership  TeamMembership?
+  defaultRole String           @default("AUXILIAR")
+  isAdmin     Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  memberships TeamMembership[]
   playerStats PlayerStat[]
 }
 
@@ -29,6 +29,7 @@ model Team {
   state         String?          @default("RS")
   phone         String?
   sex           String?
+  responsible   String?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   awayGames     Game[]           @relation("AwayTeam")
@@ -429,7 +430,7 @@ model Holiday {
 
 model TeamMembership {
   id          String    @id @default(uuid())
-  userId      String    @unique
+  userId      String
   teamId      String
   role        String
   number      Int?
@@ -439,6 +440,10 @@ model TeamMembership {
   updatedAt   DateTime  @updatedAt
   team        Team      @relation(fields: [teamId], references: [id])
   user        User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([teamId])
+  @@index([userId, status])
 }
 
 model PlayerStat {
