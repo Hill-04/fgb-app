@@ -47,9 +47,16 @@ export default withAuth(
       const isPublicTeamRoute = publicTeamRoutes.some(r => pathname.startsWith(r))
 
       if (isPublicTeamRoute) {
-        // Usuário com equipe ativa tentando acessar onboarding → redireciona pro dashboard
+        // ACTIVE: onboarding → dashboard
         if (membershipStatus === 'ACTIVE' && pathname.startsWith('/team/onboarding')) {
           return NextResponse.redirect(new URL('/team/dashboard', req.url))
+        }
+        // PENDING: create/join blocked (already have a pending request)
+        if (
+          membershipStatus === 'PENDING' &&
+          (pathname.startsWith('/team/create') || pathname.startsWith('/team/join'))
+        ) {
+          return NextResponse.redirect(new URL('/team/request-status', req.url))
         }
         return NextResponse.next()
       }

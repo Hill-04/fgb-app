@@ -81,8 +81,9 @@ export default function RequestStatusPage() {
         const data = await res.json()
         throw new Error(data.error || 'Erro ao cancelar solicitação')
       }
-      // Recarregar sessão e redirecionar ao onboarding
-      router.push('/api/auth/signout?callbackUrl=/team/onboarding')
+      // Refresh JWT (trigger='update' re-queries DB; CANCELLED maps to NO_TEAM)
+      await update()
+      router.push('/team/onboarding')
     } catch (err: any) {
       setError(err.message)
     } finally {
