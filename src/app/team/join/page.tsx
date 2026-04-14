@@ -57,10 +57,9 @@ export default function JoinTeamPage() {
         throw new Error(data.error || 'Erro ao solicitar entrada');
       }
 
-      setSuccessMessage(`Solicitação enviada para ${teamName}! Aguarde aprovação do Head Coach.`);
+      setSuccessMessage(`Solicitação enviada para ${teamName}! Redirecionando...`);
 
-      // Atualizar lista removendo a equipe que já foi solicitada
-      setTeams(teams.filter(t => t.id !== teamId));
+      setTimeout(() => router.push('/team/request-status'), 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {

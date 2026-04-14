@@ -60,6 +60,7 @@ const teamNavGroups = [
   {
     label: 'Conta',
     items: [
+      { href: '/team/members',         label: 'Membros',       icon: Users },
       { href: '/team/profile',        label: 'Meu Perfil',    icon: User },
       { href: '/team/documents',      label: 'Documentos',    icon: FileText },
       { href: '/team/notifications',  label: 'Notificacoes',  icon: Bell },

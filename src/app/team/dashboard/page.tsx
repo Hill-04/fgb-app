@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 
 export default async function TeamDashboardPage() {
   const session = await getServerSession(authOptions)
-  if (!session || (session.user as any).role !== 'TEAM') {
+  if (!session) {
     redirect('/login')
   }
 
