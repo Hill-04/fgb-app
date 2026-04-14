@@ -5,7 +5,15 @@ export const dynamic = 'force-dynamic'
 export default async function AdminRankingPage() {
   try {
     const standings = await prisma.standing.findMany({
-      include: { team: true }
+      include: {
+        team: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+          }
+        }
+      }
     })
 
     const aggregate = new Map<string, { teamId: string; teamName: string; points: number; wins: number; losses: number; games: number }>()

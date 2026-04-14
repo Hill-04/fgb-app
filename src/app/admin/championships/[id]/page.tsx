@@ -81,7 +81,15 @@ export default async function ChampionshipDetailsPage({
       where: { categoryId: firstCategory.id },
       orderBy: [{ points: 'desc' }, { wins: 'desc' }],
       take: 5,
-      include: { team: true }
+      include: {
+        team: {
+          select: {
+            id: true,
+            name: true,
+            logoUrl: true,
+          }
+        }
+      }
     }) : []
 
     const nextGame = await prisma.game.findFirst({

@@ -112,6 +112,24 @@ const schemaPatches: SchemaPatch[] = [
   },
   {
     kind: 'table',
+    table: 'PlayerStat',
+    sql: `CREATE TABLE IF NOT EXISTS PlayerStat (
+      id TEXT PRIMARY KEY,
+      gameId TEXT NOT NULL,
+      teamId TEXT NOT NULL,
+      userId TEXT NOT NULL,
+      points INTEGER DEFAULT 0,
+      fouls INTEGER DEFAULT 0,
+      assists INTEGER DEFAULT 0,
+      rebounds INTEGER DEFAULT 0,
+      blocks INTEGER DEFAULT 0,
+      steals INTEGER DEFAULT 0,
+      threePoints INTEGER DEFAULT 0
+    );`,
+    critical: true,
+  },
+  {
+    kind: 'table',
     table: 'Referee',
     sql: `CREATE TABLE IF NOT EXISTS Referee (
       id TEXT PRIMARY KEY,
@@ -239,6 +257,8 @@ const schemaPatches: SchemaPatch[] = [
     fallbackSql: ['ALTER TABLE BlockedDate ADD COLUMN createdAt TEXT;'],
     critical: true,
   },
+
+  { kind: 'column', table: 'Team', column: 'responsible', sql: 'ALTER TABLE Team ADD COLUMN responsible TEXT;', critical: true },
 
   { kind: 'column', table: 'Championship', column: 'minTeamsPerCat', sql: 'ALTER TABLE Championship ADD COLUMN minTeamsPerCat INTEGER DEFAULT 3;', critical: true },
   { kind: 'column', table: 'Championship', column: 'isSimulation', sql: 'ALTER TABLE Championship ADD COLUMN isSimulation INTEGER DEFAULT 0;', critical: true },
@@ -407,7 +427,7 @@ export async function runDatabasePatch() {
 export async function ensureDatabaseSchema(force = false) {
   // This patch system is SQLite-only — skip silently on PostgreSQL/Supabase
   const dbUrl = process.env.DATABASE_URL ?? ''
-  if (!dbUrl.startsWith('file:')) {
+  if (!(dbUrl.startsWith('file:') || dbUrl.startsWith('libsql:'))) {
     return
   }
 
