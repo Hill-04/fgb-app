@@ -9,12 +9,12 @@ type Props = { params: { id: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const response = await getGameWithStats(params.id)
-    const game: any = response.game;
+    const response = await getGameWithStats(params.id).catch(() => null)
+    const game: any = response?.game;
     if (!game) throw new Error()
     return {
-      title: `${game.home_team.short_name} vs ${game.away_team.short_name} — Box Score | FGB`,
-      description: `Estatísticas completas da partida entre ${game.home_team.name} e ${game.away_team.name}.`,
+      title: `${game.home_team?.short_name || 'Home'} vs ${game.away_team?.short_name || 'Away'} — Box Score | FGB`,
+      description: `Estatísticas completas da partida entre ${game.home_team?.name || 'Home'} e ${game.away_team?.name || 'Away'}.`,
     }
   } catch(e) {
      return { title: 'Súmula | FGB' }
@@ -24,12 +24,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function GameSumulaPage({ params }: Props) {
   let data: any;
   try {
-     data = await getGameWithStats(params.id)
+     data = await getGameWithStats(params.id).catch(() => null)
   } catch (e) {
      notFound()
   }
 
-  const { game, stats }: { game: any, stats: any[] } = data;
+  const { game, stats }: { game: any, stats: any[] } = data || {};
   if (!game) notFound()
 
   // Divide as estatísticas por time
@@ -56,8 +56,8 @@ export default async function GameSumulaPage({ params }: Props) {
              
              {/* HOME TEAM */}
              <div className="flex-1 text-center md:text-right">
-                <h2 className="fgb-display text-4xl mb-2">{game.home_team.name}</h2>
-                <div className="fgb-label text-slate-500">{game.home_team.city ?? 'Local'}</div>
+                <h2 className="fgb-display text-4xl mb-2">{game.home_team?.name || 'Time Mandante'}</h2>
+                <div className="fgb-label text-slate-500">{game.home_team?.city ?? 'Local'}</div>
              </div>
 
              {/* SCORE */}
@@ -82,8 +82,8 @@ export default async function GameSumulaPage({ params }: Props) {
 
              {/* AWAY TEAM */}
              <div className="flex-1 text-center md:text-left">
-                <h2 className="fgb-display text-4xl mb-2">{game.away_team.name}</h2>
-                <div className="fgb-label text-slate-500">{game.away_team.city ?? 'Visitante'}</div>
+                <h2 className="fgb-display text-4xl mb-2">{game.away_team?.name || 'Time Visitante'}</h2>
+                <div className="fgb-label text-slate-500">{game.away_team?.city ?? 'Visitante'}</div>
              </div>
 
           </div>
@@ -116,7 +116,7 @@ function BoxScoreTable({ team, stats, isWinner }: { team: any, stats: any[], isW
   return (
     <div className="fgb-card bg-white overflow-hidden shadow-sm" style={{ borderTop: isWinner ? '4px solid var(--verde)' : '4px solid var(--slate-800)' }}>
       <div className="p-6 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-         <h3 className="fgb-display text-2xl">{team.name}</h3>
+         <h3 className="fgb-display text-2xl">{team?.name || 'Equipe'}</h3>
          {isWinner && <span className="fgb-badge-verde text-xs bg-[var(--verde)]">Vencedor</span>}
       </div>
       
@@ -139,10 +139,10 @@ function BoxScoreTable({ team, stats, isWinner }: { team: any, stats: any[], isW
             <tbody className="text-sm font-medium">
                {displayStats.map((s, i) => (
                   <tr key={s.id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                     <td className="py-3 px-4 text-center text-slate-400 font-mono text-xs">{s.athlete.jersey_number ?? '-'}</td>
+                     <td className="py-3 px-4 text-center text-slate-400 font-mono text-xs">{s.athlete?.jersey_number ?? '-'}</td>
                      <td className="py-3 px-4 truncate max-w-48">
-                        {s.athlete.name}
-                        {s.athlete.position && <span className="text-[10px] text-slate-400 block font-normal uppercase tracking-wider mt-0.5">{s.athlete.position}</span>}
+                        {s.athlete?.name || 'Atleta não identificado'}
+                        {s.athlete?.position && <span className="text-[10px] text-slate-400 block font-normal uppercase tracking-wider mt-0.5">{s.athlete.position}</span>}
                      </td>
                      <td className="py-3 px-2 text-center font-bold text-black">{s.points}</td>
                      <td className="py-3 px-2 text-center text-slate-600">{s.rebounds_total}</td>

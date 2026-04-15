@@ -11,12 +11,12 @@ export const metadata: Metadata = {
 }
 
 export default async function JogosPage() {
-  const activeSeasonData = await getActiveSeason()
+  const activeSeasonData = await getActiveSeason().catch(() => null)
   const activeSeason: any = activeSeasonData;
   let games: any[] = []
 
   if (activeSeason) {
-    games = await getGamesBySeasonId(activeSeason.id)
+    games = await getGamesBySeasonId(activeSeason.id).catch(() => [])
   }
 
   // Separar jogos por status
@@ -112,7 +112,7 @@ function GameCard({ game }: { game: any }) {
 
           <div className="flex items-center gap-4 flex-1 justify-center">
             <div className="text-right flex-1">
-              <h3 className="fgb-display text-lg md:text-xl">{game.home_team.name}</h3>
+              <h3 className="fgb-display text-lg md:text-xl">{game.home_team?.name}</h3>
             </div>
             
             <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl text-2xl relative font-bold min-w-24 justify-center whitespace-nowrap">
@@ -128,7 +128,7 @@ function GameCard({ game }: { game: any }) {
             </div>
 
             <div className="text-left flex-1">
-              <h3 className="fgb-display text-lg md:text-xl">{game.away_team.name}</h3>
+              <h3 className="fgb-display text-lg md:text-xl">{game.away_team?.name}</h3>
             </div>
           </div>
 

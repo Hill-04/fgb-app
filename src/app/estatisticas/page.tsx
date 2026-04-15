@@ -12,15 +12,15 @@ export const metadata: Metadata = {
 }
 
 export default async function EstatisticasPage() {
-  const activeSeasonData = await getActiveSeason()
+  const activeSeasonData = await getActiveSeason().catch(() => null)
   const activeSeason: any = activeSeasonData
   
   let scorers: any[] = []
   let rebounders: any[] = []
 
   if (activeSeason) {
-    scorers = await getTopScorers(activeSeason.id, 5)
-    rebounders = await getTopRebounders(activeSeason.id, 5)
+    scorers = await getTopScorers(activeSeason.id, 5).catch(() => [])
+    rebounders = await getTopRebounders(activeSeason.id, 5).catch(() => [])
   }
 
   return (
@@ -130,7 +130,7 @@ function LeaderCard({ athlete, rank, statValue, statLabel }: { athlete: any, ran
                      <Image src={athlete.photo_url} alt={athlete.athlete_name} fill className="object-cover" unoptimized/>
                   ) : (
                      <div className="w-full h-full flex items-center justify-center text-slate-300 fgb-display text-xl">
-                        {athlete.athlete_name.substring(0,1)}
+                        {athlete.athlete_name?.substring(0,1) || 'A'}
                      </div>
                   )}
                </div>

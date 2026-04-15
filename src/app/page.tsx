@@ -28,8 +28,8 @@ export default async function HomePage() {
     },
   }).catch(() => [])
 
-  const recentGames = await getRecentResults(6)
-  const liveGames = await getLiveGames()
+  const recentGames = await getRecentResults(6).catch(() => [])
+  const liveGames = await getLiveGames().catch(() => [])
 
   const allCategories = await prisma.championshipCategory.findMany({
     where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false } },
@@ -233,9 +233,9 @@ export default async function HomePage() {
                     <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 8, letterSpacing: '0.15em' }}>● AO VIVO</span>
                   )}
                   <span className="fgb-display" style={{ fontSize: 11, color: '#fff', letterSpacing: '0.02em' }}>
-                    {game.home_team.name}
+                    {game.home_team?.name}
                     {game.home_score != null ? <span style={{ color: 'var(--yellow)', margin: '0 6px' }}>{game.home_score} × {game.away_score}</span> : <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 6px' }}>vs</span>}
-                    {game.away_team.name}
+                    {game.away_team?.name}
                   </span>
                   <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>OFICIAL</span>
                 </div>
@@ -384,13 +384,13 @@ export default async function HomePage() {
                     </span>
 
                     <div className="flex items-center gap-3 flex-1 justify-center">
-                      <span className="fgb-display flex-1 text-right" style={{ fontSize: 13, color: 'var(--black)' }}>{game.home_team.name}</span>
+                      <span className="fgb-display flex-1 text-right" style={{ fontSize: 13, color: 'var(--black)' }}>{game.home_team?.name}</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <span className="fgb-score-num">{game.home_score ?? '—'}</span>
                         <span className="fgb-label" style={{ color: 'var(--gray)' }}>×</span>
                         <span className="fgb-score-num">{game.away_score ?? '—'}</span>
                       </div>
-                      <span className="fgb-display flex-1" style={{ fontSize: 13, color: 'var(--black)' }}>{game.away_team.name}</span>
+                      <span className="fgb-display flex-1" style={{ fontSize: 13, color: 'var(--black)' }}>{game.away_team?.name}</span>
                     </div>
 
                     <span className="fgb-badge fgb-badge-outline flex-shrink-0 hide-mobile text-blue-600 bg-blue-50 border-blue-200 ml-4">

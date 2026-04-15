@@ -10,7 +10,7 @@ import { getActiveSeason } from '@/lib/queries/seasons'
 type Props = { params: { id: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const activeSeasonData = await getActiveSeason()
+  const activeSeasonData = await getActiveSeason().catch(() => null)
   const activeSeasonAny: any = activeSeasonData
   if (!activeSeasonAny) return { title: 'Atleta | FGB' }
 
@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function AthleteProfilePage({ params }: Props) {
-  const activeSeasonData = await getActiveSeason()
+  const activeSeasonData = await getActiveSeason().catch(() => null)
   const activeSeason: any = activeSeasonData
   if (!activeSeason) notFound()
 
@@ -57,7 +57,7 @@ export default async function AthleteProfilePage({ params }: Props) {
                 <Image src={athlete.photo_url} alt={athlete.athlete_name} fill className="object-cover" unoptimized/>
              ) : (
                 <div className="w-full h-full flex items-center justify-center text-white/20 fgb-display text-8xl">
-                   {athlete.athlete_name.substring(0,1)}
+                   {athlete.athlete_name?.substring(0,1) || 'A'}
                 </div>
              )}
              <div className="absolute bottom-4 right-4 bg-[var(--verde)] text-white w-12 h-12 rounded-full flex items-center justify-center fgb-display text-2xl shadow-lg border-2 border-white/20">
@@ -79,9 +79,9 @@ export default async function AthleteProfilePage({ params }: Props) {
              <div className="flex flex-wrap items-center justify-center md:justify-start gap-8 mt-6">
                 <StatBox label="Jogos" value={athlete.games_played} />
                 <div className="w-px h-10 bg-white/10" />
-                <StatBox label="Minutos" value={athlete.avg_minutes.toFixed(1)} />
+                <StatBox label="Minutos" value={(athlete.avg_minutes || 0).toFixed(1)} />
                 <div className="w-px h-10 bg-white/10" />
-                <StatBox label="Eficiência" value={athlete.avg_efficiency.toFixed(1)} highlight />
+                <StatBox label="Eficiência" value={(athlete.avg_efficiency || 0).toFixed(1)} highlight />
              </div>
           </div>
         </div>
@@ -91,10 +91,10 @@ export default async function AthleteProfilePage({ params }: Props) {
         
         {/* CARDS DE ESTATÍSTICA DE ÉPOCA */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-           <HighlightCard title="Pontos / Jogo" value={athlete.avg_points.toFixed(1)} />
-           <HighlightCard title="Rebotes / Jogo" value={athlete.avg_rebounds.toFixed(1)} />
-           <HighlightCard title="Assistências / J" value={athlete.avg_assists.toFixed(1)} />
-           <HighlightCard title="Roubos / Jogo" value={athlete.avg_steals.toFixed(1)} />
+           <HighlightCard title="Pontos / Jogo" value={(athlete.avg_points || 0).toFixed(1)} />
+           <HighlightCard title="Rebotes / Jogo" value={(athlete.avg_rebounds || 0).toFixed(1)} />
+           <HighlightCard title="Assistências / J" value={(athlete.avg_assists || 0).toFixed(1)} />
+           <HighlightCard title="Roubos / Jogo" value={(athlete.avg_steals || 0).toFixed(1)} />
         </div>
 
         {/* DETALHAMENTO TÉCNICO */}

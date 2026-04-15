@@ -11,13 +11,13 @@ export const metadata: Metadata = {
 }
 
 export default async function ClassificacaoPage() {
-  const activeSeasonData = await getActiveSeason()
+  const activeSeasonData = await getActiveSeason().catch(() => null)
   const activeSeason: any = activeSeasonData
   
   let standings: any[] = []
 
   if (activeSeason) {
-    standings = await getStandings(activeSeason.id)
+    standings = await getStandings(activeSeason.id).catch(() => [])
   }
 
   return (
@@ -80,7 +80,7 @@ export default async function ClassificacaoPage() {
                                    </div>
                                 ) : (
                                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-[10px] font-bold text-slate-400 fgb-display border border-slate-200">
-                                      {team.short_name.substring(0,3)}
+                                      {team.short_name?.substring(0,3) || 'TEAM'}
                                    </div>
                                 )}
                              </td>
