@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
 
@@ -60,6 +61,11 @@ export function LiveGamePublicView({ gameId, mode }: { gameId: string; mode: Pub
           {game.homeTeam.name} <span className="text-[var(--verde)]">{game.homeScore}</span> × <span className="text-[var(--verde)]">{game.awayScore}</span> {game.awayTeam.name}
         </h1>
         <p className="mt-3 text-sm text-[var(--gray)]">Status {game.liveStatus} · Período {game.currentPeriod || 0} · Relógio {game.clockDisplay || '10:00'}</p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href={`/games/${gameId}/live`} className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Ao vivo</Link>
+          <Link href={`/games/${gameId}/box-score`} className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Box score</Link>
+          <Link href={`/games/${gameId}/play-by-play`} className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Play-by-play</Link>
+        </div>
       </div>
 
       {mode === 'live' && (

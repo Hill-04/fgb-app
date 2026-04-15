@@ -9,6 +9,7 @@ type PregameAction =
   | 'unlock-rosters'
   | 'open-session'
   | 'assign-officials'
+  | 'update-roster-player'
 
 type LiveAction =
   | 'event'
@@ -411,6 +412,35 @@ async function syncRosterForTeam(gameId: string, teamId: string) {
       },
     },
   })
+}
+
+async function findRosterPlayer(gameId: string, teamId: string, athleteId: string) {
+  return prisma.gameRosterPlayer.findFirst({
+    where: {
+      athleteId,
+      gameRoster: {
+        gameId,
+        teamId,
+      },
+    },
+    include: {
+      athlete: { select: { id: true, name: true } },
+      gameRoster: { select: { id: true, teamId: true } },
+    },
+  })
+}
+
+async function getTrackedOnCourtCount(gameId: string, teamId: string) {
+  const roster = await prisma.gameRoster.findUnique({
+    where: { gameId_teamId: { gameId, teamId } },
+    include: { players: true },
+  })
+
+  return {
+    rosterId: roster?.id ?? null,
+    count: roster?.players.filter((player) => player.isOnCourt).length ?? 0,
+    starters: roster?.players.filter((player) => player.isStarter).slice(0, 5) ?? [],
+  }
 }
 
 async function recomputeLiveState(gameId: string) {
@@ -910,6 +940,38 @@ export class LiveGameService {
         })
         break
       }
+      case 'update-roster-player': {
+        const rosterPlayerId = payload?.rosterPlayerId ? String(payload.rosterPlayerId) : ''
+        if (!rosterPlayerId) {
+          throw new Error('Jogador do roster não informado.')
+        }
+
+        const patch = (payload?.patch as Record<string, unknown> | undefined) ?? {}
+        const data: Record<string, unknown> = {}
+
+        if (patch.jerseyNumber !== undefined) data.jerseyNumber = patch.jerseyNumber === '' ? null : Number(patch.jerseyNumber)
+        if (patch.isStarter !== undefined) data.isStarter = Boolean(patch.isStarter)
+        if (patch.isCaptain !== undefined) data.isCaptain = Boolean(patch.isCaptain)
+        if (patch.isAvailable !== undefined) data.isAvailable = Boolean(patch.isAvailable)
+        if (patch.isOnCourt !== undefined) data.isOnCourt = Boolean(patch.isOnCourt)
+        if (patch.status !== undefined) data.status = String(patch.status)
+
+        await prisma.gameRosterPlayer.update({
+          where: { id: rosterPlayerId },
+          data,
+        })
+
+        await logAudit({
+          gameId,
+          actionType: 'ROSTER_PLAYER_UPDATED',
+          actorUserId,
+          targetEntity: 'GameRosterPlayer',
+          targetEntityId: rosterPlayerId,
+          description: 'Jogador do roster atualizado manualmente no pré-jogo.',
+          meta: data,
+        })
+        break
+      }
       case 'open-session': {
         const rosters = await prisma.gameRoster.findMany({
           where: { gameId },
@@ -952,7 +1014,7 @@ export class LiveGameService {
   ) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true },
+      select: { id: true, homeTeamId: true, awayTeamId: true },
     })
 
     if (!game) {
@@ -1017,6 +1079,53 @@ export class LiveGameService {
       throw new Error('Evento inválido para a mesa digital.')
     }
 
+    if (input.teamId && input.athleteId) {
+      const rosterPlayer = await findRosterPlayer(gameId, input.teamId, input.athleteId)
+      if (!rosterPlayer) {
+        throw new Error('Atleta não pertence ao roster oficial da equipe nesta partida.')
+      }
+
+      const tracked = await getTrackedOnCourtCount(gameId, input.teamId)
+      const requireOnCourt = ![
+        'TIMEOUT_CONFIRMED',
+        'GAME_START',
+        'PERIOD_START',
+        'PERIOD_END',
+        'HALFTIME_START',
+        'HALFTIME_END',
+        'GAME_END',
+        'SUBSTITUTION_IN',
+      ].includes(input.eventType)
+
+      if (!rosterPlayer.isAvailable && input.eventType !== 'SUBSTITUTION_OUT') {
+        throw new Error('Atleta indisponível não pode receber evento de jogo.')
+      }
+
+      if (input.eventType === 'SUBSTITUTION_OUT' && tracked.count > 0 && !rosterPlayer.isOnCourt) {
+        throw new Error('O atleta precisa estar em quadra para sair.')
+      }
+
+      if (requireOnCourt && tracked.count > 0 && !rosterPlayer.isOnCourt) {
+        throw new Error('O atleta precisa estar em quadra para receber este evento.')
+      }
+
+      if (input.eventType === 'SUBSTITUTION_IN' && rosterPlayer.isOnCourt) {
+        throw new Error('O atleta já está em quadra.')
+      }
+    }
+
+    if (input.eventType === 'GAME_START') {
+      for (const teamId of [game.homeTeamId, game.awayTeamId]) {
+        const tracked = await getTrackedOnCourtCount(gameId, teamId)
+        if (tracked.count === 0 && tracked.starters.length > 0) {
+          await prisma.gameRosterPlayer.updateMany({
+            where: { id: { in: tracked.starters.map((player) => player.id) } },
+            data: { isOnCourt: true },
+          })
+        }
+      }
+    }
+
     const sequenceNumber = await getNextSequenceNumber(gameId)
     await prisma.gameEvent.create({
       data: {
@@ -1052,6 +1161,16 @@ export class LiveGameService {
         startedAt: input.eventType === 'GAME_START' ? new Date() : session.startedAt ?? null,
       },
     })
+
+    if (input.teamId && input.athleteId && ['SUBSTITUTION_IN', 'SUBSTITUTION_OUT'].includes(input.eventType)) {
+      const rosterPlayer = await findRosterPlayer(gameId, input.teamId, input.athleteId)
+      if (rosterPlayer) {
+        await prisma.gameRosterPlayer.update({
+          where: { id: rosterPlayer.id },
+          data: { isOnCourt: input.eventType === 'SUBSTITUTION_IN' },
+        })
+      }
+    }
 
     await logAudit({
       gameId,

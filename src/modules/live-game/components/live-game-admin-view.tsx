@@ -124,6 +124,76 @@ export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: Admi
     }
   }
 
+  const updateRosterPlayer = async (rosterPlayerId: string, patch: Record<string, unknown>) => {
+    setSubmitting(true)
+    try {
+      setData(await postJson(`/api/admin/games/${gameId}/pregame`, { action: 'update-roster-player', rosterPlayerId, patch }))
+      setError('')
+    } catch (currentError: any) {
+      setError(currentError.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const addOfficial = async () => {
+    const name = window.prompt('Nome do oficial:')
+    if (!name) return
+    const officialType = window.prompt('Tipo do oficial (REFEREE, TABLE, STATS, OTHER):', 'REFEREE') || 'REFEREE'
+    const role = window.prompt('Função do oficial:', 'Principal') || 'Principal'
+    const officials = [...(data.officials || []), { name, officialType, role }]
+
+    setSubmitting(true)
+    try {
+      setData(await postJson(`/api/admin/games/${gameId}/pregame`, { action: 'assign-officials', officials }))
+      setError('')
+    } catch (currentError: any) {
+      setError(currentError.message)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const exportReportPdf = async () => {
+    const { jsPDF } = await import('jspdf')
+    const autoTable = (await import('jspdf-autotable')).default
+    const doc = new jsPDF()
+    doc.setFontSize(16)
+    doc.text('FGB · Relatório Oficial da Partida', 14, 16)
+    doc.setFontSize(10)
+    doc.text(`${game.championship.name} · ${game.category.name}`, 14, 24)
+    doc.text(`${game.homeTeam.name} ${game.homeScore} x ${game.awayScore} ${game.awayTeam.name}`, 14, 30)
+    doc.text(`Status: ${game.liveStatus}`, 14, 36)
+
+    autoTable(doc, {
+      startY: 44,
+      head: [['Equipe', 'Pts', 'Ast', 'Reb', 'Stl', 'Blk']],
+      body: (data.boxScore?.teams || []).map((team: any) => [
+        team.teamName,
+        team.points,
+        team.assists,
+        team.reboundsTotal,
+        team.steals,
+        team.blocks,
+      ]),
+    })
+
+    autoTable(doc, {
+      startY: (doc as any).lastAutoTable.finalY + 8,
+      head: [['Atleta', 'Equipe', 'Pts', 'Reb', 'Ast', 'Faltas']],
+      body: (data.boxScore?.players || []).map((player: any) => [
+        player.athleteName,
+        player.teamName,
+        player.points,
+        player.reboundsTotal,
+        player.assists,
+        player.fouls,
+      ]),
+    })
+
+    doc.save(`relatorio-oficial-${game.homeTeam.name}-vs-${game.awayTeam.name}.pdf`)
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-[320px] items-center justify-center gap-3">
@@ -166,6 +236,7 @@ export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: Admi
               <button onClick={() => doPregameAction('sync-rosters')} disabled={submitting} className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Sincronizar rosters</button>
               <button onClick={() => doPregameAction('lock-rosters')} disabled={submitting} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Travar rosters</button>
               <button onClick={() => doPregameAction('open-session')} disabled={submitting} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Abrir sessão</button>
+              <button onClick={addOfficial} disabled={submitting} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Adicionar oficial</button>
             </div>
             <div className="mt-5 space-y-4">
               {(data.rosters || []).map((roster: any) => (
@@ -179,8 +250,13 @@ export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: Admi
                   </div>
                   <div className="mt-4 grid gap-2 md:grid-cols-2">
                     {(roster.players || []).map((player: any) => (
-                      <div key={player.id} className="rounded-xl border border-white bg-white px-3 py-2 text-sm text-[var(--black)]">
-                        {player.jerseyNumber ?? '--'} · {player.athleteName}
+                      <div key={player.id} className="rounded-xl border border-white bg-white px-3 py-3 text-sm text-[var(--black)]">
+                        <div className="font-semibold">{player.jerseyNumber ?? '--'} · {player.athleteName}</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button onClick={() => updateRosterPlayer(player.id, { isStarter: !player.isStarter })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isStarter ? 'Titular' : 'Banco'}</button>
+                          <button onClick={() => updateRosterPlayer(player.id, { isOnCourt: !player.isOnCourt })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isOnCourt ? 'Em quadra' : 'Fora'}</button>
+                          <button onClick={() => updateRosterPlayer(player.id, { isAvailable: !player.isAvailable })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isAvailable ? 'Disponível' : 'Indisponível'}</button>
+                        </div>
                       </div>
                     ))}
                     {(roster.players || []).length === 0 && (
@@ -198,6 +274,13 @@ export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: Admi
               <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Atletas: {(data.rosters || []).every((roster: any) => roster.players.length > 0) ? 'OK' : 'Pendente'}</div>
               <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Sessão: {data.session ? 'Aberta' : 'Não iniciada'}</div>
               <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Oficiais: {(data.referees?.length || 0) + (data.officials?.length || 0) > 0 ? 'Definidos' : 'Pendente'}</div>
+            </div>
+            <div className="mt-5 space-y-3">
+              {(data.officials || []).map((official: any) => (
+                <div key={official.id || `${official.name}-${official.role}`} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
+                  {official.name} · {official.officialType} · {official.role}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -228,6 +311,12 @@ export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: Admi
                     {label}
                   </button>
                 ))}
+                <button onClick={() => doLiveAction('event', { eventType: 'SUBSTITUTION_IN', teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })} disabled={submitting} className="rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                  Entrar
+                </button>
+                <button onClick={() => doLiveAction('event', { eventType: 'SUBSTITUTION_OUT', teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })} disabled={submitting} className="rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                  Sair
+                </button>
                 {CONTROL_EVENTS.map(([label, eventType]) => (
                   <button key={label} onClick={() => doLiveAction('event', { eventType, pointsDelta: selectedPeriod, teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })} disabled={submitting} className="rounded-xl bg-[var(--black)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white">
                     {label}
@@ -315,7 +404,10 @@ export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: Admi
       {mode === 'report' && (
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-            <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Relatório oficial</h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Relatório oficial</h2>
+              <button onClick={exportReportPdf} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Baixar PDF</button>
+            </div>
             <div className="mt-5 space-y-3">
               {(data.boxScore?.teams || []).map((team: any) => (
                 <div key={team.id} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
