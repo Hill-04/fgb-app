@@ -5,35 +5,25 @@ import { useState, useEffect } from 'react'
 import { Menu, X, ChevronDown } from 'lucide-react'
 
 const navItems = [
-  { label: 'Início', href: '/' },
   {
     label: 'FGB', href: '#',
     children: [
-      { label: 'História da Federação', href: '/fgb/historia' },
-      { label: 'Categorias e Idades',  href: '/fgb/categorias' },
-      { label: 'Regulamento',          href: '/fgb/regulamento' },
-      { label: 'Notas Oficiais',       href: '/fgb/notas' },
-      { label: 'Arbitragem',           href: '/fgb/arbitragem' },
-      { label: 'Diretoria',            href: '/fgb/diretoria' },
+      { label: 'História', href: '/fgb/historia' },
+      { label: 'Transparência', href: '/fgb/transparencia' },
+      { label: 'Notas Oficiais', href: '/fgb/notas' },
+      { label: 'Seleção Gaúcha', href: '/selecao-gaucha' },
     ]
   },
   {
-    label: 'Campeonatos', href: '/campeonatos',
+    label: 'Campeonatos', href: '#',
     children: [
+      { label: 'Calendário', href: '/calendario' },
       { label: 'Todos os Campeonatos', href: '/campeonatos' },
-      { label: 'Estadual Feminino',    href: '/campeonatos?filtro=feminino' },
-      { label: 'Estadual Masculino',   href: '/campeonatos?filtro=masculino' },
-      { label: 'Cestinhas',            href: '/campeonatos/cestinhas' },
-      { label: 'Normas do Estadual',   href: '/campeonatos/normas' },
+      { label: 'Estatísticas', href: '/campeonatos/cestinhas' },
     ]
   },
-  { label: 'Competicoes',  href: '/competicoes' },
-  { label: 'Calendario',    href: '/calendario' },
-  { label: 'Noticias',      href: '/noticias' },
-  { label: 'Videos',        href: '/videos' },
-  { label: 'Patrocinadores', href: '/patrocinadores' },
-  { label: 'Selecao Gaucha', href: '/selecao-gaucha' },
-  { label: 'Galeria',        href: '/galeria' },
+  { label: 'Transparência', href: '/fgb/transparencia' },
+  { label: 'Contato', href: '/contato' },
 ]
 
 export function PublicHeader() {
