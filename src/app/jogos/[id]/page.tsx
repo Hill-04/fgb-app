@@ -9,7 +9,8 @@ type Props = { params: { id: string } }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
-    const { game } = await getGameWithStats(params.id)
+    const response = await getGameWithStats(params.id)
+    const game: any = response.game;
     if (!game) throw new Error()
     return {
       title: `${game.home_team.short_name} vs ${game.away_team.short_name} — Box Score | FGB`,
