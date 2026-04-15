@@ -5,25 +5,40 @@ import { useState, useEffect } from 'react'
 import { Menu, X, ChevronDown } from 'lucide-react'
 
 const navItems = [
+  { label: 'Início', href: '/' },
   {
     label: 'FGB', href: '#',
     children: [
+      { label: 'Diretoria', href: '/fgb/diretoria' },
+      { label: 'Fundação', href: '/fgb/fundacao' },
       { label: 'História', href: '/fgb/historia' },
-      { label: 'Transparência', href: '/fgb/transparencia' },
+      { label: 'Regulamento', href: '/fgb/regulamento' },
+    ]
+  },
+  {
+    label: 'Secretaria', href: '#',
+    children: [
       { label: 'Notas Oficiais', href: '/fgb/notas' },
-      { label: 'Seleção Gaúcha', href: '/selecao-gaucha' },
+      { label: 'Arbitragem', href: '/fgb/arbitragem' },
+      { label: 'Categorias e Idades', href: '/fgb/categorias' },
     ]
   },
   {
     label: 'Campeonatos', href: '#',
     children: [
-      { label: 'Calendário', href: '/calendario' },
       { label: 'Todos os Campeonatos', href: '/campeonatos' },
-      { label: 'Estatísticas', href: '/campeonatos/cestinhas' },
+      { label: 'Normas do Estadual', href: '/campeonatos/normas' },
+      { label: 'Calendário', href: '/calendario' },
     ]
   },
-  { label: 'Transparência', href: '/fgb/transparencia' },
-  { label: 'Contato', href: '/contato' },
+  {
+    label: 'Destaques', href: '#',
+    children: [
+      { label: 'Seleção Gaúcha', href: '/selecao-gaucha' },
+      { label: 'Galeria', href: '/galeria' },
+    ]
+  },
+  { label: 'Notícias', href: '/noticias' },
 ]
 
 export function PublicHeader() {
