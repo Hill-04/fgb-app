@@ -104,34 +104,34 @@ export default async function CampeonatoPublicPage({ params }: Props) {
     endDate: championship.endDate?.toISOString() ?? null,
     hasPlayoffs: championship.hasPlayoffs,
     description: championship.description ?? null,
-    totalTeams: championship._count.registrations,
-    totalGames: championship._count.games,
-    registrations: championship.registrations.map((r) => ({
+    totalTeams: championship._count?.registrations || 0,
+    totalGames: championship._count?.games || 0,
+    registrations: (championship.registrations || []).map((r) => ({
       team: {
-        name: r.team.name,
-        city: r.team.city ?? null,
-        logoUrl: r.team.logoUrl ?? null,
+        name: r.team?.name || 'Equipe',
+        city: r.team?.city ?? null,
+        logoUrl: r.team?.logoUrl ?? null,
       },
     })),
-    categories: championship.categories.map((cat) => ({
+    categories: (championship.categories || []).map((cat) => ({
       id: cat.id,
       name: cat.name,
-      standings: cat.standings.map((s) => ({
+      standings: (cat.standings || []).map((s) => ({
         id: s.id,
         played: s.played,
         wins: s.wins,
         losses: s.losses,
         points: s.points,
         pointsFor: s.pointsFor,
-        pointsAgainst: s.pointsAgainst ?? s.pointsAg ?? 0,
+        pointsAgainst: s.pointsAgainst ?? 0,
         diff: s.diff,
         team: {
-          name: s.team.name,
-          city: s.team.city ?? null,
-          logoUrl: s.team.logoUrl ?? null,
+          name: s.team?.name || 'Equipe',
+          city: s.team?.city ?? null,
+          logoUrl: s.team?.logoUrl ?? null,
         },
       })),
-      games: cat.games.map((g) => ({
+      games: (cat.games || []).map((g) => ({
         id: g.id,
         phase: g.phase,
         round: g.round ?? null,
@@ -142,19 +142,18 @@ export default async function CampeonatoPublicPage({ params }: Props) {
         homeScore: g.homeScore ?? null,
         awayScore: g.awayScore ?? null,
         homeTeam: {
-          name: g.homeTeam.name,
-          logoUrl: g.homeTeam.logoUrl ?? null,
+          name: g.homeTeam?.name || 'Equipe Casa',
+          logoUrl: g.homeTeam?.logoUrl ?? null,
         },
         awayTeam: {
-          name: g.awayTeam.name,
-          logoUrl: g.awayTeam.logoUrl ?? null,
+          name: g.awayTeam?.name || 'Equipe Fora',
+          logoUrl: g.awayTeam?.logoUrl ?? null,
         },
-        mainReferee: g.refereeAssignments[0]?.referee?.name ?? null,
+        mainReferee: g.refereeAssignments?.[0]?.referee?.name ?? null,
         categoryName: cat.name,
       })),
     })),
   }
-
   return (
     <div>
       <PublicHeader />

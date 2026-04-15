@@ -19,7 +19,11 @@ const GALLERY_IMAGES = [
 
 export default async function HomePage() {
   const championships = await prisma.championship.findMany({
-    where: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false },
+    where: {
+      status: { in: ['ONGOING', 'REGISTRATION_OPEN'] },
+      isSimulation: false,
+      NOT: { name: { startsWith: 'TESTE' } },
+    },
     orderBy: { createdAt: 'desc' },
     take: 3,
     include: {
@@ -32,14 +36,14 @@ export default async function HomePage() {
   const liveGames = await getLiveGames().catch(() => [])
 
   const allCategories = await prisma.championshipCategory.findMany({
-    where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false } },
+    where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false, NOT: { name: { startsWith: 'TESTE' } } } },
     distinct: ['name'],
     select: { name: true },
     orderBy: { name: 'asc' },
   }).catch(() => [])
 
   const featuredChampionship = await prisma.championship.findFirst({
-    where: { status: 'ONGOING', isSimulation: false },
+    where: { status: 'ONGOING', isSimulation: false, NOT: { name: { startsWith: 'TESTE' } } },
     orderBy: { createdAt: 'desc' },
     include: {
       categories: { select: { name: true } },
@@ -51,7 +55,7 @@ export default async function HomePage() {
       }
     },
   }).catch(() => null) ?? await prisma.championship.findFirst({
-    where: { status: 'REGISTRATION_OPEN', isSimulation: false },
+    where: { status: 'REGISTRATION_OPEN', isSimulation: false, NOT: { name: { startsWith: 'TESTE' } } },
     orderBy: { createdAt: 'desc' },
     include: {
       categories: { select: { name: true } },
@@ -348,7 +352,7 @@ export default async function HomePage() {
                           </span>
                         ))}
                       </div>
-                      <div className="flex items-center justify-between pt-3" style={{ borderTop: '0.5px solid var(--border)' }}>
+                      <div className="flex items-center justify-between pt-3" style={{ borderTop: '0.5 solid var(--border)' }}>
                         <span className="fgb-label" style={{ color: 'var(--gray)' }}>{c._count?.registrations || 0} equipes</span>
                         <span className="fgb-label" style={{ color: 'var(--verde)' }}>Ver →</span>
                       </div>
@@ -443,29 +447,7 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="fgb-scorers-strip max-w-7xl mx-auto">
-          <div className="fgb-scorer-label">
-            <div className="fgb-scorer-label-eyb">Temporada 2026</div>
-            <div className="fgb-scorer-label-h">Top <em>Cestinhas</em></div>
-          </div>
-          <div className="flex overflow-x-auto gap-4 fgb-hide-scrollbar" style={{ paddingBottom: '4px' }}>
-            {[
-              { rank: 1, src: 'LA', name: 'Lucas Almeida', pts: '24.5' },
-              { rank: 2, src: 'MB', name: 'Marcos Bolt', pts: '22.1' },
-              { rank: 3, src: 'RS', name: 'Rafael Silva', pts: '19.8' },
-              { rank: 4, src: 'JP', name: 'João Pedro', pts: '18.4' },
-            ].map(s => (
-              <div key={s.rank} className="fgb-scorer-item">
-                <div className="fgb-scorer-rank">{s.rank}</div>
-                <div className="fgb-scorer-avatar">{s.src}</div>
-                <div>
-                  <div className="fgb-scorer-name">{s.name}</div>
-                  <div className="fgb-scorer-pts">{s.pts} PTS/G</div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* Seção de cestinhas — exibida apenas quando houver dados reais conectados */}
 
         <section className="fgb-section fgb-section-verde" style={{ borderTop: '1px solid rgba(27,115,64,0.1)' }}>
           <div className="max-w-7xl mx-auto">
