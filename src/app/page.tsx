@@ -322,7 +322,7 @@ export default async function HomePage() {
                   <Link key={c.id} href={`/campeonatos/${c.id}`} className="fgb-card admin-card-verde">
                     <div className="relative flex items-center justify-center overflow-hidden" style={{ height: 100, background: 'var(--black2)' }}>
                       <span className="fgb-display" style={{ fontSize: 64, color: 'rgba(255,255,255,0.03)', letterSpacing: '-0.04em', userSelect: 'none' }}>
-                        {c.name.substring(0, 3).toUpperCase()}
+                        {c.name?.substring(0, 3).toUpperCase() || 'FGB'}
                       </span>
                       <div style={{ position: 'absolute', top: 10, right: 10 }}>
                         <span className="fgb-badge fgb-badge-verde">
@@ -349,7 +349,7 @@ export default async function HomePage() {
                         ))}
                       </div>
                       <div className="flex items-center justify-between pt-3" style={{ borderTop: '0.5px solid var(--border)' }}>
-                        <span className="fgb-label" style={{ color: 'var(--gray)' }}>{c._count.registrations} equipes</span>
+                        <span className="fgb-label" style={{ color: 'var(--gray)' }}>{c._count?.registrations || 0} equipes</span>
                         <span className="fgb-label" style={{ color: 'var(--verde)' }}>Ver →</span>
                       </div>
                     </div>
@@ -567,7 +567,7 @@ export default async function HomePage() {
                       <Image src={team.logoUrl} alt={team.name} fill className="object-contain" unoptimized />
                     ) : (
                       <span className="fgb-display" style={{ fontSize: 18, color: 'var(--verde-dark)' }}>
-                        {team.name.slice(0, 2).toUpperCase()}
+                        {team.name?.slice(0, 2).toUpperCase() || '??'}
                       </span>
                     )}
                   </div>
