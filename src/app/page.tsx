@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/db'
+import { getLiveGames, getRecentResults } from '@/lib/queries/games'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
@@ -27,35 +28,8 @@ export default async function HomePage() {
     },
   }).catch(() => [])
 
-  const recentGames = await prisma.game.findMany({
-    where: { status: 'FINISHED' },
-    orderBy: { dateTime: 'desc' },
-    take: 6,
-    include: {
-      homeTeam: { select: { name: true } },
-      awayTeam: { select: { name: true } },
-      category: { include: { championship: { select: { name: true } } } },
-    },
-  }).catch(() => [])
-
-  const today = new Date()
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-  const todayEnd = new Date(todayStart.getTime() + 86400000)
-  const liveGames = await prisma.game.findMany({
-    where: {
-      OR: [
-        { status: 'ONGOING' },
-        { status: 'SCHEDULED', dateTime: { gte: todayStart, lt: todayEnd } }
-      ]
-    },
-    orderBy: { dateTime: 'asc' },
-    take: 8,
-    include: {
-      homeTeam: { select: { name: true } },
-      awayTeam: { select: { name: true } },
-      category: { select: { name: true } },
-    },
-  }).catch(() => [])
+  const recentGames = await getRecentResults(6)
+  const liveGames = await getLiveGames()
 
   const allCategories = await prisma.championshipCategory.findMany({
     where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false } },
@@ -253,17 +227,17 @@ export default async function HomePage() {
                 <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 9, letterSpacing: '0.2em' }}>JOGOS DE HOJE</span>
               </div>
               <div className="h-4 w-px bg-white/10 flex-shrink-0" />
-              {liveGames.map((game) => (
-                <div key={game.id} className="flex items-center gap-3 flex-shrink-0 px-4 py-1.5 rounded-full" style={{ background: game.status === 'ONGOING' ? 'rgba(204,16,22,0.15)' : 'rgba(255,255,255,0.05)', border: game.status === 'ONGOING' ? '1px solid rgba(204,16,22,0.3)' : '1px solid rgba(255,255,255,0.08)' }}>
-                  {game.status === 'ONGOING' && (
+              {liveGames.map((game: any) => (
+                <div key={game.id} className="flex items-center gap-3 flex-shrink-0 px-4 py-1.5 rounded-full" style={{ background: game.status === 'live' ? 'rgba(204,16,22,0.15)' : 'rgba(255,255,255,0.05)', border: game.status === 'live' ? '1px solid rgba(204,16,22,0.3)' : '1px solid rgba(255,255,255,0.08)' }}>
+                  {game.status === 'live' && (
                     <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 8, letterSpacing: '0.15em' }}>● AO VIVO</span>
                   )}
                   <span className="fgb-display" style={{ fontSize: 11, color: '#fff', letterSpacing: '0.02em' }}>
-                    {game.homeTeam.name}
-                    {game.homeScore != null ? <span style={{ color: 'var(--yellow)', margin: '0 6px' }}>{game.homeScore} × {game.awayScore}</span> : <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 6px' }}>vs</span>}
-                    {game.awayTeam.name}
+                    {game.home_team.name}
+                    {game.home_score != null ? <span style={{ color: 'var(--yellow)', margin: '0 6px' }}>{game.home_score} × {game.away_score}</span> : <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 6px' }}>vs</span>}
+                    {game.away_team.name}
                   </span>
-                  <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>{game.category.name}</span>
+                  <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>OFICIAL</span>
                 </div>
               ))}
             </div>
@@ -403,24 +377,26 @@ export default async function HomePage() {
               </div>
 
               <div style={{ background: '#fff', border: '1px solid var(--border)' }}>
-                {recentGames.map((game, idx) => (
-                  <div key={game.id} style={{ display: 'flex', alignItems: 'center', padding: '12px 16px', borderBottom: idx < recentGames.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                {recentGames.map((game: any, idx: number) => (
+                  <Link href={`/jogos/${game.id}`} key={game.id} style={{ display: 'flex', textDecoration: 'none', alignItems: 'center', padding: '12px 16px', borderBottom: idx < recentGames.length - 1 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors">
                     <span className="fgb-label hidden sm:block" style={{ width: 140, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--gray)' }}>
-                      {game.category.championship.name}
+                      OFICIAL FGB
                     </span>
 
                     <div className="flex items-center gap-3 flex-1 justify-center">
-                      <span className="fgb-display flex-1 text-right" style={{ fontSize: 13, color: 'var(--black)' }}>{game.homeTeam.name}</span>
+                      <span className="fgb-display flex-1 text-right" style={{ fontSize: 13, color: 'var(--black)' }}>{game.home_team.name}</span>
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className="fgb-score-num">{game.homeScore ?? '—'}</span>
+                        <span className="fgb-score-num">{game.home_score ?? '—'}</span>
                         <span className="fgb-label" style={{ color: 'var(--gray)' }}>×</span>
-                        <span className="fgb-score-num">{game.awayScore ?? '—'}</span>
+                        <span className="fgb-score-num">{game.away_score ?? '—'}</span>
                       </div>
-                      <span className="fgb-display flex-1" style={{ fontSize: 13, color: 'var(--black)' }}>{game.awayTeam.name}</span>
+                      <span className="fgb-display flex-1" style={{ fontSize: 13, color: 'var(--black)' }}>{game.away_team.name}</span>
                     </div>
 
-                    <span className="fgb-badge fgb-badge-outline flex-shrink-0 hide-mobile">Encerrado</span>
-                  </div>
+                    <span className="fgb-badge fgb-badge-outline flex-shrink-0 hide-mobile text-blue-600 bg-blue-50 border-blue-200 ml-4">
+                      SÚMULA →
+                    </span>
+                  </Link>
                 ))}
               </div>
             </div>
