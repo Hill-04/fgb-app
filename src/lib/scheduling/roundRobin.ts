@@ -316,26 +316,31 @@ function reservePlayoffWindow(endDate: Date | null, hasPlayoffs: boolean, playof
   return addDays(endDate, -(reservedWeekends * 7))
 }
 
+const MIN_PHASE_GAP_DAYS = 14
+
 function buildPhaseAnchors(startDate: Date, endDate: Date | null, phases: number) {
-  const start = startOfUtcDay(startDate)
+  const start = nextSaturday(startOfUtcDay(startDate))
 
   if (phases <= 1) {
     return [start]
   }
 
   if (!endDate) {
-    return Array.from({ length: phases }, (_, index) => addDays(start, index * 7))
+    const gapDays = Math.max(MIN_PHASE_GAP_DAYS, 14)
+    return Array.from({ length: phases }, (_, index) => nextSaturday(addDays(start, index * gapDays)))
   }
 
   const end = startOfUtcDay(endDate)
   if (end <= start) {
-    return Array.from({ length: phases }, (_, index) => addDays(start, index * 7))
+    return Array.from({ length: phases }, (_, index) => nextSaturday(addDays(start, index * MIN_PHASE_GAP_DAYS)))
   }
 
-  const totalMs = end.getTime() - start.getTime()
+  const totalDays = Math.floor((end.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
+  const intervalDays = Math.max(MIN_PHASE_GAP_DAYS, Math.floor(totalDays / phases))
+
   return Array.from({ length: phases }, (_, index) => {
-    const ratio = phases <= 1 ? 0 : index / phases
-    return startOfUtcDay(new Date(start.getTime() + totalMs * ratio))
+    const rawDate = addDays(start, index * intervalDays)
+    return nextSaturday(rawDate)
   })
 }
 
@@ -770,20 +775,17 @@ export async function generateChampionshipSchedule(championshipId: string) {
     const orderedPairs = reorderPairsForRest(basePairs)
     const perPhase = new Map<number, UniquePair[]>()
 
-    if (roundRobinByPhase) {
-      for (let phase = 1; phase <= phases; phase += 1) {
-        perPhase.set(
-          phase,
-          orderedPairs.map((pair) => ({
-            ...pair,
-          }))
-        )
-      }
-    } else {
+    {
       const pairsPerPhase = Math.max(1, Math.ceil(orderedPairs.length / phases))
       for (let phase = 1; phase <= phases; phase += 1) {
         const startIndex = (phase - 1) * pairsPerPhase
-        perPhase.set(phase, orderedPairs.slice(startIndex, startIndex + pairsPerPhase))
+        const endIndex = Math.min(startIndex + pairsPerPhase, orderedPairs.length)
+        perPhase.set(
+          phase,
+          orderedPairs.slice(startIndex, endIndex).map((pair) => ({
+            ...pair,
+          }))
+        )
       }
     }
 

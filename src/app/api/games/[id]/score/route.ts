@@ -31,6 +31,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 })
     }
 
+    // BUG-06: Block manual score if live session is active
+    const activeLiveSession = await prisma.gameLiveSession.findFirst({
+      where: {
+        gameId: id,
+        status: {
+          in: ['PRE_GAME_READY', 'LIVE', 'HALFTIME', 'PERIOD_BREAK', 'REVIEW_REQUIRED', 'FINAL_PENDING_CONFIRMATION'],
+        },
+      },
+    })
+    if (activeLiveSession) {
+      return NextResponse.json(
+        { error: 'Este jogo possui uma sessão ao vivo ativa. Use a mesa digital para registrar o resultado.' },
+        { status: 409 }
+      )
+    }
+
     await prisma.game.update({
       where: { id },
       data: {

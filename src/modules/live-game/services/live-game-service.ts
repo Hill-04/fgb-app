@@ -635,75 +635,114 @@ async function recomputeLiveState(gameId: string) {
   const homeStats = ensureLiveTeam(teamMap, game.homeTeamId)
   const awayStats = ensureLiveTeam(teamMap, game.awayTeamId)
 
-  await prisma.$transaction([
-    prisma.gamePlayerStatLine.deleteMany({ where: { gameId } }),
-    prisma.gameTeamStatLine.deleteMany({ where: { gameId } }),
-    prisma.gamePeriodScore.deleteMany({ where: { gameId } }),
-    ...Array.from(playerMap.entries()).map(([athleteId, stats]) =>
-      prisma.gamePlayerStatLine.create({
-        data: {
-          gameId,
-          athleteId,
-          teamId: stats.teamId,
-          minutesPlayed: stats.minutesPlayed,
-          points: stats.points,
-          fouls: stats.fouls,
-          assists: stats.assists,
-          reboundsOffensive: stats.reboundsOffensive,
-          reboundsDefensive: stats.reboundsDefensive,
-          reboundsTotal: stats.reboundsTotal,
-          steals: stats.steals,
-          blocks: stats.blocks,
-          turnovers: stats.turnovers,
-          twoPtMade: stats.twoPtMade,
-          twoPtAttempted: stats.twoPtAttempted,
-          threePtMade: stats.threePtMade,
-          threePtAttempted: stats.threePtAttempted,
-          freeThrowsMade: stats.freeThrowsMade,
-          freeThrowsAttempted: stats.freeThrowsAttempted,
-          plusMinus: stats.plusMinus,
-          isStarter: stats.isStarter,
-          fouledOut: stats.fouledOut,
-          disqualified: stats.disqualified,
-        },
-      })
-    ),
-    prisma.gameTeamStatLine.create({
-      data: { gameId, teamId: game.homeTeamId, ...homeStats },
-    }),
-    prisma.gameTeamStatLine.create({
-      data: { gameId, teamId: game.awayTeamId, ...awayStats },
-    }),
-    ...Array.from(periodMap.entries()).map(([period, score]) =>
-      prisma.gamePeriodScore.create({
-        data: {
-          gameId,
-          period,
-          homePoints: score.homePoints,
-          awayPoints: score.awayPoints,
-        },
-      })
-    ),
-    prisma.game.update({
-      where: { id: gameId },
-      data: {
-        homeScore: homeStats.points,
-        awayScore: awayStats.points,
-        status:
-          liveStatus === 'FINAL_PENDING_CONFIRMATION' || liveStatus === 'FINAL_OFFICIAL'
-            ? 'FINISHED'
-            : liveStatus === 'LIVE' || liveStatus === 'HALFTIME' || liveStatus === 'PERIOD_BREAK'
-              ? 'LIVE'
-              : game.status,
-        liveStatus,
-        currentPeriod,
-        clockDisplay,
-        homeTimeoutsUsed,
-        awayTimeoutsUsed,
-        homeTeamFoulsCurrentPeriod,
-        awayTeamFoulsCurrentPeriod,
+  const playerUpserts = Array.from(playerMap.entries()).map(([athleteId, stats]) =>
+    prisma.gamePlayerStatLine.upsert({
+      where: { gameId_athleteId: { gameId, athleteId } },
+      create: {
+        gameId,
+        athleteId,
+        teamId: stats.teamId,
+        minutesPlayed: stats.minutesPlayed,
+        points: stats.points,
+        fouls: stats.fouls,
+        assists: stats.assists,
+        reboundsOffensive: stats.reboundsOffensive,
+        reboundsDefensive: stats.reboundsDefensive,
+        reboundsTotal: stats.reboundsTotal,
+        steals: stats.steals,
+        blocks: stats.blocks,
+        turnovers: stats.turnovers,
+        twoPtMade: stats.twoPtMade,
+        twoPtAttempted: stats.twoPtAttempted,
+        threePtMade: stats.threePtMade,
+        threePtAttempted: stats.threePtAttempted,
+        freeThrowsMade: stats.freeThrowsMade,
+        freeThrowsAttempted: stats.freeThrowsAttempted,
+        plusMinus: stats.plusMinus,
+        isStarter: stats.isStarter,
+        fouledOut: stats.fouledOut,
+        disqualified: stats.disqualified,
       },
+      update: {
+        minutesPlayed: stats.minutesPlayed,
+        points: stats.points,
+        fouls: stats.fouls,
+        assists: stats.assists,
+        reboundsOffensive: stats.reboundsOffensive,
+        reboundsDefensive: stats.reboundsDefensive,
+        reboundsTotal: stats.reboundsTotal,
+        steals: stats.steals,
+        blocks: stats.blocks,
+        turnovers: stats.turnovers,
+        twoPtMade: stats.twoPtMade,
+        twoPtAttempted: stats.twoPtAttempted,
+        threePtMade: stats.threePtMade,
+        threePtAttempted: stats.threePtAttempted,
+        freeThrowsMade: stats.freeThrowsMade,
+        freeThrowsAttempted: stats.freeThrowsAttempted,
+        plusMinus: stats.plusMinus,
+        isStarter: stats.isStarter,
+        fouledOut: stats.fouledOut,
+        disqualified: stats.disqualified,
+      },
+    })
+  )
+
+  const teamUpserts = [
+    prisma.gameTeamStatLine.upsert({
+      where: { gameId_teamId: { gameId, teamId: game.homeTeamId } },
+      create: { gameId, teamId: game.homeTeamId, ...homeStats },
+      update: { ...homeStats },
     }),
+    prisma.gameTeamStatLine.upsert({
+      where: { gameId_teamId: { gameId, teamId: game.awayTeamId } },
+      create: { gameId, teamId: game.awayTeamId, ...awayStats },
+      update: { ...awayStats },
+    }),
+  ]
+
+  const periodUpserts = Array.from(periodMap.entries()).map(([period, score]) =>
+    prisma.gamePeriodScore.upsert({
+      where: { gameId_period: { gameId, period } },
+      create: {
+        gameId,
+        period,
+        homePoints: score.homePoints,
+        awayPoints: score.awayPoints,
+      },
+      update: {
+        homePoints: score.homePoints,
+        awayPoints: score.awayPoints,
+      },
+    })
+  )
+
+  const gameUpdate = prisma.game.update({
+    where: { id: gameId },
+    data: {
+      homeScore: homeStats.points,
+      awayScore: awayStats.points,
+      status:
+        liveStatus === 'FINAL_PENDING_CONFIRMATION' || liveStatus === 'FINAL_OFFICIAL'
+          ? 'FINISHED'
+          : liveStatus === 'LIVE' || liveStatus === 'HALFTIME' || liveStatus === 'PERIOD_BREAK'
+            ? 'LIVE'
+            : game.status,
+      liveStatus,
+      currentPeriod,
+      clockDisplay,
+      homeTimeoutsUsed,
+      awayTimeoutsUsed,
+      homeTeamFoulsCurrentPeriod,
+      awayTeamFoulsCurrentPeriod,
+    },
+  })
+
+  await prisma.$transaction([
+    ...playerUpserts,
+    ...teamUpserts,
+    ...periodUpserts,
+    gameUpdate,
   ])
 
   return {
