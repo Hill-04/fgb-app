@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useMemo, useState, use } from 'react'
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Loader2, RotateCcw } from 'lucide-react'
 
 import { Badge } from '@/components/Badge'
@@ -20,10 +20,37 @@ const QUICK_ACTIONS = [
   { label: 'Falta', eventType: 'FOUL', style: 'bg-white text-[var(--black)] border border-[var(--border)]' },
 ]
 
+const LIVE_STATUSES = new Set(['LIVE', 'HALFTIME', 'PERIOD_BREAK', 'PRE_GAME_READY'])
+
 function sortLeaders(players: any[], key: 'points' | 'assists' | 'reboundsTotal') {
   return [...players]
     .sort((a, b) => (b[key] ?? 0) - (a[key] ?? 0) || String(a.athleteName).localeCompare(String(b.athleteName)))
     .slice(0, 3)
+}
+
+function getPollDelay(snapshot: any) {
+  const liveStatus = String(snapshot?.game?.liveStatus || '').toUpperCase()
+  return LIVE_STATUSES.has(liveStatus) ? 2500 : 9000
+}
+
+function isFinishedStatus(status: unknown) {
+  const normalized = String(status || '').toUpperCase()
+  return normalized === 'FINISHED'
+}
+
+function hasAthleteInSnapshot(snapshot: any, athleteId: string) {
+  if (!athleteId) return false
+  for (const roster of snapshot?.rosters || []) {
+    for (const player of roster.players || []) {
+      if (player.athleteId === athleteId) return true
+    }
+  }
+  return false
+}
+
+function hasTeamInSnapshot(snapshot: any, teamId: string) {
+  if (!teamId) return false
+  return (snapshot?.rosters || []).some((roster: any) => roster.teamId === teamId)
 }
 
 export default function AdminJogoLivePage({ params }: { params: Promise<{ id: string }> }) {
@@ -37,38 +64,119 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
   const [period, setPeriod] = useState(1)
   const [clockTime, setClockTime] = useState('10:00')
 
-  const load = async () => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/admin/jogos/${id}/live`)
-      const payload = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(payload.error || 'Falha ao carregar live scout')
-      setData(payload)
-      setError('')
-    } catch (currentError: any) {
-      setError(currentError.message)
-    } finally {
-      setLoading(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inFlightRef = useRef(false)
+  const mountedRef = useRef(true)
+  const initializedRef = useRef(false)
+  const hasLoadedRef = useRef(false)
+  const lastSnapshotRef = useRef<any>(null)
+
+  const clearTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
     }
-  }
+  }, [])
+
+  const applySnapshot = useCallback((snapshot: any, isInitial = false) => {
+    if (!snapshot?.game) return
+
+    lastSnapshotRef.current = snapshot
+    setData(snapshot)
+    setError('')
+
+    setSelectedTeamId((current) => {
+      if (hasTeamInSnapshot(snapshot, current)) return current
+      return snapshot.game.homeTeam.id
+    })
+
+    setSelectedAthleteId((current) => {
+      if (hasAthleteInSnapshot(snapshot, current)) return current
+      return ''
+    })
+
+    if (isInitial && !initializedRef.current) {
+      setPeriod(snapshot.game.currentPeriod || 1)
+      setClockTime(snapshot.game.clockDisplay || '10:00')
+      initializedRef.current = true
+    }
+  }, [])
+
+  const fetchSnapshot = useCallback(
+    async (silent = true) => {
+      if (inFlightRef.current || !mountedRef.current) return null
+      inFlightRef.current = true
+      if (!silent && !hasLoadedRef.current) setLoading(true)
+
+      try {
+        const res = await fetch(`/api/admin/jogos/${id}/live`, { cache: 'no-store' })
+        const payload = await res.json().catch(() => ({}))
+        if (!res.ok) throw new Error(payload.error || 'Falha ao carregar live scout')
+        if (mountedRef.current) {
+          applySnapshot(payload, !initializedRef.current)
+          hasLoadedRef.current = true
+        }
+        return payload
+      } catch (currentError: any) {
+        if (mountedRef.current) {
+          setError(currentError.message || 'Erro ao atualizar snapshot live')
+        }
+        return null
+      } finally {
+        inFlightRef.current = false
+        if (mountedRef.current) setLoading(false)
+      }
+    },
+    [applySnapshot, id]
+  )
 
   useEffect(() => {
-    load()
-  }, [id])
+    mountedRef.current = true
+    let cancelled = false
 
-  useEffect(() => {
-    if (!data?.game) return
-    setSelectedTeamId((current) => current || data.game.homeTeam.id)
-    setPeriod(data.game.currentPeriod || 1)
-    setClockTime(data.game.clockDisplay || '10:00')
-  }, [data])
+    const scheduleNext = (delay: number) => {
+      if (cancelled || !mountedRef.current) return
+      clearTimer()
+      timerRef.current = setTimeout(tick, delay)
+    }
+
+    const tick = async () => {
+      if (cancelled || !mountedRef.current) return
+      if (document.visibilityState === 'hidden') return
+      const payload = await fetchSnapshot(true)
+      const delay = getPollDelay(payload || lastSnapshotRef.current)
+      scheduleNext(delay)
+    }
+
+    const onVisibilityChange = () => {
+      if (cancelled || !mountedRef.current) return
+      if (document.visibilityState === 'hidden') {
+        clearTimer()
+        return
+      }
+      tick()
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    fetchSnapshot(false).then((payload) => {
+      if (cancelled) return
+      scheduleNext(getPollDelay(payload || lastSnapshotRef.current))
+    })
+
+    return () => {
+      cancelled = true
+      mountedRef.current = false
+      clearTimer()
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [clearTimer, fetchSnapshot])
 
   const selectedRoster = useMemo(() => {
     if (!selectedTeamId) return null
     return (data?.rosters || []).find((roster: any) => roster.teamId === selectedTeamId) || null
   }, [data, selectedTeamId])
 
-  const canOperate = Boolean(data?.liveSummary?.rostersLocked) && data?.game?.status !== 'FINISHED'
+  const canOperate = Boolean(data?.liveSummary?.rostersLocked) && !isFinishedStatus(data?.game?.status)
 
   const postJson = async (url: string, body: Record<string, unknown>) => {
     const res = await fetch(url, {
@@ -77,7 +185,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
       body: JSON.stringify(body),
     })
     const payload = await res.json().catch(() => ({}))
-    if (!res.ok) throw new Error(payload.error || 'OperaÃ§Ã£o falhou')
+    if (!res.ok) throw new Error(payload.error || 'Operacao falhou')
     return payload
   }
 
@@ -85,8 +193,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
     setSubmitting(true)
     try {
       const payload = await postJson(`/api/admin/jogos/${id}/live`, { action: 'OPEN_SESSION' })
-      setData(payload)
-      setError('')
+      applySnapshot(payload, false)
     } catch (currentError: any) {
       setError(currentError.message)
     } finally {
@@ -96,7 +203,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
 
   const handleQuickAction = async (eventType: string) => {
     if (!selectedTeamId || !selectedAthleteId) {
-      setError('Selecione time e atleta para registrar a aÃ§Ã£o.')
+      setError('Selecione time e atleta para registrar a acao.')
       return
     }
 
@@ -109,8 +216,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
         period,
         clock_time: clockTime,
       })
-      setData(payload)
-      setError('')
+      applySnapshot(payload, false)
     } catch (currentError: any) {
       setError(currentError.message)
     } finally {
@@ -122,8 +228,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
     setSubmitting(true)
     try {
       const payload = await postJson(`/api/admin/jogos/${id}/events`, { action: 'UNDO_LAST' })
-      setData(payload)
-      setError('')
+      applySnapshot(payload, false)
     } catch (currentError: any) {
       setError(currentError.message)
     } finally {
@@ -141,7 +246,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
   }
 
   if (!data?.game) {
-    return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">{error || 'Jogo nÃ£o encontrado.'}</div>
+    return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">{error || 'Jogo nao encontrado.'}</div>
   }
 
   const pointLeaders = sortLeaders(data.boxScore?.players || [], 'points')
@@ -164,7 +269,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
             onClick={handleOpenSession}
             disabled={submitting}
           >
-            Abrir SessÃ£o
+            Abrir sessao
           </Button>
           <Button
             variant="outline"
@@ -173,7 +278,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
             disabled={submitting || !canOperate}
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Desfazer Ãºltimo
+            Desfazer ultimo
           </Button>
         </div>
       </div>
@@ -190,10 +295,10 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
           </div>
           <div className="flex flex-col gap-2 items-start lg:items-end">
             <Badge className={data.liveSummary?.rostersLocked ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'}>
-              {data.liveSummary?.rostersLocked ? 'Roster travado para live' : 'Roster nÃ£o travado'}
+              {data.liveSummary?.rostersLocked ? 'Roster travado para live' : 'Roster nao travado'}
             </Badge>
             <Badge className="bg-white border-[var(--border)] text-[var(--gray)]">{data.events.length} eventos</Badge>
-            <Badge variant={data.game.status === 'FINISHED' ? 'success' : 'orange'}>
+            <Badge variant={isFinishedStatus(data.game.status) ? 'success' : 'orange'}>
               {data.game.status} · {data.game.liveStatus}
             </Badge>
           </div>
@@ -204,7 +309,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
       <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
         <div className="space-y-6">
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">SeleÃ§Ã£o de Time e Atleta</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Selecao de time e atleta</h2>
             <div className="mt-4 grid gap-4 md:grid-cols-2">
               {(data.rosters || []).map((roster: any) => (
                 <div key={roster.id} className="rounded-2xl border border-[var(--border)] p-4 bg-white">
@@ -235,7 +340,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
                         >
                           <span className="font-semibold">{player.jerseyNumber ?? '--'} · {player.athleteName}</span>
                           <span className="ml-2 text-[10px] font-bold uppercase text-[var(--gray)]">
-                            {disabled ? 'DNP' : 'ElegÃ­vel'}
+                            {disabled ? 'DNP' : 'Elegivel'}
                           </span>
                         </button>
                       )
@@ -250,7 +355,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
                 value={clockTime}
                 onChange={(event) => setClockTime(event.target.value)}
                 className="h-11 rounded-xl border border-[var(--border)] px-4 text-sm outline-none"
-                placeholder="RelÃ³gio (ex.: 07:33)"
+                placeholder="Relogio (ex.: 07:33)"
               />
               <input
                 type="number"
@@ -258,13 +363,13 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
                 value={period}
                 onChange={(event) => setPeriod(Number(event.target.value) || 1)}
                 className="h-11 rounded-xl border border-[var(--border)] px-4 text-sm outline-none"
-                placeholder="PerÃ­odo"
+                placeholder="Periodo"
               />
             </div>
           </div>
 
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">AÃ§Ãµes RÃ¡pidas</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Acoes rapidas</h2>
             <p className="mt-1 text-xs text-[var(--gray)]">
               Atleta selecionado: {selectedRoster?.teamName || '-'} ·{' '}
               {(selectedRoster?.players || []).find((player: any) => player.athleteId === selectedAthleteId)?.athleteName || 'Nenhum'}
@@ -285,7 +390,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">Log CronolÃ³gico</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Log cronologico</h2>
             <div className="mt-4 space-y-3 max-h-[420px] overflow-auto pr-1">
               {[...(data.events || [])]
                 .slice()
@@ -302,13 +407,13 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
                     </div>
                     <p className="mt-1 text-sm text-[var(--black)]">{event.description}</p>
                     <p className="mt-1 text-xs text-[var(--gray)]">
-                      Impacto: {event.pointsDelta ? `${event.pointsDelta > 0 ? '+' : ''}${event.pointsDelta}` : 'sem alteraÃ§Ã£o de placar'}
+                      Impacto: {event.pointsDelta ? `${event.pointsDelta > 0 ? '+' : ''}${event.pointsDelta}` : 'sem alteracao de placar'}
                     </p>
                   </div>
                 ))}
               {(data.events || []).length === 0 && (
                 <div className="rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--gray)]">
-                  Nenhum evento lanÃ§ado ainda.
+                  Nenhum evento lancado ainda.
                 </div>
               )}
             </div>
@@ -317,7 +422,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
 
         <div className="space-y-6">
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">Resumo ao Vivo</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Resumo ao vivo</h2>
             <div className="mt-4 rounded-2xl border border-[var(--border)] p-4 bg-[var(--gray-l)]">
               <p className="text-xs text-[var(--gray)] uppercase tracking-widest font-bold">Placar atual</p>
               <p className="text-4xl font-black text-[var(--black)] mt-2">
@@ -327,7 +432,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">LÃ­deres de Pontos</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Lideres de pontos</h2>
             <div className="mt-4 space-y-3">
               {pointLeaders.map((player: any) => (
                 <div key={`pts-${player.id}`} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
@@ -338,7 +443,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">LÃ­deres de AssistÃªncia</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Lideres de assistencias</h2>
             <div className="mt-4 space-y-3">
               {assistLeaders.map((player: any) => (
                 <div key={`ast-${player.id}`} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
@@ -349,7 +454,7 @@ export default function AdminJogoLivePage({ params }: { params: Promise<{ id: st
           </div>
 
           <div className="fgb-card p-6">
-            <h2 className="fgb-display text-2xl text-[var(--black)]">LÃ­deres de Rebotes</h2>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Lideres de rebotes</h2>
             <div className="mt-4 space-y-3">
               {reboundLeaders.map((player: any) => (
                 <div key={`reb-${player.id}`} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">

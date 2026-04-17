@@ -149,6 +149,13 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             </Button>
           </Link>
 
+          <Link href={`/games/${id}/live`} target="_blank" rel="noreferrer">
+            <Button variant="outline" className="border-[var(--border)] bg-white h-12 px-8 font-bold">
+              <Activity className="w-4 h-4 mr-2" />
+              Ver Live Publico
+            </Button>
+          </Link>
+
           <Link href={`/admin/jogos/${id}/stats`}>
             <Button className="fgb-btn-primary h-12 px-8">
               <Activity className="w-4 h-4 mr-2" />

@@ -1,4 +1,4 @@
-import { LiveGamePublicView } from '@/modules/live-game/components/live-game-public-view'
+import { PublicLiveSnapshotView } from '@/modules/live-game/components/public-live-snapshot-view'
 
 export default async function PublicLiveGamePage({
   params,
@@ -6,5 +6,5 @@ export default async function PublicLiveGamePage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  return <LiveGamePublicView gameId={id} mode="live" />
+  return <PublicLiveSnapshotView gameId={id} />
 }
