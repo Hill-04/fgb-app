@@ -31,6 +31,14 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true)
   const [eligibleCounts, setEligibleCounts] = useState({ home: 0, away: 0 })
   const [rosters, setRosters] = useState<any[]>([])
+  const [liveSummary, setLiveSummary] = useState({
+    hasLiveScout: false,
+    eventsCount: 0,
+    rostersLocked: false,
+    liveHomeScore: null as number | null,
+    liveAwayScore: null as number | null,
+    liveStatus: null as string | null,
+  })
   const [finalizing, setFinalizing] = useState(false)
   const [finalizeModalOpen, setFinalizeModalOpen] = useState(false)
   const [ignoreDiscrepancy, setIgnoreDiscrepancy] = useState(false)
@@ -38,15 +46,31 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const fetchData = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/admin/jogos/${id}/stats`)
-      if (res.ok) {
-        const data = await res.json()
+      const [statsRes, liveRes] = await Promise.all([
+        fetch(`/api/admin/jogos/${id}/stats`),
+        fetch(`/api/admin/jogos/${id}/live`),
+      ])
+
+      if (statsRes.ok) {
+        const data = await statsRes.json()
         setGame(data.game)
         setStats(data.stats)
         setRosters(data.rosters || [])
         const homeEligible = data.athletes.filter((a: any) => a.team_id === data.game.home_team_id).length
         const awayEligible = data.athletes.filter((a: any) => a.team_id === data.game.away_team_id).length
         setEligibleCounts({ home: homeEligible, away: awayEligible })
+      }
+
+      if (liveRes.ok) {
+        const liveData = await liveRes.json()
+        setLiveSummary({
+          hasLiveScout: Boolean(liveData?.liveSummary?.hasLiveScout),
+          eventsCount: Number(liveData?.liveSummary?.eventsCount ?? 0),
+          rostersLocked: Boolean(liveData?.liveSummary?.rostersLocked),
+          liveHomeScore: typeof liveData?.game?.homeScore === 'number' ? liveData.game.homeScore : null,
+          liveAwayScore: typeof liveData?.game?.awayScore === 'number' ? liveData.game.awayScore : null,
+          liveStatus: liveData?.game?.liveStatus ?? null,
+        })
       }
     } catch (err) {
       console.error('Erro ao buscar dados do jogo:', err)
@@ -118,6 +142,13 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             </Button>
           </Link>
 
+          <Link href={`/admin/jogos/${id}/live`}>
+            <Button variant="outline" className="border-[var(--border)] bg-white h-12 px-8 font-bold">
+              <Activity className="w-4 h-4 mr-2" />
+              Operar ao Vivo
+            </Button>
+          </Link>
+
           <Link href={`/admin/jogos/${id}/stats`}>
             <Button className="fgb-btn-primary h-12 px-8">
               <Activity className="w-4 h-4 mr-2" />
@@ -173,6 +204,15 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                     )}
                   </div>
                 )}
+
+                <div className="mt-2 flex flex-col items-center gap-2">
+                  <Badge className={liveSummary.hasLiveScout ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}>
+                    {liveSummary.hasLiveScout ? 'Live Scout Ativo' : 'Sem Eventos Live'}
+                  </Badge>
+                  <Badge className="bg-white text-[var(--gray)] border-[var(--border)]">
+                    {liveSummary.eventsCount} eventos
+                  </Badge>
+                </div>
               </div>
               
               <div className="flex items-center gap-8">
@@ -184,6 +224,12 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                   {game.away_score ?? '-'}
                 </div>
               </div>
+
+              {liveSummary.liveHomeScore !== null && liveSummary.liveAwayScore !== null && (
+                <div className="mt-3 rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+                  Live: {liveSummary.liveHomeScore} x {liveSummary.liveAwayScore} ({liveSummary.liveStatus || 'SCHEDULED'})
+                </div>
+              )}
 
               <div className="mt-8 flex flex-col items-center gap-1">
                 <div className="flex items-center gap-2 text-[var(--black)] text-sm font-black uppercase tracking-wider">
@@ -214,7 +260,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Grid de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         {/* Atletas Mandante */}
         <div className="fgb-card flex flex-col gap-4 p-6 hover:shadow-lg transition-all border border-[rgba(var(--foreground-rgb),0.05)]">
           <div className="flex items-center justify-between">
@@ -269,6 +315,34 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             <div className="bg-white/50 p-3 rounded-lg border border-[var(--border)] overflow-hidden">
               <span className="block text-[8px] font-black text-[var(--gray)] uppercase tracking-widest mb-1 leading-none">Total Stats</span>
               <span className="block font-sans font-black text-lg text-[var(--black)]">{consistency.calculatedHome} x {consistency.calculatedAway}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="fgb-card flex flex-col gap-4 p-6 transition-all border border-[rgba(var(--foreground-rgb),0.05)] hover:shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Activity className="w-5 h-5 text-[var(--verde)]" />
+              <h3 className="fgb-label text-[var(--black)]" style={{ fontSize: 12 }}>Live Scout</h3>
+            </div>
+            <Badge className={liveSummary.hasLiveScout ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-600 border-slate-200'}>
+              {liveSummary.hasLiveScout ? 'Ativo' : 'Sem eventos'}
+            </Badge>
+          </div>
+          <div className="space-y-2 text-xs text-[var(--gray)]">
+            <div className="flex items-center justify-between">
+              <span>Eventos</span>
+              <span className="font-black text-[var(--black)]">{liveSummary.eventsCount}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Roster para live</span>
+              <span className="font-black text-[var(--black)]">{liveSummary.rostersLocked ? 'Travado' : 'NÃ£o travado'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>Placar live</span>
+              <span className="font-black text-[var(--black)]">
+                {liveSummary.liveHomeScore ?? '-'} x {liveSummary.liveAwayScore ?? '-'}
+              </span>
             </div>
           </div>
         </div>

@@ -58,6 +58,9 @@ const FOUL_EVENTS = new Set([
   'FOUL_DISQUALIFYING',
 ])
 
+const FINAL_GAME_STATUSES = new Set(['FINISHED', 'finished'])
+const FINAL_LIVE_STATUSES = new Set(['FINAL_PENDING_CONFIRMATION', 'FINAL_OFFICIAL'])
+
 function safeParseJson<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback
   try {
@@ -103,15 +106,15 @@ function buildEventDescription(event: {
     case 'BLOCK':
       return `${actor} aplicou um toco`
     case 'ASSIST':
-      return `${actor} deu assistência`
+      return `${actor} deu assistÃªncia`
     case 'TIMEOUT_CONFIRMED':
       return `${event.teamName || 'Equipe'} pediu tempo`
     case 'GAME_START':
       return 'Jogo iniciado'
     case 'PERIOD_START':
-      return `Período ${event.pointsDelta ?? ''} iniciado`.trim()
+      return `PerÃ­odo ${event.pointsDelta ?? ''} iniciado`.trim()
     case 'PERIOD_END':
-      return `Período ${event.pointsDelta ?? ''} encerrado`.trim()
+      return `PerÃ­odo ${event.pointsDelta ?? ''} encerrado`.trim()
     case 'HALFTIME_START':
       return 'Intervalo iniciado'
     case 'HALFTIME_END':
@@ -202,6 +205,10 @@ function ensureLiveTeam(
   return map.get(teamId)!
 }
 
+function isGameFinalized(status?: string | null, liveStatus?: string | null) {
+  return FINAL_GAME_STATUSES.has(status ?? '') || FINAL_LIVE_STATUSES.has(liveStatus ?? '')
+}
+
 async function getGameBase(gameId: string) {
   return prisma.game.findUnique({
     where: { id: gameId },
@@ -275,6 +282,29 @@ async function getNextSequenceNumber(gameId: string) {
   })
 
   return (last?.sequenceNumber ?? 0) + 1
+}
+
+async function ensureRostersLockedForLive(gameId: string) {
+  const rosters = await prisma.gameRoster.findMany({
+    where: { gameId },
+    include: { players: true },
+  })
+
+  if (rosters.length < 2 || rosters.some((roster) => roster.players.length === 0)) {
+    throw new Error('Defina os rosters oficiais completos antes de operar o live scout.')
+  }
+
+  if (rosters.some((roster) => !roster.isLocked)) {
+    throw new Error('Trave os rosters oficiais das duas equipes para operar o live scout.')
+  }
+}
+
+async function getLatestUnrevertedEvent(gameId: string) {
+  return prisma.gameEvent.findFirst({
+    where: { gameId, isReverted: false },
+    orderBy: [{ sequenceNumber: 'desc' }, { createdAt: 'desc' }],
+    select: { id: true, sequenceNumber: true },
+  })
 }
 
 async function logAudit(args: {
@@ -458,7 +488,7 @@ async function recomputeLiveState(gameId: string) {
   })
 
   if (!game) {
-    throw new Error('Jogo não encontrado')
+    throw new Error('Jogo nÃ£o encontrado')
   }
 
   const playerMap = new Map<string, ReturnType<typeof createPlayerAccumulator>>()
@@ -758,11 +788,11 @@ export class LiveGameService {
     const game = await getGameBase(gameId)
 
     if (!game) {
-      throw new Error('Jogo não encontrado')
+      throw new Error('Jogo nÃ£o encontrado')
     }
 
     if (publicView && !game.isLivePublished && !LIVE_VISIBLE_STATUSES.has(game.liveStatus)) {
-      throw new Error('Jogo ainda não publicado')
+      throw new Error('Jogo ainda nÃ£o publicado')
     }
 
     const latestSession = game.liveSessions[0] ?? null
@@ -912,11 +942,11 @@ export class LiveGameService {
   ) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, homeTeamId: true, awayTeamId: true },
+      select: { id: true, homeTeamId: true, awayTeamId: true, status: true, liveStatus: true },
     })
 
     if (!game) {
-      throw new Error('Jogo não encontrado')
+      throw new Error('Jogo nÃ£o encontrado')
     }
 
     switch (action) {
@@ -946,7 +976,7 @@ export class LiveGameService {
           targetEntity: 'GameRoster',
           description:
             action === 'lock-rosters'
-              ? 'Rosters travados para operação ao vivo.'
+              ? 'Rosters travados para operaÃ§Ã£o ao vivo.'
               : 'Rosters liberados para ajustes.',
         })
         break
@@ -982,7 +1012,7 @@ export class LiveGameService {
       case 'update-roster-player': {
         const rosterPlayerId = payload?.rosterPlayerId ? String(payload.rosterPlayerId) : ''
         if (!rosterPlayerId) {
-          throw new Error('Jogador do roster não informado.')
+          throw new Error('Jogador do roster nÃ£o informado.')
         }
 
         const patch = (payload?.patch as Record<string, unknown> | undefined) ?? {}
@@ -1006,21 +1036,16 @@ export class LiveGameService {
           actorUserId,
           targetEntity: 'GameRosterPlayer',
           targetEntityId: rosterPlayerId,
-          description: 'Jogador do roster atualizado manualmente no pré-jogo.',
+          description: 'Jogador do roster atualizado manualmente no prÃ©-jogo.',
           meta: data,
         })
         break
       }
       case 'open-session': {
-        const rosters = await prisma.gameRoster.findMany({
-          where: { gameId },
-          include: { players: true },
-        })
-        if (rosters.length < 2 || rosters.some((roster) => roster.players.length === 0)) {
-          throw new Error(
-            'Defina os rosters oficiais das duas equipes antes de abrir a sessão ao vivo.'
-          )
+        if (isGameFinalized(game.status, game.liveStatus)) {
+          throw new Error('Jogo finalizado nÃ£o pode iniciar sessÃ£o de live scout.')
         }
+        await ensureRostersLockedForLive(gameId)
 
         const session = await getOrCreateLiveSession(gameId, actorUserId)
         await prisma.game.update({
@@ -1036,7 +1061,7 @@ export class LiveGameService {
           actorUserId,
           targetEntity: 'GameLiveSession',
           targetEntityId: session.id,
-          description: 'Sessão ao vivo aberta.',
+          description: 'SessÃ£o ao vivo aberta.',
         })
         break
       }
@@ -1053,11 +1078,20 @@ export class LiveGameService {
   ) {
     const game = await prisma.game.findUnique({
       where: { id: gameId },
-      select: { id: true, homeTeamId: true, awayTeamId: true },
+      select: { id: true, homeTeamId: true, awayTeamId: true, status: true, liveStatus: true },
     })
 
     if (!game) {
-      throw new Error('Jogo não encontrado')
+      throw new Error('Jogo nÃ£o encontrado')
+    }
+
+    const isWriteAction = action === 'event' || action === 'revert-event'
+    if (isWriteAction && isGameFinalized(game.status, game.liveStatus)) {
+      throw new Error('Jogo finalizado nao permite novos eventos ou desfazer lancamentos.')
+    }
+
+    if (isWriteAction || action === 'publish') {
+      await ensureRostersLockedForLive(gameId)
     }
 
     const session = await getOrCreateLiveSession(gameId, actorUserId)
@@ -1077,17 +1111,22 @@ export class LiveGameService {
         actorUserId,
         targetEntity: 'GameLiveSession',
         targetEntityId: session.id,
-        description: 'Publicação pública do jogo ativada.',
+        description: 'PublicaÃ§Ã£o pÃºblica do jogo ativada.',
       })
       return this.getSnapshot(gameId)
     }
 
     if (action === 'revert-event') {
-      const eventId = payload?.eventId ? String(payload.eventId) : ''
+      const requestedEventId = payload?.eventId ? String(payload.eventId) : ''
       const reason = payload?.reason ? String(payload.reason) : 'Reversão manual'
-      if (!eventId) {
-        throw new Error('Evento não informado para reversão.')
+      const latestEvent = await getLatestUnrevertedEvent(gameId)
+      if (!latestEvent) {
+        throw new Error('Não há evento ativo para desfazer.')
       }
+      if (requestedEventId && requestedEventId !== latestEvent.id) {
+        throw new Error('Nesta fase, apenas o último evento pode ser desfeito.')
+      }
+      const eventId = requestedEventId || latestEvent.id
 
       await prisma.gameEvent.update({
         where: { id: eventId },
@@ -1115,13 +1154,13 @@ export class LiveGameService {
 
     const input = payload as EventInput | undefined
     if (!input?.eventType || !input.clockTime) {
-      throw new Error('Evento inválido para a mesa digital.')
+      throw new Error('Evento invÃ¡lido para a mesa digital.')
     }
 
     if (input.teamId && input.athleteId) {
       const rosterPlayer = await findRosterPlayer(gameId, input.teamId, input.athleteId)
       if (!rosterPlayer) {
-        throw new Error('Atleta não pertence ao roster oficial da equipe nesta partida.')
+        throw new Error('Atleta nÃ£o pertence ao roster oficial da equipe nesta partida.')
       }
 
       const tracked = await getTrackedOnCourtCount(gameId, input.teamId)
@@ -1137,7 +1176,7 @@ export class LiveGameService {
       ].includes(input.eventType)
 
       if (!rosterPlayer.isAvailable && input.eventType !== 'SUBSTITUTION_OUT') {
-        throw new Error('Atleta indisponível não pode receber evento de jogo.')
+        throw new Error('Atleta indisponÃ­vel nÃ£o pode receber evento de jogo.')
       }
 
       if (input.eventType === 'SUBSTITUTION_OUT' && tracked.count > 0 && !rosterPlayer.isOnCourt) {
@@ -1149,7 +1188,7 @@ export class LiveGameService {
       }
 
       if (input.eventType === 'SUBSTITUTION_IN' && rosterPlayer.isOnCourt) {
-        throw new Error('O atleta já está em quadra.')
+        throw new Error('O atleta jÃ¡ estÃ¡ em quadra.')
       }
     }
 
@@ -1235,33 +1274,33 @@ export class LiveGameService {
     const warnings: string[] = []
 
     if (snapshot.rosters.length < 2 || snapshot.rosters.some((roster) => roster.players.length === 0)) {
-      issues.push('Os rosters oficiais ainda não estão completos nas duas equipes.')
+      issues.push('Os rosters oficiais ainda nÃ£o estÃ£o completos nas duas equipes.')
     }
 
     if (snapshot.rosters.some((roster) => !roster.isLocked)) {
-      warnings.push('Há roster destravado. O ideal é travar antes do fechamento oficial.')
+      warnings.push('HÃ¡ roster destravado. O ideal Ã© travar antes do fechamento oficial.')
     }
 
     const homeTeamStats = snapshot.boxScore.teams.find((team) => team.teamId === snapshot.game.homeTeam.id)
     const awayTeamStats = snapshot.boxScore.teams.find((team) => team.teamId === snapshot.game.awayTeam.id)
 
     if ((homeTeamStats?.points ?? 0) !== snapshot.game.homeScore) {
-      issues.push('O placar da equipe mandante não confere com o box score consolidado.')
+      issues.push('O placar da equipe mandante nÃ£o confere com o box score consolidado.')
     }
 
     if ((awayTeamStats?.points ?? 0) !== snapshot.game.awayScore) {
-      issues.push('O placar da equipe visitante não confere com o box score consolidado.')
+      issues.push('O placar da equipe visitante nÃ£o confere com o box score consolidado.')
     }
 
     const totalPeriodsHome = snapshot.boxScore.periods.reduce((sum, period) => sum + period.homePoints, 0)
     const totalPeriodsAway = snapshot.boxScore.periods.reduce((sum, period) => sum + period.awayPoints, 0)
 
     if (totalPeriodsHome !== snapshot.game.homeScore || totalPeriodsAway !== snapshot.game.awayScore) {
-      issues.push('A soma das parciais por período não bate com o placar final.')
+      issues.push('A soma das parciais por perÃ­odo nÃ£o bate com o placar final.')
     }
 
     if (!['FINAL_PENDING_CONFIRMATION', 'FINAL_OFFICIAL'].includes(snapshot.game.liveStatus)) {
-      warnings.push('O jogo ainda não está em fase de fechamento oficial.')
+      warnings.push('O jogo ainda nÃ£o estÃ¡ em fase de fechamento oficial.')
     }
 
     return {
@@ -1276,12 +1315,12 @@ export class LiveGameService {
 
   static async handleReviewAction(gameId: string, action: ReviewAction, actorUserId?: string | null) {
     if (action !== 'finalize-official') {
-      throw new Error('Ação de revisão inválida.')
+      throw new Error('AÃ§Ã£o de revisÃ£o invÃ¡lida.')
     }
 
     const reviewed = await this.reviewGame(gameId)
     if (!reviewed.review.readyToFinalize) {
-      throw new Error('Ainda existem inconsistências que impedem o fechamento oficial.')
+      throw new Error('Ainda existem inconsistÃªncias que impedem o fechamento oficial.')
     }
 
     const boxScorePayload = {
@@ -1357,7 +1396,7 @@ export class LiveGameService {
       actorUserId,
       targetEntity: 'GameOfficialReport',
       targetEntityId: report.id,
-      description: 'Jogo fechado oficialmente e relatório consolidado.',
+      description: 'Jogo fechado oficialmente e relatÃ³rio consolidado.',
     })
 
     const game = await prisma.game.findUnique({
