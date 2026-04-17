@@ -17,27 +17,35 @@ export async function GET(
     const supabase = await createClient()
 
     // 1. Buscar o jogo para saber os times
-    // @ts-ignore
     const { data: game, error: gameError } = await (supabase as any)
       .from('games')
-      .select('id, home_team_id, away_team_id, home_score, away_score')
+      .select('id, home_team_id, away_team_id, home_score, away_score, status')
       .eq('id', id)
       .single()
 
     if (gameError) throw gameError
 
     // 2. Buscar atletas dos dois times
-    // @ts-ignore
     const { data: athletes, error: athletesError } = await (supabase as any)
       .from('athletes')
       .select('id, name, nickname, team_id, jersey_number, photo_url')
       .in('team_id', [game.home_team_id, game.away_team_id])
-      .eq('is_active', true)
+      .eq('status', 'ACTIVE')
 
     if (athletesError) throw athletesError
 
-    // 3. Buscar estatísticas existentes do jogo
-    // @ts-ignore
+    // 3. Buscar rosters atuais
+    const { data: rosters, error: rostersError } = await (supabase as any)
+      .from('game_rosters')
+      .select(`
+        *,
+        players:game_roster_players (*)
+      `)
+      .eq('game_id', id)
+
+    if (rostersError) throw rostersError
+
+    // 4. Buscar estatísticas existentes do jogo
     const { data: stats, error: statsError } = await (supabase as any)
       .from('game_stats')
       .select('*')
@@ -48,6 +56,7 @@ export async function GET(
     return NextResponse.json({
       game,
       athletes,
+      rosters,
       stats
     })
   } catch (error: any) {
@@ -75,20 +84,36 @@ export async function POST(
 
     const supabase = await createClient()
 
-    // 1. Validação de segurança: buscar times do jogo
-    // @ts-ignore
-    const { data: game, error: gameError } = await (supabase as any)
-      .from('games')
-      .select('home_team_id, away_team_id')
-      .eq('id', gameId)
-      .single()
-    
-    if (gameError) throw gameError
+    // 1. Validação: buscar rosters para verificar DNP e pertencimento
+    const { data: gamePlayers, error: playersError } = await (supabase as any)
+      .from('game_roster_players')
+      .select('athlete_id, is_available, game_rosters!inner(game_id)')
+      .eq('game_rosters.game_id', gameId)
 
-    const allowedTeams = [game.home_team_id, game.away_team_id]
+    if (playersError) throw playersError
 
-    // 2. Limpar estatísticas anteriores do jogo (Lógica "Limpar e Reinserir")
-    // @ts-ignore
+    // Mapa de elegibilidade
+    const eligibilityMap = new Map(
+      gamePlayers.map((p: any) => [p.athlete_id, p.is_available])
+    )
+
+    // 2. Preparar novos dados e validar
+    const statsToInsert = []
+    for (const s of stats) {
+      if (!eligibilityMap.has(s.athlete_id)) {
+        return NextResponse.json({ error: `Atleta ${s.athlete_id} não está no roster oficial.` }, { status: 400 })
+      }
+      if (!eligibilityMap.get(s.athlete_id)) {
+        return NextResponse.json({ error: `Atleta ${s.athlete_id} está marcado como DNP.` }, { status: 400 })
+      }
+
+      statsToInsert.push({
+        ...s,
+        game_id: gameId
+      })
+    }
+
+    // 3. Limpar estatísticas anteriores do jogo (Lógica "Limpar e Reinserir")
     const { error: deleteError } = await (supabase as any)
       .from('game_stats')
       .delete()
@@ -96,19 +121,8 @@ export async function POST(
 
     if (deleteError) throw deleteError
 
-    // 3. Preparar novos dados e validar atletas
-    const statsToInsert = stats.map((s: any) => ({
-      ...s,
-      game_id: gameId
-    })).filter((s: any) => allowedTeams.includes(s.team_id))
-
-    if (statsToInsert.length === 0 && stats.length > 0) {
-      return NextResponse.json({ error: 'Nenhum atleta válido para os times deste jogo' }, { status: 400 })
-    }
-
     // 4. Inserir lote completo
     if (statsToInsert.length > 0) {
-      // @ts-ignore
       const { error: insertError } = await (supabase as any)
         .from('game_stats')
         .insert(statsToInsert)

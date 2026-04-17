@@ -30,6 +30,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [stats, setStats] = useState<GameStat[]>([])
   const [loading, setLoading] = useState(true)
   const [eligibleCounts, setEligibleCounts] = useState({ home: 0, away: 0 })
+  const [rosters, setRosters] = useState<any[]>([])
   const [finalizing, setFinalizing] = useState(false)
   const [finalizeModalOpen, setFinalizeModalOpen] = useState(false)
   const [ignoreDiscrepancy, setIgnoreDiscrepancy] = useState(false)
@@ -42,6 +43,7 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
         const data = await res.json()
         setGame(data.game)
         setStats(data.stats)
+        setRosters(data.rosters || [])
         const homeEligible = data.athletes.filter((a: any) => a.team_id === data.game.home_team_id).length
         const awayEligible = data.athletes.filter((a: any) => a.team_id === data.game.away_team_id).length
         setEligibleCounts({ home: homeEligible, away: awayEligible })
@@ -109,6 +111,13 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           Voltar para Jogos
         </Button>
         <div className="flex gap-3">
+          <Link href={`/admin/jogos/${id}/roster`}>
+            <Button variant="outline" className="border-[var(--border)] bg-white h-12 px-8 font-bold">
+              <Users className="w-4 h-4 mr-2" />
+              Gerenciar Roster
+            </Button>
+          </Link>
+
           <Link href={`/admin/jogos/${id}/stats`}>
             <Button className="fgb-btn-primary h-12 px-8">
               <Activity className="w-4 h-4 mr-2" />
@@ -153,7 +162,16 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                 ) : game.status === 'finished' ? (
                   <Badge variant="success">Finalizado</Badge>
                 ) : (
-                  'Agendado'
+                  <div className="flex flex-col items-center gap-2">
+                    <Badge variant="outline">Agendado</Badge>
+                    {rosters.length === 0 ? (
+                      <Badge className="bg-rose-100 text-rose-700 border-rose-200">Roster Não Definido</Badge>
+                    ) : rosters.every(r => r.is_locked) ? (
+                      <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Roster Travado</Badge>
+                    ) : (
+                      <Badge className="bg-blue-100 text-blue-700 border-blue-200">Roster Salvo</Badge>
+                    )}
+                  </div>
                 )}
               </div>
               

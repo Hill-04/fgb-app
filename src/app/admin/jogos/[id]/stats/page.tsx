@@ -28,6 +28,7 @@ export default function GameStatsPage({ params }: { params: Promise<{ id: string
   const router = useRouter()
 
   const [game, setGame] = useState<Game | null>(null)
+  const [rosterLocked, setRosterLocked] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -46,36 +47,49 @@ export default function GameStatsPage({ params }: { params: Promise<{ id: string
       const data = await res.json()
       setGame(data.game)
 
+      const isLocked = data.rosters?.every((r: any) => r.is_locked) ?? false
+      setRosterLocked(isLocked)
+
+      // Se não houver jogadores no roster, avisar
+      const rosterPlayers = data.rosters?.flatMap((r: any) => r.players) || []
+      if (rosterPlayers.length === 0) {
+        throw new Error('Roster oficial não definido para este jogo. Por favor, gerencie o roster primeiro.')
+      }
+
       // Organizar atletas por time e mapear com stats existentes
       const mapStats = (teamId: string) => {
-        return data.athletes
-          .filter((a: Athlete) => a.team_id === teamId)
-          .map((a: Athlete) => {
-            const existing = data.stats.find((s: GameStat) => s.athlete_id === a.id)
-            return {
-              athlete_id: a.id,
-              team_id: teamId,
-              athlete_name: a.name,
-              jersey: a.jersey_number || 0,
-              dnp: existing?.dnp ?? false,
-              minutes_played: existing?.minutes_played ?? 0,
-              points: existing?.points ?? 0,
-              rebounds_offensive: existing?.rebounds_offensive ?? 0,
-              rebounds_defensive: existing?.rebounds_defensive ?? 0,
-              assists: existing?.assists ?? 0,
-              steals: existing?.steals ?? 0,
-              blocks: existing?.blocks ?? 0,
-              turnovers: existing?.turnovers ?? 0,
-              fouls: existing?.fouls ?? 0,
-              fg_made: existing?.fg_made ?? 0,
-              fg_attempted: existing?.fg_attempted ?? 0,
-              three_made: existing?.three_made ?? 0,
-              three_attempted: existing?.three_attempted ?? 0,
-              ft_made: existing?.ft_made ?? 0,
-              ft_attempted: existing?.ft_attempted ?? 0,
-              dunks: existing?.dunks ?? 0,
-            }
-          })
+        // Obter jogadores do roster para este time
+        const teamRoster = data.rosters?.find((r: any) => r.team_id === teamId)
+        const teamRosterPlayers = teamRoster?.players || []
+
+        return teamRosterPlayers.map((rp: any) => {
+          const athlete = data.athletes.find((a: Athlete) => a.id === rp.athlete_id)
+          const existing = data.stats.find((s: GameStat) => s.athlete_id === rp.athlete_id)
+          
+          return {
+            athlete_id: rp.athlete_id,
+            team_id: teamId,
+            athlete_name: athlete?.name || 'Atleta Desconhecido',
+            jersey: rp.jersey_number,
+            dnp: !rp.is_available, // No roster, is_available=false significa DNP
+            minutes_played: existing?.minutes_played ?? 0,
+            points: existing?.points ?? 0,
+            rebounds_offensive: existing?.rebounds_offensive ?? 0,
+            rebounds_defensive: existing?.rebounds_defensive ?? 0,
+            assists: existing?.assists ?? 0,
+            steals: existing?.steals ?? 0,
+            blocks: existing?.blocks ?? 0,
+            turnovers: existing?.turnovers ?? 0,
+            fouls: existing?.fouls ?? 0,
+            fg_made: existing?.fg_made ?? 0,
+            fg_attempted: existing?.fg_attempted ?? 0,
+            three_made: existing?.three_made ?? 0,
+            three_attempted: existing?.three_attempted ?? 0,
+            ft_made: existing?.ft_made ?? 0,
+            ft_attempted: existing?.ft_attempted ?? 0,
+            dunks: existing?.dunks ?? 0,
+          }
+        })
       }
 
       setHomeStats(mapStats(data.game.home_team_id))
@@ -98,9 +112,14 @@ export default function GameStatsPage({ params }: { params: Promise<{ id: string
     field: keyof ExtendedStat, 
     value: any
   ) => {
+    // Bloquear se o atleta for DNP
+    const stats = team === 'home' ? homeStats : awayStats
+    const athleteStat = stats.find(s => s.athlete_id === athleteId)
+    if (athleteStat?.dnp && field !== 'dnp') return
+
     const updateFn = team === 'home' ? setHomeStats : setAwayStats
     updateFn(prev => prev.map(s => s.athlete_id === athleteId ? { ...s, [field]: value } : s))
-    setSuccess(false) // Limpa feedback se houver alteração
+    setSuccess(false)
   }
 
   const handleSave = async () => {
@@ -108,28 +127,10 @@ export default function GameStatsPage({ params }: { params: Promise<{ id: string
       setSaving(true)
       setError(null)
 
-      const allStats = [...homeStats, ...awayStats].filter(s => !s.dnp)
-      const dnpStats = [...homeStats, ...awayStats].filter(s => s.dnp).map(s => ({
-        ...s,
-        minutes_played: 0,
-        points: 0,
-        rebounds_offensive: 0,
-        rebounds_defensive: 0,
-        assists: 0,
-        steals: 0,
-        blocks: 0,
-        turnovers: 0,
-        fouls: 0,
-        fg_made: 0,
-        fg_attempted: 0,
-        three_made: 0,
-        three_attempted: 0,
-        ft_made: 0,
-        ft_attempted: 0,
-        dunks: 0,
-      }))
-
-      const payload = [...allStats, ...dnpStats]
+      // Filtrar apenas quem NÃO é DNP para salvar stats numéricos,
+      // mas a API pode lidar com o objeto completo se quisermos.
+      // Manteremos a filtragem por segurança.
+      const payload = [...homeStats, ...awayStats].filter(s => !s.dnp)
 
       const res = await fetch(`/api/admin/jogos/${id}/stats`, {
         method: 'POST',
@@ -137,7 +138,10 @@ export default function GameStatsPage({ params }: { params: Promise<{ id: string
         body: JSON.stringify({ stats: payload })
       })
 
-      if (!res.ok) throw new Error('Erro ao salvar estatísticas')
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || 'Erro ao salvar estatísticas')
+      }
 
       setSuccess(true)
       setTimeout(() => setSuccess(false), 3000)
