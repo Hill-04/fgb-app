@@ -25,7 +25,7 @@ export async function GET(
     }
 
     const { id } = await params
-    const data = await LiveGameService.getSnapshot(id)
+    const data = await LiveGameService.getSnapshotEnvelope(id)
     return NextResponse.json(data)
   } catch (error: any) {
     console.error('[LIVE][Console GET]', error)
@@ -54,7 +54,7 @@ export async function POST(
       body
     )
 
-    return NextResponse.json(data)
+    return NextResponse.json(LiveGameService.createSnapshotEnvelope(data))
   } catch (error: any) {
     console.error('[LIVE][Console POST]', error)
     return NextResponse.json({ error: error.message || 'Erro ao registrar evento' }, { status: 500 })

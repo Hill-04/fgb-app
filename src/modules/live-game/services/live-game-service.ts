@@ -784,6 +784,24 @@ async function recomputeLiveState(gameId: string) {
 }
 
 export class LiveGameService {
+  static createSnapshotEnvelope(snapshot: any) {
+    const lastEvent = Array.isArray(snapshot?.events) && snapshot.events.length > 0
+      ? snapshot.events[snapshot.events.length - 1]
+      : null
+
+    return {
+      snapshot,
+      lastSequenceNumber: lastEvent?.sequenceNumber ?? 0,
+      serverUpdatedAt: new Date().toISOString(),
+      lastEventId: lastEvent?.id ?? null,
+    }
+  }
+
+  static async getSnapshotEnvelope(gameId: string, publicView = false) {
+    const snapshot = await this.getSnapshot(gameId, publicView)
+    return this.createSnapshotEnvelope(snapshot)
+  }
+
   static async getSnapshot(gameId: string, publicView = false) {
     const game = await getGameBase(gameId)
 
