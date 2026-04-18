@@ -4,25 +4,168 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { Loader2 } from 'lucide-react'
 
-function getPollDelay(payload: any) {
+type PublicLeader = {
+  athleteName: string
+  teamName: string
+  value: number
+} | null
+
+type PublicPlayerLine = {
+  athleteId: string
+  name: string
+  jerseyNumber: number | null
+  points: number
+  rebounds: number
+  assists: number
+  fouls: number
+  steals: number
+  blocks: number
+}
+
+type PublicLivePayload = {
+  game: {
+    id: string
+    status: 'SCHEDULED' | 'LIVE' | 'FINISHED'
+    isLive: boolean
+    isFinished: boolean
+    scheduledAt: string | null
+    venue: string | null
+  }
+  homeTeam: {
+    id: string
+    name: string
+    shortName: string
+    logoUrl: string | null
+    score: number
+  }
+  awayTeam: {
+    id: string
+    name: string
+    shortName: string
+    logoUrl: string | null
+    score: number
+  }
+  leaders: {
+    points: PublicLeader
+    assists: PublicLeader
+    rebounds: PublicLeader
+    steals: PublicLeader
+    blocks: PublicLeader
+  }
+  recentEvents: Array<{
+    period: number | null
+    clockTime: string | null
+    description: string
+    teamName: string | null
+    athleteName: string | null
+    pointsDelta: number
+    occurredAt: string | null
+  }>
+  teamSummary: {
+    home: {
+      teamId: string
+      teamName: string
+      points: number
+      rebounds: number
+      assists: number
+      fouls: number
+      turnovers: number
+    }
+    away: {
+      teamId: string
+      teamName: string
+      points: number
+      rebounds: number
+      assists: number
+      fouls: number
+      turnovers: number
+    }
+  }
+  boxScore: {
+    homePlayers: PublicPlayerLine[]
+    awayPlayers: PublicPlayerLine[]
+  }
+  summary: {
+    totalEvents: number
+    lastEventAt: string | null
+    currentPeriod: number | null
+  }
+}
+
+function getPollDelay(payload: PublicLivePayload | null) {
   if (payload?.game?.isLive) return 5000
   return 12000
 }
 
-function statusLabel(payload: any) {
-  if (payload?.game?.isFinished) return 'Finalizado'
-  if (payload?.game?.isLive) return 'Ao vivo'
+function statusLabel(payload: PublicLivePayload) {
+  if (payload.game.isFinished) return 'Finalizado'
+  if (payload.game.isLive) return 'Ao vivo'
   return 'Agendado'
 }
 
-function gameMessage(payload: any) {
-  if (payload?.game?.isFinished) return 'Jogo encerrado. Resultado final consolidado.'
-  if (payload?.game?.isLive) return 'Partida em andamento com atualizacao automatica.'
+function gameMessage(payload: PublicLivePayload) {
+  if (payload.game.isFinished) return 'Jogo encerrado. Resultado final consolidado.'
+  if (payload.game.isLive) return 'Partida em andamento com atualizacao automatica.'
   return 'Jogo ainda nao iniciado. Acompanhe os updates aqui.'
 }
 
+function renderLeaderLine(title: string, leader: PublicLeader) {
+  return (
+    <div className="rounded-2xl border border-[var(--border)] p-4 bg-white">
+      <p className="text-xs uppercase tracking-widest text-[var(--gray)] font-bold">{title}</p>
+      <p className="text-sm font-semibold text-[var(--black)]">
+        {leader ? `${leader.athleteName} (${leader.teamName}) - ${leader.value}` : 'Sem lider definido'}
+      </p>
+    </div>
+  )
+}
+
+function BoxScoreCard({ title, players }: { title: string; players: PublicPlayerLine[] }) {
+  return (
+    <div className="fgb-card p-6">
+      <h2 className="fgb-display text-2xl text-[var(--black)]">{title}</h2>
+      {players.length === 0 ? (
+        <div className="mt-4 rounded-2xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--gray)]">
+          Nenhum atleta com estatistica registrada.
+        </div>
+      ) : (
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-[var(--border)] bg-white">
+          <table className="min-w-[680px] w-full text-sm">
+            <thead className="bg-[var(--gray-l)] text-[10px] uppercase tracking-widest text-[var(--gray)]">
+              <tr>
+                <th className="px-4 py-3 text-left">Atleta</th>
+                <th className="px-2 py-3 text-center">Cam</th>
+                <th className="px-2 py-3 text-center">Pts</th>
+                <th className="px-2 py-3 text-center">Reb</th>
+                <th className="px-2 py-3 text-center">Ast</th>
+                <th className="px-2 py-3 text-center">Flt</th>
+                <th className="px-2 py-3 text-center">Rbo</th>
+                <th className="px-2 py-3 text-center">Toc</th>
+              </tr>
+            </thead>
+            <tbody>
+              {players.map((player) => (
+                <tr key={player.athleteId} className="border-t border-[var(--border)]">
+                  <td className="px-4 py-3 font-semibold text-[var(--black)]">{player.name}</td>
+                  <td className="px-2 py-3 text-center text-[var(--gray)]">{player.jerseyNumber ?? '--'}</td>
+                  <td className="px-2 py-3 text-center font-black text-[var(--black)]">{player.points}</td>
+                  <td className="px-2 py-3 text-center text-[var(--black)]">{player.rebounds}</td>
+                  <td className="px-2 py-3 text-center text-[var(--black)]">{player.assists}</td>
+                  <td className="px-2 py-3 text-center text-[var(--black)]">{player.fouls}</td>
+                  <td className="px-2 py-3 text-center text-[var(--black)]">{player.steals}</td>
+                  <td className="px-2 py-3 text-center text-[var(--black)]">{player.blocks}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<PublicLivePayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
@@ -31,7 +174,7 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
   const inFlightRef = useRef(false)
   const mountedRef = useRef(true)
   const hasLoadedRef = useRef(false)
-  const lastPayloadRef = useRef<any>(null)
+  const lastPayloadRef = useRef<PublicLivePayload | null>(null)
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -51,18 +194,19 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
 
       try {
         const response = await fetch(`/api/public/games/${gameId}/live`, { cache: 'no-store' })
-        const payload = await response.json().catch(() => ({}))
+        const payload = (await response.json().catch(() => ({}))) as Partial<PublicLivePayload> & { error?: string }
         if (!response.ok) throw new Error(payload.error || 'Falha ao carregar live publico')
 
         if (mountedRef.current) {
-          setData(payload)
+          const safePayload = payload as PublicLivePayload
+          setData(safePayload)
           setError('')
           setUpdatedAt(new Date().toISOString())
           hasLoadedRef.current = true
-          lastPayloadRef.current = payload
+          lastPayloadRef.current = safePayload
         }
 
-        return payload
+        return payload as PublicLivePayload
       } catch (currentError: any) {
         if (mountedRef.current) {
           setError(currentError.message || 'Erro ao atualizar live publico')
@@ -70,9 +214,7 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
         return null
       } finally {
         inFlightRef.current = false
-        if (mountedRef.current && !silent && !hasLoadedRef.current) {
-          setLoading(false)
-        } else if (mountedRef.current && hasLoadedRef.current) {
+        if (mountedRef.current) {
           setLoading(false)
         }
       }
@@ -141,22 +283,26 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
   }
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto pb-20 px-4 sm:px-6">
+    <div className="space-y-6 max-w-[1240px] mx-auto pb-20 px-4 sm:px-6">
       <div className="fgb-card p-8 border-t-8 border-t-[var(--verde)]">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
           <div className="space-y-2">
-            <p className="fgb-label text-[var(--gray)] text-[10px] uppercase tracking-widest">
-              Live Game
-            </p>
+            <p className="fgb-label text-[var(--gray)] text-[10px] uppercase tracking-widest">Live Game</p>
             <h1 className="fgb-display text-4xl text-[var(--black)] leading-tight">
               {data.homeTeam.name} {data.homeTeam.score} x {data.awayTeam.score} {data.awayTeam.name}
             </h1>
             <p className="text-sm text-[var(--gray)]">{gameMessage(data)}</p>
           </div>
           <div className="flex flex-col items-start lg:items-end gap-2">
-            <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
-              data.game.isLive ? 'bg-rose-100 text-rose-700' : data.game.isFinished ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'
-            }`}>
+            <span
+              className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                data.game.isLive
+                  ? 'bg-rose-100 text-rose-700'
+                  : data.game.isFinished
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : 'bg-slate-100 text-slate-700'
+              }`}
+            >
               {statusLabel(data)}
             </span>
             <span className="rounded-full border border-[var(--border)] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
@@ -200,35 +346,24 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
         <div className="fgb-card p-6">
           <h2 className="fgb-display text-2xl text-[var(--black)]">Leaders</h2>
           <div className="mt-4 space-y-3">
-            <div className="rounded-2xl border border-[var(--border)] p-4 bg-white">
-              <p className="text-xs uppercase tracking-widest text-[var(--gray)] font-bold">Pontos</p>
-              <p className="text-sm font-semibold text-[var(--black)]">
-                {data.leaders.points ? `${data.leaders.points.athleteName} (${data.leaders.points.teamName}) - ${data.leaders.points.value}` : 'Sem lider definido'}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-[var(--border)] p-4 bg-white">
-              <p className="text-xs uppercase tracking-widest text-[var(--gray)] font-bold">Assistencias</p>
-              <p className="text-sm font-semibold text-[var(--black)]">
-                {data.leaders.assists ? `${data.leaders.assists.athleteName} (${data.leaders.assists.teamName}) - ${data.leaders.assists.value}` : 'Sem lider definido'}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-[var(--border)] p-4 bg-white">
-              <p className="text-xs uppercase tracking-widest text-[var(--gray)] font-bold">Rebotes</p>
-              <p className="text-sm font-semibold text-[var(--black)]">
-                {data.leaders.rebounds ? `${data.leaders.rebounds.athleteName} (${data.leaders.rebounds.teamName}) - ${data.leaders.rebounds.value}` : 'Sem lider definido'}
-              </p>
-            </div>
+            {renderLeaderLine('Pontos', data.leaders.points)}
+            {renderLeaderLine('Assistencias', data.leaders.assists)}
+            {renderLeaderLine('Rebotes', data.leaders.rebounds)}
+            {renderLeaderLine('Roubos', data.leaders.steals)}
+            {renderLeaderLine('Tocos', data.leaders.blocks)}
           </div>
         </div>
 
         <div className="fgb-card p-6">
-          <h2 className="fgb-display text-2xl text-[var(--black)]">Play-by-play</h2>
+          <h2 className="fgb-display text-2xl text-[var(--black)]">Eventos recentes</h2>
           <div className="mt-4 space-y-3 max-h-[420px] overflow-auto pr-1">
-            {data.recentEvents.map((event: any, index: number) => (
-              <div key={`${event.occurredAt}-${index}`} className="rounded-2xl border border-[var(--border)] p-4 bg-white">
+            {data.recentEvents.map((event, index) => (
+              <div key={`${event.occurredAt || 'event'}-${index}`} className="rounded-2xl border border-[var(--border)] p-4 bg-white">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold text-[var(--black)]">{event.description}</p>
-                  <span className="text-xs text-[var(--gray)]">P{event.period} · {event.clockTime}</span>
+                  <span className="text-xs text-[var(--gray)]">
+                    P{event.period ?? '-'} - {event.clockTime || '--:--'}
+                  </span>
                 </div>
               </div>
             ))}
@@ -241,11 +376,37 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
         </div>
       </div>
 
+      <div className="grid gap-6 xl:grid-cols-2">
+        <div className="fgb-card p-6">
+          <h2 className="fgb-display text-2xl text-[var(--black)]">Resumo do mandante</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.home.points}</strong> pts</div>
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.home.rebounds}</strong> reb</div>
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.home.assists}</strong> ast</div>
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.home.fouls}</strong> flt</div>
+          </div>
+        </div>
+
+        <div className="fgb-card p-6">
+          <h2 className="fgb-display text-2xl text-[var(--black)]">Resumo do visitante</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.away.points}</strong> pts</div>
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.away.rebounds}</strong> reb</div>
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.away.assists}</strong> ast</div>
+            <div className="rounded-xl border border-[var(--border)] bg-white p-3"><strong>{data.teamSummary.away.fouls}</strong> flt</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <BoxScoreCard title={`Box score - ${data.homeTeam.name}`} players={data.boxScore.homePlayers} />
+        <BoxScoreCard title={`Box score - ${data.awayTeam.name}`} players={data.boxScore.awayPlayers} />
+      </div>
+
       <div className="text-xs text-[var(--gray)]">
-        {updatedAt ? `Atualizado em ${new Date(updatedAt).toLocaleTimeString('pt-BR')}.` : ''}
-        {' '}
+        {updatedAt ? `Atualizado em ${new Date(updatedAt).toLocaleTimeString('pt-BR')}.` : ''}{' '}
         <Link className="underline" href={`/games/${gameId}/box-score`}>
-          Ver box score completo
+          Ver visao complementar
         </Link>
       </div>
     </div>
