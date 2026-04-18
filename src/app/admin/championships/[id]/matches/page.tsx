@@ -1,4 +1,5 @@
 'use client'
+// Compatibilidade temporaria: a rota canonica agora e /admin/championships/[id]/jogos.
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'

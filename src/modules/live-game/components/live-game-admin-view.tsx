@@ -6,6 +6,20 @@ import { Loader2 } from 'lucide-react'
 
 type AdminViewMode = 'pregame' | 'live' | 'review' | 'report' | 'audit'
 
+function buildAdminGamePath(gameId: string, mode: AdminViewMode, championshipId?: string) {
+  if (!championshipId) return `/admin/games/${gameId}/${mode}`
+
+  const modeMap: Record<AdminViewMode, string> = {
+    pregame: 'roster',
+    live: 'live',
+    review: 'encerramento',
+    report: 'sumula',
+    audit: 'auditoria',
+  }
+
+  return `/admin/championships/${championshipId}/jogos/${gameId}/${modeMap[mode]}`
+}
+
 const QUICK_EVENTS = [
   ['+2', 'SHOT_MADE_2', 2],
   ['+3', 'SHOT_MADE_3', 3],
@@ -40,7 +54,15 @@ async function postJson(url: string, body: Record<string, unknown>) {
   return data
 }
 
-export function LiveGameAdminView({ gameId, mode }: { gameId: string; mode: AdminViewMode }) {
+export function LiveGameAdminView({
+  gameId,
+  mode,
+  championshipId,
+}: {
+  gameId: string
+  mode: AdminViewMode
+  championshipId?: string
+}) {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)

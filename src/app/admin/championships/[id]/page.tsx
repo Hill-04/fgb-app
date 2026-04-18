@@ -485,7 +485,7 @@ export default async function ChampionshipDetailsPage({
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <Link
-                        href={`/admin/championships/${activeChampionshipId}/matches`}
+                        href={`/admin/championships/${activeChampionshipId}/jogos`}
                         className="flex items-center justify-center fgb-btn-primary h-9 rounded-xl text-[9px]"
                       >
                         Registrar resultado
@@ -557,7 +557,7 @@ export default async function ChampionshipDetailsPage({
             <div className="fgb-card overflow-hidden">
               <div className="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--gray-l)]">
                 <h3 className="fgb-label text-[var(--black)] uppercase" style={{ fontSize: 10 }}>Próximos Jogos</h3>
-                <Link href={`/admin/championships/${id}/matches`} className="text-[10px] font-black text-[var(--verde)] uppercase hover:underline">Ver Todos →</Link>
+                <Link href={`/admin/championships/${id}/jogos`} className="text-[10px] font-black text-[var(--verde)] uppercase hover:underline">Ver Todos →</Link>
               </div>
               <div className="divide-y divide-[var(--border)] bg-white font-sans">
                 {upcomingGames.length > 0 ? upcomingGames.map((game) => (
@@ -577,7 +577,7 @@ export default async function ChampionshipDetailsPage({
             <div className="fgb-card overflow-hidden">
               <div className="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-[var(--gray-l)]">
                 <h3 className="fgb-label text-[var(--black)] uppercase" style={{ fontSize: 10 }}>Últimos Resultados</h3>
-                <Link href={`/admin/championships/${id}/matches`} className="text-[10px] font-black text-[var(--verde)] uppercase hover:underline">Histórico →</Link>
+                <Link href={`/admin/championships/${id}/jogos`} className="text-[10px] font-black text-[var(--verde)] uppercase hover:underline">Histórico →</Link>
               </div>
               <div className="divide-y divide-[var(--border)] bg-white font-sans">
                 {lastResults.length > 0 ? lastResults.map((game) => (

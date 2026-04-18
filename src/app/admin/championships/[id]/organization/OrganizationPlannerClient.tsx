@@ -19,7 +19,7 @@ export function OrganizationPlannerClient({
       championshipId={championshipId}
       championshipName={championshipName}
       onClose={() => router.refresh()}
-      onApplied={() => router.push(`/admin/championships/${championshipId}/matches`)}
+      onApplied={() => router.push(`/admin/championships/${championshipId}/jogos`)}
       variant="page"
     />
   )

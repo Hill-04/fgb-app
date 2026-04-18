@@ -14,10 +14,10 @@ interface Tab {
 }
 
 const statusLabels: Record<string, string> = {
-  DRAFT: 'Criação',
-  REGISTRATION_OPEN: 'Inscrições',
-  REGISTRATION_CLOSED: 'Inscrições',
-  ORGANIZING: 'Organização',
+  DRAFT: 'Criacao',
+  REGISTRATION_OPEN: 'Inscricoes',
+  REGISTRATION_CLOSED: 'Inscricoes',
+  ORGANIZING: 'Organizacao',
   ONGOING: 'Em andamento',
   ACTIVE: 'Em andamento',
   FINISHED: 'Encerrado',
@@ -28,19 +28,19 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
 
   const tabs: Tab[] = [
     {
-      label: 'Visão Geral',
+      label: 'Visao Geral',
       href: `/admin/championships/${id}`,
       icon: LayoutDashboard,
       alwaysActive: true,
     },
     {
-      label: 'Inscrições',
+      label: 'Inscricoes',
       href: `/admin/championships/${id}/registrations`,
       icon: Users,
       alwaysActive: true,
     },
     {
-      label: 'Organizar IA',
+      label: 'Organizacao',
       href: `/admin/championships/${id}/organization`,
       icon: Sparkles,
       alwaysActive: true,
@@ -48,24 +48,36 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
     },
     {
       label: 'Jogos',
-      href: `/admin/championships/${id}/matches`,
+      href: `/admin/championships/${id}/jogos`,
       icon: Calendar,
       requiresStatus: ['ORGANIZING', 'ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
-      label: 'Classificação',
+      label: 'Classificacao',
       href: `/admin/championships/${id}/standings`,
       icon: BarChart2,
       requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
-      label: 'Documentos',
-      href: `/admin/championships/${id}/documents`,
+      label: 'Rankings',
+      href: `/admin/championships/${id}/cestinhas`,
+      icon: BarChart2,
+      requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
+    },
+    {
+      label: 'Arbitragem',
+      href: `/admin/championships/${id}/arbitragem`,
       icon: FileText,
       alwaysActive: true,
     },
     {
-      label: 'Configurações',
+      label: 'Relatorios',
+      href: `/admin/championships/${id}/relatorios`,
+      icon: FileText,
+      alwaysActive: true,
+    },
+    {
+      label: 'Configuracoes',
       href: `/admin/championships/${id}/settings`,
       icon: Settings,
       alwaysActive: true,
@@ -73,18 +85,17 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
   ]
 
   return (
-    <div className="flex items-center gap-0 border-b border-[var(--border)] overflow-x-auto shrink-0 no-scrollbar bg-white">
+    <div className="flex items-center gap-0 shrink-0 overflow-x-auto border-b border-[var(--border)] bg-white no-scrollbar">
       {tabs.map((tab, index) => {
-        const isActive = tab.href === `/admin/championships/${id}`
-          ? pathname === tab.href
-          : pathname.startsWith(tab.href)
+        const isActive =
+          tab.href === `/admin/championships/${id}` ? pathname === tab.href : pathname.startsWith(tab.href)
 
         const isEnabled = tab.alwaysActive || !tab.requiresStatus || tab.requiresStatus.includes(status)
         const previousLabel = tabs[Math.max(0, index - 1)]?.label
         const reasonLabel = statusLabels[status] || 'a etapa anterior'
         const disabledTitle = previousLabel
-          ? `Esta aba estará disponível após ${previousLabel}.`
-          : `Esta aba estará disponível após ${reasonLabel}.`
+          ? `Esta aba estara disponivel apos ${previousLabel}.`
+          : `Esta aba estara disponivel apos ${reasonLabel}.`
 
         return (
           <Link
@@ -95,13 +106,13 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
             }}
             aria-disabled={!isEnabled}
             title={!isEnabled ? disabledTitle : undefined}
-            className={`group flex items-center gap-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest whitespace-nowrap border-b-2 transition-all ${
+            className={`group flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all ${
               isActive
-                ? 'text-[var(--verde)] border-[var(--verde)] bg-[var(--verde)]/5'
-                : 'text-[var(--gray)] border-transparent hover:text-[var(--black)] hover:border-[var(--border)]'
-            } ${!isEnabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                ? 'border-[var(--verde)] bg-[var(--verde)]/5 text-[var(--verde)]'
+                : 'border-transparent text-[var(--gray)] hover:border-[var(--border)] hover:text-[var(--black)]'
+            } ${!isEnabled ? 'cursor-not-allowed opacity-40' : ''}`}
           >
-            <tab.icon className={`w-3.5 h-3.5 ${isActive ? 'text-[var(--verde)]' : 'text-[var(--gray)]'}`} />
+            <tab.icon className={`h-3.5 w-3.5 ${isActive ? 'text-[var(--verde)]' : 'text-[var(--gray)]'}`} />
             {tab.label}
             {tab.badge && (
               <span className="ml-1 rounded-full bg-[var(--verde)]/10 px-2 py-0.5 text-[9px] font-black text-[var(--verde)]">

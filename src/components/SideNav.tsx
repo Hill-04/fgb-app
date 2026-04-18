@@ -29,7 +29,6 @@ const adminNavGroups = [
   {
     label: 'Temporada',
     items: [
-      { href: '/admin/jogos',         label: 'Jogos',        icon: Calendar },
       { href: '/admin/teams',         label: 'Times',        icon: Users },
     ],
   },

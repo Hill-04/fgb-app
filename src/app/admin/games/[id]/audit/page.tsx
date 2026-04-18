@@ -1,4 +1,5 @@
-import { LiveGameAdminView } from '@/modules/live-game/components/live-game-admin-view'
+import { notFound, redirect } from 'next/navigation'
+import { buildChampionshipGamePath, findChampionshipIdByGameId } from '@/lib/admin-game-routing'
 
 export default async function AdminGameAuditPage({
   params,
@@ -6,5 +7,7 @@ export default async function AdminGameAuditPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  return <LiveGameAdminView gameId={id} mode="audit" />
+  const championshipId = await findChampionshipIdByGameId(id)
+  if (!championshipId) notFound()
+  redirect(buildChampionshipGamePath(championshipId, id, 'auditoria'))
 }
