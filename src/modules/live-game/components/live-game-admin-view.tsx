@@ -4,6 +4,15 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Clock3, Loader2 } from 'lucide-react'
 import { buildAdminGamePath as buildCanonicalAdminGamePath } from '@/lib/admin-game-routing'
+import {
+  buildLiveGameTableModel,
+  type LiveTablePlayer,
+  type LiveTableTab,
+} from './live-game-table-adapter'
+import { LiveScoreboardFiba } from './live-scoreboard-fiba'
+import { LiveTeamPanelFiba } from './live-team-panel-fiba'
+import { LiveEventLogFiba } from './live-event-log-fiba'
+import { LiveBoxscoreFiba } from './live-boxscore-fiba'
 
 type AdminViewMode = 'pregame' | 'live' | 'review' | 'report' | 'audit'
 
@@ -42,15 +51,6 @@ const QUICK_EVENTS = [
   ['TOV', 'TURNOVER'],
   ['Falta', 'FOUL_PERSONAL'],
   ['Tempo', 'TIMEOUT_CONFIRMED'],
-] as const
-
-const CONTROL_EVENTS = [
-  ['Iniciar jogo', 'GAME_START'],
-  ['Iniciar perÃ­odo', 'PERIOD_START'],
-  ['Fim perÃ­odo', 'PERIOD_END'],
-  ['Intervalo', 'HALFTIME_START'],
-  ['Voltar intervalo', 'HALFTIME_END'],
-  ['Encerrar jogo', 'GAME_END'],
 ] as const
 
 function buildAdminGameModePath(gameId: string, mode: AdminViewMode, championshipId?: string) {
@@ -448,15 +448,6 @@ function isSameActionSignature(signature: string, last: { signature: string; at:
   return Boolean(last && last.signature === signature && now - last.at < 450)
 }
 
-function parseClockDisplay(value?: string | null) {
-  if (!value) return { minutes: '10', seconds: '00' }
-  const [minutes = '10', seconds = '00'] = value.split(':')
-  return {
-    minutes: minutes.padStart(2, '0'),
-    seconds: seconds.padStart(2, '0'),
-  }
-}
-
 function resolveShotClockReset(eventType?: string) {
   switch (eventType) {
     case 'REBOUND_OFFENSIVE':
@@ -475,12 +466,6 @@ function resolveShotClockReset(eventType?: string) {
     default:
       return null
   }
-}
-
-function formatPeriodLabel(period?: number | null) {
-  const safePeriod = period && period > 0 ? period : 1
-  if (safePeriod <= 4) return `${safePeriod}o Periodo`
-  return `Prorrogacao ${safePeriod - 4}`
 }
 
 export function LiveGameAdminView({
@@ -502,6 +487,7 @@ export function LiveGameAdminView({
   const [selectedPeriod, setSelectedPeriod] = useState(1)
   const [clockTime, setClockTime] = useState('10:00')
   const [visualShotClock, setVisualShotClock] = useState(24)
+  const [activeTab, setActiveTab] = useState<LiveTableTab>('home')
   const [pendingMutations, setPendingMutations] = useState<PendingMutation[]>([])
 
   const endpoint = `/api/admin/games/${gameId}/${mode}`
@@ -695,55 +681,17 @@ export function LiveGameAdminView({
     })()
   }, [pendingMutations, gameId, mode])
 
-  const selectedPlayers = useMemo(() => {
-    if (!selectedTeamId) return []
-    return data?.rosters?.find((roster: any) => roster.teamId === selectedTeamId)?.players || []
-  }, [data, selectedTeamId])
+  const tableModel = useMemo(() => buildLiveGameTableModel(data), [data])
 
-  const homeRoster = useMemo(
-    () => data?.rosters?.find((roster: any) => roster.teamId === data?.game?.homeTeam?.id),
-    [data]
-  )
-
-  const awayRoster = useMemo(
-    () => data?.rosters?.find((roster: any) => roster.teamId === data?.game?.awayTeam?.id),
-    [data]
-  )
-
-  const playerLinesByAthleteId = useMemo(() => {
-    const map = new Map<string, any>()
-    for (const player of data?.boxScore?.players || []) {
-      if (player?.athleteId) {
-        map.set(player.athleteId, player)
-      }
-    }
-    return map
-  }, [data])
-
-  const teamLinesByTeamId = useMemo(() => {
-    const map = new Map<string, any>()
-    for (const teamLine of data?.boxScore?.teams || []) {
-      if (teamLine?.teamId) {
-        map.set(teamLine.teamId, teamLine)
-      }
-    }
-    return map
-  }, [data])
-
-  const homeTeamLine = data?.game?.homeTeam?.id ? teamLinesByTeamId.get(data.game.homeTeam.id) : null
-  const awayTeamLine = data?.game?.awayTeam?.id ? teamLinesByTeamId.get(data.game.awayTeam.id) : null
-
-  const recentEvents = useMemo(() => [...(data?.events || [])].reverse().slice(0, 18), [data])
-
-  const selectedTeamName =
-    selectedTeamId === data?.game?.homeTeam?.id
-      ? data?.game?.homeTeam?.name
-      : selectedTeamId === data?.game?.awayTeam?.id
-        ? data?.game?.awayTeam?.name
-        : 'Equipe'
+  const selectedTeam =
+    selectedTeamId === tableModel.home.id
+      ? tableModel.home
+      : selectedTeamId === tableModel.away.id
+        ? tableModel.away
+        : null
 
   const selectedAthlete =
-    selectedPlayers.find((player: any) => player.athleteId === selectedAthleteId) || null
+    selectedTeam?.players.find((player) => player.athleteId === selectedAthleteId) || null
 
   const doPregameAction = async (action: string, extra: Record<string, unknown> = {}) => {
     setSubmitting(true)
@@ -884,6 +832,66 @@ export function LiveGameAdminView({
     doc.save(`relatorio-oficial-${data.game.homeTeam.name}-vs-${data.game.awayTeam.name}.pdf`)
   }
 
+  const handlePlayerQuickAction = (
+    teamId: string,
+    player: LiveTablePlayer,
+    action: '2pts' | '3pts' | 'ft' | 'foul' | 'reb' | 'ast' | 'sub'
+  ) => {
+    setSelectedTeamId(teamId)
+    setSelectedAthleteId(player.athleteId)
+
+    if (action === 'sub') {
+      enqueueLiveEvent({
+        eventType: player.isOnCourt ? 'SUBSTITUTION_OUT' : 'SUBSTITUTION_IN',
+        teamId,
+        athleteId: player.athleteId,
+        period: selectedPeriod,
+        clockTime,
+      })
+      return
+    }
+
+    const actionMap = {
+      '2pts': { eventType: 'SHOT_MADE_2', pointsDelta: 2 },
+      '3pts': { eventType: 'SHOT_MADE_3', pointsDelta: 3 },
+      ft: { eventType: 'FREE_THROW_MADE', pointsDelta: 1 },
+      foul: { eventType: 'FOUL_PERSONAL' },
+      reb: { eventType: 'REBOUND_DEFENSIVE' },
+      ast: { eventType: 'ASSIST' },
+    } as const
+
+    const payload = actionMap[action]
+    enqueueLiveEvent({
+      eventType: payload.eventType,
+      pointsDelta: 'pointsDelta' in payload ? payload.pointsDelta : undefined,
+      teamId,
+      athleteId: player.athleteId,
+      period: selectedPeriod,
+      clockTime,
+    })
+  }
+
+  const handleControlEvent = (eventType: string) => {
+    enqueueLiveEvent({
+      eventType,
+      teamId: null,
+      athleteId: null,
+      period: selectedPeriod,
+      clockTime,
+    })
+  }
+
+  const handleTimeoutFromSide = (side: 'home' | 'away') => {
+    const teamId = side === 'home' ? tableModel.home.id : tableModel.away.id
+    enqueueLiveEvent({
+      eventType: 'TIMEOUT_CONFIRMED',
+      teamId,
+      athleteId: null,
+      period: selectedPeriod,
+      clockTime,
+    })
+  }
+
   if (isInitialLoading && !data) {
     return (
       <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-[28px] border border-[var(--border)] bg-white p-8 text-center shadow-sm">
@@ -911,8 +919,6 @@ export function LiveGameAdminView({
   }
 
   const { game } = data
-  const clockParts = parseClockDisplay(game.clockDisplay || clockTime)
-
   return (
     <div className="space-y-6 px-4 py-6 sm:px-6">
       <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
@@ -998,461 +1004,196 @@ export function LiveGameAdminView({
       )}
 
       {mode === 'live' && (
-        <div className="space-y-6">
-          <div className="overflow-hidden rounded-[32px] border border-[rgba(12,28,55,0.22)] bg-[radial-gradient(circle_at_top,rgba(17,43,86,0.96),rgba(8,16,31,0.98)_54%,rgba(7,11,19,1)_100%)] p-6 text-white shadow-[0_28px_80px_rgba(4,12,28,0.28)]">
-            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-              <div className="grid flex-1 gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
-                <div className="rounded-[24px] border border-white/10 bg-white/6 p-5 backdrop-blur">
-                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/55">Mandante</p>
-                  <div className="mt-3 flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-black">
-                      {String(game.homeTeam?.name || 'H').slice(0, 1)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-2xl font-black uppercase tracking-wide">{game.homeTeam?.name || 'Equipe'}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.3em] text-white/45">
-                        {homeTeamLine?.points ?? game.homeScore ?? 0} pts · {homeTeamLine?.assists ?? 0} ast · {homeTeamLine?.reboundsTotal ?? 0} reb
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex items-end justify-between">
-                    <div className="text-[88px] font-black leading-none tracking-tight text-white">
-                      {game.homeScore ?? 0}
-                    </div>
-                    <div className="space-y-2 text-right">
-                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
-                        Faltas {game.homeTeamFoulsCurrentPeriod ?? 0}
-                      </div>
-                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
-                        Timeouts {game.homeTimeoutsUsed ?? 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        <div className="space-y-5">
+          <LiveScoreboardFiba
+            table={tableModel}
+            clockDisplay={game.clockDisplay || clockTime}
+            visualShotClock={visualShotClock}
+            isSyncing={pendingMutations.length > 0 || isRefreshingInBackground}
+            onResetShotClock={(value) => setVisualShotClock(value)}
+            onTimeout={handleTimeoutFromSide}
+            onControlEvent={handleControlEvent}
+          />
 
-                <div className="flex flex-col items-center gap-3">
-                  <div className="rounded-full border border-[rgba(255,214,102,0.4)] bg-[rgba(255,214,102,0.12)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.35em] text-[#ffe28a]">
-                    {formatPeriodLabel(game.currentPeriod)}
-                  </div>
-                  <div className="rounded-[26px] border border-white/10 bg-black/30 px-8 py-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
-                    <div className="text-[12px] font-black uppercase tracking-[0.4em] text-white/45">Game Clock</div>
-                    <div className="mt-3 text-[72px] font-black leading-none tracking-[0.08em] text-white">
-                      {clockParts.minutes}
-                      <span className="mx-1 text-[#ffe28a]">:</span>
-                      {clockParts.seconds}
-                    </div>
-                  </div>
-                  <div className="w-full max-w-[220px] rounded-[22px] border border-[rgba(255,214,102,0.25)] bg-[rgba(255,214,102,0.08)] px-5 py-4 text-center">
-                    <div className="text-[10px] font-black uppercase tracking-[0.35em] text-[#ffe28a]">
-                      Shot Clock Visual
-                    </div>
-                    <div className={`mt-2 text-[44px] font-black leading-none ${visualShotClock <= 5 ? 'text-[#ff8f8f]' : 'text-[#ffe28a]'}`}>
-                      {String(Math.max(visualShotClock, 0)).padStart(2, '0')}
-                    </div>
-                    <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/45">
-                      Camada visual local da mesa
-                    </p>
-                    <div className="mt-3 grid grid-cols-2 gap-2">
-                      <button
-                        onClick={() => setVisualShotClock(24)}
-                        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-white"
-                      >
-                        Reset 24
-                      </button>
-                      <button
-                        onClick={() => setVisualShotClock(14)}
-                        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-white"
-                      >
-                        Reset 14
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-[24px] border border-white/10 bg-white/6 p-5 backdrop-blur">
-                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/55">Visitante</p>
-                  <div className="mt-3 flex items-center gap-4">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-black">
-                      {String(game.awayTeam?.name || 'A').slice(0, 1)}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="truncate text-2xl font-black uppercase tracking-wide">{game.awayTeam?.name || 'Equipe'}</p>
-                      <p className="mt-1 text-xs uppercase tracking-[0.3em] text-white/45">
-                        {awayTeamLine?.points ?? game.awayScore ?? 0} pts · {awayTeamLine?.assists ?? 0} ast · {awayTeamLine?.reboundsTotal ?? 0} reb
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex items-end justify-between">
-                    <div className="text-[88px] font-black leading-none tracking-tight text-white">
-                      {game.awayScore ?? 0}
-                    </div>
-                    <div className="space-y-2 text-right">
-                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
-                        Faltas {game.awayTeamFoulsCurrentPeriod ?? 0}
-                      </div>
-                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
-                        Timeouts {game.awayTimeoutsUsed ?? 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid w-full gap-3 sm:max-w-[280px] sm:grid-cols-2 xl:grid-cols-1">
-                <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/50">Status</p>
-                  <p className="mt-3 text-lg font-black uppercase">{game.liveStatus || 'SCHEDULED'}</p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-white/45">
-                    Sequencia local {pendingMutations.length > 0 ? `${pendingMutations.length} pendente(s)` : 'estavel'}
-                  </p>
-                </div>
-                <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/50">Jogo</p>
-                  <p className="mt-3 text-lg font-black uppercase">{game.category?.name || 'Categoria'}</p>
-                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-white/45">
-                    Periodo {selectedPeriod} · Clock UI {clockTime}
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2 rounded-[18px] border border-[rgba(12,28,55,0.12)] bg-white p-2 shadow-sm">
+            {[
+              ['home', `Mandante · ${tableModel.home.shortName}`],
+              ['away', `Visitante · ${tableModel.away.shortName}`],
+              ['log', 'Log'],
+              ['box', 'Box score'],
+            ].map(([tabId, label]) => (
+              <button
+                key={tabId}
+                type="button"
+                onClick={() => setActiveTab(tabId as LiveTableTab)}
+                className={`rounded-[14px] px-4 py-3 text-[11px] font-black uppercase tracking-[0.24em] transition ${
+                  activeTab === tabId
+                    ? 'bg-[var(--black)] text-[#ffe28a] shadow-[0_10px_24px_rgba(10,14,26,0.16)]'
+                    : 'bg-[var(--gray-l)] text-[var(--gray)] hover:text-[var(--black)]'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
-            <div className="space-y-6">
-              <div className="grid gap-6 lg:grid-cols-2">
-                {[
-                  {
-                    side: 'home',
-                    title: game.homeTeam?.name || 'Mandante',
-                    caption: homeRoster?.coachName || 'Elenco da partida',
-                    roster: homeRoster,
-                    teamId: game.homeTeam?.id,
-                  },
-                  {
-                    side: 'away',
-                    title: game.awayTeam?.name || 'Visitante',
-                    caption: awayRoster?.coachName || 'Elenco da partida',
-                    roster: awayRoster,
-                    teamId: game.awayTeam?.id,
-                  },
-                ].map((teamPanel) => (
-                  <div key={teamPanel.side} className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="fgb-label text-[var(--gray)]">
-                          {teamPanel.side === 'home' ? 'Mandante' : 'Visitante'}
-                        </p>
-                        <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
-                          {teamPanel.title}
-                        </h2>
-                        <p className="mt-1 text-sm text-[var(--gray)]">{teamPanel.caption || 'Sem comissao definida'}</p>
-                      </div>
-                      <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                        {(teamPanel.roster?.players || []).length} atletas
-                      </span>
-                    </div>
+          {activeTab === 'home' && (
+            <LiveTeamPanelFiba
+              team={tableModel.home}
+              selectedAthleteId={selectedAthleteId}
+              onSelectAthlete={(athleteId) => {
+                setSelectedTeamId(tableModel.home.id)
+                setSelectedAthleteId(athleteId)
+              }}
+              onPlayerAction={(player, action) => handlePlayerQuickAction(tableModel.home.id, player, action)}
+            />
+          )}
 
-                    <div className="mt-5 space-y-3">
-                      {(teamPanel.roster?.players || []).length === 0 && (
-                        <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--gray-l)] px-4 py-5 text-sm text-[var(--gray)]">
-                          Nenhum atleta carregado para esta equipe.
-                        </div>
-                      )}
+          {activeTab === 'away' && (
+            <LiveTeamPanelFiba
+              team={tableModel.away}
+              selectedAthleteId={selectedAthleteId}
+              onSelectAthlete={(athleteId) => {
+                setSelectedTeamId(tableModel.away.id)
+                setSelectedAthleteId(athleteId)
+              }}
+              onPlayerAction={(player, action) => handlePlayerQuickAction(tableModel.away.id, player, action)}
+            />
+          )}
 
-                      {(teamPanel.roster?.players || []).map((player: any) => {
-                        const statLine = playerLinesByAthleteId.get(player.athleteId)
-                        const isSelected =
-                          selectedTeamId === teamPanel.teamId && selectedAthleteId === player.athleteId
+          {activeTab === 'log' && <LiveEventLogFiba events={tableModel.events} />}
+          {activeTab === 'box' && <LiveBoxscoreFiba table={tableModel} />}
 
-                        return (
-                          <button
-                            key={player.id}
-                            type="button"
-                            onClick={() => {
-                              setSelectedTeamId(teamPanel.teamId || '')
-                              setSelectedAthleteId(player.athleteId || '')
-                            }}
-                            className={`w-full rounded-[22px] border px-4 py-4 text-left transition ${
-                              isSelected
-                                ? 'border-[var(--verde)] bg-[rgba(34,139,82,0.06)] shadow-[0_12px_28px_rgba(34,139,82,0.12)]'
-                                : 'border-[var(--border)] bg-white hover:border-[var(--verde)]/40'
-                            }`}
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-3">
-                                  <span className="rounded-xl bg-[var(--gray-l)] px-3 py-2 text-sm font-black text-[var(--black)]">
-                                    {player.jerseyNumber ?? '--'}
-                                  </span>
-                                  <div className="min-w-0">
-                                    <p className="truncate text-sm font-semibold text-[var(--black)]">
-                                      {player.athleteName || 'Atleta sem nome'}
-                                    </p>
-                                    <p className="mt-1 text-[11px] uppercase tracking-[0.25em] text-[var(--gray)]">
-                                      {player.isOnCourt ? 'Em quadra' : 'No banco'} · {player.isAvailable ? 'Disponivel' : 'Indisponivel'}
-                                    </p>
-                                  </div>
-                                </div>
-                                <div className="mt-3 flex flex-wrap gap-2">
-                                  {player.isStarter && (
-                                    <span className="rounded-full bg-[rgba(34,139,82,0.12)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
-                                      Titular
-                                    </span>
-                                  )}
-                                  {player.isCaptain && (
-                                    <span className="rounded-full bg-[rgba(12,28,55,0.08)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">
-                                      Capitao
-                                    </span>
-                                  )}
-                                  {isSelected && (
-                                    <span className="rounded-full bg-[var(--black)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white">
-                                      Selecionado
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
+          <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="rounded-[22px] border border-[var(--border)] bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="fgb-label text-[var(--gray)]">Selecao atual</p>
+                  <h3 className="mt-2 text-2xl font-black uppercase tracking-[0.08em] text-[var(--black)]">
+                    {selectedAthlete?.name || 'Nenhum atleta selecionado'}
+                  </h3>
+                  <p className="mt-1 text-sm text-[var(--gray)]">
+                    {selectedTeam?.name || 'Equipe'} · camisa {selectedAthlete?.jerseyNumber ?? '--'}
+                  </p>
+                </div>
+                <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+                  fallback seguro
+                </span>
+              </div>
 
-                              <div className="grid grid-cols-2 gap-2 text-right">
-                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
-                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Pts</p>
-                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.points ?? 0}</p>
-                                </div>
-                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
-                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Faltas</p>
-                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.fouls ?? 0}</p>
-                                </div>
-                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
-                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Reb</p>
-                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.reboundsTotal ?? 0}</p>
-                                </div>
-                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
-                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Ast</p>
-                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.assists ?? 0}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                <select
+                  value={selectedTeamId}
+                  onChange={(event) => {
+                    setSelectedTeamId(event.target.value)
+                    setSelectedAthleteId('')
+                  }}
+                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                >
+                  <option value="">Equipe</option>
+                  <option value={tableModel.home.id}>{tableModel.home.name}</option>
+                  <option value={tableModel.away.id}>{tableModel.away.name}</option>
+                </select>
+                <select
+                  value={selectedAthleteId}
+                  onChange={(event) => setSelectedAthleteId(event.target.value)}
+                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                >
+                  <option value="">Atleta</option>
+                  {(selectedTeam?.players || []).map((player) => (
+                    <option key={player.id} value={player.athleteId}>
+                      {player.jerseyNumber ?? '--'} · {player.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={clockTime}
+                  onChange={(event) => setClockTime(event.target.value)}
+                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                />
+                <input
+                  type="number"
+                  min={1}
+                  value={selectedPeriod}
+                  onChange={(event) => setSelectedPeriod(Number(event.target.value) || 1)}
+                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                />
+              </div>
+
+              <div className="mt-4 grid grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Pts</p>
+                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.points ?? 0}</p>
+                </div>
+                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Reb</p>
+                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.rebounds ?? 0}</p>
+                </div>
+                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Ast</p>
+                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.assists ?? 0}</p>
+                </div>
+                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Faltas</p>
+                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.fouls ?? 0}</p>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-6">
-              <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="fgb-label text-[var(--gray)]">Centro de Operacao</p>
-                    <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
-                      Acao rapida da mesa
-                    </h2>
-                  </div>
-                  <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                    sem backend novo
-                  </span>
+            <div className="rounded-[22px] border border-[var(--border)] bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="fgb-label text-[var(--gray)]">Acoes auxiliares</p>
+                  <h3 className="mt-2 text-2xl font-black uppercase tracking-[0.08em] text-[var(--black)]">
+                    Mesa manual e publicacao
+                  </h3>
                 </div>
+                <button
+                  onClick={async () => {
+                    const last = [...(data.events || [])].reverse().find((event: any) => !event.isReverted && !event.isOptimistic)
+                    if (!last) return
+                    await doLiveActionDirect('revert-event', { eventId: last.id, reason: 'Desfazer rapido da mesa' })
+                  }}
+                  className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--black)]"
+                >
+                  Desfazer ultimo
+                </button>
+              </div>
 
-                <div className="mt-5 grid gap-3 md:grid-cols-2">
-                  <select value={selectedTeamId} onChange={(event) => { setSelectedTeamId(event.target.value); setSelectedAthleteId('') }} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none">
-                    <option value="">Equipe</option>
-                    <option value={game.homeTeam.id}>{game.homeTeam.name}</option>
-                    <option value={game.awayTeam.id}>{game.awayTeam.name}</option>
-                  </select>
-                  <select value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none">
-                    <option value="">Atleta</option>
-                    {selectedPlayers.map((player: any) => (
-                      <option key={player.id} value={player.athleteId}>
-                        {player.jerseyNumber ?? '--'} · {player.athleteName}
-                      </option>
-                    ))}
-                  </select>
-                  <input value={clockTime} onChange={(event) => setClockTime(event.target.value)} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none" />
-                  <input type="number" min={1} value={selectedPeriod} onChange={(event) => setSelectedPeriod(Number(event.target.value) || 1)} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none" />
-                </div>
-
-                <div className="mt-4 rounded-[22px] bg-[var(--gray-l)] p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)]">Selecao atual</p>
-                  <p className="mt-2 text-lg font-black text-[var(--black)]">
-                    {selectedAthlete?.athleteName || 'Nenhum atleta selecionado'}
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--gray)]">
-                    {selectedTeamName} · Camisa {selectedAthlete?.jerseyNumber ?? '--'}
-                  </p>
-                </div>
-
-                <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {QUICK_EVENTS.map(([label, eventType, pointsDelta]) => (
-                    <button
-                      key={label}
-                      onClick={() =>
-                        enqueueLiveEvent({
-                          eventType,
-                          pointsDelta,
-                          teamId: selectedTeamId || null,
-                          athleteId: selectedAthleteId || null,
-                          period: selectedPeriod,
-                          clockTime,
-                        })
-                      }
-                      className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
-                    >
-                      {label}
-                    </button>
-                  ))}
+              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                {QUICK_EVENTS.filter(([_, eventType]) => !['TIMEOUT_CONFIRMED'].includes(eventType)).map(([label, eventType, pointsDelta]) => (
                   <button
+                    key={label}
                     onClick={() =>
                       enqueueLiveEvent({
-                        eventType: 'SUBSTITUTION_IN',
+                        eventType,
+                        pointsDelta,
                         teamId: selectedTeamId || null,
                         athleteId: selectedAthleteId || null,
                         period: selectedPeriod,
                         clockTime,
                       })
                     }
-                    className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
                   >
-                    Entrar
+                    {label}
                   </button>
-                  <button
-                    onClick={() =>
-                      enqueueLiveEvent({
-                        eventType: 'SUBSTITUTION_OUT',
-                        teamId: selectedTeamId || null,
-                        athleteId: selectedAthleteId || null,
-                        period: selectedPeriod,
-                        clockTime,
-                      })
-                    }
-                    className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
-                  >
-                    Sair
-                  </button>
-                </div>
-
-                <div className="mt-5 grid gap-3">
-                  {CONTROL_EVENTS.map(([label, eventType]) => (
-                    <button
-                      key={label}
-                      onClick={() =>
-                        enqueueLiveEvent({
-                          eventType,
-                          pointsDelta: selectedPeriod,
-                          teamId: selectedTeamId || null,
-                          athleteId: selectedAthleteId || null,
-                          period: selectedPeriod,
-                          clockTime,
-                        })
-                      }
-                      className="rounded-2xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-[0.28em] text-white transition hover:bg-[var(--verde)]"
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
+                ))}
               </div>
 
-              <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="fgb-label text-[var(--gray)]">Feed da Partida</p>
-                    <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
-                      Ultimos eventos
-                    </h2>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const last = [...(data.events || [])].reverse().find((event: any) => !event.isReverted && !event.isOptimistic)
-                      if (!last) return
-                      await doLiveActionDirect('revert-event', { eventId: last.id, reason: 'Desfazer rapido' })
-                    }}
-                    className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-[var(--black)]"
-                  >
-                    Desfazer ultimo
-                  </button>
-                </div>
-
-                <div className="mt-5 space-y-3">
-                  {recentEvents.length === 0 && (
-                    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--gray-l)] px-4 py-5 text-sm text-[var(--gray)]">
-                      Nenhum evento registrado ainda. A mesa continua operavel assim que o primeiro evento entrar.
-                    </div>
-                  )}
-
-                  {recentEvents.map((event: any, index: number) => (
-                    <div
-                      key={event.id}
-                      className={`rounded-[22px] border px-4 py-4 ${
-                        event.isOptimistic
-                          ? 'border-yellow-200 bg-yellow-50/80'
-                          : index === 0
-                            ? 'border-[var(--verde)]/25 bg-[rgba(34,139,82,0.05)]'
-                            : 'border-[var(--border)] bg-white'
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-[var(--black)]">{event.description || event.eventType || 'Evento registrado'}</p>
-                          <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-[var(--gray)]">
-                            P{event.period ?? selectedPeriod} · {event.clockTime || clockTime}
-                          </p>
-                        </div>
-                        {event.isOptimistic ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-yellow-700">
-                            <Clock3 className="h-3 w-3" />
-                            Sincronizando
-                          </span>
-                        ) : (
-                          <span className="rounded-full bg-[var(--gray-l)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                            {event.teamName || 'Mesa'}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="fgb-label text-[var(--gray)]">Leitura Rapida</p>
-                    <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
-                      Lideres e publicacao
-                    </h2>
-                  </div>
-                  <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                    dados reais
-                  </span>
-                </div>
-                <div className="mt-5 space-y-3">
-                  {(data.boxScore?.players || []).slice(0, 8).map((player: any) => (
-                    <div key={player.id} className="grid grid-cols-[1fr_auto] gap-3 rounded-2xl border border-[var(--border)] px-4 py-3">
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-[var(--black)]">{player.athleteName || 'Atleta'}</p>
-                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--gray)]">{player.teamName || 'Equipe'}</p>
-                      </div>
-                      <div className="text-right text-sm text-[var(--black)]">
-                        <p><strong>{player.points ?? 0}</strong> pts</p>
-                        <p>{player.reboundsTotal ?? 0} reb · {player.assists ?? 0} ast</p>
-                      </div>
-                    </div>
-                  ))}
-                  {(data.boxScore?.players || []).length === 0 && (
-                    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--gray-l)] px-4 py-5 text-sm text-[var(--gray)]">
-                      Os lideres aparecerao aqui assim que os eventos forem consolidando o box score.
-                    </div>
-                  )}
-                </div>
-                <div className="mt-5 flex flex-wrap gap-3">
-                  <button onClick={() => doLiveActionDirect('publish')} className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">
-                    Publicar no site
-                  </button>
-                  <Link href={`/games/${gameId}/live`} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
-                    Ver publico
-                  </Link>
-                </div>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button
+                  onClick={() => doLiveActionDirect('publish')}
+                  className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white"
+                >
+                  Publicar no site
+                </button>
+                <Link
+                  href={`/games/${gameId}/live`}
+                  className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
+                >
+                  Ver publico
+                </Link>
               </div>
             </div>
           </div>

@@ -1,0 +1,261 @@
+export type LiveTableTab = 'home' | 'away' | 'log' | 'box'
+
+export type LiveTablePlayer = {
+  id: string
+  athleteId: string
+  name: string
+  jerseyNumber: number | null
+  isStarter: boolean
+  isCaptain: boolean
+  isAvailable: boolean
+  isOnCourt: boolean
+  status: string
+  points: number
+  rebounds: number
+  assists: number
+  fouls: number
+  steals: number
+  blocks: number
+  turnovers: number
+  disqualified: boolean
+}
+
+export type LiveTableTeam = {
+  id: string
+  side: 'home' | 'away'
+  name: string
+  shortName: string
+  score: number
+  fouls: number
+  timeoutsUsed: number
+  coachName: string
+  players: LiveTablePlayer[]
+}
+
+export type LiveTableEvent = {
+  id: string
+  teamSide: 'home' | 'away' | 'neutral'
+  clockTime: string
+  periodLabel: string
+  description: string
+  icon: string
+  isOptimistic: boolean
+  teamName: string
+}
+
+export type LiveTableBoxRow = {
+  id: string
+  athleteName: string
+  teamName: string
+  points: number
+  rebounds: number
+  assists: number
+  fouls: number
+}
+
+export type LiveTablePeriodScore = {
+  period: number
+  label: string
+  homePoints: number
+  awayPoints: number
+}
+
+export type LiveGameTableModel = {
+  championshipName: string
+  categoryName: string
+  venueLabel: string
+  liveStatus: string
+  currentPeriod: number
+  currentPeriodLabel: string
+  clockDisplay: string
+  home: LiveTableTeam
+  away: LiveTableTeam
+  periodScores: LiveTablePeriodScore[]
+  events: LiveTableEvent[]
+  boxRows: LiveTableBoxRow[]
+}
+
+function shortTeamName(name?: string | null) {
+  const safeName = (name || 'Equipe').trim()
+  const words = safeName.split(/\s+/).filter(Boolean)
+  if (words.length === 1) return words[0].slice(0, 3).toUpperCase()
+  return words
+    .slice(0, 3)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+}
+
+function formatPeriodLabel(period?: number | null) {
+  const safePeriod = period && period > 0 ? period : 1
+  if (safePeriod <= 4) return `${safePeriod}o PERIODO`
+  return `PRORR. ${safePeriod - 4}`
+}
+
+function resolveEventIcon(eventType?: string | null) {
+  switch (eventType) {
+    case 'SHOT_MADE_2':
+      return '2PTS'
+    case 'SHOT_MADE_3':
+      return '3PTS'
+    case 'FREE_THROW_MADE':
+      return 'FT'
+    case 'FOUL_PERSONAL':
+      return 'F'
+    case 'REBOUND_OFFENSIVE':
+    case 'REBOUND_DEFENSIVE':
+      return 'REB'
+    case 'ASSIST':
+      return 'AST'
+    case 'STEAL':
+      return 'STL'
+    case 'BLOCK':
+      return 'BLK'
+    case 'TURNOVER':
+      return 'TOV'
+    case 'SUBSTITUTION_IN':
+    case 'SUBSTITUTION_OUT':
+      return 'SUB'
+    case 'TIMEOUT_CONFIRMED':
+      return 'TO'
+    case 'GAME_START':
+      return 'INI'
+    case 'PERIOD_START':
+      return 'P+'
+    case 'PERIOD_END':
+      return 'P-'
+    case 'HALFTIME_START':
+      return 'HT'
+    case 'HALFTIME_END':
+      return 'RET'
+    case 'GAME_END':
+      return 'FIM'
+    default:
+      return 'EV'
+  }
+}
+
+function buildPlayerMap(snapshot: any) {
+  const playerLines = new Map<string, any>()
+  for (const line of snapshot?.boxScore?.players || []) {
+    if (line?.athleteId) {
+      playerLines.set(line.athleteId, line)
+    }
+  }
+  return playerLines
+}
+
+function buildTeam(
+  snapshot: any,
+  side: 'home' | 'away',
+  playerLinesByAthleteId: Map<string, any>
+): LiveTableTeam {
+  const gameTeam = side === 'home' ? snapshot?.game?.homeTeam : snapshot?.game?.awayTeam
+  const roster = snapshot?.rosters?.find((entry: any) => entry.teamId === gameTeam?.id)
+  const teamLine = snapshot?.boxScore?.teams?.find((entry: any) => entry.teamId === gameTeam?.id)
+
+  return {
+    id: gameTeam?.id || `${side}-team`,
+    side,
+    name: gameTeam?.name || 'Equipe',
+    shortName: shortTeamName(gameTeam?.name),
+    score:
+      side === 'home'
+        ? snapshot?.game?.homeScore ?? teamLine?.points ?? 0
+        : snapshot?.game?.awayScore ?? teamLine?.points ?? 0,
+    fouls:
+      side === 'home'
+        ? snapshot?.game?.homeTeamFoulsCurrentPeriod ?? teamLine?.fouls ?? 0
+        : snapshot?.game?.awayTeamFoulsCurrentPeriod ?? teamLine?.fouls ?? 0,
+    timeoutsUsed:
+      side === 'home'
+        ? snapshot?.game?.homeTimeoutsUsed ?? teamLine?.timeoutsUsed ?? 0
+        : snapshot?.game?.awayTimeoutsUsed ?? teamLine?.timeoutsUsed ?? 0,
+    coachName: roster?.coachName || 'Sem coach definido',
+    players: (roster?.players || []).map((player: any) => {
+      const statLine = playerLinesByAthleteId.get(player.athleteId)
+      return {
+        id: player.id,
+        athleteId: player.athleteId,
+        name: player.athleteName || 'Atleta',
+        jerseyNumber: player.jerseyNumber ?? null,
+        isStarter: Boolean(player.isStarter),
+        isCaptain: Boolean(player.isCaptain),
+        isAvailable: Boolean(player.isAvailable),
+        isOnCourt: Boolean(player.isOnCourt),
+        status: player.status || 'ACTIVE',
+        points: statLine?.points ?? 0,
+        rebounds: statLine?.reboundsTotal ?? 0,
+        assists: statLine?.assists ?? 0,
+        fouls: statLine?.fouls ?? 0,
+        steals: statLine?.steals ?? 0,
+        blocks: statLine?.blocks ?? 0,
+        turnovers: statLine?.turnovers ?? 0,
+        disqualified: Boolean(statLine?.disqualified),
+      } satisfies LiveTablePlayer
+    }),
+  }
+}
+
+export function buildLiveGameTableModel(snapshot: any): LiveGameTableModel {
+  const playerLinesByAthleteId = buildPlayerMap(snapshot)
+  const home = buildTeam(snapshot, 'home', playerLinesByAthleteId)
+  const away = buildTeam(snapshot, 'away', playerLinesByAthleteId)
+
+  return {
+    championshipName: snapshot?.game?.championship?.name || 'Campeonato',
+    categoryName: snapshot?.game?.category?.name || 'Categoria',
+    venueLabel:
+      snapshot?.game?.venue ||
+      snapshot?.game?.location ||
+      [snapshot?.game?.city, snapshot?.game?.court].filter(Boolean).join(' · ') ||
+      'Local a definir',
+    liveStatus: snapshot?.game?.liveStatus || 'SCHEDULED',
+    currentPeriod: snapshot?.game?.currentPeriod || 1,
+    currentPeriodLabel: formatPeriodLabel(snapshot?.game?.currentPeriod),
+    clockDisplay: snapshot?.game?.clockDisplay || '10:00',
+    home,
+    away,
+    periodScores: (snapshot?.boxScore?.periods || []).map((periodLine: any) => ({
+      period: periodLine.period,
+      label: `P${periodLine.period}`,
+      homePoints: periodLine.homePoints ?? 0,
+      awayPoints: periodLine.awayPoints ?? 0,
+    })),
+    events: [...(snapshot?.events || [])]
+      .reverse()
+      .slice(0, 18)
+      .map((event: any) => ({
+        id: event.id,
+        teamSide:
+          event.teamId === snapshot?.game?.homeTeam?.id
+            ? 'home'
+            : event.teamId === snapshot?.game?.awayTeam?.id
+              ? 'away'
+              : 'neutral',
+        clockTime: event.clockTime || '10:00',
+        periodLabel: formatPeriodLabel(event.period),
+        description: event.description || event.eventType || 'Evento registrado',
+        icon: resolveEventIcon(event.eventType),
+        isOptimistic: Boolean(event.isOptimistic),
+        teamName: event.teamName || 'Mesa',
+      })),
+    boxRows: [...(snapshot?.boxScore?.players || [])]
+      .sort((left: any, right: any) => {
+        if ((right.points ?? 0) !== (left.points ?? 0)) return (right.points ?? 0) - (left.points ?? 0)
+        if ((right.reboundsTotal ?? 0) !== (left.reboundsTotal ?? 0)) {
+          return (right.reboundsTotal ?? 0) - (left.reboundsTotal ?? 0)
+        }
+        return String(left.athleteName || '').localeCompare(String(right.athleteName || ''))
+      })
+      .map((player: any) => ({
+        id: player.id,
+        athleteName: player.athleteName || 'Atleta',
+        teamName: player.teamName || 'Equipe',
+        points: player.points ?? 0,
+        rebounds: player.reboundsTotal ?? 0,
+        assists: player.assists ?? 0,
+        fouls: player.fouls ?? 0,
+      })),
+  }
+}
