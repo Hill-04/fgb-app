@@ -22,6 +22,14 @@ type PendingMutation = {
   createdAt: number
 }
 
+const MODE_LABELS: Record<AdminViewMode, string> = {
+  pregame: 'Pré-jogo',
+  live: 'Live',
+  review: 'Encerramento',
+  report: 'Súmula',
+  audit: 'Auditoria',
+}
+
 const QUICK_EVENTS = [
   ['+2', 'SHOT_MADE_2', 2],
   ['+3', 'SHOT_MADE_3', 3],
@@ -729,7 +737,7 @@ export function LiveGameAdminView({
     const autoTable = (await import('jspdf-autotable')).default
     const doc = new jsPDF()
     doc.setFontSize(16)
-    doc.text('FGB · Relatório Oficial da Partida', 14, 16)
+    doc.text('FGB · Súmula Oficial da Partida', 14, 16)
     doc.setFontSize(10)
     doc.text(`${data.game.championship.name} · ${data.game.category.name}`, 14, 24)
     doc.text(`${data.game.homeTeam.name} ${data.game.homeScore} x ${data.game.awayScore} ${data.game.awayTeam.name}`, 14, 30)
@@ -799,6 +807,9 @@ export function LiveGameAdminView({
         <h1 className="mt-2 fgb-display text-4xl leading-none text-[var(--black)]">
           {game.homeTeam.name} <span className="text-[var(--verde)]">{game.homeScore}</span> × <span className="text-[var(--verde)]">{game.awayScore}</span> {game.awayTeam.name}
         </h1>
+        <div className="mt-4 inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+          Etapa atual: {MODE_LABELS[mode]}
+        </div>
         <p className="mt-3 text-sm text-[var(--gray)]">
           Status {game.liveStatus} · Período {game.currentPeriod || 0} · Relógio {game.clockDisplay || '10:00'}
           {mode === 'live' && pendingMutations.length > 0 && (
@@ -819,8 +830,8 @@ export function LiveGameAdminView({
       <div className="flex flex-wrap gap-3">
         <Link href={buildAdminGameModePath(gameId, 'pregame', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Pré-jogo</Link>
         <Link href={buildAdminGameModePath(gameId, 'live', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Mesa</Link>
-        <Link href={buildAdminGameModePath(gameId, 'review', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Revisão</Link>
-        <Link href={buildAdminGameModePath(gameId, 'report', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Relatório</Link>
+        <Link href={buildAdminGameModePath(gameId, 'review', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Encerramento</Link>
+        <Link href={buildAdminGameModePath(gameId, 'report', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Súmula</Link>
         <Link href={buildAdminGameModePath(gameId, 'audit', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Auditoria</Link>
       </div>
 
@@ -1008,7 +1019,7 @@ export function LiveGameAdminView({
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Relatório oficial</h2>
+              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Súmula oficial</h2>
               <button onClick={exportReportPdf} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Baixar PDF</button>
             </div>
             <div className="mt-5 space-y-3">
@@ -1058,6 +1069,7 @@ export function LiveGameAdminView({
     </div>
   )
 }
+
 
 
 
