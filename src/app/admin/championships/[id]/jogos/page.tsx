@@ -1,3 +1,5 @@
-import MatchesPage from '../matches/page'
+import ChampionshipGamesPageClient from './ChampionshipGamesPageClient'
 
-export default MatchesPage
+export default function ChampionshipGamesPage() {
+  return <ChampionshipGamesPageClient />
+}

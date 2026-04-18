@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Clock3, Loader2 } from 'lucide-react'
+import { buildAdminGamePath as buildCanonicalAdminGamePath } from '@/lib/admin-game-routing'
 
 type AdminViewMode = 'pregame' | 'live' | 'review' | 'report' | 'audit'
 
@@ -44,10 +45,8 @@ const CONTROL_EVENTS = [
   ['Encerrar jogo', 'GAME_END'],
 ] as const
 
-function buildAdminGamePath(gameId: string, mode: AdminViewMode, championshipId?: string) {
-  if (!championshipId) return `/admin/games/${gameId}/${mode}`
-
-  const modeMap: Record<AdminViewMode, string> = {
+function buildAdminGameModePath(gameId: string, mode: AdminViewMode, championshipId?: string) {
+  const modeMap: Record<AdminViewMode, 'roster' | 'live' | 'encerramento' | 'sumula' | 'auditoria'> = {
     pregame: 'roster',
     live: 'live',
     review: 'encerramento',
@@ -55,7 +54,7 @@ function buildAdminGamePath(gameId: string, mode: AdminViewMode, championshipId?
     audit: 'auditoria',
   }
 
-  return `/admin/championships/${championshipId}/jogos/${gameId}/${modeMap[mode]}`
+  return buildCanonicalAdminGamePath(gameId, modeMap[mode], championshipId)
 }
 
 async function postJson(url: string, body: Record<string, unknown>) {
@@ -786,11 +785,11 @@ export function LiveGameAdminView({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link href={buildAdminGamePath(gameId, 'pregame', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Pré-jogo</Link>
-        <Link href={buildAdminGamePath(gameId, 'live', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Mesa</Link>
-        <Link href={buildAdminGamePath(gameId, 'review', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Revisão</Link>
-        <Link href={buildAdminGamePath(gameId, 'report', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Relatório</Link>
-        <Link href={buildAdminGamePath(gameId, 'audit', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Auditoria</Link>
+        <Link href={buildAdminGameModePath(gameId, 'pregame', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Pré-jogo</Link>
+        <Link href={buildAdminGameModePath(gameId, 'live', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Mesa</Link>
+        <Link href={buildAdminGameModePath(gameId, 'review', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Revisão</Link>
+        <Link href={buildAdminGameModePath(gameId, 'report', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Relatório</Link>
+        <Link href={buildAdminGameModePath(gameId, 'audit', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Auditoria</Link>
       </div>
 
       {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}

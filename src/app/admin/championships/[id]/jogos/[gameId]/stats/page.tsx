@@ -1,10 +1,10 @@
-import { redirect } from 'next/navigation'
+import GameStatsPageClient from '../GameStatsPageClient'
 
-export default async function ChampionshipGameStatsCompatibilityPage({
+export default async function ChampionshipGameStatsPage({
   params,
 }: {
   params: Promise<{ id: string; gameId: string }>
 }) {
-  const { gameId } = await params
-  redirect(`/admin/jogos/${gameId}/stats`)
+  const { id, gameId } = await params
+  return <GameStatsPageClient gameId={gameId} championshipId={id} />
 }
