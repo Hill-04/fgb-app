@@ -1,13 +1,14 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { checkGameConsistency } from '@/lib/games-consistency'
 
 export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params
   const session = await getServerSession(authOptions)
 
   if (!session?.user || (session.user as any).role !== 'ADMIN') {
@@ -21,7 +22,7 @@ export async function POST(
   const { data, error: gameError } = await supabase
     .from('games')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   const game = data as any
@@ -38,7 +39,7 @@ export async function POST(
   const { data: statsData, error: statsError } = await supabase
     .from('game_stats')
     .select('*')
-    .eq('game_id', params.id)
+    .eq('game_id', id)
 
   const stats = (statsData || []) as any[]
 
@@ -67,7 +68,7 @@ export async function POST(
         ? `${game.notes}\n${logMessage}`
         : logMessage
     })
-    .eq('id', params.id)
+    .eq('id', id)
 
   if (updateError) {
     return NextResponse.json({ error: 'Erro ao finalizar jogo: ' + updateError.message }, { status: 500 })
