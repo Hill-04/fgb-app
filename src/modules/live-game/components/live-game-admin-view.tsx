@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -23,10 +23,10 @@ type PendingMutation = {
 }
 
 const MODE_LABELS: Record<AdminViewMode, string> = {
-  pregame: 'Pré-jogo',
+  pregame: 'PrÃ©-jogo',
   live: 'Live',
   review: 'Encerramento',
-  report: 'Súmula',
+  report: 'SÃºmula',
   audit: 'Auditoria',
 }
 
@@ -46,8 +46,8 @@ const QUICK_EVENTS = [
 
 const CONTROL_EVENTS = [
   ['Iniciar jogo', 'GAME_START'],
-  ['Iniciar período', 'PERIOD_START'],
-  ['Fim período', 'PERIOD_END'],
+  ['Iniciar perÃ­odo', 'PERIOD_START'],
+  ['Fim perÃ­odo', 'PERIOD_END'],
   ['Intervalo', 'HALFTIME_START'],
   ['Voltar intervalo', 'HALFTIME_END'],
   ['Encerrar jogo', 'GAME_END'],
@@ -72,7 +72,7 @@ async function postJson(url: string, body: Record<string, unknown>) {
     body: JSON.stringify(body),
   })
   const data = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(data.error || 'Erro na operação')
+  if (!response.ok) throw new Error(data.error || 'Erro na operaÃ§Ã£o')
   return data
 }
 
@@ -237,7 +237,7 @@ function buildOptimisticDescription(snapshot: any, eventType: string, teamId?: s
     case 'REBOUND_DEFENSIVE':
       return `${actor} pegou rebote defensivo`
     case 'ASSIST':
-      return `${actor} deu assistência`
+      return `${actor} deu assistÃªncia`
     case 'STEAL':
       return `${actor} roubou a bola`
     case 'BLOCK':
@@ -255,9 +255,9 @@ function buildOptimisticDescription(snapshot: any, eventType: string, teamId?: s
     case 'GAME_START':
       return 'Jogo iniciado'
     case 'PERIOD_START':
-      return 'Período iniciado'
+      return 'PerÃ­odo iniciado'
     case 'PERIOD_END':
-      return 'Período encerrado'
+      return 'PerÃ­odo encerrado'
     case 'HALFTIME_START':
       return 'Intervalo iniciado'
     case 'HALFTIME_END':
@@ -448,6 +448,41 @@ function isSameActionSignature(signature: string, last: { signature: string; at:
   return Boolean(last && last.signature === signature && now - last.at < 450)
 }
 
+function parseClockDisplay(value?: string | null) {
+  if (!value) return { minutes: '10', seconds: '00' }
+  const [minutes = '10', seconds = '00'] = value.split(':')
+  return {
+    minutes: minutes.padStart(2, '0'),
+    seconds: seconds.padStart(2, '0'),
+  }
+}
+
+function resolveShotClockReset(eventType?: string) {
+  switch (eventType) {
+    case 'REBOUND_OFFENSIVE':
+      return 14
+    case 'REBOUND_DEFENSIVE':
+    case 'SHOT_MADE_2':
+    case 'SHOT_MADE_3':
+    case 'FREE_THROW_MADE':
+    case 'TURNOVER':
+    case 'STEAL':
+    case 'TIMEOUT_CONFIRMED':
+    case 'PERIOD_START':
+    case 'HALFTIME_END':
+    case 'GAME_START':
+      return 24
+    default:
+      return null
+  }
+}
+
+function formatPeriodLabel(period?: number | null) {
+  const safePeriod = period && period > 0 ? period : 1
+  if (safePeriod <= 4) return `${safePeriod}o Periodo`
+  return `Prorrogacao ${safePeriod - 4}`
+}
+
 export function LiveGameAdminView({
   gameId,
   mode,
@@ -466,6 +501,7 @@ export function LiveGameAdminView({
   const [selectedAthleteId, setSelectedAthleteId] = useState('')
   const [selectedPeriod, setSelectedPeriod] = useState(1)
   const [clockTime, setClockTime] = useState('10:00')
+  const [visualShotClock, setVisualShotClock] = useState(24)
   const [pendingMutations, setPendingMutations] = useState<PendingMutation[]>([])
 
   const endpoint = `/api/admin/games/${gameId}/${mode}`
@@ -499,7 +535,7 @@ export function LiveGameAdminView({
     try {
       const response = await fetch(endpoint, { cache: 'no-store' })
       const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Falha ao carregar módulo live')
+      if (!response.ok) throw new Error(payload.error || 'Falha ao carregar mÃ³dulo live')
 
       if (mode === 'live') {
         const envelope = normalizeEnvelope(payload)
@@ -565,6 +601,31 @@ export function LiveGameAdminView({
       setClockTime(data.game.clockDisplay || '10:00')
     }
   }, [data, selectedTeamId])
+
+  useEffect(() => {
+    if (mode !== 'live') return
+    if (!data?.game) return
+
+    if (data.game.liveStatus === 'SCHEDULED' || data.game.liveStatus === 'PRE_GAME_READY') {
+      setVisualShotClock(24)
+    }
+
+    if (data.game.liveStatus === 'PERIOD_BREAK' || data.game.liveStatus === 'HALFTIME') {
+      setVisualShotClock((current) => (current > 24 ? 24 : current))
+    }
+  }, [mode, data?.game?.liveStatus, data?.game?.currentPeriod])
+
+  useEffect(() => {
+    if (mode !== 'live') return
+    const isRunning = data?.game?.liveStatus === 'LIVE'
+    if (!isRunning) return
+
+    const interval = window.setInterval(() => {
+      setVisualShotClock((current) => (current > 0 ? current - 1 : 0))
+    }, 1000)
+
+    return () => window.clearInterval(interval)
+  }, [mode, data?.game?.liveStatus])
 
   useEffect(() => {
     if (mode !== 'live') return
@@ -639,6 +700,51 @@ export function LiveGameAdminView({
     return data?.rosters?.find((roster: any) => roster.teamId === selectedTeamId)?.players || []
   }, [data, selectedTeamId])
 
+  const homeRoster = useMemo(
+    () => data?.rosters?.find((roster: any) => roster.teamId === data?.game?.homeTeam?.id),
+    [data]
+  )
+
+  const awayRoster = useMemo(
+    () => data?.rosters?.find((roster: any) => roster.teamId === data?.game?.awayTeam?.id),
+    [data]
+  )
+
+  const playerLinesByAthleteId = useMemo(() => {
+    const map = new Map<string, any>()
+    for (const player of data?.boxScore?.players || []) {
+      if (player?.athleteId) {
+        map.set(player.athleteId, player)
+      }
+    }
+    return map
+  }, [data])
+
+  const teamLinesByTeamId = useMemo(() => {
+    const map = new Map<string, any>()
+    for (const teamLine of data?.boxScore?.teams || []) {
+      if (teamLine?.teamId) {
+        map.set(teamLine.teamId, teamLine)
+      }
+    }
+    return map
+  }, [data])
+
+  const homeTeamLine = data?.game?.homeTeam?.id ? teamLinesByTeamId.get(data.game.homeTeam.id) : null
+  const awayTeamLine = data?.game?.awayTeam?.id ? teamLinesByTeamId.get(data.game.awayTeam.id) : null
+
+  const recentEvents = useMemo(() => [...(data?.events || [])].reverse().slice(0, 18), [data])
+
+  const selectedTeamName =
+    selectedTeamId === data?.game?.homeTeam?.id
+      ? data?.game?.homeTeam?.name
+      : selectedTeamId === data?.game?.awayTeam?.id
+        ? data?.game?.awayTeam?.name
+        : 'Equipe'
+
+  const selectedAthlete =
+    selectedPlayers.find((player: any) => player.athleteId === selectedAthleteId) || null
+
   const doPregameAction = async (action: string, extra: Record<string, unknown> = {}) => {
     setSubmitting(true)
     try {
@@ -665,9 +771,10 @@ export function LiveGameAdminView({
   }
 
   const enqueueLiveEvent = (extra: Record<string, unknown>) => {
+    const eventType = String(extra.eventType || '')
     const now = Date.now()
     const signature = JSON.stringify({
-      eventType: extra.eventType,
+      eventType,
       teamId: extra.teamId,
       athleteId: extra.athleteId,
       period: extra.period,
@@ -687,6 +794,11 @@ export function LiveGameAdminView({
     }
 
     lastActionGuardRef.current = { signature, at: now }
+
+    const visualReset = resolveShotClockReset(eventType)
+    if (visualReset !== null) {
+      setVisualShotClock(visualReset)
+    }
 
     const baseSequence =
       confirmedEnvelopeRef.current?.lastSequenceNumber ??
@@ -727,7 +839,7 @@ export function LiveGameAdminView({
     const name = window.prompt('Nome do oficial:')
     if (!name) return
     const officialType = window.prompt('Tipo do oficial (REFEREE, TABLE, STATS, OTHER):', 'REFEREE') || 'REFEREE'
-    const role = window.prompt('Função do oficial:', 'Principal') || 'Principal'
+    const role = window.prompt('FunÃ§Ã£o do oficial:', 'Principal') || 'Principal'
     const officials = [...(data.officials || []), { name, officialType, role }]
     await doPregameAction('assign-officials', { officials })
   }
@@ -737,9 +849,9 @@ export function LiveGameAdminView({
     const autoTable = (await import('jspdf-autotable')).default
     const doc = new jsPDF()
     doc.setFontSize(16)
-    doc.text('FGB · Súmula Oficial da Partida', 14, 16)
+    doc.text('FGB Â· SÃºmula Oficial da Partida', 14, 16)
     doc.setFontSize(10)
-    doc.text(`${data.game.championship.name} · ${data.game.category.name}`, 14, 24)
+    doc.text(`${data.game.championship.name} Â· ${data.game.category.name}`, 14, 24)
     doc.text(`${data.game.homeTeam.name} ${data.game.homeScore} x ${data.game.awayScore} ${data.game.awayTeam.name}`, 14, 30)
     doc.text(`Status: ${data.game.liveStatus}`, 14, 36)
 
@@ -776,7 +888,7 @@ export function LiveGameAdminView({
     return (
       <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-[28px] border border-[var(--border)] bg-white p-8 text-center shadow-sm">
         <Loader2 className="h-8 w-8 animate-spin text-[var(--verde)]" />
-        <span className="fgb-label text-[var(--gray)]">Carregando módulo live</span>
+        <span className="fgb-label text-[var(--gray)]">Carregando mÃ³dulo live</span>
       </div>
     )
   }
@@ -799,19 +911,20 @@ export function LiveGameAdminView({
   }
 
   const { game } = data
+  const clockParts = parseClockDisplay(game.clockDisplay || clockTime)
 
   return (
     <div className="space-y-6 px-4 py-6 sm:px-6">
       <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-        <p className="fgb-label text-[var(--gray)]">{game.championship.name} · {game.category.name}</p>
+        <p className="fgb-label text-[var(--gray)]">{game.championship.name} Â· {game.category.name}</p>
         <h1 className="mt-2 fgb-display text-4xl leading-none text-[var(--black)]">
-          {game.homeTeam.name} <span className="text-[var(--verde)]">{game.homeScore}</span> × <span className="text-[var(--verde)]">{game.awayScore}</span> {game.awayTeam.name}
+          {game.homeTeam.name} <span className="text-[var(--verde)]">{game.homeScore}</span> Ã— <span className="text-[var(--verde)]">{game.awayScore}</span> {game.awayTeam.name}
         </h1>
         <div className="mt-4 inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
           Etapa atual: {MODE_LABELS[mode]}
         </div>
         <p className="mt-3 text-sm text-[var(--gray)]">
-          Status {game.liveStatus} · Período {game.currentPeriod || 0} · Relógio {game.clockDisplay || '10:00'}
+          Status {game.liveStatus} Â· PerÃ­odo {game.currentPeriod || 0} Â· RelÃ³gio {game.clockDisplay || '10:00'}
           {mode === 'live' && pendingMutations.length > 0 && (
             <span className="ml-3 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-yellow-700">
               <Clock3 className="h-3 w-3" />
@@ -828,10 +941,10 @@ export function LiveGameAdminView({
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link href={buildAdminGameModePath(gameId, 'pregame', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Pré-jogo</Link>
+        <Link href={buildAdminGameModePath(gameId, 'pregame', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">PrÃ©-jogo</Link>
         <Link href={buildAdminGameModePath(gameId, 'live', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Mesa</Link>
         <Link href={buildAdminGameModePath(gameId, 'review', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Encerramento</Link>
-        <Link href={buildAdminGameModePath(gameId, 'report', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Súmula</Link>
+        <Link href={buildAdminGameModePath(gameId, 'report', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">SÃºmula</Link>
         <Link href={buildAdminGameModePath(gameId, 'audit', championshipId)} className="rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Auditoria</Link>
       </div>
 
@@ -843,7 +956,7 @@ export function LiveGameAdminView({
             <div className="flex flex-wrap gap-3">
               <button onClick={() => doPregameAction('sync-rosters')} disabled={submitting} className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Sincronizar rosters</button>
               <button onClick={() => doPregameAction('lock-rosters')} disabled={submitting} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Travar rosters</button>
-              <button onClick={() => doPregameAction('open-session')} disabled={submitting} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Abrir sessão</button>
+              <button onClick={() => doPregameAction('open-session')} disabled={submitting} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Abrir sessÃ£o</button>
               <button onClick={addOfficial} disabled={submitting} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Adicionar oficial</button>
             </div>
             <div className="mt-5 space-y-4">
@@ -852,18 +965,18 @@ export function LiveGameAdminView({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h2 className="text-lg font-black text-[var(--black)]">{roster.teamName}</h2>
-                      <p className="text-sm text-[var(--gray)]">Coach: {roster.coachName || 'Não definido'}</p>
+                      <p className="text-sm text-[var(--gray)]">Coach: {roster.coachName || 'NÃ£o definido'}</p>
                     </div>
-                    <span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">{roster.isLocked ? 'Travado' : 'Editável'}</span>
+                    <span className="rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">{roster.isLocked ? 'Travado' : 'EditÃ¡vel'}</span>
                   </div>
                   <div className="mt-4 grid gap-2 md:grid-cols-2">
                     {(roster.players || []).map((player: any) => (
                       <div key={player.id} className="rounded-xl border border-white bg-white px-3 py-3 text-sm text-[var(--black)]">
-                        <div className="font-semibold">{player.jerseyNumber ?? '--'} · {player.athleteName}</div>
+                        <div className="font-semibold">{player.jerseyNumber ?? '--'} Â· {player.athleteName}</div>
                         <div className="mt-2 flex flex-wrap gap-2">
                           <button onClick={() => updateRosterPlayer(player.id, { isStarter: !player.isStarter })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isStarter ? 'Titular' : 'Banco'}</button>
                           <button onClick={() => updateRosterPlayer(player.id, { isOnCourt: !player.isOnCourt })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isOnCourt ? 'Em quadra' : 'Fora'}</button>
-                          <button onClick={() => updateRosterPlayer(player.id, { isAvailable: !player.isAvailable })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isAvailable ? 'Disponível' : 'Indisponível'}</button>
+                          <button onClick={() => updateRosterPlayer(player.id, { isAvailable: !player.isAvailable })} className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">{player.isAvailable ? 'DisponÃ­vel' : 'IndisponÃ­vel'}</button>
                         </div>
                       </div>
                     ))}
@@ -877,7 +990,7 @@ export function LiveGameAdminView({
             <div className="mt-5 space-y-3 text-sm text-[var(--black)]">
               <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Rosters: {(data.rosters || []).length >= 2 ? 'OK' : 'Pendente'}</div>
               <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Atletas: {(data.rosters || []).every((roster: any) => roster.players.length > 0) ? 'OK' : 'Pendente'}</div>
-              <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Sessão: {data.session ? 'Aberta' : 'Não iniciada'}</div>
+              <div className="rounded-2xl border border-[var(--border)] px-4 py-3">SessÃ£o: {data.session ? 'Aberta' : 'NÃ£o iniciada'}</div>
               <div className="rounded-2xl border border-[var(--border)] px-4 py-3">Oficiais: {(data.referees?.length || 0) + (data.officials?.length || 0) > 0 ? 'Definidos' : 'Pendente'}</div>
             </div>
           </div>
@@ -885,100 +998,461 @@ export function LiveGameAdminView({
       )}
 
       {mode === 'live' && (
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6">
-            <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-              <div className="grid gap-4 md:grid-cols-4">
-                <select value={selectedTeamId} onChange={(event) => { setSelectedTeamId(event.target.value); setSelectedAthleteId('') }} className="h-11 rounded-xl border border-[var(--border)] px-4 text-sm outline-none">
-                  <option value="">Equipe</option>
-                  <option value={game.homeTeam.id}>{game.homeTeam.name}</option>
-                  <option value={game.awayTeam.id}>{game.awayTeam.name}</option>
-                </select>
-                <select value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)} className="h-11 rounded-xl border border-[var(--border)] px-4 text-sm outline-none">
-                  <option value="">Atleta</option>
-                  {selectedPlayers.map((player: any) => (
-                    <option key={player.id} value={player.athleteId}>{player.jerseyNumber ?? '--'} · {player.athleteName}</option>
-                  ))}
-                </select>
-                <input value={clockTime} onChange={(event) => setClockTime(event.target.value)} className="h-11 rounded-xl border border-[var(--border)] px-4 text-sm outline-none" />
-                <input type="number" min={1} value={selectedPeriod} onChange={(event) => setSelectedPeriod(Number(event.target.value) || 1)} className="h-11 rounded-xl border border-[var(--border)] px-4 text-sm outline-none" />
-              </div>
-              <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
-                {QUICK_EVENTS.map(([label, eventType, pointsDelta]) => (
-                  <button
-                    key={label}
-                    onClick={() => enqueueLiveEvent({ eventType, pointsDelta, teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })}
-                    className="rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
-                  >
-                    {label}
-                  </button>
-                ))}
-                <button onClick={() => enqueueLiveEvent({ eventType: 'SUBSTITUTION_IN', teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })} className="rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Entrar</button>
-                <button onClick={() => enqueueLiveEvent({ eventType: 'SUBSTITUTION_OUT', teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })} className="rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Sair</button>
-                {CONTROL_EVENTS.map(([label, eventType]) => (
-                  <button
-                    key={label}
-                    onClick={() => enqueueLiveEvent({ eventType, pointsDelta: selectedPeriod, teamId: selectedTeamId || null, athleteId: selectedAthleteId || null, period: selectedPeriod, clockTime })}
-                    className="rounded-xl bg-[var(--black)] px-4 py-4 text-[10px] font-black uppercase tracking-widest text-white"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Últimos eventos</h2>
-                <button
-                  onClick={async () => {
-                    const last = [...(data.events || [])].reverse().find((event: any) => !event.isReverted && !event.isOptimistic)
-                    if (!last) return
-                    await doLiveActionDirect('revert-event', { eventId: last.id, reason: 'Desfazer rápido' })
-                  }}
-                  className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
-                >
-                  Desfazer último
-                </button>
-              </div>
-              <div className="mt-5 space-y-3">
-                {[...(data.events || [])].reverse().slice(0, 15).map((event: any) => (
-                  <div key={event.id} className={`rounded-2xl border px-4 py-3 ${event.isOptimistic ? 'border-yellow-200 bg-yellow-50/70 opacity-80' : 'border-[var(--border)] bg-white'}`}>
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-[var(--black)]">{event.description}</p>
-                      <span className="fgb-label text-[var(--gray)]">P{event.period} · {event.clockTime}</span>
+        <div className="space-y-6">
+          <div className="overflow-hidden rounded-[32px] border border-[rgba(12,28,55,0.22)] bg-[radial-gradient(circle_at_top,rgba(17,43,86,0.96),rgba(8,16,31,0.98)_54%,rgba(7,11,19,1)_100%)] p-6 text-white shadow-[0_28px_80px_rgba(4,12,28,0.28)]">
+            <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+              <div className="grid flex-1 gap-5 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+                <div className="rounded-[24px] border border-white/10 bg-white/6 p-5 backdrop-blur">
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/55">Mandante</p>
+                  <div className="mt-3 flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-black">
+                      {String(game.homeTeam?.name || 'H').slice(0, 1)}
                     </div>
-                    {event.isOptimistic && (
-                      <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-yellow-700">
-                        <Clock3 className="h-3 w-3" />
-                        Sincronizando
-                      </div>
-                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-2xl font-black uppercase tracking-wide">{game.homeTeam?.name || 'Equipe'}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.3em] text-white/45">
+                        {homeTeamLine?.points ?? game.homeScore ?? 0} pts · {homeTeamLine?.assists ?? 0} ast · {homeTeamLine?.reboundsTotal ?? 0} reb
+                      </p>
+                    </div>
                   </div>
-                ))}
+                  <div className="mt-5 flex items-end justify-between">
+                    <div className="text-[88px] font-black leading-none tracking-tight text-white">
+                      {game.homeScore ?? 0}
+                    </div>
+                    <div className="space-y-2 text-right">
+                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
+                        Faltas {game.homeTeamFoulsCurrentPeriod ?? 0}
+                      </div>
+                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
+                        Timeouts {game.homeTimeoutsUsed ?? 0}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-center gap-3">
+                  <div className="rounded-full border border-[rgba(255,214,102,0.4)] bg-[rgba(255,214,102,0.12)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.35em] text-[#ffe28a]">
+                    {formatPeriodLabel(game.currentPeriod)}
+                  </div>
+                  <div className="rounded-[26px] border border-white/10 bg-black/30 px-8 py-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                    <div className="text-[12px] font-black uppercase tracking-[0.4em] text-white/45">Game Clock</div>
+                    <div className="mt-3 text-[72px] font-black leading-none tracking-[0.08em] text-white">
+                      {clockParts.minutes}
+                      <span className="mx-1 text-[#ffe28a]">:</span>
+                      {clockParts.seconds}
+                    </div>
+                  </div>
+                  <div className="w-full max-w-[220px] rounded-[22px] border border-[rgba(255,214,102,0.25)] bg-[rgba(255,214,102,0.08)] px-5 py-4 text-center">
+                    <div className="text-[10px] font-black uppercase tracking-[0.35em] text-[#ffe28a]">
+                      Shot Clock Visual
+                    </div>
+                    <div className={`mt-2 text-[44px] font-black leading-none ${visualShotClock <= 5 ? 'text-[#ff8f8f]' : 'text-[#ffe28a]'}`}>
+                      {String(Math.max(visualShotClock, 0)).padStart(2, '0')}
+                    </div>
+                    <p className="mt-2 text-[10px] uppercase tracking-[0.2em] text-white/45">
+                      Camada visual local da mesa
+                    </p>
+                    <div className="mt-3 grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => setVisualShotClock(24)}
+                        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-white"
+                      >
+                        Reset 24
+                      </button>
+                      <button
+                        onClick={() => setVisualShotClock(14)}
+                        className="rounded-xl border border-white/10 bg-white/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-white"
+                      >
+                        Reset 14
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="rounded-[24px] border border-white/10 bg-white/6 p-5 backdrop-blur">
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/55">Visitante</p>
+                  <div className="mt-3 flex items-center gap-4">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-lg font-black">
+                      {String(game.awayTeam?.name || 'A').slice(0, 1)}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="truncate text-2xl font-black uppercase tracking-wide">{game.awayTeam?.name || 'Equipe'}</p>
+                      <p className="mt-1 text-xs uppercase tracking-[0.3em] text-white/45">
+                        {awayTeamLine?.points ?? game.awayScore ?? 0} pts · {awayTeamLine?.assists ?? 0} ast · {awayTeamLine?.reboundsTotal ?? 0} reb
+                      </p>
+                    </div>
+                  </div>
+                  <div className="mt-5 flex items-end justify-between">
+                    <div className="text-[88px] font-black leading-none tracking-tight text-white">
+                      {game.awayScore ?? 0}
+                    </div>
+                    <div className="space-y-2 text-right">
+                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
+                        Faltas {game.awayTeamFoulsCurrentPeriod ?? 0}
+                      </div>
+                      <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.3em] text-white/70">
+                        Timeouts {game.awayTimeoutsUsed ?? 0}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid w-full gap-3 sm:max-w-[280px] sm:grid-cols-2 xl:grid-cols-1">
+                <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/50">Status</p>
+                  <p className="mt-3 text-lg font-black uppercase">{game.liveStatus || 'SCHEDULED'}</p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-white/45">
+                    Sequencia local {pendingMutations.length > 0 ? `${pendingMutations.length} pendente(s)` : 'estavel'}
+                  </p>
+                </div>
+                <div className="rounded-[24px] border border-white/10 bg-white/6 p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.35em] text-white/50">Jogo</p>
+                  <p className="mt-3 text-lg font-black uppercase">{game.category?.name || 'Categoria'}</p>
+                  <p className="mt-2 text-xs uppercase tracking-[0.25em] text-white/45">
+                    Periodo {selectedPeriod} · Clock UI {clockTime}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Líderes</h2>
-              <div className="mt-5 space-y-3">
-                {(data.boxScore?.players || []).slice(0, 10).map((player: any) => (
-                  <div key={player.id} className="grid grid-cols-[1fr_auto] gap-3 rounded-2xl border border-[var(--border)] px-4 py-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--black)]">{player.athleteName}</p>
-                      <p className="text-xs text-[var(--gray)]">{player.teamName}</p>
+          <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-6">
+              <div className="grid gap-6 lg:grid-cols-2">
+                {[
+                  {
+                    side: 'home',
+                    title: game.homeTeam?.name || 'Mandante',
+                    caption: homeRoster?.coachName || 'Elenco da partida',
+                    roster: homeRoster,
+                    teamId: game.homeTeam?.id,
+                  },
+                  {
+                    side: 'away',
+                    title: game.awayTeam?.name || 'Visitante',
+                    caption: awayRoster?.coachName || 'Elenco da partida',
+                    roster: awayRoster,
+                    teamId: game.awayTeam?.id,
+                  },
+                ].map((teamPanel) => (
+                  <div key={teamPanel.side} className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="fgb-label text-[var(--gray)]">
+                          {teamPanel.side === 'home' ? 'Mandante' : 'Visitante'}
+                        </p>
+                        <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
+                          {teamPanel.title}
+                        </h2>
+                        <p className="mt-1 text-sm text-[var(--gray)]">{teamPanel.caption || 'Sem comissao definida'}</p>
+                      </div>
+                      <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+                        {(teamPanel.roster?.players || []).length} atletas
+                      </span>
                     </div>
-                    <div className="text-right text-sm text-[var(--black)]">
-                      <p><strong>{player.points}</strong> pts</p>
-                      <p>{player.reboundsTotal} reb · {player.assists} ast</p>
+
+                    <div className="mt-5 space-y-3">
+                      {(teamPanel.roster?.players || []).length === 0 && (
+                        <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--gray-l)] px-4 py-5 text-sm text-[var(--gray)]">
+                          Nenhum atleta carregado para esta equipe.
+                        </div>
+                      )}
+
+                      {(teamPanel.roster?.players || []).map((player: any) => {
+                        const statLine = playerLinesByAthleteId.get(player.athleteId)
+                        const isSelected =
+                          selectedTeamId === teamPanel.teamId && selectedAthleteId === player.athleteId
+
+                        return (
+                          <button
+                            key={player.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedTeamId(teamPanel.teamId || '')
+                              setSelectedAthleteId(player.athleteId || '')
+                            }}
+                            className={`w-full rounded-[22px] border px-4 py-4 text-left transition ${
+                              isSelected
+                                ? 'border-[var(--verde)] bg-[rgba(34,139,82,0.06)] shadow-[0_12px_28px_rgba(34,139,82,0.12)]'
+                                : 'border-[var(--border)] bg-white hover:border-[var(--verde)]/40'
+                            }`}
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-3">
+                                  <span className="rounded-xl bg-[var(--gray-l)] px-3 py-2 text-sm font-black text-[var(--black)]">
+                                    {player.jerseyNumber ?? '--'}
+                                  </span>
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-semibold text-[var(--black)]">
+                                      {player.athleteName || 'Atleta sem nome'}
+                                    </p>
+                                    <p className="mt-1 text-[11px] uppercase tracking-[0.25em] text-[var(--gray)]">
+                                      {player.isOnCourt ? 'Em quadra' : 'No banco'} · {player.isAvailable ? 'Disponivel' : 'Indisponivel'}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {player.isStarter && (
+                                    <span className="rounded-full bg-[rgba(34,139,82,0.12)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
+                                      Titular
+                                    </span>
+                                  )}
+                                  {player.isCaptain && (
+                                    <span className="rounded-full bg-[rgba(12,28,55,0.08)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">
+                                      Capitao
+                                    </span>
+                                  )}
+                                  {isSelected && (
+                                    <span className="rounded-full bg-[var(--black)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white">
+                                      Selecionado
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-2 text-right">
+                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Pts</p>
+                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.points ?? 0}</p>
+                                </div>
+                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Faltas</p>
+                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.fouls ?? 0}</p>
+                                </div>
+                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Reb</p>
+                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.reboundsTotal ?? 0}</p>
+                                </div>
+                                <div className="rounded-2xl bg-[var(--gray-l)] px-3 py-2">
+                                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Ast</p>
+                                  <p className="mt-1 text-lg font-black text-[var(--black)]">{statLine?.assists ?? 0}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 ))}
               </div>
-              <div className="mt-5 flex flex-wrap gap-3">
-                <button onClick={() => doLiveActionDirect('publish')} className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Publicar no site</button>
-                <Link href={`/games/${gameId}/live`} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">Ver público</Link>
+            </div>
+
+            <div className="space-y-6">
+              <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="fgb-label text-[var(--gray)]">Centro de Operacao</p>
+                    <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
+                      Acao rapida da mesa
+                    </h2>
+                  </div>
+                  <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+                    sem backend novo
+                  </span>
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-2">
+                  <select value={selectedTeamId} onChange={(event) => { setSelectedTeamId(event.target.value); setSelectedAthleteId('') }} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none">
+                    <option value="">Equipe</option>
+                    <option value={game.homeTeam.id}>{game.homeTeam.name}</option>
+                    <option value={game.awayTeam.id}>{game.awayTeam.name}</option>
+                  </select>
+                  <select value={selectedAthleteId} onChange={(event) => setSelectedAthleteId(event.target.value)} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none">
+                    <option value="">Atleta</option>
+                    {selectedPlayers.map((player: any) => (
+                      <option key={player.id} value={player.athleteId}>
+                        {player.jerseyNumber ?? '--'} · {player.athleteName}
+                      </option>
+                    ))}
+                  </select>
+                  <input value={clockTime} onChange={(event) => setClockTime(event.target.value)} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none" />
+                  <input type="number" min={1} value={selectedPeriod} onChange={(event) => setSelectedPeriod(Number(event.target.value) || 1)} className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none" />
+                </div>
+
+                <div className="mt-4 rounded-[22px] bg-[var(--gray-l)] p-4">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)]">Selecao atual</p>
+                  <p className="mt-2 text-lg font-black text-[var(--black)]">
+                    {selectedAthlete?.athleteName || 'Nenhum atleta selecionado'}
+                  </p>
+                  <p className="mt-1 text-sm text-[var(--gray)]">
+                    {selectedTeamName} · Camisa {selectedAthlete?.jerseyNumber ?? '--'}
+                  </p>
+                </div>
+
+                <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
+                  {QUICK_EVENTS.map(([label, eventType, pointsDelta]) => (
+                    <button
+                      key={label}
+                      onClick={() =>
+                        enqueueLiveEvent({
+                          eventType,
+                          pointsDelta,
+                          teamId: selectedTeamId || null,
+                          athleteId: selectedAthleteId || null,
+                          period: selectedPeriod,
+                          clockTime,
+                        })
+                      }
+                      className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      enqueueLiveEvent({
+                        eventType: 'SUBSTITUTION_IN',
+                        teamId: selectedTeamId || null,
+                        athleteId: selectedAthleteId || null,
+                        period: selectedPeriod,
+                        clockTime,
+                      })
+                    }
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
+                  >
+                    Entrar
+                  </button>
+                  <button
+                    onClick={() =>
+                      enqueueLiveEvent({
+                        eventType: 'SUBSTITUTION_OUT',
+                        teamId: selectedTeamId || null,
+                        athleteId: selectedAthleteId || null,
+                        period: selectedPeriod,
+                        clockTime,
+                      })
+                    }
+                    className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
+                  >
+                    Sair
+                  </button>
+                </div>
+
+                <div className="mt-5 grid gap-3">
+                  {CONTROL_EVENTS.map(([label, eventType]) => (
+                    <button
+                      key={label}
+                      onClick={() =>
+                        enqueueLiveEvent({
+                          eventType,
+                          pointsDelta: selectedPeriod,
+                          teamId: selectedTeamId || null,
+                          athleteId: selectedAthleteId || null,
+                          period: selectedPeriod,
+                          clockTime,
+                        })
+                      }
+                      className="rounded-2xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-[0.28em] text-white transition hover:bg-[var(--verde)]"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="fgb-label text-[var(--gray)]">Feed da Partida</p>
+                    <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
+                      Ultimos eventos
+                    </h2>
+                  </div>
+                  <button
+                    onClick={async () => {
+                      const last = [...(data.events || [])].reverse().find((event: any) => !event.isReverted && !event.isOptimistic)
+                      if (!last) return
+                      await doLiveActionDirect('revert-event', { eventId: last.id, reason: 'Desfazer rapido' })
+                    }}
+                    className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.25em] text-[var(--black)]"
+                  >
+                    Desfazer ultimo
+                  </button>
+                </div>
+
+                <div className="mt-5 space-y-3">
+                  {recentEvents.length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--gray-l)] px-4 py-5 text-sm text-[var(--gray)]">
+                      Nenhum evento registrado ainda. A mesa continua operavel assim que o primeiro evento entrar.
+                    </div>
+                  )}
+
+                  {recentEvents.map((event: any, index: number) => (
+                    <div
+                      key={event.id}
+                      className={`rounded-[22px] border px-4 py-4 ${
+                        event.isOptimistic
+                          ? 'border-yellow-200 bg-yellow-50/80'
+                          : index === 0
+                            ? 'border-[var(--verde)]/25 bg-[rgba(34,139,82,0.05)]'
+                            : 'border-[var(--border)] bg-white'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-semibold text-[var(--black)]">{event.description || event.eventType || 'Evento registrado'}</p>
+                          <p className="mt-2 text-[11px] uppercase tracking-[0.25em] text-[var(--gray)]">
+                            P{event.period ?? selectedPeriod} · {event.clockTime || clockTime}
+                          </p>
+                        </div>
+                        {event.isOptimistic ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-yellow-700">
+                            <Clock3 className="h-3 w-3" />
+                            Sincronizando
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-[var(--gray-l)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+                            {event.teamName || 'Mesa'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="fgb-label text-[var(--gray)]">Leitura Rapida</p>
+                    <h2 className="mt-2 text-2xl font-black uppercase tracking-wide text-[var(--black)]">
+                      Lideres e publicacao
+                    </h2>
+                  </div>
+                  <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+                    dados reais
+                  </span>
+                </div>
+                <div className="mt-5 space-y-3">
+                  {(data.boxScore?.players || []).slice(0, 8).map((player: any) => (
+                    <div key={player.id} className="grid grid-cols-[1fr_auto] gap-3 rounded-2xl border border-[var(--border)] px-4 py-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--black)]">{player.athleteName || 'Atleta'}</p>
+                        <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[var(--gray)]">{player.teamName || 'Equipe'}</p>
+                      </div>
+                      <div className="text-right text-sm text-[var(--black)]">
+                        <p><strong>{player.points ?? 0}</strong> pts</p>
+                        <p>{player.reboundsTotal ?? 0} reb · {player.assists ?? 0} ast</p>
+                      </div>
+                    </div>
+                  ))}
+                  {(data.boxScore?.players || []).length === 0 && (
+                    <div className="rounded-2xl border border-dashed border-[var(--border)] bg-[var(--gray-l)] px-4 py-5 text-sm text-[var(--gray)]">
+                      Os lideres aparecerao aqui assim que os eventos forem consolidando o box score.
+                    </div>
+                  )}
+                </div>
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <button onClick={() => doLiveActionDirect('publish')} className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">
+                    Publicar no site
+                  </button>
+                  <Link href={`/games/${gameId}/live`} className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                    Ver publico
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -1007,7 +1481,7 @@ export function LiveGameAdminView({
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {(data.boxScore?.periods || []).map((period: any) => (
                 <div key={period.id} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
-                  Período {period.period}: {period.homePoints} × {period.awayPoints}
+                  PerÃ­odo {period.period}: {period.homePoints} Ã— {period.awayPoints}
                 </div>
               ))}
             </div>
@@ -1019,13 +1493,13 @@ export function LiveGameAdminView({
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Súmula oficial</h2>
+              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">SÃºmula oficial</h2>
               <button onClick={exportReportPdf} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Baixar PDF</button>
             </div>
             <div className="mt-5 space-y-3">
               {(data.boxScore?.teams || []).map((team: any) => (
                 <div key={team.id} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
-                  <strong>{team.teamName}</strong>: {team.points} pts · {team.assists} ast · {team.reboundsTotal} reb · {team.steals} stl
+                  <strong>{team.teamName}</strong>: {team.points} pts Â· {team.assists} ast Â· {team.reboundsTotal} reb Â· {team.steals} stl
                 </div>
               ))}
             </div>
@@ -1041,7 +1515,7 @@ export function LiveGameAdminView({
                   </div>
                   <div className="text-right text-sm text-[var(--black)]">
                     <p><strong>{player.points}</strong> pts</p>
-                    <p>{player.reboundsTotal} reb · {player.assists} ast</p>
+                    <p>{player.reboundsTotal} reb Â· {player.assists} ast</p>
                   </div>
                 </div>
               ))}
@@ -1060,7 +1534,7 @@ export function LiveGameAdminView({
                   <p className="text-sm font-semibold text-[var(--black)]">{log.description}</p>
                   <span className="text-xs text-[var(--gray)]">{new Date(log.createdAt).toLocaleString('pt-BR')}</span>
                 </div>
-                <p className="mt-1 text-xs text-[var(--gray)]">{log.actionType} · {log.targetEntity}</p>
+                <p className="mt-1 text-xs text-[var(--gray)]">{log.actionType} Â· {log.targetEntity}</p>
               </div>
             ))}
           </div>
@@ -1069,6 +1543,7 @@ export function LiveGameAdminView({
     </div>
   )
 }
+
 
 
 
