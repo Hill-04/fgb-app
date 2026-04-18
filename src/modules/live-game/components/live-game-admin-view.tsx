@@ -450,7 +450,8 @@ export function LiveGameAdminView({
   championshipId?: string
 }) {
   const [data, setData] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+  const [isRefreshingInBackground, setIsRefreshingInBackground] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [selectedTeamId, setSelectedTeamId] = useState('')
@@ -477,8 +478,16 @@ export function LiveGameAdminView({
     setData(envelope.snapshot)
   }
 
-  const load = async () => {
-    setLoading(true)
+  const load = async ({ background = false }: { background?: boolean } = {}) => {
+    const hasVisibleSnapshot = Boolean(confirmedSnapshotRef.current || data)
+    const shouldUseBackgroundRefresh = background || hasVisibleSnapshot
+
+    if (shouldUseBackgroundRefresh) {
+      setIsRefreshingInBackground(true)
+    } else {
+      setIsInitialLoading(true)
+    }
+
     try {
       const response = await fetch(endpoint, { cache: 'no-store' })
       const payload = await response.json().catch(() => ({}))
@@ -515,19 +524,23 @@ export function LiveGameAdminView({
     } catch (currentError: any) {
       setError(currentError.message)
     } finally {
-      setLoading(false)
+      if (shouldUseBackgroundRefresh) {
+        setIsRefreshingInBackground(false)
+      } else {
+        setIsInitialLoading(false)
+      }
     }
   }
 
   useEffect(() => {
-    load()
+    void load()
   }, [endpoint])
 
   useEffect(() => {
     if (mode !== 'live') return
 
     const interval = setInterval(() => {
-      void load()
+      void load({ background: true })
     }, 5000)
 
     return () => clearInterval(interval)
@@ -751,9 +764,9 @@ export function LiveGameAdminView({
     doc.save(`relatorio-oficial-${data.game.homeTeam.name}-vs-${data.game.awayTeam.name}.pdf`)
   }
 
-  if (loading) {
+  if (isInitialLoading && !data) {
     return (
-      <div className="flex min-h-[320px] items-center justify-center gap-3">
+      <div className="flex min-h-[320px] flex-col items-center justify-center gap-4 rounded-[28px] border border-[var(--border)] bg-white p-8 text-center shadow-sm">
         <Loader2 className="h-8 w-8 animate-spin text-[var(--verde)]" />
         <span className="fgb-label text-[var(--gray)]">Carregando módulo live</span>
       </div>
@@ -761,7 +774,20 @@ export function LiveGameAdminView({
   }
 
   if (!data) {
-    return <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-red-700">{error || 'Falha ao carregar jogo.'}</div>
+    return (
+      <div className="rounded-[28px] border border-red-200 bg-red-50 p-8 text-center shadow-sm">
+        <p className="text-sm font-semibold text-red-700">{error || 'Falha ao carregar jogo.'}</p>
+        <button
+          onClick={() => {
+            setError('')
+            void load()
+          }}
+          className="mt-4 rounded-xl bg-red-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    )
   }
 
   const { game } = data
@@ -779,6 +805,12 @@ export function LiveGameAdminView({
             <span className="ml-3 inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-yellow-700">
               <Clock3 className="h-3 w-3" />
               {pendingMutations.length} sincronizando
+            </span>
+          )}
+          {mode === 'live' && isRefreshingInBackground && pendingMutations.length === 0 && (
+            <span className="ml-3 inline-flex items-center gap-1 rounded-full border border-[var(--border)] bg-white px-2 py-1 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+              <Loader2 className="h-3 w-3 animate-spin" />
+              Sincronizando
             </span>
           )}
         </p>
@@ -1026,3 +1058,6 @@ export function LiveGameAdminView({
     </div>
   )
 }
+
+
+
