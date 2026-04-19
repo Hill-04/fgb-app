@@ -3,6 +3,42 @@ import { createClient } from '@/lib/supabase/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
+function toSafeInt(value: unknown) {
+  const parsed = Number.parseInt(String(value ?? 0), 10)
+  return Number.isFinite(parsed) ? Math.max(parsed, 0) : 0
+}
+
+function sanitizeIncomingStat(stat: Record<string, unknown>) {
+  const fgMade = toSafeInt(stat.fg_made)
+  const fgAttempted = Math.max(toSafeInt(stat.fg_attempted), fgMade)
+  const threeMade = Math.min(toSafeInt(stat.three_made), fgMade)
+  const threeAttempted = Math.max(toSafeInt(stat.three_attempted), threeMade)
+  const ftMade = toSafeInt(stat.ft_made)
+  const ftAttempted = Math.max(toSafeInt(stat.ft_attempted), ftMade)
+
+  return {
+    athlete_id: stat.athlete_id,
+    team_id: stat.team_id,
+    minutes_played: toSafeInt(stat.minutes_played),
+    dnp: false,
+    points: (fgMade - threeMade) * 2 + threeMade * 3 + ftMade,
+    rebounds_offensive: toSafeInt(stat.rebounds_offensive),
+    rebounds_defensive: toSafeInt(stat.rebounds_defensive),
+    assists: toSafeInt(stat.assists),
+    steals: toSafeInt(stat.steals),
+    blocks: toSafeInt(stat.blocks),
+    turnovers: toSafeInt(stat.turnovers),
+    fouls: toSafeInt(stat.fouls),
+    fg_made: fgMade,
+    fg_attempted: fgAttempted,
+    three_made: threeMade,
+    three_attempted: threeAttempted,
+    ft_made: ftMade,
+    ft_attempted: ftAttempted,
+    dunks: toSafeInt(stat.dunks),
+  }
+}
+
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -19,7 +55,17 @@ export async function GET(
     // 1. Buscar o jogo para saber os times
     const { data: game, error: gameError } = await (supabase as any)
       .from('games')
-      .select('id, home_team_id, away_team_id, home_score, away_score, status')
+      .select(`
+        id,
+        home_team_id,
+        away_team_id,
+        home_score,
+        away_score,
+        status,
+        venue,
+        homeTeam:teams!home_team_id (id, name, short_name),
+        awayTeam:teams!away_team_id (id, name, short_name)
+      `)
       .eq('id', id)
       .single()
 
@@ -108,7 +154,7 @@ export async function POST(
       }
 
       statsToInsert.push({
-        ...s,
+        ...sanitizeIncomingStat(s),
         game_id: gameId
       })
     }

@@ -321,13 +321,17 @@ model GameEvent {
   gameId             String
   liveSessionId      String
   sequenceNumber     Int
+  sequence           Int?
   period             Int
   clockTime          String
+  clockMs            Int?
   eventType          String
   teamId             String?
   athleteId          String?
   secondaryAthleteId String?
   pointsDelta        Int?
+  homeScoreAfter     Int?
+  awayScoreAfter     Int?
   payloadJson        String?
   createdByUserId    String?
   createdAt          DateTime  @default(now())

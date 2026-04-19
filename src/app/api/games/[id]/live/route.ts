@@ -17,9 +17,22 @@ export async function GET(
     const rawSnapshot = await LiveGameService.getSnapshot(id, true)
     const officialSnapshot = buildPublicLiveSnapshot(rawSnapshot)
     const compatibilityPayload = buildLegacyPublicLiveCompatSnapshot(officialSnapshot)
+    const enrichedPayload = {
+      ...compatibilityPayload,
+      game: {
+        ...compatibilityPayload.game,
+        currentPeriod: rawSnapshot.game.currentPeriod ?? compatibilityPayload.summary?.currentPeriod ?? null,
+        clockDisplay: rawSnapshot.game.clockDisplay ?? null,
+      },
+      summary: {
+        ...compatibilityPayload.summary,
+        currentPeriod: rawSnapshot.game.currentPeriod ?? compatibilityPayload.summary?.currentPeriod ?? null,
+        clockDisplay: rawSnapshot.game.clockDisplay ?? null,
+      },
+    }
 
     // Legacy compatibility route. Official public live endpoint is /api/public/games/[id]/live.
-    return NextResponse.json(compatibilityPayload, {
+    return NextResponse.json(enrichedPayload, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate',
         Deprecation: 'true',
