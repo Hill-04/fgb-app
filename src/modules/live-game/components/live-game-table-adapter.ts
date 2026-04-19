@@ -17,6 +17,12 @@ export type LiveTablePlayer = {
   steals: number
   blocks: number
   turnovers: number
+  twoPtMade: number
+  twoPtAttempted: number
+  threePtMade: number
+  threePtAttempted: number
+  freeThrowsMade: number
+  freeThrowsAttempted: number
   disqualified: boolean
 }
 
@@ -45,12 +51,25 @@ export type LiveTableEvent = {
 
 export type LiveTableBoxRow = {
   id: string
+  teamSide: 'home' | 'away'
+  jerseyNumber: number | null
   athleteName: string
   teamName: string
   points: number
   rebounds: number
   assists: number
+  steals: number
+  blocks: number
+  turnovers: number
   fouls: number
+  twoPtMade: number
+  twoPtAttempted: number
+  threePtMade: number
+  threePtAttempted: number
+  freeThrowsMade: number
+  freeThrowsAttempted: number
+  isOnCourt: boolean
+  disqualified: boolean
 }
 
 export type LiveTablePeriodScore = {
@@ -191,6 +210,12 @@ function buildTeam(
         steals: statLine?.steals ?? 0,
         blocks: statLine?.blocks ?? 0,
         turnovers: statLine?.turnovers ?? 0,
+        twoPtMade: statLine?.twoPtMade ?? 0,
+        twoPtAttempted: statLine?.twoPtAttempted ?? 0,
+        threePtMade: statLine?.threePtMade ?? 0,
+        threePtAttempted: statLine?.threePtAttempted ?? 0,
+        freeThrowsMade: statLine?.freeThrowsMade ?? 0,
+        freeThrowsAttempted: statLine?.freeThrowsAttempted ?? 0,
         disqualified: Boolean(statLine?.disqualified),
       } satisfies LiveTablePlayer
     }),
@@ -240,22 +265,29 @@ export function buildLiveGameTableModel(snapshot: any): LiveGameTableModel {
         isOptimistic: Boolean(event.isOptimistic),
         teamName: event.teamName || 'Mesa',
       })),
-    boxRows: [...(snapshot?.boxScore?.players || [])]
-      .sort((left: any, right: any) => {
-        if ((right.points ?? 0) !== (left.points ?? 0)) return (right.points ?? 0) - (left.points ?? 0)
-        if ((right.reboundsTotal ?? 0) !== (left.reboundsTotal ?? 0)) {
-          return (right.reboundsTotal ?? 0) - (left.reboundsTotal ?? 0)
-        }
-        return String(left.athleteName || '').localeCompare(String(right.athleteName || ''))
-      })
-      .map((player: any) => ({
+    boxRows: [home, away].flatMap((team) =>
+      team.players.map((player) => ({
         id: player.id,
-        athleteName: player.athleteName || 'Atleta',
-        teamName: player.teamName || 'Equipe',
-        points: player.points ?? 0,
-        rebounds: player.reboundsTotal ?? 0,
-        assists: player.assists ?? 0,
-        fouls: player.fouls ?? 0,
-      })),
+        teamSide: team.side,
+        jerseyNumber: player.jerseyNumber,
+        athleteName: player.name,
+        teamName: team.name,
+        points: player.points,
+        rebounds: player.rebounds,
+        assists: player.assists,
+        steals: player.steals,
+        blocks: player.blocks,
+        turnovers: player.turnovers,
+        fouls: player.fouls,
+        twoPtMade: player.twoPtMade,
+        twoPtAttempted: player.twoPtAttempted,
+        threePtMade: player.threePtMade,
+        threePtAttempted: player.threePtAttempted,
+        freeThrowsMade: player.freeThrowsMade,
+        freeThrowsAttempted: player.freeThrowsAttempted,
+        isOnCourt: player.isOnCourt,
+        disqualified: player.disqualified,
+      }))
+    ),
   }
 }

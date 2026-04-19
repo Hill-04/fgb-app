@@ -1015,93 +1015,95 @@ export function LiveGameAdminView({
             onControlEvent={handleControlEvent}
           />
 
-          <div className="flex flex-wrap gap-2 rounded-[18px] border border-[rgba(12,28,55,0.12)] bg-white p-2 shadow-sm">
-            {[
-              ['home', `Mandante · ${tableModel.home.shortName}`],
-              ['away', `Visitante · ${tableModel.away.shortName}`],
-              ['log', 'Log'],
-              ['box', 'Box score'],
-            ].map(([tabId, label]) => (
-              <button
-                key={tabId}
-                type="button"
-                onClick={() => setActiveTab(tabId as LiveTableTab)}
-                className={`rounded-[14px] px-4 py-3 text-[11px] font-black uppercase tracking-[0.24em] transition ${
-                  activeTab === tabId
-                    ? 'bg-[var(--black)] text-[#ffe28a] shadow-[0_10px_24px_rgba(10,14,26,0.16)]'
-                    : 'bg-[var(--gray-l)] text-[var(--gray)] hover:text-[var(--black)]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="overflow-hidden rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] shadow-[0_20px_48px_rgba(4,10,22,0.28)]">
+            <div className="flex gap-1.5 px-2 pt-2">
+              {[
+                ['home', `🔵 ${tableModel.home.shortName}`],
+                ['away', `🔴 ${tableModel.away.shortName}`],
+                ['log', '📋 Log'],
+                ['box', '📊 Boxscore'],
+              ].map(([tabId, label]) => (
+                <button
+                  key={tabId}
+                  type="button"
+                  onClick={() => setActiveTab(tabId as LiveTableTab)}
+                  className={`flex-1 rounded-t-[8px] border-b-2 px-2 py-2 text-[12px] font-bold uppercase tracking-[0.04em] transition ${
+                    activeTab === tabId
+                      ? 'border-b-[#f5c849] bg-white/10 text-[#f5c849]'
+                      : 'border-b-transparent bg-white/[0.03] text-white/50'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {activeTab === 'home' && (
+              <LiveTeamPanelFiba
+                team={tableModel.home}
+                selectedAthleteId={selectedAthleteId}
+                onSelectAthlete={(athleteId) => {
+                  setSelectedTeamId(tableModel.home.id)
+                  setSelectedAthleteId(athleteId)
+                }}
+                onPlayerAction={(player, action) => handlePlayerQuickAction(tableModel.home.id, player, action)}
+              />
+            )}
+
+            {activeTab === 'away' && (
+              <LiveTeamPanelFiba
+                team={tableModel.away}
+                selectedAthleteId={selectedAthleteId}
+                onSelectAthlete={(athleteId) => {
+                  setSelectedTeamId(tableModel.away.id)
+                  setSelectedAthleteId(athleteId)
+                }}
+                onPlayerAction={(player, action) => handlePlayerQuickAction(tableModel.away.id, player, action)}
+              />
+            )}
+
+            {activeTab === 'log' && <LiveEventLogFiba events={tableModel.events} />}
+            {activeTab === 'box' && <LiveBoxscoreFiba table={tableModel} />}
           </div>
 
-          {activeTab === 'home' && (
-            <LiveTeamPanelFiba
-              team={tableModel.home}
-              selectedAthleteId={selectedAthleteId}
-              onSelectAthlete={(athleteId) => {
-                setSelectedTeamId(tableModel.home.id)
-                setSelectedAthleteId(athleteId)
-              }}
-              onPlayerAction={(player, action) => handlePlayerQuickAction(tableModel.home.id, player, action)}
-            />
-          )}
-
-          {activeTab === 'away' && (
-            <LiveTeamPanelFiba
-              team={tableModel.away}
-              selectedAthleteId={selectedAthleteId}
-              onSelectAthlete={(athleteId) => {
-                setSelectedTeamId(tableModel.away.id)
-                setSelectedAthleteId(athleteId)
-              }}
-              onPlayerAction={(player, action) => handlePlayerQuickAction(tableModel.away.id, player, action)}
-            />
-          )}
-
-          {activeTab === 'log' && <LiveEventLogFiba events={tableModel.events} />}
-          {activeTab === 'box' && <LiveBoxscoreFiba table={tableModel} />}
-
-          <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
-            <div className="rounded-[22px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <div className="grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
+            <div className="rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] p-4 text-white shadow-[0_18px_40px_rgba(0,0,0,0.2)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="fgb-label text-[var(--gray)]">Selecao atual</p>
-                  <h3 className="mt-2 text-2xl font-black uppercase tracking-[0.08em] text-[var(--black)]">
+                  <div className="text-[10px] uppercase tracking-[0.24em] text-white/40">Seleção atual</div>
+                  <div className="mt-2 text-[22px] font-black uppercase tracking-[0.05em] text-white">
                     {selectedAthlete?.name || 'Nenhum atleta selecionado'}
-                  </h3>
-                  <p className="mt-1 text-sm text-[var(--gray)]">
+                  </div>
+                  <div className="mt-1 text-sm text-white/45">
                     {selectedTeam?.name || 'Equipe'} · camisa {selectedAthlete?.jerseyNumber ?? '--'}
-                  </p>
+                  </div>
                 </div>
-                <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                  fallback seguro
+                <span className="rounded-full bg-white/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-white/55">
+                  fallback
                 </span>
               </div>
 
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <select
                   value={selectedTeamId}
                   onChange={(event) => {
                     setSelectedTeamId(event.target.value)
                     setSelectedAthleteId('')
                   }}
-                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                  className="h-11 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none"
                 >
-                  <option value="">Equipe</option>
-                  <option value={tableModel.home.id}>{tableModel.home.name}</option>
-                  <option value={tableModel.away.id}>{tableModel.away.name}</option>
+                  <option value="" className="text-black">Equipe</option>
+                  <option value={tableModel.home.id} className="text-black">{tableModel.home.name}</option>
+                  <option value={tableModel.away.id} className="text-black">{tableModel.away.name}</option>
                 </select>
                 <select
                   value={selectedAthleteId}
                   onChange={(event) => setSelectedAthleteId(event.target.value)}
-                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                  className="h-11 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none"
                 >
-                  <option value="">Atleta</option>
+                  <option value="" className="text-black">Atleta</option>
                   {(selectedTeam?.players || []).map((player) => (
-                    <option key={player.id} value={player.athleteId}>
+                    <option key={player.id} value={player.athleteId} className="text-black">
                       {player.jerseyNumber ?? '--'} · {player.name}
                     </option>
                   ))}
@@ -1109,44 +1111,39 @@ export function LiveGameAdminView({
                 <input
                   value={clockTime}
                   onChange={(event) => setClockTime(event.target.value)}
-                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                  className="h-11 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none"
                 />
                 <input
                   type="number"
                   min={1}
                   value={selectedPeriod}
                   onChange={(event) => setSelectedPeriod(Number(event.target.value) || 1)}
-                  className="h-12 rounded-2xl border border-[var(--border)] px-4 text-sm outline-none"
+                  className="h-11 rounded-xl border border-white/10 bg-black/20 px-4 text-sm text-white outline-none"
                 />
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-3">
-                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Pts</p>
-                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.points ?? 0}</p>
-                </div>
-                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Reb</p>
-                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.rebounds ?? 0}</p>
-                </div>
-                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Ast</p>
-                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.assists ?? 0}</p>
-                </div>
-                <div className="rounded-2xl bg-[var(--gray-l)] px-4 py-3 text-center">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Faltas</p>
-                  <p className="mt-1 text-lg font-black text-[var(--black)]">{selectedAthlete?.fouls ?? 0}</p>
-                </div>
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {[
+                  ['Pts', selectedAthlete?.points ?? 0],
+                  ['Reb', selectedAthlete?.rebounds ?? 0],
+                  ['Ast', selectedAthlete?.assists ?? 0],
+                  ['Faltas', selectedAthlete?.fouls ?? 0],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-[10px] bg-white/8 px-3 py-3 text-center">
+                    <div className="text-[9px] uppercase tracking-[0.18em] text-white/40">{label}</div>
+                    <div className="mt-1 text-lg font-black text-white">{value}</div>
+                  </div>
+                ))}
               </div>
             </div>
 
-            <div className="rounded-[22px] border border-[var(--border)] bg-white p-5 shadow-sm">
+            <div className="rounded-[14px] border border-white/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] p-4 text-white shadow-[0_18px_40px_rgba(0,0,0,0.2)]">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="fgb-label text-[var(--gray)]">Acoes auxiliares</p>
-                  <h3 className="mt-2 text-2xl font-black uppercase tracking-[0.08em] text-[var(--black)]">
-                    Mesa manual e publicacao
-                  </h3>
+                  <div className="text-[10px] uppercase tracking-[0.24em] text-white/40">Console auxiliar</div>
+                  <div className="mt-2 text-[22px] font-black uppercase tracking-[0.05em] text-white">
+                    Mesa manual e publicação
+                  </div>
                 </div>
                 <button
                   onClick={async () => {
@@ -1154,13 +1151,13 @@ export function LiveGameAdminView({
                     if (!last) return
                     await doLiveActionDirect('revert-event', { eventId: last.id, reason: 'Desfazer rapido da mesa' })
                   }}
-                  className="rounded-xl border border-[var(--border)] px-4 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--black)]"
+                  className="rounded-lg border border-white/10 bg-white/8 px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-white"
                 >
-                  Desfazer ultimo
+                  Desfazer último
                 </button>
               </div>
 
-              <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
                 {QUICK_EVENTS.filter(([_, eventType]) => !['TIMEOUT_CONFIRMED'].includes(eventType)).map(([label, eventType, pointsDelta]) => (
                   <button
                     key={label}
@@ -1174,25 +1171,25 @@ export function LiveGameAdminView({
                         clockTime,
                       })
                     }
-                    className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.22em] text-[var(--black)] transition hover:border-[var(--verde)] hover:bg-white"
+                    className="rounded-[10px] border border-white/10 bg-white/8 px-3 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-white transition hover:bg-white/12"
                   >
                     {label}
                   </button>
                 ))}
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-wrap gap-3">
                 <button
                   onClick={() => doLiveActionDirect('publish')}
-                  className="rounded-xl bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white"
+                  className="rounded-lg bg-[var(--verde)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white"
                 >
                   Publicar no site
                 </button>
                 <Link
                   href={`/games/${gameId}/live`}
-                  className="rounded-xl border border-[var(--border)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
+                  className="rounded-lg border border-white/10 bg-white/6 px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white"
                 >
-                  Ver publico
+                  Ver público
                 </Link>
               </div>
             </div>

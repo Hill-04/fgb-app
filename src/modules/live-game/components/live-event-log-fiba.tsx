@@ -1,67 +1,62 @@
 import { Clock3 } from 'lucide-react'
 import type { LiveTableEvent } from './live-game-table-adapter'
 
-const SIDE_STYLES: Record<LiveTableEvent['teamSide'], string> = {
-  home: 'border-l-[#7fb3ff] bg-[#0f2348]',
-  away: 'border-l-[#ff9dac] bg-[#431722]',
-  neutral: 'border-l-[#ffd76c] bg-white/[0.05]',
+const ICON_MAP: Record<string, string> = {
+  '2PTS': '🏀',
+  '3PTS': '🎯',
+  FT: '⭕',
+  F: '✋',
+  REB: '📌',
+  AST: '🤝',
+  STL: '🦅',
+  BLK: '🛡️',
+  TOV: '💨',
+  SUB: '🔄',
+  TO: '⏸️',
+  'P+': '▶️',
+  'P-': '🔔',
+  INI: '▶️',
+  HT: '🏁',
+  RET: '↩️',
+  FIM: '🏆',
+  EV: '•',
 }
 
 export function LiveEventLogFiba({ events }: { events: LiveTableEvent[] }) {
   return (
-    <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.35em] text-white/45">
-            Log da mesa
-          </div>
-          <h3 className="mt-2 text-[24px] font-black uppercase tracking-[0.08em] text-white">
-            Ultimos eventos
-          </h3>
-        </div>
-        <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white/65">
-          {events.length} itens
-        </span>
+    <div className="rounded-b-[14px] border border-t-0 border-white/8 bg-white/[0.04] p-3">
+      <div className="mb-3 text-[11px] uppercase tracking-[0.1em] text-white/45">
+        LOG DA PARTIDA ({events.length} eventos)
       </div>
 
-      <div className="mt-4 space-y-2">
+      <div className="h-[320px] space-y-1 overflow-y-auto pr-1">
         {events.length === 0 && (
-          <div className="rounded-[14px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-white/40">
-            Nenhum evento registrado ainda.
+          <div className="mt-10 text-center text-[13px] text-white/30">
+            Nenhum evento ainda.
+            <br />
+            Inicie o jogo para registrar.
           </div>
         )}
 
         {events.map((event, index) => (
           <div
             key={event.id}
-            className={`rounded-[14px] border border-white/8 border-l-4 px-4 py-3 ${SIDE_STYLES[event.teamSide]} ${index === 0 ? 'shadow-[0_12px_28px_rgba(0,0,0,0.18)]' : ''}`}
+            className={`flex items-center gap-2 rounded-[6px] px-3 py-2 text-[12px] ${
+              index === 0 ? 'border-l-2 border-[#f5c849] bg-[#f5c849]/12 text-[#ffe57a]' : 'bg-white/[0.04] text-white/75'
+            }`}
           >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="rounded-md bg-white/10 px-2 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[#ffe28a]">
-                    {event.icon}
-                  </span>
-                  <span className="truncate text-sm font-semibold text-white">
-                    {event.description}
-                  </span>
-                </div>
-                <p className="mt-2 text-[10px] uppercase tracking-[0.24em] text-white/40">
-                  {event.periodLabel} · {event.clockTime} · {event.teamName}
-                </p>
-              </div>
-
-              {event.isOptimistic ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-yellow-700">
-                  <Clock3 className="h-3 w-3" />
-                  Sync
-                </span>
-              ) : (
-                <span className="rounded-full bg-white/10 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-white/55">
-                  OK
-                </span>
-              )}
-            </div>
+            <span className="flex-shrink-0 text-[14px]">{ICON_MAP[event.icon] || '•'}</span>
+            <span className="min-w-[38px] flex-shrink-0 text-[11px] text-white/35">{event.clockTime}</span>
+            <span className="min-w-0 flex-1 truncate">
+              {event.teamSide === 'home' ? '🔵 ' : event.teamSide === 'away' ? '🔴 ' : ''}
+              {event.description}
+            </span>
+            {event.isOptimistic && (
+              <span className="inline-flex flex-shrink-0 items-center gap-1 rounded-full bg-yellow-100 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-yellow-700">
+                <Clock3 className="h-3 w-3" />
+                Sync
+              </span>
+            )}
           </div>
         ))}
       </div>

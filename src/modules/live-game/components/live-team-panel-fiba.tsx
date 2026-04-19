@@ -25,7 +25,7 @@ function ActionButton({
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`h-6 min-w-[28px] rounded-md border px-2 text-[10px] font-black uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-35 ${colorClass}`}
+      className={`h-[22px] w-[28px] rounded-[4px] border text-[10px] font-black transition disabled:cursor-not-allowed disabled:opacity-35 ${colorClass}`}
     >
       {label}
     </button>
@@ -35,11 +35,13 @@ function ActionButton({
 function PlayerRow({
   player,
   selected,
+  teamTone,
   onSelect,
   onAction,
 }: {
   player: LiveTablePlayer
   selected: boolean
+  teamTone: 'home' | 'away'
   onSelect: () => void
   onAction: (action: PlayerActionKey) => void
 }) {
@@ -48,50 +50,43 @@ function PlayerRow({
 
   return (
     <div
-      className={`w-full rounded-[14px] border px-3 py-3 text-left transition ${
-        selected
-          ? 'border-[#ffd76c]/40 bg-white/10 shadow-[0_10px_24px_rgba(0,0,0,0.18)]'
-          : 'border-white/8 bg-white/[0.04] hover:border-white/18 hover:bg-white/[0.06]'
-      }`}
+      className={`rounded-[8px] px-2 py-2 transition ${
+        player.disqualified
+          ? 'bg-red-500/10 opacity-60'
+          : player.isOnCourt
+            ? 'border border-white/12 bg-white/8'
+            : 'bg-white/[0.03]'
+      } ${selected ? 'ring-1 ring-[#f5c849]' : ''}`}
     >
-      <button type="button" onClick={onSelect} className="w-full text-left">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/10 text-[11px] font-black text-white">
-            {player.jerseyNumber ?? '--'}
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-white">
-              {player.name}
-            </div>
-            <div className="mt-1 flex flex-wrap gap-2 text-[10px] uppercase tracking-[0.18em] text-white/40">
-              <span>{player.isOnCourt ? 'Em quadra' : 'Banco'}</span>
-              {player.isStarter && <span>Titular</span>}
-              {player.isCaptain && <span>Capitao</span>}
-              {!player.isAvailable && <span>Indisponivel</span>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-1 text-[10px] font-black uppercase tracking-[0.12em] text-white/65">
-            <span className="rounded bg-white/8 px-2 py-1 text-center text-[#ffd76c]">{player.points}P</span>
-            <span className="rounded bg-white/8 px-2 py-1 text-center">{player.rebounds}R</span>
-            <span className="rounded bg-white/8 px-2 py-1 text-center">{player.assists}A</span>
-            <span
-              className={`rounded px-2 py-1 text-center ${
-                player.disqualified
-                  ? 'bg-[#7c1f2f] text-[#ffb0bf]'
-                  : inTrouble
-                    ? 'bg-[#604215] text-[#ffd76c]'
-                    : 'bg-white/8'
-              }`}
-            >
-              {player.fouls}F
-            </span>
-          </div>
+      <div className="flex items-center gap-2">
+        <div
+          className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[4px] text-[11px] font-extrabold text-white ${
+            teamTone === 'home' ? 'bg-[#0e3f80]' : 'bg-[#9f2437]'
+          }`}
+        >
+          {player.jerseyNumber ?? '--'}
         </div>
-      </button>
 
-      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
+          <div className={`truncate text-[12px] font-semibold ${player.isOnCourt ? 'text-white' : 'text-white/55'}`}>
+            {player.name}
+          </div>
+          <div className="text-[10px] text-white/30">
+            {player.isOnCourt ? 'Em quadra' : 'Banco'}
+          </div>
+        </button>
+
+        <div className="flex items-center gap-1 text-[10px] font-black uppercase text-white/55">
+          <span className={`rounded px-1.5 py-0.5 ${player.points > 0 ? 'bg-white/10 text-[#f5c849]' : 'bg-white/6'}`}>{player.points}P</span>
+          <span className="rounded bg-white/6 px-1.5 py-0.5">{player.rebounds}R</span>
+          <span className="rounded bg-white/6 px-1.5 py-0.5">{player.assists}A</span>
+          <span className={`rounded px-1.5 py-0.5 ${player.disqualified ? 'bg-[#7c1f2f] text-[#ffb0bf]' : inTrouble ? 'bg-[#604215] text-[#ffd76c]' : 'bg-white/6'}`}>
+            {player.fouls}F
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap gap-1">
         {player.isOnCourt && (
           <>
             <ActionButton label="+2" colorClass="border-[#2ecc71]/40 bg-[#2ecc71]/12 text-[#8ff0b6]" onClick={() => onAction('2pts')} disabled={!canOperate} />
@@ -119,53 +114,35 @@ export function LiveTeamPanelFiba({
   onSelectAthlete,
   onPlayerAction,
 }: LiveTeamPanelFibaProps) {
-  const onCourt = team.players.filter((player) => player.isOnCourt)
-  const bench = team.players.filter((player) => !player.isOnCourt)
+  const teamTone = team.side === 'home' ? 'home' : 'away'
 
   return (
-    <div className="rounded-[18px] border border-white/8 bg-white/[0.04] p-4 shadow-[0_18px_40px_rgba(0,0,0,0.18)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] font-black uppercase tracking-[0.35em] text-white/45">
-            {team.side === 'home' ? 'Mandante' : 'Visitante'}
-          </div>
-          <h3 className="mt-2 text-[26px] font-black uppercase tracking-[0.08em] text-white">
-            {team.name}
-          </h3>
-          <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-white/35">
-            {team.coachName}
-          </p>
-        </div>
-        <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.28em] text-white/65">
-          {team.players.length} atletas
-        </div>
+    <div className="rounded-b-[14px] border border-t-0 border-white/8 bg-white/[0.04] p-3">
+      <div className="mb-3 text-[11px] uppercase tracking-[0.1em] text-white/45">
+        JOGADORES — EM QUADRA
+        <span className="ml-2 text-white/25">
+          clique nas ações: +2 +3 LL = pontos | F = falta | R = rebote | A = assistência | ↑↓ = substituição
+        </span>
       </div>
 
-      <div className="mt-4 grid gap-2 text-[10px] uppercase tracking-[0.18em] text-white/35 sm:grid-cols-2">
-        <div className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2">
-          Em quadra · {onCourt.length}
-        </div>
-        <div className="rounded-xl border border-white/8 bg-white/[0.03] px-3 py-2">
-          Banco · {bench.length}
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-2">
+      <div className="grid gap-2 lg:grid-cols-2">
         {team.players.map((player) => (
           <PlayerRow
             key={player.id}
             player={player}
             selected={selectedAthleteId === player.athleteId}
+            teamTone={teamTone}
             onSelect={() => onSelectAthlete(player.athleteId)}
             onAction={(action) => onPlayerAction(player, action)}
           />
         ))}
-        {team.players.length === 0 && (
-          <div className="rounded-[14px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-white/40">
-            Sem roster carregado para esta equipe.
-          </div>
-        )}
       </div>
+
+      {team.players.length === 0 && (
+        <div className="rounded-[8px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-white/40">
+          Sem roster carregado para esta equipe.
+        </div>
+      )}
     </div>
   )
 }
