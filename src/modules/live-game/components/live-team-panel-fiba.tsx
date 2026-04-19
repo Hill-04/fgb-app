@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import type { LiveTablePlayer, LiveTableTeam } from './live-game-table-adapter'
 
 type PlayerActionKey = '2pts' | '3pts' | 'ft' | 'foul' | 'reb' | 'ast' | 'sub'
@@ -9,138 +12,182 @@ type LiveTeamPanelFibaProps = {
   onPlayerAction: (player: LiveTablePlayer, action: PlayerActionKey) => void
 }
 
-function ActionButton({
-  label,
-  colorClass,
-  onClick,
-  disabled = false,
-}: {
-  label: string
-  colorClass: string
-  onClick: () => void
-  disabled?: boolean
+const FGB = {
+  verde:    '#1B7340',
+  vermelho: '#CC1016',
+  amarelo:  '#F5C200',
+}
+
+function ActionBtn({ label, color, onClick, disabled = false }: {
+  label: string; color: string; onClick: () => void; disabled?: boolean
 }) {
+  const [flash, setFlash] = useState(false)
+  const handle = () => {
+    if (disabled) return
+    setFlash(true)
+    setTimeout(() => setFlash(false), 150)
+    onClick()
+  }
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`h-[22px] w-[28px] rounded-[4px] border text-[10px] font-black transition disabled:cursor-not-allowed disabled:opacity-35 ${colorClass}`}
-    >
+    <button onClick={handle} disabled={disabled} style={{
+      width: 28, height: 24, borderRadius: 4,
+      background: flash ? '#FFFFFF' : `${color}33`,
+      color: flash ? color : color,
+      fontSize: 10, fontWeight: 800, cursor: disabled ? 'not-allowed' : 'pointer',
+      border: `1px solid ${color}66`,
+      transition: 'background .1s, transform .1s',
+      transform: flash ? 'scale(0.88)' : 'scale(1)',
+      fontFamily: "'Barlow Condensed', 'Oswald', sans-serif",
+      opacity: disabled ? 0.3 : 1,
+    }}>
       {label}
     </button>
   )
 }
 
 function PlayerRow({
-  player,
-  selected,
-  teamTone,
-  onSelect,
-  onAction,
+  player, selected, jerseyBg, onSelect, onAction,
 }: {
   player: LiveTablePlayer
   selected: boolean
-  teamTone: 'home' | 'away'
+  jerseyBg: string
   onSelect: () => void
   onAction: (action: PlayerActionKey) => void
 }) {
-  const inTrouble = player.fouls >= 3
-  const canOperate = player.isAvailable && !player.disqualified
+  const inTrouble = player.fouls >= 3 && !player.disqualified
+  const canAct = player.isAvailable && !player.disqualified
 
   return (
-    <div
-      className={`rounded-[8px] px-2 py-2 transition ${
-        player.disqualified
-          ? 'bg-red-500/10 opacity-60'
-          : player.isOnCourt
-            ? 'border border-white/12 bg-white/8'
-            : 'bg-white/[0.03]'
-      } ${selected ? 'ring-1 ring-[#f5c849]' : ''}`}
-    >
-      <div className="flex items-center gap-2">
-        <div
-          className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[4px] text-[11px] font-extrabold text-white ${
-            teamTone === 'home' ? 'bg-[#0e3f80]' : 'bg-[#9f2437]'
-          }`}
-        >
+    <div style={{
+      borderRadius: 8, padding: '7px 8px', marginBottom: 4,
+      background: player.disqualified
+        ? 'rgba(255,0,0,.06)'
+        : player.isOnCourt
+          ? 'rgba(255,255,255,.08)'
+          : 'rgba(255,255,255,.03)',
+      border: selected
+        ? `1px solid ${FGB.amarelo}`
+        : player.isOnCourt
+          ? '1px solid rgba(255,255,255,.12)'
+          : '1px solid transparent',
+      opacity: player.disqualified ? 0.5 : 1,
+      transition: 'all .15s',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {/* Jersey */}
+        <div style={{
+          width: 30, height: 30, borderRadius: 5, background: jerseyBg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 12, fontWeight: 900, color: '#FFF', flexShrink: 0,
+          fontFamily: "'Barlow Condensed', 'Oswald', sans-serif",
+        }}>
           {player.jerseyNumber ?? '--'}
         </div>
 
-        <button type="button" onClick={onSelect} className="min-w-0 flex-1 text-left">
-          <div className={`truncate text-[12px] font-semibold ${player.isOnCourt ? 'text-white' : 'text-white/55'}`}>
+        {/* Nome */}
+        <button onClick={onSelect} style={{
+          flex: 1, minWidth: 0, textAlign: 'left', background: 'none',
+          border: 'none', padding: 0, cursor: 'pointer',
+        }}>
+          <div style={{
+            fontSize: 12, fontWeight: 600,
+            color: player.isOnCourt ? '#FFF' : 'rgba(255,255,255,.5)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
             {player.name}
+            {player.isCaptain && <span style={{ marginLeft: 4, fontSize: 9, color: FGB.amarelo }}>(C)</span>}
           </div>
-          <div className="text-[10px] text-white/30">
+          <div style={{ fontSize: 10, color: 'rgba(255,255,255,.3)' }}>
             {player.isOnCourt ? 'Em quadra' : 'Banco'}
           </div>
         </button>
 
-        <div className="flex items-center gap-1 text-[10px] font-black uppercase text-white/55">
-          <span className={`rounded px-1.5 py-0.5 ${player.points > 0 ? 'bg-white/10 text-[#f5c849]' : 'bg-white/6'}`}>{player.points}P</span>
-          <span className="rounded bg-white/6 px-1.5 py-0.5">{player.rebounds}R</span>
-          <span className="rounded bg-white/6 px-1.5 py-0.5">{player.assists}A</span>
-          <span className={`rounded px-1.5 py-0.5 ${player.disqualified ? 'bg-[#7c1f2f] text-[#ffb0bf]' : inTrouble ? 'bg-[#604215] text-[#ffd76c]' : 'bg-white/6'}`}>
-            {player.fouls}F
-          </span>
+        {/* Mini stats */}
+        <div style={{ display: 'flex', gap: 3, fontSize: 10, fontFamily: "'Barlow Condensed', sans-serif" }}>
+          <span style={{
+            background: player.points > 0 ? 'rgba(245,194,0,.2)' : 'rgba(255,255,255,.06)',
+            color: player.points > 0 ? FGB.amarelo : 'rgba(255,255,255,.5)',
+            padding: '1px 5px', borderRadius: 3, fontWeight: player.points > 0 ? 700 : 400,
+          }}>{player.points}P</span>
+          <span style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.5)', padding: '1px 5px', borderRadius: 3 }}>{player.rebounds}R</span>
+          <span style={{ background: 'rgba(255,255,255,.06)', color: 'rgba(255,255,255,.5)', padding: '1px 5px', borderRadius: 3 }}>{player.assists}A</span>
+          <span style={{
+            background: player.disqualified ? 'rgba(255,0,0,.2)' : inTrouble ? 'rgba(245,194,0,.2)' : 'rgba(255,255,255,.06)',
+            color: player.disqualified ? '#FF4444' : inTrouble ? FGB.amarelo : 'rgba(255,255,255,.5)',
+            padding: '1px 5px', borderRadius: 3, fontWeight: inTrouble ? 700 : 400,
+          }}>{player.fouls}F</span>
         </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-1">
-        {player.isOnCourt && (
-          <>
-            <ActionButton label="+2" colorClass="border-[#2ecc71]/40 bg-[#2ecc71]/12 text-[#8ff0b6]" onClick={() => onAction('2pts')} disabled={!canOperate} />
-            <ActionButton label="+3" colorClass="border-[#3498db]/40 bg-[#3498db]/12 text-[#9fd6ff]" onClick={() => onAction('3pts')} disabled={!canOperate} />
-            <ActionButton label="LL" colorClass="border-[#a56ee8]/40 bg-[#a56ee8]/12 text-[#d6bcff]" onClick={() => onAction('ft')} disabled={!canOperate} />
-            <ActionButton label="F" colorClass="border-[#f39c12]/40 bg-[#f39c12]/12 text-[#ffd28a]" onClick={() => onAction('foul')} disabled={!canOperate} />
-            <ActionButton label="R" colorClass="border-[#1abc9c]/40 bg-[#1abc9c]/12 text-[#9df1e0]" onClick={() => onAction('reb')} disabled={!canOperate} />
-            <ActionButton label="A" colorClass="border-[#f1c40f]/40 bg-[#f1c40f]/12 text-[#ffe28a]" onClick={() => onAction('ast')} disabled={!canOperate} />
-          </>
-        )}
-        <ActionButton
-          label={player.isOnCourt ? '↓' : '↑'}
-          colorClass={player.isOnCourt ? 'border-[#e74c3c]/40 bg-[#e74c3c]/12 text-[#ffae9f]' : 'border-[#27ae60]/40 bg-[#27ae60]/12 text-[#8ee1ad]'}
-          onClick={() => onAction('sub')}
-          disabled={!canOperate}
-        />
-      </div>
+      {/* Ações */}
+      {!player.disqualified && (
+        <div style={{ display: 'flex', gap: 3, marginTop: 7, flexWrap: 'wrap' }}>
+          {player.isOnCourt && <>
+            <ActionBtn label="+2" color="#2ECC71" onClick={() => onAction('2pts')} disabled={!canAct} />
+            <ActionBtn label="+3" color="#3498DB" onClick={() => onAction('3pts')} disabled={!canAct} />
+            <ActionBtn label="LL" color="#9B59B6" onClick={() => onAction('ft')} disabled={!canAct} />
+            <ActionBtn label="F" color="#E67E22" onClick={() => onAction('foul')} disabled={!canAct} />
+            <ActionBtn label="R" color="#1ABC9C" onClick={() => onAction('reb')} disabled={!canAct} />
+            <ActionBtn label="A" color="#F39C12" onClick={() => onAction('ast')} disabled={!canAct} />
+          </>}
+          <ActionBtn
+            label={player.isOnCourt ? '↓' : '↑'}
+            color={player.isOnCourt ? '#E74C3C' : '#27AE60'}
+            onClick={() => onAction('sub')}
+            disabled={!canAct}
+          />
+        </div>
+      )}
+      {player.disqualified && (
+        <div style={{ marginTop: 4, fontSize: 10, color: '#FF4444', fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif" }}>
+          ELIMINADO
+        </div>
+      )}
     </div>
   )
 }
 
 export function LiveTeamPanelFiba({
-  team,
-  selectedAthleteId,
-  onSelectAthlete,
-  onPlayerAction,
+  team, selectedAthleteId, onSelectAthlete, onPlayerAction,
 }: LiveTeamPanelFibaProps) {
-  const teamTone = team.side === 'home' ? 'home' : 'away'
+  const jerseyBg = team.side === 'home' ? FGB.verde : FGB.vermelho
+  const accentColor = team.side === 'home' ? '#7FD4A0' : '#FF9999'
 
   return (
-    <div className="rounded-b-[14px] border border-t-0 border-white/8 bg-white/[0.04] p-3">
-      <div className="mb-3 text-[11px] uppercase tracking-[0.1em] text-white/45">
-        JOGADORES — EM QUADRA
-        <span className="ml-2 text-white/25">
-          clique nas ações: +2 +3 LL = pontos | F = falta | R = rebote | A = assistência | ↑↓ = substituição
+    <div style={{
+      borderRadius: '0 0 14px 14px',
+      border: '1px solid rgba(255,255,255,.08)', borderTop: 'none',
+      background: 'rgba(255,255,255,.04)', padding: 12,
+    }}>
+      <div style={{
+        fontSize: 11, color: 'rgba(255,255,255,.4)', marginBottom: 10,
+        fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1, textTransform: 'uppercase',
+      }}>
+        <span style={{ color: accentColor, fontWeight: 700 }}>{team.name}</span>
+        <span style={{ marginLeft: 8, color: 'rgba(255,255,255,.25)', fontSize: 10 }}>
+          clique nas ações: +2 +3 LL = pontos · F = falta · R = rebote · A = assist · ↑↓ = substituição
         </span>
       </div>
 
-      <div className="grid gap-2 lg:grid-cols-2">
-        {team.players.map((player) => (
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+        {team.players.map(player => (
           <PlayerRow
             key={player.id}
             player={player}
             selected={selectedAthleteId === player.athleteId}
-            teamTone={teamTone}
+            jerseyBg={jerseyBg}
             onSelect={() => onSelectAthlete(player.athleteId)}
-            onAction={(action) => onPlayerAction(player, action)}
+            onAction={action => onPlayerAction(player, action)}
           />
         ))}
       </div>
 
       {team.players.length === 0 && (
-        <div className="rounded-[8px] border border-dashed border-white/10 bg-white/[0.03] px-4 py-6 text-sm text-white/40">
-          Sem roster carregado para esta equipe.
+        <div style={{
+          border: '1px dashed rgba(255,255,255,.1)', borderRadius: 8, padding: '24px 16px',
+          textAlign: 'center', color: 'rgba(255,255,255,.3)', fontSize: 13,
+        }}>
+          Sem roster carregado.
         </div>
       )}
     </div>

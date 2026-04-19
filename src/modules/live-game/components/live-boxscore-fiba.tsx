@@ -1,98 +1,108 @@
 import type { LiveGameTableModel, LiveTablePlayer } from './live-game-table-adapter'
 
-function calcTotals(players: LiveTablePlayer[]) {
-  return players.reduce(
-    (acc, player) => ({
-      points: acc.points + player.points,
-      rebounds: acc.rebounds + player.rebounds,
-      assists: acc.assists + player.assists,
-      steals: acc.steals + player.steals,
-      blocks: acc.blocks + player.blocks,
-      turnovers: acc.turnovers + player.turnovers,
-      fouls: acc.fouls + player.fouls,
-    }),
-    { points: 0, rebounds: 0, assists: 0, steals: 0, blocks: 0, turnovers: 0, fouls: 0 }
-  )
+const FGB = { verde: '#1B7340', vermelho: '#CC1016', amarelo: '#F5C200' }
+
+function pct(made: number, att: number) {
+  if (!att) return '—'
+  return `${Math.round((made / att) * 100)}%`
 }
 
-function BoxTable({
-  team,
-}: {
-  team: LiveGameTableModel['home']
-}) {
+function calcTotals(players: LiveTablePlayer[]) {
+  return players.reduce((acc, p) => ({
+    pts: acc.pts + p.points,
+    reb: acc.reb + p.rebounds,
+    ast: acc.ast + p.assists,
+    stl: acc.stl + p.steals,
+    blk: acc.blk + p.blocks,
+    tov: acc.tov + p.turnovers,
+    pf: acc.pf + p.fouls,
+    fgm: acc.fgm + p.twoPtMade + p.threePtMade,
+    fga: acc.fga + p.twoPtAttempted + p.threePtAttempted,
+    tpm: acc.tpm + p.threePtMade,
+    tpa: acc.tpa + p.threePtAttempted,
+    ftm: acc.ftm + p.freeThrowsMade,
+    fta: acc.fta + p.freeThrowsAttempted,
+  }), { pts:0,reb:0,ast:0,stl:0,blk:0,tov:0,pf:0,fgm:0,fga:0,tpm:0,tpa:0,ftm:0,fta:0 })
+}
+
+function TeamTable({ team }: { team: LiveGameTableModel['home'] }) {
+  const color = team.side === 'home' ? '#7FD4A0' : '#FF9999'
   const totals = calcTotals(team.players)
-  const tone = team.side === 'home' ? 'text-[#8fbfff]' : 'text-[#ffb4c1]'
+  const headers = ['#', 'Nome', 'S', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'FG%', '3P%', 'LL%']
 
   return (
-    <div className="mb-4">
-      <div className={`mb-2 text-[13px] font-extrabold uppercase tracking-[0.08em] ${tone}`}>
-        {team.name.toUpperCase()} — {team.score} pts
+    <div style={{ marginBottom: 20 }}>
+      <div style={{
+        fontSize: 13, fontWeight: 800, color, letterSpacing: 1,
+        fontFamily: "'Barlow Condensed', 'Oswald', sans-serif",
+        marginBottom: 8, textTransform: 'uppercase',
+      }}>
+        {team.name} — {team.score} pts
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-[11px] text-white/80">
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
           <thead>
-            <tr className="border-b border-white/8 text-[10px] uppercase tracking-[0.08em] text-white/40">
-              {['#', 'Nome', 'PTS', 'REB', 'AST', 'STL', 'BLK', 'TOV', 'PF', 'FG', '3P', 'LL'].map((header) => (
-                <th key={header} className={`px-1.5 py-2 font-semibold ${header === 'Nome' ? 'text-left' : 'text-right'}`}>
-                  {header}
+            <tr style={{ color: 'rgba(255,255,255,.4)', fontFamily: "'Barlow Condensed', sans-serif", fontSize: 10 }}>
+              {headers.map(h => (
+                <th key={h} style={{
+                  padding: '3px 6px', fontWeight: 600,
+                  textAlign: h === 'Nome' ? 'left' : 'right',
+                  borderBottom: '1px solid rgba(255,255,255,.08)',
+                }}>
+                  {h}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {team.players.map((player) => {
-              const fgMade = player.twoPtMade + player.threePtMade
-              const fgAttempted = player.twoPtAttempted + player.threePtAttempted
-              const fgPct = fgAttempted > 0 ? Math.round((fgMade / fgAttempted) * 100) : 0
-
+            {team.players.map(p => {
+              const fgm = p.twoPtMade + p.threePtMade
+              const fga = p.twoPtAttempted + p.threePtAttempted
               return (
-                <tr
-                  key={player.id}
-                  className={`${
-                    player.disqualified
-                      ? 'opacity-45'
-                      : player.isOnCourt
-                        ? 'bg-white/[0.04]'
-                        : 'opacity-70'
-                  }`}
-                >
-                  <td className={`px-1.5 py-1.5 font-black ${tone}`}>{player.jerseyNumber ?? '--'}</td>
-                  <td className="px-1.5 py-1.5 font-medium">
-                    {player.name}
-                    {player.disqualified ? ' 🔴' : ''}
+                <tr key={p.id} style={{
+                  opacity: p.disqualified ? .4 : p.isOnCourt ? 1 : .65,
+                  background: p.isOnCourt ? 'rgba(255,255,255,.04)' : 'transparent',
+                }}>
+                  <td style={{ padding: '3px 6px', color, fontWeight: 700, fontFamily: "'Barlow Condensed', sans-serif" }}>{p.jerseyNumber ?? '--'}</td>
+                  <td style={{ padding: '3px 6px', fontWeight: 500 }}>
+                    {p.name}{p.disqualified ? ' 🔴' : ''}
                   </td>
-                  <td className={`px-1.5 py-1.5 text-right ${player.points > 10 ? 'font-black text-[#f5c849]' : ''}`}>{player.points}</td>
-                  <td className="px-1.5 py-1.5 text-right">{player.rebounds}</td>
-                  <td className="px-1.5 py-1.5 text-right">{player.assists}</td>
-                  <td className="px-1.5 py-1.5 text-right">{player.steals}</td>
-                  <td className="px-1.5 py-1.5 text-right">{player.blocks}</td>
-                  <td className={`px-1.5 py-1.5 text-right ${player.turnovers > 2 ? 'text-[#ff9640]' : ''}`}>{player.turnovers}</td>
-                  <td className={`px-1.5 py-1.5 text-right ${player.fouls >= 4 ? 'text-[#ff6464]' : player.fouls >= 3 ? 'text-[#f5c849]' : ''}`}>
-                    {player.fouls}
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: 'rgba(255,255,255,.3)', fontSize: 10 }}>
+                    {p.isStarter ? 'T' : 'R'}
                   </td>
-                  <td className="px-1.5 py-1.5 text-right text-[10px]">
-                    {fgMade}/{fgAttempted}
-                    <span className="text-white/30"> {fgPct}%</span>
-                  </td>
-                  <td className="px-1.5 py-1.5 text-right text-[10px]">
-                    {player.threePtMade}/{player.threePtAttempted}
-                  </td>
-                  <td className="px-1.5 py-1.5 text-right text-[10px]">
-                    {player.freeThrowsMade}/{player.freeThrowsAttempted}
-                  </td>
+                  <td style={{
+                    padding: '3px 6px', textAlign: 'right',
+                    fontWeight: p.points > 10 ? 700 : 400,
+                    color: p.points >= 20 ? FGB.amarelo : p.points >= 10 ? '#FFF' : 'rgba(255,255,255,.6)',
+                  }}>{p.points}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: 'rgba(255,255,255,.7)' }}>{p.rebounds}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: 'rgba(255,255,255,.7)' }}>{p.assists}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: 'rgba(255,255,255,.7)' }}>{p.steals}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: 'rgba(255,255,255,.7)' }}>{p.blocks}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', color: p.turnovers >= 4 ? '#FF8C00' : 'rgba(255,255,255,.7)' }}>{p.turnovers}</td>
+                  <td style={{
+                    padding: '3px 6px', textAlign: 'right',
+                    color: p.fouls >= 5 ? '#FF4444' : p.fouls >= 4 ? FGB.amarelo : 'rgba(255,255,255,.7)',
+                    fontWeight: p.fouls >= 4 ? 700 : 400,
+                  }}>{p.fouls}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', fontSize: 10, color: 'rgba(255,255,255,.55)' }}>{pct(fgm, fga)}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', fontSize: 10, color: 'rgba(255,255,255,.55)' }}>{pct(p.threePtMade, p.threePtAttempted)}</td>
+                  <td style={{ padding: '3px 6px', textAlign: 'right', fontSize: 10, color: 'rgba(255,255,255,.55)' }}>{pct(p.freeThrowsMade, p.freeThrowsAttempted)}</td>
                 </tr>
               )
             })}
-            <tr className={`border-t border-white/10 text-[11px] font-black ${tone}`}>
-              <td colSpan={2} className="px-1.5 py-2">TOTAL</td>
-              <td className="px-1.5 py-2 text-right">{totals.points}</td>
-              <td className="px-1.5 py-2 text-right">{totals.rebounds}</td>
-              <td className="px-1.5 py-2 text-right">{totals.assists}</td>
-              <td className="px-1.5 py-2 text-right">{totals.steals}</td>
-              <td className="px-1.5 py-2 text-right">{totals.blocks}</td>
-              <td className="px-1.5 py-2 text-right">{totals.turnovers}</td>
-              <td className="px-1.5 py-2 text-right">{totals.fouls}</td>
-              <td colSpan={3} />
+            <tr style={{ borderTop: '1px solid rgba(255,255,255,.12)', fontWeight: 800, color, fontFamily: "'Barlow Condensed', sans-serif" }}>
+              <td colSpan={3} style={{ padding: '4px 6px', fontSize: 11 }}>TOTAL</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.pts}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.reb}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.ast}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.stl}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.blk}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.tov}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{totals.pf}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{pct(totals.fgm, totals.fga)}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{pct(totals.tpm, totals.tpa)}</td>
+              <td style={{ padding: '4px 6px', textAlign: 'right' }}>{pct(totals.ftm, totals.fta)}</td>
             </tr>
           </tbody>
         </table>
@@ -103,12 +113,19 @@ function BoxTable({
 
 export function LiveBoxscoreFiba({ table }: { table: LiveGameTableModel }) {
   return (
-    <div className="rounded-b-[14px] border border-t-0 border-white/8 bg-white/[0.04] p-3">
-      <div className="mb-3 text-[11px] uppercase tracking-[0.1em] text-white/45">
+    <div style={{
+      borderRadius: '0 0 14px 14px',
+      border: '1px solid rgba(255,255,255,.08)', borderTop: 'none',
+      background: 'rgba(255,255,255,.04)', padding: 12,
+    }}>
+      <div style={{
+        fontSize: 11, color: 'rgba(255,255,255,.4)', marginBottom: 12,
+        fontFamily: "'Barlow Condensed', sans-serif", letterSpacing: 1, textTransform: 'uppercase',
+      }}>
         BOXSCORE
       </div>
-      <BoxTable team={table.home} />
-      <BoxTable team={table.away} />
+      <TeamTable team={table.home} />
+      <TeamTable team={table.away} />
     </div>
   )
 }
