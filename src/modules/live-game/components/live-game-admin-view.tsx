@@ -13,6 +13,7 @@ import { LiveScoreboardFiba } from './live-scoreboard-fiba'
 import { LiveTeamPanelFiba } from './live-team-panel-fiba'
 import { LiveEventLogFiba } from './live-event-log-fiba'
 import { LiveBoxscoreFiba } from './live-boxscore-fiba'
+import { SumulaEletronicoView } from './sumula-eletronico-view'
 
 type AdminViewMode = 'pregame' | 'live' | 'review' | 'report' | 'audit'
 
@@ -1228,38 +1229,7 @@ export function LiveGameAdminView({
       )}
 
       {mode === 'report' && (
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">SÃºmula oficial</h2>
-              <button onClick={exportReportPdf} className="rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white">Baixar PDF</button>
-            </div>
-            <div className="mt-5 space-y-3">
-              {(data.boxScore?.teams || []).map((team: any) => (
-                <div key={team.id} className="rounded-2xl border border-[var(--border)] px-4 py-3 text-sm text-[var(--black)]">
-                  <strong>{team.teamName}</strong>: {team.points} pts Â· {team.assists} ast Â· {team.reboundsTotal} reb Â· {team.steals} stl
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-            <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Box score individual</h2>
-            <div className="mt-5 space-y-3">
-              {(data.boxScore?.players || []).map((player: any) => (
-                <div key={player.id} className="grid grid-cols-[1fr_auto] gap-3 rounded-2xl border border-[var(--border)] px-4 py-3">
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--black)]">{player.athleteName}</p>
-                    <p className="text-xs text-[var(--gray)]">{player.teamName}</p>
-                  </div>
-                  <div className="text-right text-sm text-[var(--black)]">
-                    <p><strong>{player.points}</strong> pts</p>
-                    <p>{player.reboundsTotal} reb Â· {player.assists} ast</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+        <SumulaEletronicoView data={data} />
       )}
 
       {mode === 'audit' && (
