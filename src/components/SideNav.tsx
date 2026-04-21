@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Medal, Gavel, Coins,
+  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Coins,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -27,22 +27,25 @@ const adminNavGroups = [
     ],
   },
   {
-    label: 'Temporada',
+    label: 'Operacao',
     items: [
       { href: '/admin/teams',         label: 'Times',        icon: Users },
+      { href: '/admin/athletes',      label: 'Atletas (BID)', icon: Users },
+      { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
+    ],
+  },
+  {
+    label: 'Financeiro',
+    items: [
       { href: '/admin/fees',          label: 'Taxas',        icon: Coins },
     ],
   },
   {
-    label: 'Modulos',
+    label: 'Publicacao',
     items: [
-      { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
-      { href: '/admin/athletes',      label: 'Atletas (BID)', icon: Users },
-      { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
       { href: '/admin/sponsors',      label: 'Patrocinadores', icon: Trophy },
       { href: '/admin/news',          label: 'Noticias',      icon: Newspaper },
       { href: '/admin/videos',        label: 'Videos',        icon: Video },
-      { href: '/admin/ranking',       label: 'Ranking',       icon: Medal },
     ],
   },
   {

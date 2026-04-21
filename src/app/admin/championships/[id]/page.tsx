@@ -2,7 +2,7 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
 import { Badge } from '@/components/Badge'
-import { Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Sparkles, Settings } from 'lucide-react'
+import { ArrowRight, Users, Calendar, BarChart3, CheckCircle2, PlayCircle, Sparkles, Settings } from 'lucide-react'
 import { Brackets } from '@/components/Brackets'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -134,9 +134,78 @@ export default async function ChampionshipDetailsPage({
       'FINISHED': 5
     }
     const currentStep = statusMap[championship.status as keyof typeof statusMap] || 1
+    const nextAction = currentStep <= 2
+      ? {
+          label: pendingRegistrations > 0 ? 'Revisar inscricoes' : 'Gerenciar inscricoes',
+          href: `/admin/championships/${activeChampionshipId}/registrations`,
+          detail: pendingRegistrations > 0
+            ? `${pendingRegistrations} equipe(s) aguardando validacao`
+            : allCategoriesReady
+              ? 'Categorias prontas para organizacao'
+              : `${totalMissing} equipe(s) faltando para viabilidade`,
+        }
+      : currentStep === 3
+        ? {
+            label: 'Organizar com IA',
+            href: `/admin/championships/${activeChampionshipId}/organization`,
+            detail: 'Gerar calendario e confrontos da competicao',
+          }
+        : currentStep === 4
+          ? {
+              label: 'Registrar resultados',
+              href: `/admin/championships/${activeChampionshipId}/jogos`,
+              detail: `${Math.max(0, totalGames - completedGames)} jogo(s) pendente(s)`,
+            }
+          : {
+              label: 'Ver classificacao',
+              href: `/admin/championships/${activeChampionshipId}/standings`,
+              detail: 'Campeonato encerrado ou em leitura historica',
+            }
 
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 pb-10">
+      <div className="space-y-6 pb-10">
+        <section className="relative overflow-hidden rounded-[34px] border border-[var(--border)] bg-white p-6 shadow-sm md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,194,0,0.16),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(27,115,64,0.12),transparent_34%)]" />
+          <div className="relative grid gap-6 xl:grid-cols-[1fr_340px] xl:items-end">
+            <div>
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className={`fgb-badge ${
+                  championship.status === 'ONGOING' ? 'fgb-badge-red' :
+                  championship.status === 'REGISTRATION_OPEN' ? 'fgb-badge-verde' :
+                  championship.status === 'REGISTRATION_CLOSED' ? 'fgb-badge-yellow' :
+                  championship.status === 'FINISHED' ? 'fgb-badge-outline' :
+                  'fgb-badge-outline'
+                }`}>
+                  {formatChampionshipStatus(championship.status)}
+                </span>
+                <span className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--gray)]">
+                  Etapa {currentStep}/5
+                </span>
+              </div>
+              <h1 className="fgb-display max-w-4xl text-4xl leading-none text-[var(--black)] md:text-6xl">
+                {championship.name}
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[var(--gray)]">
+                Painel operacional do campeonato: acompanhe prontidao, inscricoes,
+                jogos e classificacao sem precisar garimpar informacoes em varias telas.
+              </p>
+            </div>
+
+            <Link
+              href={nextAction.href}
+              className="group rounded-[28px] border border-[var(--border)] bg-[var(--black)] p-5 text-white shadow-premium transition-all hover:-translate-y-1"
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">Proxima melhor acao</p>
+                <ArrowRight className="h-4 w-4 text-[var(--yellow)] transition-transform group-hover:translate-x-1" />
+              </div>
+              <p className="fgb-display text-2xl leading-none text-white">{nextAction.label}</p>
+              <p className="mt-3 text-xs font-semibold leading-5 text-white/65">{nextAction.detail}</p>
+            </Link>
+          </div>
+        </section>
+
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
 
         {/* ─── COLUNA ESQUERDA — Pipeline Vertical ─── */}
         <div className="lg:sticky lg:top-6 h-fit fgb-card p-6">
@@ -652,6 +721,7 @@ export default async function ChampionshipDetailsPage({
           </div>
 
         </div>
+      </div>
       </div>
     )
   } catch (error: any) {

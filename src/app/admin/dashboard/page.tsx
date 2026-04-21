@@ -1,38 +1,49 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { StatCard } from '@/components/StatCard'
-import { Badge } from '@/components/Badge'
-import { Trophy, Users, Calendar, Flag, Activity, ShieldCheck, Plus } from 'lucide-react'
-import { formatChampionshipStatus } from '@/lib/utils'
 import { ChampionshipCard } from '@/components/ChampionshipCard'
+import {
+  AlertTriangle,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Flag,
+  ShieldCheck,
+  Trophy,
+  Users,
+} from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
+function formatDate(date: Date | null) {
+  if (!date) return 'Sem prazo'
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+}
+
 export default async function FederationDashboardPage() {
   try {
-    // 1. Fetch ALL non-archived championships for global metrics
     const activeChampionships = await prisma.championship.findMany({
       where: { status: { not: 'ARCHIVED' } },
       include: {
         _count: {
           select: {
             registrations: { where: { status: 'CONFIRMED' } },
-            games: true
-          }
-        }
-      }
+            games: true,
+          },
+        },
+      },
     })
 
     const totalActive = activeChampionships.length
     const totalTeams = activeChampionships.reduce((acc, curr) => acc + curr._count.registrations, 0)
     const totalGames = activeChampionships.reduce((acc, curr) => acc + curr._count.games, 0)
 
-    // Calculate finished games across ALL active championships
     const finishedGames = await prisma.game.count({
       where: {
         championship: { status: { not: 'ARCHIVED' } },
-        status: 'FINISHED'
-      }
+        status: 'FINISHED',
+      },
     })
 
     const statusCounts = activeChampionships.reduce((acc, curr) => {
@@ -41,7 +52,7 @@ export default async function FederationDashboardPage() {
     }, {} as Record<string, number>)
 
     const featuredChampionships = await prisma.championship.findMany({
-      where: { status: { in: ['ONGOING', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED'] } },
+      where: { status: { in: ['ONGOING', 'REGISTRATION_OPEN', 'REGISTRATION_CLOSED', 'ORGANIZING'] } },
       orderBy: { createdAt: 'desc' },
       take: 3,
       include: {
@@ -50,9 +61,9 @@ export default async function FederationDashboardPage() {
           select: {
             registrations: { where: { status: 'CONFIRMED' } },
             games: true,
-          }
-        }
-      }
+          },
+        },
+      },
     })
 
     const pendingRegistrations = await prisma.registration.count({
@@ -88,181 +99,265 @@ export default async function FederationDashboardPage() {
       },
     })
 
+    const operationalIssues = pendingRegistrations + closingSoon.length + gamesMissingVenue + finishedWithoutScore
+    const gameProgress = totalGames > 0 ? Math.round((finishedGames / totalGames) * 100) : 0
+    const activeNow = (statusCounts.ONGOING || 0) + (statusCounts.ACTIVE || 0)
+
+    const actionCards = [
+      {
+        label: 'Validar inscricoes',
+        value: pendingRegistrations,
+        detail: pendingRegistrations === 1 ? 'equipe aguardando decisao' : 'equipes aguardando decisao',
+        href: '/admin/championships',
+        tone: 'red',
+      },
+      {
+        label: 'Prazos nesta semana',
+        value: closingSoon.length,
+        detail: closingSoon.length === 0 ? 'nenhum campeonato em risco' : `${closingSoon[0].name} ate ${formatDate(closingSoon[0].regDeadline)}`,
+        href: '/admin/championships',
+        tone: 'yellow',
+      },
+      {
+        label: 'Jogos sem local',
+        value: gamesMissingVenue,
+        detail: 'partidas precisam de ginasio definido',
+        href: '/admin/championships',
+        tone: 'orange',
+      },
+      {
+        label: 'Resultados incompletos',
+        value: finishedWithoutScore,
+        detail: 'sumulas precisam ser revisadas',
+        href: '/admin/championships',
+        tone: 'green',
+      },
+    ]
+
     return (
       <div className="space-y-8 pb-10">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="fgb-label text-[var(--red)]" style={{ fontSize: 10 }}>Visão Global</span>
-                <span className="fgb-badge fgb-badge-red">EXECUTIVA</span>
+        <section className="relative overflow-hidden rounded-[36px] border border-[var(--border)] bg-[var(--black)] p-6 text-white shadow-premium md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,194,0,0.22),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(27,115,64,0.34),transparent_34%)]" />
+          <div className="pointer-events-none absolute right-8 top-8 hidden h-28 w-28 rounded-full border border-white/10 md:block" />
+
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_340px] lg:items-end">
+            <div className="max-w-3xl">
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[var(--yellow)]">
+                  Central de comando
+                </span>
+                <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
+                  {operationalIssues === 0 ? 'Operacao estavel' : `${operationalIssues} pontos de atencao`}
+                </span>
               </div>
-              <h1 className="fgb-display text-3xl text-[var(--black)]">Painel da Federação</h1>
-              <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Métricas de todos os campeonatos ativos</p>
+              <h1 className="fgb-display max-w-4xl text-4xl leading-none text-white md:text-6xl">
+                Painel da Federacao
+              </h1>
+              <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white/68">
+                Uma visao executiva para decidir rapido: campeonatos ativos, gargalos de inscricao,
+                organizacao de jogos e pendencias que podem travar a temporada.
+              </p>
             </div>
-            <Link href="/admin/championships" className="fgb-btn-outline">
-              Acessar Campeonatos →
-            </Link>
-          </div>
-        </div>
 
-        {/* Global KPIs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <StatCard
-            label="Campeonatos Ativos"
-            value={totalActive}
-            sublabel="Em fase de planejamento ou execução"
-            accent="verde"
-            icon={<Trophy className="w-5 h-5" />}
-          />
-          <StatCard
-            label="Equipes Envolvidas"
-            value={totalTeams}
-            sublabel="Total de Inscrições Confirmadas"
-            accent="yellow"
-            icon={<Users className="w-5 h-5" />}
-          />
-          <StatCard
-            label="Volume de Jogos"
-            value={totalGames}
-            sublabel="Jogos previstos no calendário geral"
-            accent="red"
-            icon={<Calendar className="w-5 h-5" />}
-          />
-          <StatCard
-            label="Jogos Realizados"
-            value={finishedGames}
-            sublabel="Súmulas já cadastradas no sistema"
-            accent="orange"
-            icon={<Flag className="w-5 h-5" />}
-          />
-        </div>
-
-        {/* Tricolor accent */}
-        <div className="fgb-tricolor-banner rounded-full" />
-
-        {/* Status sistema + jogos realizados */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Status Breakdown — higher volume FGB color blocks */}
-          <div className="lg:col-span-2 bg-white border border-[var(--border)] rounded-[20px] p-8 shadow-sm">
-             <div className="flex items-center gap-3 mb-8">
-               <div className="w-1.5 h-6 bg-[var(--red)] rounded-full" />
-               <h3 className="fgb-display text-sm text-[var(--black)]">Distribuição por Status</h3>
-             </div>
-
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {[
-                  { label: 'Rascunho',    status: 'DRAFT',             count: statusCounts['DRAFT'] || 0,             blockClass: 'fgb-stat-block-dark' },
-                  { label: 'Inscrições',  status: 'REGISTRATION_OPEN', count: statusCounts['REGISTRATION_OPEN'] || 0, blockClass: 'fgb-stat-block-yellow' },
-                  { label: 'Em Andamento',status: 'ONGOING',           count: statusCounts['ONGOING'] || 0,           blockClass: 'fgb-stat-block-verde' },
-                  { label: 'Encerrados',  status: 'FINISHED',          count: statusCounts['FINISHED'] || 0,          blockClass: 'fgb-stat-block-red' },
-                ].map((item) => (
-                  <div key={item.status} className={`fgb-stat-block ${item.blockClass} group cursor-default h-32`}>
-                    <span className="fgb-stat-block-num text-4xl mb-0 transition-transform group-hover:scale-110">{item.count}</span>
-                    <span className="fgb-stat-block-label" style={{ letterSpacing: '0.2em' }}>{item.label}</span>
-                  </div>
-                ))}
-             </div>
-          </div>
-
-          <div className="flex flex-col gap-6">
-            <div 
-              className="flex-1 rounded-[24px] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden transition-all duration-500 hover:shadow-premium group" 
-              style={{ background: 'linear-gradient(135deg, var(--verde) 0%, var(--verde-dark) 100%)' }}
-            >
-               <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.05)_0%,transparent_60%)] group-hover:opacity-60 transition-opacity" />
-               <div className="bg-white/10 p-4 rounded-3xl mb-4 relative z-10 backdrop-blur-sm group-hover:rotate-12 transition-transform">
-                  <ShieldCheck className="w-10 h-10 text-white" />
-               </div>
-               <h3 className="fgb-display text-sm text-white mb-2 relative z-10">FGB Digital</h3>
-               <div className="flex items-center justify-center gap-2 relative z-10 bg-black/20 px-4 py-1.5 rounded-full border border-white/10">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-400"></span>
-                  </span>
-                  <span className="fgb-label text-white" style={{ fontSize: 9, letterSpacing: '0.1em' }}>SISTEMA ONLINE</span>
-               </div>
-            </div>
-            
-            <div className="rounded-[24px] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden bg-white border border-[var(--border)] shadow-sm hover:shadow-md transition-all group">
-               <div className="absolute top-0 left-0 w-full h-1 bg-[var(--yellow)]" />
-               <p className="fgb-display text-5xl text-[var(--black)] leading-none mb-1 group-hover:scale-105 transition-transform">{finishedGames}</p>
-               <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, textTransform: 'none' }}>Súmulas Integradas</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Featured Championships */}
-        {featuredChampionships.length > 0 && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="fgb-display text-sm text-[var(--black)]">Campeonatos em Destaque</h3>
-                <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>Ações rápidas para as competições principais</p>
+            <div className="rounded-[28px] border border-white/12 bg-white/10 p-5 backdrop-blur">
+              <div className="mb-4 flex items-center justify-between">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">Saude operacional</p>
+                {operationalIssues === 0 ? (
+                  <CheckCircle2 className="h-5 w-5 text-[var(--yellow)]" />
+                ) : (
+                  <AlertTriangle className="h-5 w-5 text-[var(--yellow)]" />
+                )}
               </div>
-              <Link href="/admin/championships" className="fgb-badge fgb-badge-red hover:opacity-80 cursor-pointer">
-                Ver Todos →
+              <p className="fgb-display text-5xl leading-none text-white">
+                {operationalIssues === 0 ? 'OK' : operationalIssues}
+              </p>
+              <p className="mt-2 text-xs font-semibold leading-5 text-white/62">
+                {operationalIssues === 0
+                  ? 'Nenhuma pendencia critica encontrada no momento.'
+                  : 'Resolva primeiro inscricoes, prazos e jogos sem local.'}
+              </p>
+              <Link
+                href="/admin/championships"
+                className="mt-5 inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--yellow)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              >
+                Abrir campeonatos
+                <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredChampionships.map((c) => (
-                <ChampionshipCard
-                  key={c.id}
-                  id={c.id}
-                  name={c.name}
-                  year={c.year}
-                  status={c.status}
-                  categories={c.categories}
-                  teamCount={c._count.registrations}
-                  gameCount={c._count.games}
-                  href={`/admin/championships/${c.id}`}
-                />
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            label="Campeonatos ativos"
+            value={totalActive}
+            sublabel={`${activeNow} em andamento agora`}
+            accent="verde"
+            icon={<Trophy className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Equipes confirmadas"
+            value={totalTeams}
+            sublabel="base competitiva validada"
+            accent="yellow"
+            icon={<Users className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Calendario geral"
+            value={totalGames}
+            sublabel={`${gameProgress}% dos jogos realizados`}
+            accent="red"
+            icon={<Calendar className="h-5 w-5" />}
+          />
+          <StatCard
+            label="Sumulas integradas"
+            value={finishedGames}
+            sublabel="resultados ja processados"
+            accent="orange"
+            icon={<Flag className="h-5 w-5" />}
+          />
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">
+          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm md:p-7">
+            <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="fgb-label text-[var(--red)]" style={{ fontSize: 10 }}>Prioridades da rodada</p>
+                <h2 className="fgb-display mt-2 text-2xl leading-none text-[var(--black)]">
+                  O que precisa de acao
+                </h2>
+              </div>
+              <p className="max-w-sm text-xs font-medium leading-5 text-[var(--gray)]">
+                Cards curtos substituem listas longas: cada bloco mostra uma pendencia e o proximo caminho.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {actionCards.map((item) => (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className="group rounded-[22px] border border-[var(--border)] bg-[var(--gray-l)] p-5 transition-all hover:-translate-y-1 hover:border-[var(--yellow)] hover:bg-white hover:shadow-md"
+                >
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--gray)]">
+                      {item.label}
+                    </p>
+                    <span className={`h-2.5 w-2.5 rounded-full ${
+                      item.tone === 'red' ? 'bg-[var(--red)]' :
+                      item.tone === 'yellow' ? 'bg-[var(--yellow)]' :
+                      item.tone === 'orange' ? 'bg-[var(--orange)]' :
+                      'bg-[var(--verde)]'
+                    }`} />
+                  </div>
+                  <div className="flex items-end justify-between gap-4">
+                    <div>
+                      <p className="fgb-display text-4xl leading-none text-[var(--black)]">{item.value}</p>
+                      <p className="mt-2 text-xs font-semibold leading-5 text-[var(--gray)]">{item.detail}</p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-[var(--gray)] transition-transform group-hover:translate-x-1 group-hover:text-[var(--black)]" />
+                  </div>
+                </Link>
               ))}
             </div>
           </div>
-        )}
 
-        {/* Alertas Operacionais */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="fgb-badge fgb-badge-yellow">ALERTAS</span>
-            <h3 className="fgb-display text-sm text-[var(--black)]">Acoes Prioritarias</h3>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="fgb-card p-5">
-              <p className="fgb-label text-[var(--gray)] mb-2">Inscricoes pendentes</p>
-              <p className="fgb-display text-2xl text-[var(--black)]">{pendingRegistrations}</p>
-              <Link href="/admin/championships?info=registrations" className="fgb-label text-[var(--verde)] mt-2 inline-flex">Revisar →</Link>
-            </div>
-            <div className="fgb-card p-5">
-              <p className="fgb-label text-[var(--gray)] mb-2">Prazo encerrando</p>
-              <p className="fgb-display text-2xl text-[var(--black)]">{closingSoon.length}</p>
-              <div className="text-[11px] text-[var(--gray)]">
-                {closingSoon.length === 0 ? 'Nenhum prazo na semana' : closingSoon.map((c) => (
-                  <div key={c.id}>{c.name}</div>
-                ))}
+          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm md:p-7">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--verde)]/10 text-[var(--verde)]">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Distribuicao por etapa</p>
+                <h2 className="fgb-display text-xl leading-none text-[var(--black)]">Status da temporada</h2>
               </div>
             </div>
-            <div className="fgb-card p-5">
-              <p className="fgb-label text-[var(--gray)] mb-2">Jogos sem local</p>
-              <p className="fgb-display text-2xl text-[var(--black)]">{gamesMissingVenue}</p>
-              <Link href="/admin/championships" className="fgb-label text-[var(--red)] mt-2 inline-flex">Corrigir →</Link>
-            </div>
-            <div className="fgb-card p-5">
-              <p className="fgb-label text-[var(--gray)] mb-2">Resultados incompletos</p>
-              <p className="fgb-display text-2xl text-[var(--black)]">{finishedWithoutScore}</p>
-              <Link href="/admin/championships" className="fgb-label text-[var(--orange)] mt-2 inline-flex">Atualizar →</Link>
+
+            <div className="space-y-3">
+              {[
+                { label: 'Rascunho', count: statusCounts.DRAFT || 0, color: 'bg-slate-300' },
+                { label: 'Inscricoes abertas', count: statusCounts.REGISTRATION_OPEN || 0, color: 'bg-[var(--yellow)]' },
+                { label: 'Organizacao', count: statusCounts.ORGANIZING || 0, color: 'bg-[var(--orange)]' },
+                { label: 'Em andamento', count: activeNow, color: 'bg-[var(--verde)]' },
+                { label: 'Encerrados', count: statusCounts.FINISHED || 0, color: 'bg-[var(--red)]' },
+              ].map((item) => (
+                <div key={item.label} className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[var(--gray)]">{item.label}</span>
+                    <span className="text-sm font-black text-[var(--black)]">{item.count}</span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-white">
+                    <div
+                      className={`h-full rounded-full ${item.color}`}
+                      style={{ width: `${totalActive > 0 ? Math.max(6, Math.round((item.count / totalActive) * 100)) : 0}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        </div>
+        </section>
+
+        {featuredChampionships.length > 0 && (
+          <section className="space-y-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Operacao ativa</p>
+                <h2 className="fgb-display mt-2 text-2xl leading-none text-[var(--black)]">
+                  Campeonatos para acompanhar
+                </h2>
+              </div>
+              <Link
+                href="/admin/championships"
+                className="inline-flex items-center gap-2 self-start rounded-full border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--yellow)] hover:bg-[var(--yellow)]"
+              >
+                Ver todos
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {featuredChampionships.map((championship) => (
+                <ChampionshipCard
+                  key={championship.id}
+                  id={championship.id}
+                  name={championship.name}
+                  year={championship.year}
+                  status={championship.status}
+                  categories={championship.categories}
+                  teamCount={championship._count.registrations}
+                  gameCount={championship._count.games}
+                  href={`/admin/championships/${championship.id}`}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section className="rounded-[28px] border border-dashed border-[var(--border)] bg-white/70 p-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-[var(--gray)]" />
+              <p className="text-xs font-semibold leading-5 text-[var(--gray)]">
+                Menos atalhos soltos, mais fluxo: relatorios, ranking e arbitragem continuam acessiveis por URL,
+                mas saem da navegacao principal ate terem valor operacional claro.
+              </p>
+            </div>
+            <Link href="/admin/fees" className="text-[10px] font-black uppercase tracking-widest text-[var(--verde)] hover:underline">
+              Revisar taxas
+            </Link>
+          </div>
+        </section>
       </div>
     )
   } catch (error: any) {
-    console.error("Dashboard Global Error:", error)
+    console.error('Dashboard Global Error:', error)
     return (
       <div className="fgb-card admin-card-red p-20 text-center">
-        <h2 className="fgb-display text-2xl text-[var(--black)] mb-2">Erro ao carregar Dashboard Executivo</h2>
-        <p className="fgb-label text-[var(--gray)] mb-6 font-mono" style={{ textTransform: 'none', letterSpacing: 0 }}>{error.message}</p>
+        <h2 className="fgb-display mb-2 text-2xl text-[var(--black)]">Erro ao carregar Dashboard Executivo</h2>
+        <p className="fgb-label mb-6 font-mono text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+          {error.message}
+        </p>
       </div>
     )
   }

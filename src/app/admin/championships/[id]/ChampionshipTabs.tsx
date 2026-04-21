@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart2, Calendar, FileText, LayoutDashboard, Settings, Sparkles, Users } from 'lucide-react'
+import { BarChart2, Calendar, LayoutDashboard, Settings, Sparkles, Users } from 'lucide-react'
 
 interface Tab {
   label: string
@@ -59,24 +59,6 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
       requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
-      label: 'Rankings',
-      href: `/admin/championships/${id}/cestinhas`,
-      icon: BarChart2,
-      requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
-    },
-    {
-      label: 'Arbitragem',
-      href: `/admin/championships/${id}/arbitragem`,
-      icon: FileText,
-      alwaysActive: true,
-    },
-    {
-      label: 'Relatorios',
-      href: `/admin/championships/${id}/relatorios`,
-      icon: FileText,
-      alwaysActive: true,
-    },
-    {
       label: 'Configuracoes',
       href: `/admin/championships/${id}/settings`,
       icon: Settings,
@@ -85,7 +67,7 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
   ]
 
   return (
-    <div className="flex items-center gap-0 shrink-0 overflow-x-auto border-b border-[var(--border)] bg-white no-scrollbar">
+    <div className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-[var(--border)] bg-white px-2 no-scrollbar">
       {tabs.map((tab, index) => {
         const isActive =
           tab.href === `/admin/championships/${id}` ? pathname === tab.href : pathname.startsWith(tab.href)
@@ -106,16 +88,18 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
             }}
             aria-disabled={!isEnabled}
             title={!isEnabled ? disabledTitle : undefined}
-            className={`group flex items-center gap-2 whitespace-nowrap border-b-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+            className={`group my-2 flex items-center gap-2 whitespace-nowrap rounded-2xl border px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${
               isActive
-                ? 'border-[var(--verde)] bg-[var(--verde)]/5 text-[var(--verde)]'
-                : 'border-transparent text-[var(--gray)] hover:border-[var(--border)] hover:text-[var(--black)]'
+                ? 'border-[var(--verde)] bg-[var(--verde)] text-white shadow-sm'
+                : 'border-transparent text-[var(--gray)] hover:border-[var(--border)] hover:bg-[var(--gray-l)] hover:text-[var(--black)]'
             } ${!isEnabled ? 'cursor-not-allowed opacity-40' : ''}`}
           >
-            <tab.icon className={`h-3.5 w-3.5 ${isActive ? 'text-[var(--verde)]' : 'text-[var(--gray)]'}`} />
+            <tab.icon className={`h-3.5 w-3.5 ${isActive ? 'text-white' : 'text-[var(--gray)]'}`} />
             {tab.label}
             {tab.badge && (
-              <span className="ml-1 rounded-full bg-[var(--verde)]/10 px-2 py-0.5 text-[9px] font-black text-[var(--verde)]">
+              <span className={`ml-1 rounded-full px-2 py-0.5 text-[9px] font-black ${
+                isActive ? 'bg-white/15 text-white' : 'bg-[var(--verde)]/10 text-[var(--verde)]'
+              }`}>
                 {tab.badge}
               </span>
             )}
