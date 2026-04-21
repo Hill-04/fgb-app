@@ -1,15 +1,18 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Section } from '@/components/Section'
 import { Badge } from '@/components/Badge'
+import { FeeCalculator } from '@/components/fee-calculator'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import { Calendar, MapPin, Users, FileText, AlertCircle, CheckCircle2, ChevronRight, Info, ExternalLink, PartyPopper } from 'lucide-react'
+import { Calendar, MapPin, Users, FileText, AlertCircle, CheckCircle2, ChevronRight, Info, PartyPopper, Wallet } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formatCurrencyBRL } from '@/lib/fees'
 import { toast } from 'sonner'
 import confetti from 'canvas-confetti'
 
@@ -58,6 +61,8 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const [createdRegistrationId, setCreatedRegistrationId] = useState<string | null>(null)
+  const [estimatedFeeTotal, setEstimatedFeeTotal] = useState(0)
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [blockedDates, setBlockedDates] = useState<{ startDate: string; endDate?: string; reason: string }[]>([])
@@ -139,6 +144,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
       }
 
       // Success!
+      setCreatedRegistrationId(data.registration?.id || null)
       setSuccess(true)
       confetti({
         particleCount: 150,
@@ -146,11 +152,6 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
         origin: { y: 0.6 },
         colors: ['#FF6B00', '#0B0F1E', '#FFFFFF']
       })
-
-      setTimeout(() => {
-        router.push('/team/dashboard')
-        router.refresh() // To update dashboard counts
-      }, 3000)
 
     } catch (err) {
       setError('Erro inesperado. Tente novamente.')
@@ -179,13 +180,44 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
         <h1 className="text-4xl font-black text-[var(--black)] mb-2 uppercase italic">Inscrição Realizada!</h1>
         <p className="text-[var(--gray)] text-center max-w-md font-medium">
           Sua equipe foi inscrita com sucesso no {championship.name}. 
-          Aguarde a validação da federação. Redirecionando...
+          Aguarde a validação da federação.
         </p>
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <Badge variant="outline" className="px-4 py-2 text-sm bg-green-50 text-green-700 border border-green-200">
             <PartyPopper className="w-4 h-4 mr-2" />
             Inscrito com Sucesso
           </Badge>
+          <Badge variant="outline" className="px-4 py-2 text-sm bg-orange-50 text-orange-700 border border-orange-200">
+            <Wallet className="w-4 h-4 mr-2" />
+            Taxas estimadas: {formatCurrencyBRL(estimatedFeeTotal)}
+          </Badge>
+        </div>
+
+        <div className="mt-8 grid w-full max-w-2xl gap-4 md:grid-cols-2">
+          <div className="rounded-3xl border border-orange-200 bg-orange-50 p-5 text-left shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700">Taxas da Inscricao</p>
+            <p className="mt-2 text-2xl font-black text-[var(--black)]">{formatCurrencyBRL(estimatedFeeTotal)}</p>
+            <p className="mt-2 text-xs font-medium text-orange-800/80">
+              Valor estimado com base no Regimento de Taxas FGB 2018. A FGB pode confirmar ou ajustar a cobranca.
+            </p>
+          </div>
+          <div className="flex flex-col justify-center gap-3 rounded-3xl border border-[var(--border)] bg-white p-5 shadow-sm">
+            {createdRegistrationId && (
+              <Link
+                href={`/team/registrations/${createdRegistrationId}/fees`}
+                className="flex h-11 items-center justify-center rounded-xl bg-[var(--black)] px-5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-black/85"
+              >
+                Ver taxas da inscricao
+              </Link>
+            )}
+            <Link
+              href="/team/dashboard"
+              className="flex h-11 items-center justify-center rounded-xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--gray)] transition-all hover:text-[var(--black)]"
+              onClick={() => router.refresh()}
+            >
+              Ir para o dashboard
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -542,6 +574,12 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
           subtitle="Revise os dados e confirme sua inscrição"
         >
           <div className="space-y-6">
+            <FeeCalculator
+              championshipId={championship.id}
+              initialCategoryCount={Math.max(1, selectedCategories.length)}
+              onEstimateChange={(snapshot) => setEstimatedFeeTotal(snapshot.total)}
+            />
+
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                <div className="lg:col-span-2 space-y-4">
                   <div className="fgb-card p-6 space-y-4 bg-white border border-[var(--border)] rounded-3xl shadow-sm">

@@ -67,6 +67,42 @@ const schemaPatches: SchemaPatch[] = [
   },
   {
     kind: 'table',
+    table: 'FeeConfig',
+    sql: `CREATE TABLE IF NOT EXISTS FeeConfig (
+      id TEXT PRIMARY KEY,
+      key TEXT NOT NULL UNIQUE,
+      label TEXT NOT NULL,
+      value REAL NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT,
+      isActive INTEGER DEFAULT 1,
+      appliesFrom DATETIME DEFAULT CURRENT_TIMESTAMP,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+    critical: true,
+  },
+  {
+    kind: 'table',
+    table: 'RegistrationFee',
+    sql: `CREATE TABLE IF NOT EXISTS RegistrationFee (
+      id TEXT PRIMARY KEY,
+      registrationId TEXT NOT NULL,
+      feeKey TEXT NOT NULL,
+      feeLabel TEXT NOT NULL,
+      quantity INTEGER DEFAULT 1,
+      unitValue REAL NOT NULL,
+      totalValue REAL NOT NULL,
+      notes TEXT,
+      status TEXT DEFAULT 'PENDING',
+      paidAt DATETIME,
+      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );`,
+    critical: true,
+  },
+  {
+    kind: 'table',
     table: 'Athlete',
     sql: `CREATE TABLE IF NOT EXISTS Athlete (
       id TEXT PRIMARY KEY,
@@ -473,6 +509,7 @@ const schemaPatches: SchemaPatch[] = [
   },
 
   { kind: 'column', table: 'Team', column: 'responsible', sql: 'ALTER TABLE Team ADD COLUMN responsible TEXT;', critical: true },
+  { kind: 'column', table: 'Team', column: 'totalFeesOwed', sql: 'ALTER TABLE Team ADD COLUMN totalFeesOwed REAL DEFAULT 0;', critical: true },
 
   { kind: 'column', table: 'Championship', column: 'minTeamsPerCat', sql: 'ALTER TABLE Championship ADD COLUMN minTeamsPerCat INTEGER DEFAULT 3;', critical: true },
   { kind: 'column', table: 'Championship', column: 'isSimulation', sql: 'ALTER TABLE Championship ADD COLUMN isSimulation INTEGER DEFAULT 0;', critical: true },
@@ -493,6 +530,8 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'BlockedDate_startDate_endDate_idx', sql: 'CREATE INDEX IF NOT EXISTS BlockedDate_startDate_endDate_idx ON BlockedDate(startDate, endDate);' },
   { kind: 'sql', name: 'Standing_teamId_categoryId_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS Standing_teamId_categoryId_key ON Standing(teamId, categoryId);' },
   { kind: 'sql', name: 'AthleteCategory_registrationId_idx', sql: 'CREATE INDEX IF NOT EXISTS AthleteCategory_registrationId_idx ON AthleteCategory(registrationId);' },
+  { kind: 'sql', name: 'RegistrationFee_registrationId_idx', sql: 'CREATE INDEX IF NOT EXISTS RegistrationFee_registrationId_idx ON RegistrationFee(registrationId);' },
+  { kind: 'sql', name: 'FeeConfig_key_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS FeeConfig_key_key ON FeeConfig(key);' },
 
   { kind: 'column', table: 'PlayerStat', column: 'assists',     sql: 'ALTER TABLE PlayerStat ADD COLUMN assists     INTEGER DEFAULT 0;', critical: true },
   { kind: 'column', table: 'PlayerStat', column: 'rebounds',    sql: 'ALTER TABLE PlayerStat ADD COLUMN rebounds    INTEGER DEFAULT 0;', critical: true },

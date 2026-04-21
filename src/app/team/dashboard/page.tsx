@@ -6,9 +6,10 @@ import { StatCard } from "@/components/StatCard"
 import { Section } from "@/components/Section"
 import { Badge } from "@/components/Badge"
 import Link from "next/link"
-import { Trophy, Calendar, Users, Award, MapPin, Shield, CheckCircle2, ChevronRight, PartyPopper, Brackets as BracketsIcon } from "lucide-react"
+import { Trophy, Calendar, Users, Award, MapPin, Shield, CheckCircle2, ChevronRight, PartyPopper, Brackets as BracketsIcon, Wallet } from "lucide-react"
 import { Brackets } from "@/components/Brackets"
 import { cn } from "@/lib/utils"
+import { formatCurrencyBRL, summarizeRegistrationFees } from "@/lib/fees"
 
 export default async function TeamDashboardPage() {
   const session = await getServerSession(authOptions)
@@ -35,7 +36,18 @@ export default async function TeamDashboardPage() {
               include: {
                 category: true
               }
-            }
+            },
+            fees: {
+              select: {
+                feeKey: true,
+                feeLabel: true,
+                quantity: true,
+                unitValue: true,
+                totalValue: true,
+                status: true,
+                paidAt: true,
+              },
+            },
           }
         },
         homeGames: {
@@ -290,7 +302,10 @@ export default async function TeamDashboardPage() {
               subtitle={`Gerencie suas ${team.registrations.length} participações ativas`}
             >
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                {team.registrations.map((registration) => (
+                {team.registrations.map((registration) => {
+                  const feeSummary = summarizeRegistrationFees((registration as any).fees || [])
+
+                  return (
                   <div key={registration.id} className="fgb-card bg-white border border-[var(--border)] shadow-sm p-6 rounded-[2.5rem] flex flex-col justify-between hover:border-orange-200 transition-all duration-300 group relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-50 rounded-full blur-2xl group-hover:bg-orange-100 transition-all duration-700" />
                     
@@ -328,6 +343,14 @@ export default async function TeamDashboardPage() {
                              <span className="text-xs font-bold text-[var(--black)] uppercase italic">{regCat.category.name}</span>
                           </div>
                         ))}
+                        <div className="px-4 py-2 rounded-xl bg-orange-50 border border-orange-200 flex flex-col shadow-inner">
+                           <span className="text-[8px] font-black text-orange-700 uppercase tracking-widest">Taxas</span>
+                           <span className="text-xs font-black text-orange-700 uppercase italic">{formatCurrencyBRL(feeSummary.total)}</span>
+                        </div>
+                        <div className="px-4 py-2 rounded-xl bg-red-50 border border-red-200 flex flex-col shadow-inner">
+                           <span className="text-[8px] font-black text-red-700 uppercase tracking-widest">Pendente</span>
+                           <span className="text-xs font-black text-red-700 uppercase italic">{formatCurrencyBRL(feeSummary.pendingTotal)}</span>
+                        </div>
                       </div>
 
                       <div className="flex items-center justify-between">
@@ -342,15 +365,19 @@ export default async function TeamDashboardPage() {
                             </span>
                          </div>
                          <Link
-                          href={`/campeonatos/${registration.championship.id}`}
+                          href={`/team/registrations/${registration.id}/fees`}
                           className="px-6 py-2.5 rounded-xl bg-[var(--gray-l)] hover:bg-gray-100 text-[var(--black)] font-bold text-xs transition-all border border-[var(--border)] group-hover:border-orange-200 shadow-sm"
                         >
-                          Ver Tabela →
+                          <span className="inline-flex items-center gap-1.5">
+                            <Wallet className="h-3.5 w-3.5 text-orange-600" />
+                            Ver Taxas
+                          </span>
                         </Link>
                       </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
             </Section>
           </div>

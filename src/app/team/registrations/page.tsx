@@ -3,7 +3,8 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { ClipboardList, Trophy, CheckCircle2, Clock, XCircle, ChevronRight, Tag } from 'lucide-react'
+import { ClipboardList, Trophy, CheckCircle2, Clock, XCircle, ChevronRight, Tag, Wallet } from 'lucide-react'
+import { formatCurrencyBRL, summarizeRegistrationFees } from '@/lib/fees'
 
 const STATUS_CONFIG = {
   CONFIRMED: {
@@ -54,6 +55,17 @@ export default async function TeamRegistrationsPage() {
       categories: {
         include: {
           category: { select: { id: true, name: true } },
+        },
+      },
+      fees: {
+        select: {
+          feeKey: true,
+          feeLabel: true,
+          quantity: true,
+          unitValue: true,
+          totalValue: true,
+          status: true,
+          paidAt: true,
         },
       },
     },
@@ -113,6 +125,7 @@ export default async function TeamRegistrationsPage() {
           {registrations.map(reg => {
             const cfg = STATUS_CONFIG[reg.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG.PENDING
             const Icon = cfg.icon
+            const feeSummary = summarizeRegistrationFees(reg.fees as any)
             const champStatus: Record<string, string> = {
               REGISTRATION_OPEN:   'Inscrições Abertas',
               REGISTRATION_CLOSED: 'Inscrições Encerradas',
@@ -152,6 +165,16 @@ export default async function TeamRegistrationsPage() {
                         <span className="fgb-badge fgb-badge-outline">
                           {champStatus[reg.championship.status] ?? reg.championship.status}
                         </span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-orange-700">
+                          <Wallet className="h-3 w-3" />
+                          Total {formatCurrencyBRL(feeSummary.total)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-red-200 bg-red-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-red-700">
+                          Pendente {formatCurrencyBRL(feeSummary.pendingTotal)}
+                        </span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-green-200 bg-green-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-green-700">
+                          Pago {formatCurrencyBRL(feeSummary.paidTotal)}
+                        </span>
                       </div>
 
                       {/* Categorias inscritas */}
@@ -180,11 +203,11 @@ export default async function TeamRegistrationsPage() {
 
                   {/* CTA */}
                   <Link
-                    href={`/team/championships`}
+                    href={`/team/registrations/${reg.id}/fees`}
                     className="flex items-center gap-1 fgb-label text-[var(--gray)] hover:text-[var(--black)] transition-colors flex-shrink-0"
                     style={{ fontSize: 10 }}
                   >
-                    Ver campeonato <ChevronRight className="w-3.5 h-3.5" />
+                    Ver taxas <ChevronRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>

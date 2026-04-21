@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { ensureDatabaseSchema } from '@/lib/db-patch'
+import { syncTeamTotalFeesOwed } from '@/lib/fees-server'
 
 export async function PATCH(
   request: Request,
@@ -86,11 +87,24 @@ export async function DELETE(
   await ensureDatabaseSchema()
   
   try {
+    const registration = await prisma.registration.findUnique({
+      where: { id: regId },
+      select: { teamId: true },
+    })
+
+    if (!registration) {
+      return NextResponse.json({ error: 'Registration not found' }, { status: 404 })
+    }
+
     await prisma.athleteCategory.deleteMany({ where: { registrationId: regId } })
     await prisma.blockedDate.deleteMany({ where: { registrationId: regId } })
+    await prisma.registrationFee.deleteMany({ where: { registrationId: regId } })
     await prisma.registration.delete({
       where: { id: regId }
     })
+
+    await syncTeamTotalFeesOwed(registration.teamId)
+
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json({ error: 'Failed to delete registration' }, { status: 500 })

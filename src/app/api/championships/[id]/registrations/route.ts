@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { summarizeRegistrationFees } from '@/lib/fees'
 
 export async function GET(
   request: Request,
@@ -20,6 +21,21 @@ export async function GET(
           athletePlayers: {
             orderBy: { createdAt: 'asc' }
           },
+          fees: {
+            select: {
+              id: true,
+              feeKey: true,
+              feeLabel: true,
+              quantity: true,
+              unitValue: true,
+              totalValue: true,
+              status: true,
+              paidAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+            orderBy: { createdAt: 'asc' },
+          },
           categories: {
             include: {
               category: { select: { id: true, name: true } }
@@ -33,7 +49,8 @@ export async function GET(
     // Map to flatten categories for the frontend
     const formatted = registrations.map(reg => ({
       ...reg,
-      categories: reg.categories.map(rc => rc.category)
+      categories: reg.categories.map(rc => rc.category),
+      feeSummary: summarizeRegistrationFees(reg.fees),
     }))
 
     return NextResponse.json(formatted)

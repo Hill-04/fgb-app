@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Medal, Gavel,
+  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Medal, Gavel, Coins,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -30,6 +30,7 @@ const adminNavGroups = [
     label: 'Temporada',
     items: [
       { href: '/admin/teams',         label: 'Times',        icon: Users },
+      { href: '/admin/fees',          label: 'Taxas',        icon: Coins },
     ],
   },
   {
