@@ -19,6 +19,8 @@ model User {
   updatedAt   DateTime         @updatedAt
   memberships TeamMembership[]
   playerStats PlayerStat[]
+  financialPaymentsCreated FinancialPayment[] @relation("FinancialPaymentCreatedBy")
+  financialAuditLogsCreated FinancialAuditLog[] @relation("FinancialAuditLogCreatedBy")
 }
 
 model Team {
@@ -50,6 +52,7 @@ model Team {
   seasonRankings      SeasonRanking[]
   bidEntriesFrom      AthleteBidEntry[]    @relation("BidTeamFrom")
   bidEntriesTo        AthleteBidEntry[]    @relation("BidTeamTo")
+  financialInvoices   FinancialInvoice[]
 }
 
 model Gym {
@@ -106,6 +109,7 @@ model Championship {
   games                    Game[]
   registrations            Registration[]
   bidEntries               AthleteBidEntry[]
+  financialInvoices        FinancialInvoice[]
 }
 
 model ChampionshipCategory {
@@ -147,6 +151,7 @@ model Registration {
   team           Team                   @relation(fields: [teamId], references: [id])
   championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
   categories     RegistrationCategory[]
+  financialInvoices FinancialInvoice[]
 
   @@unique([championshipId, teamId])
 }
@@ -178,8 +183,97 @@ model RegistrationFee {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  financialInvoiceItems FinancialInvoiceItem[]
 
   @@index([registrationId])
+}
+
+model FinancialInvoice {
+  id             String   @id @default(uuid())
+  number         String   @unique
+  teamId         String
+  championshipId String?
+  registrationId String?
+  status         String   @default("DRAFT")
+  issueDate      DateTime @default(now())
+  dueDate        DateTime?
+  subtotalCents  Int      @default(0)
+  discountCents  Int      @default(0)
+  totalCents     Int      @default(0)
+  paidCents      Int      @default(0)
+  balanceCents   Int      @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  team           Team          @relation(fields: [teamId], references: [id])
+  championship   Championship? @relation(fields: [championshipId], references: [id])
+  registration   Registration? @relation(fields: [registrationId], references: [id])
+  items          FinancialInvoiceItem[]
+  payments       FinancialPayment[]
+  auditLogs      FinancialAuditLog[]
+
+  @@index([teamId])
+  @@index([championshipId])
+  @@index([registrationId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([issueDate])
+}
+
+model FinancialInvoiceItem {
+  id                String   @id @default(uuid())
+  invoiceId         String
+  registrationFeeId String?
+  feeKey            String?
+  description       String
+  quantity          Int      @default(1)
+  unitValueCents    Int
+  totalCents        Int
+  sourceType        String   @default("MANUAL")
+  createdAt         DateTime @default(now())
+
+  invoice           FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  registrationFee   RegistrationFee? @relation(fields: [registrationFeeId], references: [id])
+
+  @@index([invoiceId])
+  @@index([registrationFeeId])
+}
+
+model FinancialPayment {
+  id              String   @id @default(uuid())
+  invoiceId       String
+  amountCents     Int
+  method          String   @default("MANUAL")
+  status          String   @default("CONFIRMED")
+  paidAt          DateTime @default(now())
+  reference       String?
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  invoice         FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy       User?            @relation("FinancialPaymentCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([paidAt])
+}
+
+model FinancialAuditLog {
+  id              String   @id @default(uuid())
+  invoiceId       String
+  action          String
+  description     String
+  metadataJson    String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  invoice         FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy       User?            @relation("FinancialAuditLogCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@index([invoiceId])
+  @@index([createdAt])
 }
 
 model RegistrationCategory {

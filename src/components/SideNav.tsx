@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
-  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Coins,
+  FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Coins, Receipt, Wallet,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -37,7 +37,9 @@ const adminNavGroups = [
   {
     label: 'Financeiro',
     items: [
-      { href: '/admin/fees',          label: 'Taxas',        icon: Coins },
+      { href: '/admin/financeiro',    label: 'Painel',       icon: Wallet },
+      { href: '/admin/financeiro/faturas', label: 'Faturas', icon: Receipt },
+      { href: '/admin/financeiro/taxas', label: 'Taxas',     icon: Coins },
     ],
   },
   {
@@ -65,6 +67,7 @@ const teamNavGroups = [
       { href: '/team/championships',  label: 'Campeonatos',   icon: Trophy },
       { href: '/team/matches',        label: 'Jogos',         icon: Calendar },
       { href: '/team/standings',      label: 'Classificacao', icon: BarChart2 },
+      { href: '/team/financeiro',     label: 'Financeiro',    icon: Wallet },
     ],
   },
   {
@@ -131,7 +134,9 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
             </p>
             {group.items.map(item => {
               const Icon = item.icon
-              const active = pathname?.startsWith(item.href)
+              const active = item.href === '/admin/financeiro'
+                ? pathname === item.href
+                : pathname?.startsWith(item.href)
               return (
                 <Link
                   key={item.href}

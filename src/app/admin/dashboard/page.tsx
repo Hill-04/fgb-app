@@ -343,7 +343,7 @@ export default async function FederationDashboardPage() {
                 mas saem da navegacao principal ate terem valor operacional claro.
               </p>
             </div>
-            <Link href="/admin/fees" className="text-[10px] font-black uppercase tracking-widest text-[var(--verde)] hover:underline">
+            <Link href="/admin/financeiro/taxas" className="text-[10px] font-black uppercase tracking-widest text-[var(--verde)] hover:underline">
               Revisar taxas
             </Link>
           </div>
