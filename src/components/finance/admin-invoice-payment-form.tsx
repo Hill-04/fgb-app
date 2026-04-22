@@ -76,8 +76,8 @@ export function AdminInvoicePaymentForm({ invoiceId, status, balanceCents }: Adm
   }
 
   return (
-    <div className="space-y-4 rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-      <div>
+    <div className="space-y-4 rounded-[30px] border border-[var(--border)] bg-white p-5 shadow-sm">
+      <div className="rounded-[24px] border border-red-100 bg-gradient-to-br from-red-50 to-white p-4">
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--red)]">Operacao financeira</p>
         <h2 className="fgb-display mt-2 text-2xl leading-none text-[var(--black)]">Baixa manual</h2>
         <p className="mt-2 text-xs font-semibold leading-5 text-[var(--gray)]">

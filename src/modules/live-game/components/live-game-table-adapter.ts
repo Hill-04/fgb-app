@@ -1,5 +1,7 @@
 export type LiveTableTab = 'home' | 'away' | 'log' | 'box'
 
+export const LIVE_VISIBLE_EVENTS_LIMIT = 18
+
 export type LiveTablePlayer = {
   id: string
   athleteId: string
@@ -164,14 +166,36 @@ function buildPlayerMap(snapshot: any) {
   return playerLines
 }
 
+function buildRosterMap(snapshot: any) {
+  const rosters = new Map<string, any>()
+  for (const roster of snapshot?.rosters || []) {
+    if (roster?.teamId) {
+      rosters.set(roster.teamId, roster)
+    }
+  }
+  return rosters
+}
+
+function buildTeamLineMap(snapshot: any) {
+  const teamLines = new Map<string, any>()
+  for (const line of snapshot?.boxScore?.teams || []) {
+    if (line?.teamId) {
+      teamLines.set(line.teamId, line)
+    }
+  }
+  return teamLines
+}
+
 function buildTeam(
   snapshot: any,
   side: 'home' | 'away',
-  playerLinesByAthleteId: Map<string, any>
+  playerLinesByAthleteId: Map<string, any>,
+  rostersByTeamId: Map<string, any>,
+  teamLinesByTeamId: Map<string, any>
 ): LiveTableTeam {
   const gameTeam = side === 'home' ? snapshot?.game?.homeTeam : snapshot?.game?.awayTeam
-  const roster = snapshot?.rosters?.find((entry: any) => entry.teamId === gameTeam?.id)
-  const teamLine = snapshot?.boxScore?.teams?.find((entry: any) => entry.teamId === gameTeam?.id)
+  const roster = rostersByTeamId.get(gameTeam?.id)
+  const teamLine = teamLinesByTeamId.get(gameTeam?.id)
 
   return {
     id: gameTeam?.id || `${side}-team`,
@@ -224,8 +248,10 @@ function buildTeam(
 
 export function buildLiveGameTableModel(snapshot: any): LiveGameTableModel {
   const playerLinesByAthleteId = buildPlayerMap(snapshot)
-  const home = buildTeam(snapshot, 'home', playerLinesByAthleteId)
-  const away = buildTeam(snapshot, 'away', playerLinesByAthleteId)
+  const rostersByTeamId = buildRosterMap(snapshot)
+  const teamLinesByTeamId = buildTeamLineMap(snapshot)
+  const home = buildTeam(snapshot, 'home', playerLinesByAthleteId, rostersByTeamId, teamLinesByTeamId)
+  const away = buildTeam(snapshot, 'away', playerLinesByAthleteId, rostersByTeamId, teamLinesByTeamId)
 
   return {
     championshipName: snapshot?.game?.championship?.name || 'Campeonato',
@@ -249,7 +275,7 @@ export function buildLiveGameTableModel(snapshot: any): LiveGameTableModel {
     })),
     events: [...(snapshot?.events || [])]
       .reverse()
-      .slice(0, 18)
+      .slice(0, LIVE_VISIBLE_EVENTS_LIMIT)
       .map((event: any) => ({
         id: event.id,
         teamSide:

@@ -73,19 +73,40 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
   const deferredRemoteRef = useRef<LiveEnvelope | null>(null)
   const pendingMutationsRef = useRef<PendingMutation[]>([])
   const processingRef = useRef(false)
+  const loadInFlightRef = useRef(false)
   const lastActionGuardRef = useRef<{ signature: string; at: number } | null>(null)
 
   useEffect(() => {
     pendingMutationsRef.current = pendingMutations
   }, [pendingMutations])
 
-  const applyRemoteEnvelope = (envelope: LiveEnvelope) => {
+  const shouldSkipRemoteEnvelope = (envelope: LiveEnvelope) => {
+    const currentEnvelope = confirmedEnvelopeRef.current
+    if (!currentEnvelope) return false
+    if (pendingMutationsRef.current.length > 0) return false
+    if (deferredRemoteRef.current) return false
+
+    return (
+      currentEnvelope.lastSequenceNumber === envelope.lastSequenceNumber &&
+      currentEnvelope.lastEventId === envelope.lastEventId
+    )
+  }
+
+  const applyRemoteEnvelope = (envelope: LiveEnvelope, { force = false }: { force?: boolean } = {}) => {
+    if (!force && shouldSkipRemoteEnvelope(envelope)) {
+      return false
+    }
+
     confirmedSnapshotRef.current = envelope.snapshot
     confirmedEnvelopeRef.current = envelope
     setData(envelope.snapshot)
+    return true
   }
 
   const load = async ({ background = false }: { background?: boolean } = {}) => {
+    if (loadInFlightRef.current) return
+
+    loadInFlightRef.current = true
     const hasVisibleSnapshot = Boolean(confirmedSnapshotRef.current || data)
     const shouldUseBackgroundRefresh = background || hasVisibleSnapshot
 
@@ -109,7 +130,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
 
         if (pendingMutationsRef.current.length > 0) {
           if (envelope.lastSequenceNumber >= highestPendingSequence) {
-            applyRemoteEnvelope(envelope)
+            applyRemoteEnvelope(envelope, { force: true })
             return
           }
 
@@ -128,6 +149,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
     } catch (currentError: any) {
       setError(currentError.message)
     } finally {
+      loadInFlightRef.current = false
       if (shouldUseBackgroundRefresh) {
         setIsRefreshingInBackground(false)
       } else {
@@ -143,11 +165,27 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
   useEffect(() => {
     if (mode !== 'live') return
 
-    const interval = setInterval(() => {
+    const loadWhenVisible = () => {
+      if (typeof document !== 'undefined' && document.hidden) return
       void load({ background: true })
+    }
+
+    const interval = setInterval(() => {
+      loadWhenVisible()
     }, 5000)
 
-    return () => clearInterval(interval)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        void load({ background: true })
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
   }, [mode, endpoint])
 
   useEffect(() => {
@@ -192,7 +230,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
     if (processingRef.current) return
     if (pendingMutations.length === 0) {
       if (deferredRemoteRef.current) {
-        applyRemoteEnvelope(deferredRemoteRef.current)
+        applyRemoteEnvelope(deferredRemoteRef.current, { force: true })
         deferredRemoteRef.current = null
       }
       return
@@ -279,7 +317,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
     setSubmitting(true)
     try {
       const envelope = normalizeEnvelope(await postJson(`/api/admin/games/${gameId}/live`, { action, ...extra }))
-      applyRemoteEnvelope(envelope)
+      applyRemoteEnvelope(envelope, { force: true })
       setError('')
     } catch (currentError: any) {
       setError(currentError.message)

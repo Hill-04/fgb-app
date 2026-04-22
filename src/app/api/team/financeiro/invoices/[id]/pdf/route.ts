@@ -13,7 +13,7 @@ export async function GET(_request: NextRequest, { params }: Params) {
   try {
     const teamSession = await requireTeamSession()
     if (!teamSession) return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
-    const { teamId } = teamSession
+    const { session, teamId } = teamSession
     const { id } = await params
 
     const invoice = await prisma.financialInvoice.findFirst({
@@ -31,6 +31,15 @@ export async function GET(_request: NextRequest, { params }: Params) {
     if (!invoice) {
       return NextResponse.json({ error: 'Fatura nao encontrada.' }, { status: 404 })
     }
+
+    await prisma.financialAuditLog.create({
+      data: {
+        invoiceId: id,
+        action: 'PDF_GENERATED',
+        description: 'PDF institucional da fatura gerado pela equipe.',
+        createdByUserId: (session.user as any)?.id || null,
+      },
+    })
 
     const buffer = await buildInvoicePdfBuffer(serializeInvoice(invoice))
 

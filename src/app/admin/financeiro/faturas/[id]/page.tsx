@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation'
 import { Download, Receipt, Wallet } from 'lucide-react'
 
 import { AdminInvoicePaymentForm } from '@/components/finance/admin-invoice-payment-form'
+import { FinanceErrorState } from '@/components/finance/finance-error-state'
 import { InvoiceStatusBadge } from '@/components/finance/invoice-status-badge'
+import { InvoiceTimeline } from '@/components/finance/invoice-timeline'
 import { prisma } from '@/lib/db'
 import { formatCurrencyCentsBRL, getEffectiveInvoiceStatus } from '@/lib/finance'
 
@@ -19,28 +21,31 @@ function formatDate(date?: Date | null) {
 
 export default async function AdminFinancialInvoiceDetailPage({ params }: PageProps) {
   const { id } = await params
-  const invoice = await prisma.financialInvoice.findUnique({
-    where: { id },
-    include: {
-      team: { select: { id: true, name: true, city: true, state: true } },
-      championship: { select: { id: true, name: true, year: true } },
-      registration: { select: { id: true, status: true } },
-      items: { orderBy: { createdAt: 'asc' } },
-      payments: { orderBy: { paidAt: 'desc' } },
-      auditLogs: {
-        orderBy: { createdAt: 'desc' },
-        include: { createdBy: { select: { id: true, name: true, email: true } } },
+  try {
+    const invoice = await prisma.financialInvoice.findUnique({
+      where: { id },
+      include: {
+        team: { select: { id: true, name: true, city: true, state: true } },
+        championship: { select: { id: true, name: true, year: true } },
+        registration: { select: { id: true, status: true } },
+        items: { orderBy: { createdAt: 'asc' } },
+        payments: { orderBy: { paidAt: 'desc' } },
+        auditLogs: {
+          orderBy: { createdAt: 'desc' },
+          include: { createdBy: { select: { id: true, name: true, email: true } } },
+        },
       },
-    },
-  })
+    })
 
-  if (!invoice) notFound()
+    if (!invoice) notFound()
 
-  const effectiveStatus = getEffectiveInvoiceStatus(invoice)
+    const effectiveStatus = getEffectiveInvoiceStatus(invoice)
 
-  return (
-    <div className="space-y-7 pb-10">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    return (
+      <div className="space-y-7 pb-10">
+        <div className="relative overflow-hidden rounded-[36px] border border-[var(--border)] bg-white p-6 shadow-sm">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-[var(--verde)] via-[var(--yellow)] to-[var(--red)]" />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <InvoiceStatusBadge status={effectiveStatus} />
@@ -52,15 +57,16 @@ export default async function AdminFinancialInvoiceDetailPage({ params }: PagePr
           <p className="mt-2 text-sm text-[var(--gray)]">
             {invoice.team.name} {invoice.championship ? `| ${invoice.championship.name}` : '| Sem campeonato'}
           </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/admin/financeiro/faturas" className="inline-flex h-11 items-center rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--gray-l)]">
-            Voltar
-          </Link>
-          <Link href={`/api/admin/financeiro/invoices/${invoice.id}/pdf`} target="_blank" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--black)] px-5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-black/85">
-            <Download className="h-4 w-4" />
-            PDF
-          </Link>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/admin/financeiro/faturas" className="inline-flex h-11 items-center rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--gray-l)]">
+              Voltar
+            </Link>
+            <Link href={`/api/admin/financeiro/invoices/${invoice.id}/pdf`} target="_blank" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--black)] px-5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-black/85">
+              <Download className="h-4 w-4" />
+              PDF
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -142,24 +148,20 @@ export default async function AdminFinancialInvoiceDetailPage({ params }: PagePr
         <div className="space-y-6">
           <AdminInvoicePaymentForm invoiceId={invoice.id} status={effectiveStatus} balanceCents={invoice.balanceCents} />
 
-          <div className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Historico</p>
-            <div className="mt-4 space-y-3">
-              {invoice.auditLogs.length === 0 ? (
-                <p className="text-sm text-[var(--gray)]">Sem historico.</p>
-              ) : invoice.auditLogs.map((log) => (
-                <div key={log.id} className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] p-4">
-                  <p className="text-sm font-black text-[var(--black)]">{log.action}</p>
-                  <p className="mt-1 text-xs font-semibold leading-5 text-[var(--gray)]">{log.description}</p>
-                  <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
-                    {log.createdAt.toLocaleString('pt-BR')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <InvoiceTimeline logs={invoice.auditLogs} />
         </div>
       </section>
     </div>
-  )
+    )
+  } catch (error: any) {
+    console.error('[FINANCE][INVOICE_DETAIL]', error)
+    return (
+      <div className="space-y-7 pb-10">
+        <Link href="/admin/financeiro/faturas" className="inline-flex h-11 items-center rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--gray-l)]">
+          Voltar para faturas
+        </Link>
+        <FinanceErrorState detail={error?.message} />
+      </div>
+    )
+  }
 }

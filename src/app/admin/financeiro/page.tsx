@@ -1,6 +1,10 @@
 import Link from 'next/link'
-import { ArrowRight, AlertTriangle, CheckCircle2, FileText, Receipt, Trophy, Users, Wallet } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, FileText, Receipt, Trophy, Users, Wallet } from 'lucide-react'
 
+import { FinanceEmptyState } from '@/components/finance/finance-empty-state'
+import { FinanceErrorState } from '@/components/finance/finance-error-state'
+import { FinanceKpiCard } from '@/components/finance/finance-kpi-card'
+import { FinancePageHeader } from '@/components/finance/finance-page-header'
 import { InvoiceStatusBadge } from '@/components/finance/invoice-status-badge'
 import { prisma } from '@/lib/db'
 import { formatCurrencyCentsBRL, getDefaultFinancePeriod, getEffectiveInvoiceStatus } from '@/lib/finance'
@@ -8,17 +12,18 @@ import { formatCurrencyCentsBRL, getDefaultFinancePeriod, getEffectiveInvoiceSta
 export const dynamic = 'force-dynamic'
 
 export default async function AdminFinanceiroPage() {
-  const period = getDefaultFinancePeriod()
-  const invoices = await prisma.financialInvoice.findMany({
-    where: {
-      issueDate: { gte: period.start, lte: period.end },
-    },
-    include: {
-      team: { select: { id: true, name: true } },
-      championship: { select: { id: true, name: true } },
-    },
-    orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
-  })
+  try {
+    const period = getDefaultFinancePeriod()
+    const invoices = await prisma.financialInvoice.findMany({
+      where: {
+        issueDate: { gte: period.start, lte: period.end },
+      },
+      include: {
+        team: { select: { id: true, name: true } },
+        championship: { select: { id: true, name: true } },
+      },
+      orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
+    })
 
   const activeInvoices = invoices.filter((invoice) => invoice.status !== 'VOID')
   const overdueInvoices = activeInvoices.filter((invoice) => getEffectiveInvoiceStatus(invoice) === 'OVERDUE')
@@ -93,59 +98,24 @@ export default async function AdminFinanceiroPage() {
     },
   ]
 
-  return (
-    <div className="space-y-8 pb-10">
-      <section className="relative overflow-hidden rounded-[36px] border border-[var(--border)] bg-[var(--black)] p-6 text-white shadow-premium md:p-8">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,194,0,0.24),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(27,115,64,0.42),transparent_34%)]" />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-[var(--yellow)]">
-                Temporada {period.year}
-              </span>
-              <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-white/70">
-                Fonte de verdade: faturas
-              </span>
-            </div>
-            <h1 className="fgb-display max-w-3xl text-4xl leading-none text-white md:text-6xl">Financeiro FGB</h1>
-            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-white/68">
-              Painel operacional para acompanhar faturamento, pendencias e inadimplencia por equipe ou campeonato.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href="/admin/financeiro/faturas/nova" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--yellow)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition hover:-translate-y-0.5">
-              Nova fatura
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link href="/admin/financeiro/taxas" className="inline-flex h-11 items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 text-[10px] font-black uppercase tracking-widest text-white transition hover:bg-white/15">
-              Regimento de taxas
-            </Link>
-          </div>
-        </div>
-      </section>
+    return (
+      <div className="space-y-8 pb-10">
+        <FinancePageHeader
+          eyebrow={`Temporada ${period.year}`}
+          badge="Fonte de verdade: faturas"
+          title="Financeiro FGB"
+          description="Central de comando para acompanhar faturamento, pendencias e inadimplencia por equipe ou campeonato."
+          primaryHref="/admin/financeiro/faturas/nova"
+          primaryLabel="Nova fatura"
+          secondaryHref="/admin/financeiro/taxas"
+          secondaryLabel="Regimento de taxas"
+        />
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => {
-          const Icon = card.icon
-          return (
-            <div key={card.label} className="rounded-[28px] border border-[var(--border)] bg-white p-5 shadow-sm">
-              <div className="mb-5 flex items-center justify-between gap-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">{card.label}</p>
-                <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
-                  card.tone === 'green' ? 'bg-green-50 text-green-700' :
-                  card.tone === 'yellow' ? 'bg-yellow-50 text-yellow-700' :
-                  card.tone === 'red' ? 'bg-red-50 text-red-700' :
-                  'bg-[var(--gray-l)] text-[var(--black)]'
-                }`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-              <p className="fgb-display text-3xl leading-none text-[var(--black)]">{card.value}</p>
-              <p className="mt-2 text-xs font-semibold text-[var(--gray)]">{card.detail}</p>
-            </div>
-          )
-        })}
-      </section>
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {cards.map((card) => (
+            <FinanceKpiCard key={card.label} {...card} tone={card.tone as any} />
+          ))}
+        </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="overflow-hidden rounded-[32px] border border-[var(--border)] bg-white shadow-sm">
@@ -171,7 +141,15 @@ export default async function AdminFinanceiroPage() {
               <tbody>
                 {recentInvoices.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-14 text-center text-sm font-semibold text-[var(--gray)]">Nenhuma fatura nesta temporada.</td>
+                    <td colSpan={4} className="px-6 py-8">
+                      <FinanceEmptyState
+                        icon={Receipt}
+                        title="Nenhuma fatura na temporada"
+                        description="Quando a primeira cobranca for criada, ela aparece aqui com status, equipe e saldo."
+                        actionHref="/admin/financeiro/faturas/nova"
+                        actionLabel="Criar fatura"
+                      />
+                    </td>
                   </tr>
                 ) : recentInvoices.map((invoice) => {
                   const effectiveStatus = getEffectiveInvoiceStatus(invoice)
@@ -233,6 +211,22 @@ export default async function AdminFinanceiroPage() {
           </p>
         </div>
       </section>
-    </div>
-  )
+      </div>
+    )
+  } catch (error: any) {
+    console.error('[FINANCE][DASHBOARD]', error)
+    return (
+      <div className="space-y-8 pb-10">
+        <FinancePageHeader
+          eyebrow="Central financeira"
+          badge="Falha de carregamento"
+          title="Financeiro FGB"
+          description="A navegacao permanece ativa, mas os dados financeiros nao puderam ser carregados."
+          primaryHref="/admin/dashboard"
+          primaryLabel="Voltar ao painel"
+        />
+        <FinanceErrorState detail={error?.message} />
+      </div>
+    )
+  }
 }

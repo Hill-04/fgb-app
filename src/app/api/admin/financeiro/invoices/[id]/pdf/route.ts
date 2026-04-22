@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { buildInvoicePdfBuffer } from '@/lib/finance-pdf'
+import { prisma } from '@/lib/db'
 import { getFinancialInvoiceById, requireAdminSession } from '@/lib/finance-server'
 import { serializeInvoice } from '@/lib/finance'
 
@@ -18,6 +19,15 @@ export async function GET(_request: NextRequest, { params }: Params) {
     if (!invoice) {
       return NextResponse.json({ error: 'Fatura nao encontrada.' }, { status: 404 })
     }
+
+    await prisma.financialAuditLog.create({
+      data: {
+        invoiceId: id,
+        action: 'PDF_GENERATED',
+        description: 'PDF institucional da fatura gerado pelo admin.',
+        createdByUserId: (session.user as any)?.id || null,
+      },
+    })
 
     const buffer = await buildInvoicePdfBuffer(serializeInvoice(invoice))
 

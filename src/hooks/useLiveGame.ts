@@ -1,20 +1,36 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
 
 export type LiveAction =
-  | 'SCORE'
-  | 'FOUL'
-  | 'REBOUND'
+  | 'SCORE_2'
+  | 'SCORE_3'
+  | 'FREE_THROW'
+  | 'FREE_THROW_MISS'
+  | 'MISS_2'
+  | 'MISS_3'
+  | 'PERSONAL_FOUL'
+  | 'TECHNICAL_FOUL'
+  | 'UNSPORTSMANLIKE_FOUL'
+  | 'DISQUALIFYING_FOUL'
+  | 'REBOUND_OFF'
+  | 'REBOUND_DEF'
   | 'ASSIST'
   | 'STEAL'
   | 'BLOCK'
+  | 'TURNOVER'
   | 'SUBSTITUTION'
   | 'TIMEOUT'
   | 'START_PERIOD'
   | 'END_PERIOD'
-  | 'VIOLATION'
+  | 'VIOLATION_24S'
+  | 'VIOLATION_8S'
+  | 'VIOLATION_3S'
+  | 'BALL_OUT'
   | 'CANCEL_LAST_EVENT'
+
+export type PossessionSide = 'HOME' | 'AWAY' | null
 
 export type LiveTeam = {
   id: string
@@ -28,6 +44,7 @@ export type LiveRosterPlayer = {
   jerseyNumber: number | null
   isStarter: boolean
   isOnCourt: boolean
+  isDisqualified?: boolean
   athlete: {
     id: string
     name: string
@@ -51,13 +68,14 @@ export type LiveEvent = {
   clockTime?: string | null
   teamId?: string | null
   athleteId?: string | null
-  athleteName?: string | null
+  secondaryAthleteId?: string | null
   description?: string | null
   sequence?: number
   sequenceNumber?: number
   createdAt: string
   homeScoreAfter?: number | null
   awayScoreAfter?: number | null
+  isCancelled?: boolean
 }
 
 export type LivePlayerStatLine = {
@@ -67,9 +85,11 @@ export type LivePlayerStatLine = {
   athleteId: string
   points: number
   fouls: number
+  technicalFouls: number
   assists: number
   steals: number
   blocks: number
+  turnovers: number
   reboundsOffensive: number
   reboundsDefensive: number
   reboundsTotal: number
@@ -81,6 +101,7 @@ export type LivePlayerStatLine = {
   freeThrowsAttempted: number
   fgPct?: number
   threePct?: number
+  freeThrowPct?: number
   athlete: {
     id: string
     name: string
@@ -100,6 +121,7 @@ export type LiveTeamStatLine = {
   assists: number
   steals: number
   blocks: number
+  turnovers: number
   twoPtMade: number
   twoPtAttempted: number
   threePtMade: number
@@ -114,6 +136,8 @@ export type LiveGameSnapshot = {
   awayTeamId: string
   homeTeam: LiveTeam
   awayTeam: LiveTeam
+  championship?: { id: string; name: string } | null
+  category?: { id: string; name: string } | null
   homeScore: number
   awayScore: number
   currentPeriod: number
@@ -129,123 +153,68 @@ export type LiveGameSnapshot = {
   liveTeamStatLines: LiveTeamStatLine[]
 }
 
-type PossessionSide = 'home' | 'away' | null
-
 function toNumber(value: unknown, fallback = 0) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-function parseClockDisplay(clockDisplay?: string | null) {
+function periodDefaultMs(period: number) {
+  return period > 4 ? 5 * 60 * 1000 : 10 * 60 * 1000
+}
+
+function parseClockDisplay(clockDisplay?: string | null, period = 1) {
   const safe = String(clockDisplay || '').trim()
-  if (!safe) return 10 * 60 * 1000
+  if (!safe) return periodDefaultMs(period)
   const [rawMinutes, rawSeconds] = safe.split(':')
   const minutes = toNumber(rawMinutes, 10)
   const seconds = toNumber(rawSeconds, 0)
   return Math.max(0, Math.trunc(minutes * 60_000 + seconds * 1_000))
 }
 
-function formatClock(clockMs: number) {
-  const safeMs = Math.max(0, Math.trunc(clockMs))
-  const totalSeconds = Math.floor(safeMs / 1000)
-  const minutes = Math.floor(totalSeconds / 60)
-  const seconds = totalSeconds % 60
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
-}
-
 function cloneSnapshot(snapshot: LiveGameSnapshot) {
   return JSON.parse(JSON.stringify(snapshot)) as LiveGameSnapshot
 }
 
-function applyOptimisticUpdate(snapshot: LiveGameSnapshot, action: LiveAction, payload: Record<string, unknown>) {
-  const next = cloneSnapshot(snapshot)
+function applyScoreOptimistic(
+  snapshot: LiveGameSnapshot,
+  action: LiveAction,
+  payload: Record<string, unknown>
+) {
+  if (!['SCORE_2', 'SCORE_3', 'FREE_THROW'].includes(action)) {
+    return snapshot
+  }
+
   const teamId = String(payload.teamId || '')
-  const athleteId = String(payload.athleteId || '')
-  const points = Math.max(0, Math.trunc(toNumber(payload.points, 0)))
-  const period = Math.max(1, Math.trunc(toNumber(payload.period, next.currentPeriod || 1)))
-  const clockMs = Math.max(0, Math.trunc(toNumber(payload.clockMs, parseClockDisplay(next.clockDisplay))))
-  const clockDisplay = formatClock(clockMs)
-  const now = new Date().toISOString()
-
-  next.currentPeriod = period
-  next.clockDisplay = clockDisplay
-
-  if (action === 'SCORE') {
-    if (teamId === next.homeTeamId) next.homeScore += points
-    if (teamId === next.awayTeamId) next.awayScore += points
-  }
-  if (action === 'FOUL') {
-    if (teamId === next.homeTeamId) next.homeTeamFoulsCurrentPeriod += 1
-    if (teamId === next.awayTeamId) next.awayTeamFoulsCurrentPeriod += 1
-  }
-  if (action === 'TIMEOUT') {
-    if (teamId === next.homeTeamId) next.homeTimeoutsUsed += 1
-    if (teamId === next.awayTeamId) next.awayTimeoutsUsed += 1
-  }
-  if (action === 'START_PERIOD') {
-    next.liveStatus = 'LIVE'
-  }
-  if (action === 'END_PERIOD') {
-    next.liveStatus = period >= 4 ? 'FINISHED' : 'HALFTIME'
-  }
-  if (action === 'SUBSTITUTION') {
-    const athleteOutId = String(payload.athleteOutId || '')
-    const athleteInId = String(payload.athleteInId || '')
-    const roster = next.gameRosters.find((entry) => entry.teamId === teamId)
-    if (roster) {
-      if (athleteOutId) {
-        const athleteOut = roster.players.find((entry) => entry.athleteId === athleteOutId)
-        if (athleteOut) athleteOut.isOnCourt = false
-      }
-      if (athleteInId) {
-        const athleteIn = roster.players.find((entry) => entry.athleteId === athleteInId)
-        if (athleteIn) athleteIn.isOnCourt = true
-      }
-    }
-  }
-
-  if (action !== 'CANCEL_LAST_EVENT') {
-    next.gameEvents.unshift({
-      id: `optimistic-${Date.now()}`,
-      type: action,
-      period,
-      clockMs,
-      clockTime: clockDisplay,
-      teamId: teamId || null,
-      athleteId: athleteId || null,
-      createdAt: now,
-      homeScoreAfter: next.homeScore,
-      awayScoreAfter: next.awayScore,
-      description: action,
-    })
-  }
-
+  const points = action === 'SCORE_3' ? 3 : action === 'FREE_THROW' ? 1 : 2
+  const next = cloneSnapshot(snapshot)
+  if (teamId === next.homeTeamId) next.homeScore += points
+  if (teamId === next.awayTeamId) next.awayScore += points
   return next
 }
 
 export function useLiveGame(gameId: string) {
   const [game, setGame] = useState<LiveGameSnapshot | null>(null)
-  const [gameClockMs, setGameClockMs] = useState(10 * 60 * 1000)
+  const [clockMs, setClockMs] = useState(10 * 60 * 1000)
   const [shotClockMs, setShotClockMs] = useState(24_000)
   const [isClockRunning, setIsClockRunning] = useState(false)
   const [possession, setPossession] = useState<PossessionSide>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const initializedClockRef = useRef(false)
   const gameRef = useRef<LiveGameSnapshot | null>(null)
 
-  const applyServerSnapshot = useCallback(
-    (snapshot: LiveGameSnapshot) => {
-      gameRef.current = snapshot
-      setGame(snapshot)
-      if (!isClockRunning) {
-        const parsedClock = parseClockDisplay(snapshot.clockDisplay)
-        const periodFallback = Math.max(1, snapshot.currentPeriod || 1) * 10 * 60 * 1000
-        setGameClockMs(parsedClock || periodFallback)
-      }
-    },
-    [isClockRunning]
-  )
+  const applyServerSnapshot = useCallback((snapshot: LiveGameSnapshot) => {
+    gameRef.current = snapshot
+    setGame(snapshot)
+
+    if (!initializedClockRef.current) {
+      const parsed = parseClockDisplay(snapshot.clockDisplay, snapshot.currentPeriod || 1)
+      setClockMs(parsed)
+      setShotClockMs(24_000)
+      initializedClockRef.current = true
+    }
+  }, [])
 
   const fetchSnapshot = useCallback(async () => {
     if (!gameId) return
@@ -270,14 +239,16 @@ export function useLiveGame(gameId: string) {
         await fetchSnapshot()
         if (!cancelled) setError(null)
       } catch (currentError: unknown) {
-        if (!cancelled) setError(currentError instanceof Error ? currentError.message : 'Erro ao carregar live')
+        if (!cancelled) {
+          const message = currentError instanceof Error ? currentError.message : 'Erro ao carregar live'
+          setError(message)
+        }
       } finally {
         if (!cancelled) setIsLoading(false)
       }
     }
 
     void load()
-
     return () => {
       cancelled = true
     }
@@ -286,7 +257,13 @@ export function useLiveGame(gameId: string) {
   useEffect(() => {
     if (!isClockRunning) return
     const interval = window.setInterval(() => {
-      setGameClockMs((current) => Math.max(0, current - 100))
+      setClockMs((current) => {
+        const next = Math.max(0, current - 100)
+        if (next <= 0) {
+          setIsClockRunning(false)
+        }
+        return next
+      })
       setShotClockMs((current) => Math.max(0, current - 100))
     }, 100)
     return () => window.clearInterval(interval)
@@ -296,7 +273,7 @@ export function useLiveGame(gameId: string) {
     if (!gameId) return
     const interval = window.setInterval(() => {
       void fetchSnapshot().catch(() => {
-        /* noop: polling resiliente */
+        /* polling resiliente */
       })
     }, 2500)
     return () => window.clearInterval(interval)
@@ -306,16 +283,12 @@ export function useLiveGame(gameId: string) {
     async (action: LiveAction, payload: Record<string, unknown> = {}) => {
       if (!gameId) return
 
-      if (gameRef.current) {
-        const optimistic = applyOptimisticUpdate(gameRef.current, action, payload)
-        gameRef.current = optimistic
-        setGame(optimistic)
-      }
-
-      if (action === 'SCORE') {
-        const teamId = String(payload.teamId || '')
-        if (teamId && gameRef.current) {
-          setPossession(teamId === gameRef.current.homeTeamId ? 'away' : 'home')
+      const previous = gameRef.current
+      if (previous) {
+        const optimistic = applyScoreOptimistic(previous, action, payload)
+        if (optimistic !== previous) {
+          gameRef.current = optimistic
+          setGame(optimistic)
         }
       }
 
@@ -332,8 +305,16 @@ export function useLiveGame(gameId: string) {
         applyServerSnapshot(data as LiveGameSnapshot)
         setError(null)
       } catch (currentError: unknown) {
-        setError(currentError instanceof Error ? currentError.message : 'Falha na acao live')
-        await fetchSnapshot()
+        const message = currentError instanceof Error ? currentError.message : 'Falha na acao live'
+        setError(message)
+        toast.error(message)
+        if (previous) {
+          gameRef.current = previous
+          setGame(previous)
+        }
+        await fetchSnapshot().catch(() => {
+          /* noop */
+        })
         throw currentError
       }
     },
@@ -356,32 +337,25 @@ export function useLiveGame(gameId: string) {
     if (!game) return [] as LiveRosterPlayer[]
     const roster = game.gameRosters.find((entry) => entry.teamId === game.homeTeamId)
     if (!roster) return [] as LiveRosterPlayer[]
-    const onCourt = roster.players.filter((entry) => entry.isOnCourt)
-    if (onCourt.length > 0) return onCourt
-    const starters = roster.players.filter((entry) => entry.isStarter).slice(0, 5)
-    return starters.length > 0 ? starters : roster.players.slice(0, 5)
+    return roster.players.filter((entry) => entry.isOnCourt)
   }, [game])
 
   const awayLineup = useMemo(() => {
     if (!game) return [] as LiveRosterPlayer[]
     const roster = game.gameRosters.find((entry) => entry.teamId === game.awayTeamId)
     if (!roster) return [] as LiveRosterPlayer[]
-    const onCourt = roster.players.filter((entry) => entry.isOnCourt)
-    if (onCourt.length > 0) return onCourt
-    const starters = roster.players.filter((entry) => entry.isStarter).slice(0, 5)
-    return starters.length > 0 ? starters : roster.players.slice(0, 5)
+    return roster.players.filter((entry) => entry.isOnCourt)
   }, [game])
 
-  const events = useMemo(() => {
-    return game?.gameEvents ?? []
-  }, [game])
+  const events = useMemo(() => game?.gameEvents ?? [], [game])
 
-  const stats = useMemo(() => {
-    return {
+  const stats = useMemo(
+    () => ({
       players: game?.livePlayerStatLines ?? [],
       teams: game?.liveTeamStatLines ?? [],
-    }
-  }, [game])
+    }),
+    [game]
+  )
 
   return {
     game,
@@ -389,16 +363,16 @@ export function useLiveGame(gameId: string) {
     awayLineup,
     events,
     stats,
-    clockMs: gameClockMs,
+    clockMs,
     shotClockMs,
     isClockRunning,
     possession,
+    isLoading,
+    error,
     executeAction,
     startClock,
     stopClock,
     resetShotClock,
-    isLoading,
-    error,
+    setPossession,
   }
 }
-

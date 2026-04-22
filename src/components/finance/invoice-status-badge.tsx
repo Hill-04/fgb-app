@@ -10,11 +10,12 @@ export function InvoiceStatusBadge({ status, className }: InvoiceStatusBadgeProp
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em]',
+        'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-sm',
         getInvoiceStatusClassName(status),
         className
       )}
     >
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
       {getInvoiceStatusLabel(status)}
     </span>
   )

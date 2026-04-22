@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { Download } from 'lucide-react'
 
+import { FinanceErrorState } from '@/components/finance/finance-error-state'
 import { InvoiceStatusBadge } from '@/components/finance/invoice-status-badge'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -22,35 +23,39 @@ export default async function TeamFinancialInvoiceDetailPage({ params }: PagePro
   if (!teamId) redirect('/team/create')
 
   const { id } = await params
-  const invoice = await prisma.financialInvoice.findFirst({
-    where: { id, teamId },
-    include: {
-      championship: { select: { id: true, name: true, year: true } },
-      items: { orderBy: { createdAt: 'asc' } },
-      payments: { orderBy: { paidAt: 'desc' } },
-    },
-  })
+  try {
+    const invoice = await prisma.financialInvoice.findFirst({
+      where: { id, teamId },
+      include: {
+        championship: { select: { id: true, name: true, year: true } },
+        items: { orderBy: { createdAt: 'asc' } },
+        payments: { orderBy: { paidAt: 'desc' } },
+      },
+    })
 
-  if (!invoice) notFound()
+    if (!invoice) notFound()
 
-  const effectiveStatus = getEffectiveInvoiceStatus(invoice)
+    const effectiveStatus = getEffectiveInvoiceStatus(invoice)
 
-  return (
-    <div className="space-y-7 pb-10">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    return (
+      <div className="space-y-7 pb-10">
+        <div className="relative overflow-hidden rounded-[34px] border border-[var(--border)] bg-white p-6 shadow-sm">
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-2 bg-gradient-to-r from-[var(--verde)] via-[var(--yellow)] to-[var(--red)]" />
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <InvoiceStatusBadge status={effectiveStatus} />
           <h1 className="fgb-display mt-3 text-4xl leading-none text-[var(--black)]">{invoice.number}</h1>
           <p className="mt-2 text-sm text-[var(--gray)]">{invoice.championship?.name || 'Fatura institucional FGB'}</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Link href="/team/financeiro" className="inline-flex h-11 items-center rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--gray-l)]">
-            Voltar
-          </Link>
-          <Link href={`/api/team/financeiro/invoices/${invoice.id}/pdf`} target="_blank" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--black)] px-5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-black/85">
-            <Download className="h-4 w-4" />
-            PDF
-          </Link>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href="/team/financeiro" className="inline-flex h-11 items-center rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--gray-l)]">
+              Voltar
+            </Link>
+            <Link href={`/api/team/financeiro/invoices/${invoice.id}/pdf`} target="_blank" className="inline-flex h-11 items-center gap-2 rounded-2xl bg-[var(--black)] px-5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-black/85">
+              <Download className="h-4 w-4" />
+              PDF
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -97,6 +102,17 @@ export default async function TeamFinancialInvoiceDetailPage({ params }: PagePro
           </table>
         </div>
       </div>
-    </div>
-  )
+      </div>
+    )
+  } catch (error: any) {
+    console.error('[TEAM][FINANCE_INVOICE_DETAIL]', error)
+    return (
+      <div className="space-y-7 pb-10">
+        <Link href="/team/financeiro" className="inline-flex h-11 items-center rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--gray-l)]">
+          Voltar para financeiro
+        </Link>
+        <FinanceErrorState detail={error?.message} />
+      </div>
+    )
+  }
 }
