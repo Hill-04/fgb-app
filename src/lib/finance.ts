@@ -2,9 +2,11 @@ import type { Prisma } from '@prisma/client'
 
 export const INVOICE_STATUSES = ['DRAFT', 'OPEN', 'PARTIAL', 'PAID', 'OVERDUE', 'VOID'] as const
 export const PAYMENT_STATUSES = ['CONFIRMED', 'REVERSED'] as const
+export const INVOICE_ITEM_SOURCE_TYPES = ['REGISTRATION_FEE', 'MANUAL', 'DISCOUNT', 'ADJUSTMENT'] as const
 
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number]
+export type InvoiceItemSourceType = (typeof INVOICE_ITEM_SOURCE_TYPES)[number]
 
 export const DEFAULT_INVOICE_DUE_DAYS = 15
 
@@ -15,10 +17,11 @@ export function centsFromAmount(value: number) {
 
 export function centsFromCurrencyInput(value: unknown) {
   if (typeof value === 'number') return centsFromAmount(value)
-  const normalized = String(value || '')
+  const raw = String(value || '')
     .replace(/[^\d,.-]/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.')
+  const normalized = raw.includes(',')
+    ? raw.replace(/\./g, '').replace(',', '.')
+    : raw.replace(/\.(?=\d{3}(\D|$))/g, '')
   return centsFromAmount(Number(normalized))
 }
 
@@ -56,6 +59,13 @@ export function normalizeInvoiceStatus(status?: string | null): InvoiceStatus {
 export function normalizePaymentStatus(status?: string | null): PaymentStatus {
   const normalized = String(status || 'CONFIRMED').toUpperCase()
   return PAYMENT_STATUSES.includes(normalized as PaymentStatus) ? normalized as PaymentStatus : 'CONFIRMED'
+}
+
+export function normalizeInvoiceItemSourceType(sourceType?: string | null): InvoiceItemSourceType {
+  const normalized = String(sourceType || 'MANUAL').toUpperCase()
+  return INVOICE_ITEM_SOURCE_TYPES.includes(normalized as InvoiceItemSourceType)
+    ? normalized as InvoiceItemSourceType
+    : 'MANUAL'
 }
 
 export function getEffectiveInvoiceStatus(invoice: {
@@ -105,9 +115,11 @@ export function calculateInvoiceTotals(
   payments: Array<{ amountCents: number; status: string }>,
   discountCents = 0
 ) {
-  const subtotalCents = items.reduce((sum, item) => sum + Math.max(0, item.totalCents || 0), 0)
-  const safeDiscountCents = Math.min(Math.max(0, discountCents || 0), subtotalCents)
-  const totalCents = Math.max(0, subtotalCents - safeDiscountCents)
+  const positiveItemsCents = items.reduce((sum, item) => sum + Math.max(0, item.totalCents || 0), 0)
+  const negativeItemsCents = items.reduce((sum, item) => sum + Math.min(0, item.totalCents || 0), 0)
+  const subtotalCents = positiveItemsCents
+  const explicitDiscountCents = Math.min(Math.max(0, discountCents || 0), subtotalCents)
+  const totalCents = Math.max(0, subtotalCents + negativeItemsCents - explicitDiscountCents)
   const paidCents = payments
     .filter((payment) => normalizePaymentStatus(payment.status) === 'CONFIRMED')
     .reduce((sum, payment) => sum + Math.max(0, payment.amountCents || 0), 0)
@@ -115,7 +127,7 @@ export function calculateInvoiceTotals(
 
   return {
     subtotalCents,
-    discountCents: safeDiscountCents,
+    discountCents: explicitDiscountCents,
     totalCents,
     paidCents,
     balanceCents,

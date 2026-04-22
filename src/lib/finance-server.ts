@@ -2,7 +2,7 @@ import { getServerSession } from 'next-auth'
 
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { serializeInvoice } from '@/lib/finance'
+import { normalizeInvoiceItemSourceType, serializeInvoice } from '@/lib/finance'
 
 export const FINANCIAL_INVOICE_INCLUDE = {
   team: { select: { id: true, name: true, city: true, state: true } },
@@ -43,7 +43,11 @@ export function normalizeInvoiceItemsInput(items: any[]) {
     .map((item) => {
       const quantity = Math.max(1, Number(item.quantity || 1))
       const unitValueCents = Math.max(0, Number(item.unitValueCents || 0))
-      const totalCents = Math.max(0, Number(item.totalCents ?? quantity * unitValueCents))
+      const sourceType = normalizeInvoiceItemSourceType(
+        item.sourceType || (item.registrationFeeId ? 'REGISTRATION_FEE' : 'MANUAL')
+      )
+      const sign = sourceType === 'DISCOUNT' ? -1 : 1
+      const totalCents = sign * Math.max(0, Number(item.totalCents ?? quantity * unitValueCents))
 
       return {
         registrationFeeId: item.registrationFeeId ? String(item.registrationFeeId) : null,
@@ -52,8 +56,8 @@ export function normalizeInvoiceItemsInput(items: any[]) {
         quantity,
         unitValueCents,
         totalCents,
-        sourceType: String(item.sourceType || (item.registrationFeeId ? 'REGISTRATION_FEE' : 'MANUAL')).toUpperCase(),
+        sourceType,
       }
     })
-    .filter((item) => item.description && item.totalCents > 0)
+    .filter((item) => item.description && item.totalCents !== 0)
 }

@@ -1,13 +1,16 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Download, Receipt, Wallet } from 'lucide-react'
+import { Download, ShieldCheck, Wallet } from 'lucide-react'
 
+import { AdminInvoiceEditForm } from '@/components/finance/admin-invoice-edit-form'
+import { AdminInvoiceItemsManager } from '@/components/finance/admin-invoice-items-manager'
 import { AdminInvoicePaymentForm } from '@/components/finance/admin-invoice-payment-form'
 import { FinanceErrorState } from '@/components/finance/finance-error-state'
 import { InvoiceStatusBadge } from '@/components/finance/invoice-status-badge'
 import { InvoiceTimeline } from '@/components/finance/invoice-timeline'
 import { prisma } from '@/lib/db'
 import { formatCurrencyCentsBRL, getEffectiveInvoiceStatus } from '@/lib/finance'
+import { getInvoiceEditPolicy } from '@/lib/finance-invoice-service'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +43,18 @@ export default async function AdminFinancialInvoiceDetailPage({ params }: PagePr
     if (!invoice) notFound()
 
     const effectiveStatus = getEffectiveInvoiceStatus(invoice)
+    const editPolicy = getInvoiceEditPolicy(invoice)
+    const dueDateInput = invoice.dueDate ? invoice.dueDate.toISOString().slice(0, 10) : ''
+    const serializedItems = invoice.items.map((item) => ({
+      id: item.id,
+      registrationFeeId: item.registrationFeeId,
+      feeKey: item.feeKey,
+      description: item.description,
+      quantity: item.quantity,
+      unitValueCents: item.unitValueCents,
+      totalCents: item.totalCents,
+      sourceType: item.sourceType,
+    }))
 
     return (
       <div className="space-y-7 pb-10">
@@ -88,37 +103,13 @@ export default async function AdminFinancialInvoiceDetailPage({ params }: PagePr
 
       <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="space-y-6">
-          <div className="overflow-hidden rounded-[32px] border border-[var(--border)] bg-white shadow-sm">
-            <div className="flex items-center gap-3 border-b border-[var(--border)] bg-[var(--gray-l)] px-6 py-5">
-              <Receipt className="h-5 w-5 text-[var(--verde)]" />
-              <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Itens cobrados</h2>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead>
-                  <tr className="border-b border-[var(--border)]">
-                    <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Item</th>
-                    <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Qtd</th>
-                    <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Unitario</th>
-                    <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {invoice.items.map((item) => (
-                    <tr key={item.id} className="border-b border-[var(--border)]">
-                      <td className="px-6 py-4">
-                        <p className="font-semibold text-[var(--black)]">{item.description}</p>
-                        <p className="mt-1 text-xs text-[var(--gray)]">{item.feeKey || item.sourceType}</p>
-                      </td>
-                      <td className="px-6 py-4 text-right font-semibold">{item.quantity}</td>
-                      <td className="px-6 py-4 text-right font-semibold">{formatCurrencyCentsBRL(item.unitValueCents)}</td>
-                      <td className="px-6 py-4 text-right font-black text-[var(--black)]">{formatCurrencyCentsBRL(item.totalCents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <AdminInvoiceItemsManager
+            invoiceId={invoice.id}
+            items={serializedItems}
+            canAddItem={editPolicy.canAddItem}
+            canRemoveManualItem={editPolicy.canRemoveManualItem}
+            lockedReason={editPolicy.lockedReason}
+          />
 
           <div className="rounded-[32px] border border-[var(--border)] bg-white p-6 shadow-sm">
             <div className="mb-5 flex items-center gap-3">
@@ -146,7 +137,39 @@ export default async function AdminFinancialInvoiceDetailPage({ params }: PagePr
         </div>
 
         <div className="space-y-6">
-          <AdminInvoicePaymentForm invoiceId={invoice.id} status={effectiveStatus} balanceCents={invoice.balanceCents} />
+          <div className="rounded-[30px] border border-[var(--border)] bg-white p-5 shadow-sm">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--verde)]/10 text-[var(--verde)]">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Politica de edicao</p>
+                <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Acoes permitidas</h2>
+              </div>
+            </div>
+            <div className="grid gap-2 text-sm font-semibold text-[var(--gray)]">
+              <p>Vencimento: <strong className="text-[var(--black)]">{editPolicy.canEditDueDate ? 'permitido' : 'bloqueado'}</strong></p>
+              <p>Composicao: <strong className="text-[var(--black)]">{editPolicy.canAddItem ? 'permitida' : 'bloqueada'}</strong></p>
+              <p>Cancelamento: <strong className="text-[var(--black)]">{editPolicy.canVoid ? 'permitido' : 'bloqueado'}</strong></p>
+              {editPolicy.lockedReason ? <p className="rounded-2xl bg-[var(--gray-l)] p-3 text-xs">{editPolicy.lockedReason}</p> : null}
+            </div>
+          </div>
+
+          <AdminInvoiceEditForm
+            invoiceId={invoice.id}
+            dueDate={dueDateInput}
+            notes={invoice.notes || ''}
+            canEditDueDate={editPolicy.canEditDueDate}
+            canEditNotes={editPolicy.canEditNotes}
+            lockedReason={editPolicy.lockedReason}
+          />
+
+          <AdminInvoicePaymentForm
+            invoiceId={invoice.id}
+            status={effectiveStatus}
+            balanceCents={invoice.balanceCents}
+            canVoid={editPolicy.canVoid}
+          />
 
           <InvoiceTimeline logs={invoice.auditLogs} />
         </div>

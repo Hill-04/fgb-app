@@ -5,6 +5,7 @@ import { Download } from 'lucide-react'
 
 import { FinanceErrorState } from '@/components/finance/finance-error-state'
 import { InvoiceStatusBadge } from '@/components/finance/invoice-status-badge'
+import { InvoiceTimeline } from '@/components/finance/invoice-timeline'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { formatCurrencyCentsBRL, getEffectiveInvoiceStatus } from '@/lib/finance'
@@ -30,6 +31,7 @@ export default async function TeamFinancialInvoiceDetailPage({ params }: PagePro
         championship: { select: { id: true, name: true, year: true } },
         items: { orderBy: { createdAt: 'asc' } },
         payments: { orderBy: { paidAt: 'desc' } },
+        auditLogs: { orderBy: { createdAt: 'desc' } },
       },
     })
 
@@ -75,33 +77,55 @@ export default async function TeamFinancialInvoiceDetailPage({ params }: PagePro
         ))}
       </section>
 
-      <div className="overflow-hidden rounded-[32px] border border-[var(--border)] bg-white shadow-sm">
-        <div className="border-b border-[var(--border)] bg-[var(--gray-l)] px-6 py-5">
-          <h2 className="fgb-display text-2xl leading-none text-[var(--black)]">Itens da fatura</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Item</th>
-                <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Qtd</th>
-                <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Unitario</th>
-                <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Subtotal</th>
-              </tr>
-            </thead>
-            <tbody>
-              {invoice.items.map((item) => (
-                <tr key={item.id} className="border-b border-[var(--border)]">
-                  <td className="px-6 py-4 font-semibold text-[var(--black)]">{item.description}</td>
-                  <td className="px-6 py-4 text-right font-semibold">{item.quantity}</td>
-                  <td className="px-6 py-4 text-right font-semibold">{formatCurrencyCentsBRL(item.unitValueCents)}</td>
-                  <td className="px-6 py-4 text-right font-black text-[var(--black)]">{formatCurrencyCentsBRL(item.totalCents)}</td>
+      <section className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="overflow-hidden rounded-[32px] border border-[var(--border)] bg-white shadow-sm">
+          <div className="border-b border-[var(--border)] bg-[var(--gray-l)] px-6 py-5">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Composicao da cobranca</p>
+            <h2 className="fgb-display mt-1 text-2xl leading-none text-[var(--black)]">Itens da fatura</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Item</th>
+                  <th className="px-6 py-4 text-center text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Origem</th>
+                  <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Qtd</th>
+                  <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Unitario</th>
+                  <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Subtotal</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {invoice.items.map((item) => (
+                  <tr key={item.id} className="border-b border-[var(--border)]">
+                    <td className="px-6 py-4 font-semibold text-[var(--black)]">{item.description}</td>
+                    <td className="px-6 py-4 text-center">
+                      <span className="rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+                        {item.sourceType === 'REGISTRATION_FEE' ? 'Inscricao' : item.sourceType === 'DISCOUNT' ? 'Desconto' : item.sourceType === 'ADJUSTMENT' ? 'Ajuste' : 'Manual'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-semibold">{item.quantity}</td>
+                    <td className="px-6 py-4 text-right font-semibold">{formatCurrencyCentsBRL(item.unitValueCents)}</td>
+                    <td className={`px-6 py-4 text-right font-black ${item.totalCents < 0 ? 'text-yellow-700' : 'text-[var(--black)]'}`}>
+                      {formatCurrencyCentsBRL(item.totalCents)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+
+        <div className="space-y-6">
+          <div className="rounded-[30px] border border-[var(--border)] bg-white p-5 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Orientacao</p>
+            <h2 className="fgb-display mt-2 text-2xl leading-none text-[var(--black)]">Consulta da equipe</h2>
+            <p className="mt-3 text-sm font-semibold leading-6 text-[var(--gray)]">
+              Esta area e somente leitura. Para duvidas sobre valores, vencimento ou baixa, entre em contato com a FGB informando o numero da fatura.
+            </p>
+          </div>
+          <InvoiceTimeline logs={invoice.auditLogs} />
+        </div>
+      </section>
       </div>
     )
   } catch (error: any) {

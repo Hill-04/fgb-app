@@ -15,9 +15,10 @@ type AdminInvoicePaymentFormProps = {
   invoiceId: string
   status: string
   balanceCents: number
+  canVoid?: boolean
 }
 
-export function AdminInvoicePaymentForm({ invoiceId, status, balanceCents }: AdminInvoicePaymentFormProps) {
+export function AdminInvoicePaymentForm({ invoiceId, status, balanceCents, canVoid: canVoidFromPolicy }: AdminInvoicePaymentFormProps) {
   const router = useRouter()
   const [amount, setAmount] = useState((balanceCents / 100).toFixed(2))
   const [reference, setReference] = useState('')
@@ -27,7 +28,7 @@ export function AdminInvoicePaymentForm({ invoiceId, status, balanceCents }: Adm
 
   const canPay = !['DRAFT', 'PAID', 'VOID'].includes(status) && balanceCents > 0
   const canIssue = status === 'DRAFT'
-  const canVoid = status !== 'PAID' && status !== 'VOID'
+  const canVoid = canVoidFromPolicy ?? (status !== 'PAID' && status !== 'VOID')
 
   async function submitPayment() {
     const amountCents = centsFromCurrencyInput(amount)
@@ -56,12 +57,21 @@ export function AdminInvoicePaymentForm({ invoiceId, status, balanceCents }: Adm
   }
 
   async function runAction(action: 'issue' | 'void') {
+    const reason =
+      action === 'void'
+        ? window.prompt('Motivo do cancelamento da fatura:')
+        : null
+    if (action === 'void' && !reason?.trim()) {
+      toast.error('Informe o motivo do cancelamento.')
+      return
+    }
+
     setActionLoading(action)
     try {
       const response = await fetch(`/api/admin/financeiro/invoices/${invoiceId}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: action === 'void' ? JSON.stringify({ reason: 'Cancelamento manual pelo painel financeiro.' }) : undefined,
+        body: action === 'void' ? JSON.stringify({ reason }) : undefined,
       })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.error || 'Erro ao atualizar fatura.')

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
 import { FINANCIAL_INVOICE_INCLUDE, requireAdminSession } from '@/lib/finance-server'
-import { getEffectiveInvoiceStatus, serializeInvoice } from '@/lib/finance'
+import { serializeInvoice } from '@/lib/finance'
+import { getInvoiceEditPolicy } from '@/lib/finance-invoice-service'
 
 type Params = {
   params: Promise<{ id: string }>
@@ -19,8 +20,8 @@ export async function POST(_request: NextRequest, { params }: Params) {
       return NextResponse.json({ error: 'Fatura nao encontrada.' }, { status: 404 })
     }
 
-    if (getEffectiveInvoiceStatus(invoice) === 'VOID') {
-      return NextResponse.json({ error: 'Fatura cancelada nao pode ser emitida.' }, { status: 400 })
+    if (!getInvoiceEditPolicy(invoice).canIssue) {
+      return NextResponse.json({ error: 'Apenas faturas em rascunho podem ser emitidas.' }, { status: 400 })
     }
 
     const updated = await prisma.$transaction(async (tx) => {
