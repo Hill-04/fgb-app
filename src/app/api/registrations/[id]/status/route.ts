@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import {
+  assertRegistrationHasBillableFees,
+  createInvoiceFromRegistration,
+  RegistrationInvoiceGenerationError,
+} from '@/lib/finance-invoice-service'
 
 export async function PATCH(
   request: Request,
@@ -21,14 +26,27 @@ export async function PATCH(
       return NextResponse.json({ error: 'Status inválido' }, { status: 400 })
     }
 
+    if (status === 'CONFIRMED') {
+      await assertRegistrationHasBillableFees(id)
+    }
+
     const registration = await prisma.registration.update({
       where: { id },
       data: { status }
     })
 
-    return NextResponse.json({ success: true, registration }, { status: 200 })
-  } catch (error) {
+    const financialInvoiceGeneration =
+      status === 'CONFIRMED'
+        ? await createInvoiceFromRegistration(id, {
+            createdByUserId: (session.user as any)?.id || null,
+            context: 'REGISTRATION_STATUS_CONFIRMATION',
+          })
+        : null
+
+    return NextResponse.json({ success: true, registration, financialInvoiceGeneration }, { status: 200 })
+  } catch (error: any) {
     console.error('Error updating registration status:', error)
-    return NextResponse.json({ error: 'Erro ao atualizar status' }, { status: 500 })
+    const status = error instanceof RegistrationInvoiceGenerationError ? error.status : 500
+    return NextResponse.json({ error: error.message || 'Erro ao atualizar status' }, { status })
   }
 }

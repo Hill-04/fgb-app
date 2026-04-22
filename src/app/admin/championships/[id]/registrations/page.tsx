@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Loader2, Pencil, Plus, Receipt, Shield, Trash2 } from 'lucide-react'
+import { FileText, Loader2, Pencil, Plus, Receipt, Shield, Trash2 } from 'lucide-react'
 
 import { formatCurrencyBRL } from '@/lib/fees'
+import { formatCurrencyCentsBRL } from '@/lib/finance'
 
 type Category = { id: string; name: string }
 type Team = { id: string; name: string }
@@ -42,6 +43,13 @@ type Registration = {
     pendingTotal: number
     paidTotal: number
   }
+  financialInvoice?: {
+    id: string
+    number: string
+    status: string
+    totalCents: number
+    balanceCents: number
+  } | null
 }
 
 type Championship = {
@@ -403,6 +411,15 @@ export default function RegistrationsPage() {
                       <span className="text-[9px] font-bold text-green-700">
                         Pago {formatCurrencyBRL(registration.feeSummary?.paidTotal || 0)}
                       </span>
+                      {registration.financialInvoice ? (
+                        <span className="mt-1 border-t border-[var(--border)] pt-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
+                          Fatura {registration.financialInvoice.number} | {formatCurrencyCentsBRL(registration.financialInvoice.balanceCents)}
+                        </span>
+                      ) : (
+                        <span className="mt-1 border-t border-[var(--border)] pt-1 text-[9px] font-bold text-[var(--gray)]">
+                          Sem fatura vinculada
+                        </span>
+                      )}
                     </Link>
                   </td>
                   <td className="px-6 py-4">
@@ -431,6 +448,15 @@ export default function RegistrationsPage() {
                       >
                         <Receipt className="h-4 w-4" />
                       </Link>
+                      {registration.financialInvoice ? (
+                        <Link
+                          href={`/admin/financeiro/faturas/${registration.financialInvoice.id}`}
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-yellow-50 hover:text-yellow-700"
+                          title={`Fatura ${registration.financialInvoice.number}`}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Link>
+                      ) : null}
                       <button
                         onClick={() => handleDelete(registration.id)}
                         className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-red-50 hover:text-red-500"

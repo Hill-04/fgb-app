@@ -2,6 +2,11 @@ import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { syncTeamTotalFeesOwed } from '@/lib/fees-server'
+import {
+  assertRegistrationHasBillableFees,
+  createInvoiceFromRegistration,
+  RegistrationInvoiceGenerationError,
+} from '@/lib/finance-invoice-service'
 
 export async function PATCH(
   request: Request,
@@ -9,6 +14,7 @@ export async function PATCH(
 ) {
   const { regId } = await params
   await ensureDatabaseSchema()
+  const body = await request.json()
   const {
     teamId,
     categoryIds,
@@ -18,45 +24,69 @@ export async function PATCH(
     coachPhone,
     coachEmail,
     coachMultiTeam,
-    blockedDates = [],
-    athletePlayers = []
-  } = await request.json()
+    blockedDates,
+    athletePlayers
+  } = body
   
   try {
+    if (status === 'CONFIRMED') {
+      await assertRegistrationHasBillableFees(regId)
+    }
+
+    const updateData: any = {}
+
+    if (status) updateData.status = status
+    if ('observations' in body) updateData.observations = observations || null
+    if ('coachName' in body) updateData.coachName = coachName || null
+    if ('coachPhone' in body) updateData.coachPhone = coachPhone || null
+    if ('coachEmail' in body) updateData.coachEmail = coachEmail || null
+    if ('coachMultiTeam' in body) updateData.coachMultiTeam = coachMultiTeam ?? false
+
+    if (teamId) {
+      updateData.teamId = teamId
+    }
+
+    if (Array.isArray(blockedDates)) {
+      updateData.blockedDates = {
+        deleteMany: {},
+        create: blockedDates.map((blockedDate: any) => ({
+          startDate: new Date(blockedDate.startDate),
+          endDate: new Date(blockedDate.endDate || blockedDate.startDate),
+          reason: blockedDate.reason || null,
+          affectsAllCats: blockedDate.affectsAllCats ?? false,
+        }))
+      }
+    }
+
+    if (Array.isArray(athletePlayers)) {
+      updateData.athletePlayers = {
+        deleteMany: {},
+        create: athletePlayers.map((athlete: any) => ({
+          athleteName: athlete.athleteName,
+          athleteDoc: athlete.athleteDoc || null,
+          categoryIds: JSON.stringify(athlete.categoryIds || []),
+        }))
+      }
+    }
+
+    if (Array.isArray(categoryIds)) {
+      updateData.categories = {
+        deleteMany: {},
+        create: categoryIds.map((cid: string) => ({ categoryId: cid }))
+      }
+    }
+
     const registration = await prisma.registration.update({
       where: { id: regId },
-      data: {
-        teamId,
-        status,
-        observations: observations || null,
-        coachName: coachName || null,
-        coachPhone: coachPhone || null,
-        coachEmail: coachEmail || null,
-        coachMultiTeam: coachMultiTeam ?? false,
-        blockedDates: {
-          deleteMany: {},
-          create: blockedDates.map((blockedDate: any) => ({
-            startDate: new Date(blockedDate.startDate),
-            endDate: new Date(blockedDate.endDate || blockedDate.startDate),
-            reason: blockedDate.reason || null,
-            affectsAllCats: blockedDate.affectsAllCats ?? false,
-          }))
-        },
-        athletePlayers: {
-          deleteMany: {},
-          create: athletePlayers.map((athlete: any) => ({
-            athleteName: athlete.athleteName,
-            athleteDoc: athlete.athleteDoc || null,
-            categoryIds: JSON.stringify(athlete.categoryIds || []),
-          }))
-        },
-        categories: {
-          deleteMany: {},
-          create: categoryIds.map((cid: string) => ({ categoryId: cid }))
-        }
-      },
+      data: updateData,
       include: {
         team: true,
+        financialInvoices: {
+          where: { status: { not: 'VOID' } },
+          select: { id: true, number: true, status: true, totalCents: true, balanceCents: true },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
         blockedDates: { orderBy: { startDate: 'asc' } },
         athletePlayers: { orderBy: { createdAt: 'asc' } },
         categories: {
@@ -67,15 +97,23 @@ export async function PATCH(
       }
     })
 
+    const financialInvoiceGeneration =
+      status === 'CONFIRMED'
+        ? await createInvoiceFromRegistration(regId, { context: 'REGISTRATION_PATCH_CONFIRMATION' })
+        : null
+
     const formatted = {
       ...registration,
-      categories: registration.categories.map(rc => rc.category)
+      categories: registration.categories.map(rc => rc.category),
+      financialInvoice: financialInvoiceGeneration?.invoice || registration.financialInvoices[0] || null,
+      financialInvoiceGeneration,
     }
 
     return NextResponse.json(formatted)
   } catch (error: any) {
     console.error('API Error:', error)
-    return NextResponse.json({ error: 'Failed to update registration' }, { status: 500 })
+    const status = error instanceof RegistrationInvoiceGenerationError ? error.status : 500
+    return NextResponse.json({ error: error.message || 'Failed to update registration' }, { status })
   }
 }
 
