@@ -1,3 +1,5 @@
+import { buildCanonicalLiveEventDescription, getLiveEventPresentation } from '../live-fiba-config'
+
 export type LiveTableTab = 'home' | 'away' | 'log' | 'box'
 
 export const LIVE_VISIBLE_EVENTS_LIMIT = 18
@@ -36,6 +38,11 @@ export type LiveTableTeam = {
   score: number
   fouls: number
   timeoutsUsed: number
+  rebounds: number
+  assists: number
+  steals: number
+  blocks: number
+  turnovers: number
   coachName: string
   players: LiveTablePlayer[]
 }
@@ -45,6 +52,10 @@ export type LiveTableEvent = {
   teamSide: 'home' | 'away' | 'neutral'
   clockTime: string
   periodLabel: string
+  eventType: string
+  actionLabel: string
+  detailLabel: string
+  actorName: string
   description: string
   icon: string
   isOptimistic: boolean
@@ -113,49 +124,6 @@ function formatPeriodLabel(period?: number | null) {
   return `PRORR. ${safePeriod - 4}`
 }
 
-function resolveEventIcon(eventType?: string | null) {
-  switch (eventType) {
-    case 'SHOT_MADE_2':
-      return '2PTS'
-    case 'SHOT_MADE_3':
-      return '3PTS'
-    case 'FREE_THROW_MADE':
-      return 'FT'
-    case 'FOUL_PERSONAL':
-      return 'F'
-    case 'REBOUND_OFFENSIVE':
-    case 'REBOUND_DEFENSIVE':
-      return 'REB'
-    case 'ASSIST':
-      return 'AST'
-    case 'STEAL':
-      return 'STL'
-    case 'BLOCK':
-      return 'BLK'
-    case 'TURNOVER':
-      return 'TOV'
-    case 'SUBSTITUTION_IN':
-    case 'SUBSTITUTION_OUT':
-      return 'SUB'
-    case 'TIMEOUT_CONFIRMED':
-      return 'TO'
-    case 'GAME_START':
-      return 'INI'
-    case 'PERIOD_START':
-      return 'P+'
-    case 'PERIOD_END':
-      return 'P-'
-    case 'HALFTIME_START':
-      return 'HT'
-    case 'HALFTIME_END':
-      return 'RET'
-    case 'GAME_END':
-      return 'FIM'
-    default:
-      return 'EV'
-  }
-}
-
 function buildPlayerMap(snapshot: any) {
   const playerLines = new Map<string, any>()
   for (const line of snapshot?.boxScore?.players || []) {
@@ -214,6 +182,11 @@ function buildTeam(
       side === 'home'
         ? snapshot?.game?.homeTimeoutsUsed ?? teamLine?.timeoutsUsed ?? 0
         : snapshot?.game?.awayTimeoutsUsed ?? teamLine?.timeoutsUsed ?? 0,
+    rebounds: teamLine?.reboundsTotal ?? 0,
+    assists: teamLine?.assists ?? 0,
+    steals: teamLine?.steals ?? 0,
+    blocks: teamLine?.blocks ?? 0,
+    turnovers: teamLine?.turnovers ?? 0,
     coachName: roster?.coachName || 'Sem coach definido',
     players: (roster?.players || []).map((player: any) => {
       const statLine = playerLinesByAthleteId.get(player.athleteId)
@@ -276,21 +249,35 @@ export function buildLiveGameTableModel(snapshot: any): LiveGameTableModel {
     events: [...(snapshot?.events || [])]
       .reverse()
       .slice(0, LIVE_VISIBLE_EVENTS_LIMIT)
-      .map((event: any) => ({
-        id: event.id,
-        teamSide:
-          event.teamId === snapshot?.game?.homeTeam?.id
-            ? 'home'
-            : event.teamId === snapshot?.game?.awayTeam?.id
-              ? 'away'
-              : 'neutral',
-        clockTime: event.clockTime || '10:00',
-        periodLabel: formatPeriodLabel(event.period),
-        description: event.description || event.eventType || 'Evento registrado',
-        icon: resolveEventIcon(event.eventType),
-        isOptimistic: Boolean(event.isOptimistic),
-        teamName: event.teamName || 'Mesa',
-      })),
+      .map((event: any) => {
+        const presentation = getLiveEventPresentation(event.eventType)
+        return {
+          id: event.id,
+          teamSide:
+            event.teamId === snapshot?.game?.homeTeam?.id
+              ? 'home'
+              : event.teamId === snapshot?.game?.awayTeam?.id
+                ? 'away'
+                : 'neutral',
+          clockTime: event.clockTime || '10:00',
+          periodLabel: formatPeriodLabel(event.period),
+          eventType: event.eventType || 'EVENT',
+          actionLabel: presentation.actionLabel,
+          detailLabel: presentation.detailLabel,
+          actorName: event.athleteName || event.teamName || 'Mesa',
+          description:
+            event.description ||
+            buildCanonicalLiveEventDescription({
+              eventType: event.eventType || 'EVENT',
+              athleteName: event.athleteName,
+              teamName: event.teamName,
+              period: event.period,
+            }),
+          icon: presentation.icon,
+          isOptimistic: Boolean(event.isOptimistic),
+          teamName: event.teamName || 'Mesa',
+        }
+      }),
     boxRows: [home, away].flatMap((team) =>
       team.players.map((player) => ({
         id: player.id,

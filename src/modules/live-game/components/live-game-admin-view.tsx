@@ -37,6 +37,8 @@ export function LiveGameAdminView({
         selectedTeam={liveAdmin.selectedTeam}
         selectedAthlete={liveAdmin.selectedAthlete}
         isSyncing={liveAdmin.isSyncing}
+        error={liveAdmin.error}
+        pendingCount={liveAdmin.pendingCount}
         submitting={liveAdmin.submitting}
         selection={liveAdmin.selection}
         selectionActions={liveAdmin.selectionActions}

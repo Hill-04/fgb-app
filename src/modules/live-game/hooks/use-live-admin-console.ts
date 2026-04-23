@@ -476,12 +476,29 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
   }
 
   const handleControlEvent = (eventType: string) => {
+    const basePeriod = data?.game?.currentPeriod || selectedPeriod || 1
+    const startsFreshPeriod = ['PERIOD_START', 'HALFTIME_END'].includes(eventType)
+    const nextPeriod = startsFreshPeriod ? basePeriod + 1 : basePeriod
+    const nextClock = ['GAME_START', 'PERIOD_START', 'HALFTIME_END'].includes(eventType) ? '10:00' : clockTime
+
+    if (startsFreshPeriod) {
+      setSelectedPeriod(nextPeriod)
+    }
+
+    if (nextClock !== clockTime) {
+      setClockTime(nextClock)
+    }
+
+    if (['GAME_START', 'PERIOD_START', 'HALFTIME_END'].includes(eventType)) {
+      setVisualShotClock(24)
+    }
+
     enqueueLiveEvent({
       eventType,
       teamId: null,
       athleteId: null,
-      period: selectedPeriod,
-      clockTime,
+      period: nextPeriod,
+      clockTime: nextClock,
     })
   }
 

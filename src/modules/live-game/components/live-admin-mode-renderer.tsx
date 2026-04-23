@@ -2,7 +2,7 @@
 
 import type { LiveGameTableModel, LiveTablePlayer, LiveTableTeam } from './live-game-table-adapter'
 import { LiveAdminAuditMode } from './live-admin-audit-mode'
-import { LiveAdminLiveMode } from './live-admin-live-mode'
+import { LiveFibaTable } from './live-fiba/live-fiba-table'
 import { LiveAdminPregameMode } from './live-admin-pregame-mode'
 import { LiveAdminReportMode } from './live-admin-report-mode'
 import { LiveAdminReviewMode } from './live-admin-review-mode'
@@ -21,6 +21,8 @@ type LiveAdminModeRendererProps = {
   selectedTeam: LiveTableTeam | null
   selectedAthlete: LiveTablePlayer | null
   isSyncing: boolean
+  error: string
+  pendingCount: number
   submitting: boolean
   selection: LiveAdminSelectionState
   selectionActions: LiveAdminSelectionActions
@@ -35,6 +37,8 @@ export function LiveAdminModeRenderer({
   selectedTeam,
   selectedAthlete,
   isSyncing,
+  error,
+  pendingCount,
   submitting,
   selection,
   selectionActions,
@@ -46,16 +50,15 @@ export function LiveAdminModeRenderer({
 
   if (mode === 'live') {
     return (
-      <LiveAdminLiveMode
-        data={data}
-        gameId={gameId}
+      <LiveFibaTable
         tableModel={tableModel}
-        selectedTeam={selectedTeam}
-        selectedAthlete={selectedAthlete}
+        handlers={handlers}
         isSyncing={isSyncing}
         selection={selection}
         selectionActions={selectionActions}
-        handlers={handlers}
+        pendingCount={pendingCount}
+        error={error}
+        onRefresh={handlers.retry}
       />
     )
   }

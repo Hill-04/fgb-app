@@ -1,4 +1,5 @@
 import type { PendingMutation } from '../types/live-admin'
+import { buildCanonicalLiveEventDescription } from '../live-fiba-config'
 
 function cloneSnapshot(snapshot: any) {
   return JSON.parse(JSON.stringify(snapshot))
@@ -119,7 +120,7 @@ function sortLeaders(snapshot: any) {
   })
 }
 
-function buildOptimisticDescription(snapshot: any, eventType: string, teamId?: string | null, athleteId?: string | null) {
+function buildOptimisticDescription(snapshot: any, eventType: string, teamId?: string | null, athleteId?: string | null, period?: number | null) {
   const athleteName = athleteId
     ? snapshot.rosters?.flatMap((roster: any) => roster.players || [])?.find((player: any) => player.athleteId === athleteId)?.athleteName
     : null
@@ -130,50 +131,12 @@ function buildOptimisticDescription(snapshot: any, eventType: string, teamId?: s
         ? snapshot.game.awayTeam.name
         : null
 
-  const actor = athleteName || teamName || 'Equipe'
-
-  switch (eventType) {
-    case 'SHOT_MADE_2':
-      return `${actor} converteu 2 pontos`
-    case 'SHOT_MADE_3':
-      return `${actor} converteu 3 pontos`
-    case 'FREE_THROW_MADE':
-      return `${actor} converteu lance livre`
-    case 'REBOUND_OFFENSIVE':
-      return `${actor} pegou rebote ofensivo`
-    case 'REBOUND_DEFENSIVE':
-      return `${actor} pegou rebote defensivo`
-    case 'ASSIST':
-      return `${actor} deu assistencia`
-    case 'STEAL':
-      return `${actor} roubou a bola`
-    case 'BLOCK':
-      return `${actor} aplicou um toco`
-    case 'TURNOVER':
-      return `${actor} cometeu turnover`
-    case 'FOUL_PERSONAL':
-      return `${actor} cometeu falta`
-    case 'TIMEOUT_CONFIRMED':
-      return `${actor} pediu tempo`
-    case 'SUBSTITUTION_IN':
-      return `${actor} entrou em quadra`
-    case 'SUBSTITUTION_OUT':
-      return `${actor} saiu de quadra`
-    case 'GAME_START':
-      return 'Jogo iniciado'
-    case 'PERIOD_START':
-      return 'Periodo iniciado'
-    case 'PERIOD_END':
-      return 'Periodo encerrado'
-    case 'HALFTIME_START':
-      return 'Intervalo iniciado'
-    case 'HALFTIME_END':
-      return 'Intervalo encerrado'
-    case 'GAME_END':
-      return 'Jogo encerrado'
-    default:
-      return `${actor} registrou ${eventType}`
-  }
+  return buildCanonicalLiveEventDescription({
+    eventType,
+    athleteName,
+    teamName,
+    period,
+  })
 }
 
 export function applyOptimisticEvent(snapshot: any, mutation: PendingMutation) {
@@ -216,7 +179,7 @@ export function applyOptimisticEvent(snapshot: any, mutation: PendingMutation) {
     correctionReason: null,
     isOptimistic: true,
     syncStatus: 'syncing',
-    description: buildOptimisticDescription(next, eventType, teamId, athleteId),
+    description: buildOptimisticDescription(next, eventType, teamId, athleteId, period),
   }
 
   next.events.push(optimisticEvent)
