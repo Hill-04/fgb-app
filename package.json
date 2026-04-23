@@ -11,7 +11,8 @@
     "seed": "ts-node --project tsconfig.seed.json prisma/seed.ts",
     "seed:test": "ts-node --project tsconfig.seed.json prisma/seed-test-flow.ts",
     "seed:prod": "DATABASE_URL=$TURSO_DATABASE_URL DATABASE_AUTH_TOKEN=$TURSO_AUTH_TOKEN ts-node --project tsconfig.seed.json prisma/seed.ts",
-    "seed:live-table": "tsx scripts/seed-live-table-demo.ts"
+    "seed:live-table": "tsx scripts/seed-live-table-demo.ts",
+    "cleanup:live-table": "tsx scripts/cleanup-live-table-demo.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",

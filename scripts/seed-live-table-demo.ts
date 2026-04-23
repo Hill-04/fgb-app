@@ -1,132 +1,83 @@
-import { PrismaClient } from '@prisma/client'
-import { PrismaLibSQL } from '@prisma/adapter-libsql'
-import { createClient } from '@libsql/client'
-import * as dotenv from 'dotenv'
-import fs from 'fs'
+import { randomUUID } from 'crypto'
 
-dotenv.config()
-
-const CHAMPIONSHIP_NAME = 'Demo Mesa FIBA 2026'
-const HOME_TEAM_NAME = 'Mesa Demo Azul'
-const AWAY_TEAM_NAME = 'Mesa Demo Vermelho'
-
-const HOME_PLAYERS = [
-  ['Lucas Ferreira', 4, 'PG'],
-  ['Matheus Costa', 7, 'SG'],
-  ['Pedro Alves', 10, 'SF'],
-  ['Rafael Souza', 14, 'PF'],
-  ['Bruno Oliveira', 21, 'C'],
-  ['Thiago Lima', 8, 'SG'],
-  ['Guilherme Neto', 11, 'SF'],
-  ['Diego Martins', 23, 'C'],
-  ['Caio Dornelles', 31, 'PF'],
-  ['Murilo Prates', 18, 'PG'],
-] as const
-
-const AWAY_PLAYERS = [
-  ['Andre Santos', 5, 'PG'],
-  ['Felipe Mendes', 9, 'SG'],
-  ['Carlos Rocha', 12, 'SF'],
-  ['Victor Pereira', 15, 'PF'],
-  ['Eduardo Gomes', 22, 'C'],
-  ['Leonardo Cruz', 6, 'PG'],
-  ['Rodrigo Freitas', 13, 'SF'],
-  ['Henrique Dias', 20, 'C'],
-  ['Vinicius Lisboa', 27, 'PF'],
-  ['Igor Ramires', 33, 'SG'],
-] as const
-
-async function createPrismaClient() {
-  let url = process.env.DATABASE_URL
-
-  if (fs.existsSync('.env.local')) {
-    const envContent = fs.readFileSync('.env.local', 'utf-8')
-    const match = envContent.match(/DATABASE_URL=\"(.+)\"/)
-    if (match) {
-      url = match[1]
-    }
-  }
-
-  if (!url) {
-    throw new Error('DATABASE_URL nao definida')
-  }
-
-  const isRemote = url.startsWith('libsql://')
-  const authToken = isRemote ? process.env.DATABASE_AUTH_TOKEN : undefined
-  const libsql = createClient({ url, authToken })
-  const adapter = new PrismaLibSQL(libsql)
-  return new PrismaClient({ adapter } as any)
-}
+import {
+  FIXTURE_ADMIN_EMAIL,
+  FIXTURE_ADMIN_NAME,
+  FIXTURE_ADMIN_PASSWORD,
+  FIXTURE_AWAY_PLAYERS,
+  FIXTURE_AWAY_TEAM_NAME,
+  FIXTURE_CATEGORY_NAME,
+  FIXTURE_CHAMPIONSHIP_DESCRIPTION,
+  FIXTURE_CHAMPIONSHIP_NAME,
+  FIXTURE_HOME_PLAYERS,
+  FIXTURE_HOME_TEAM_NAME,
+  buildFixtureLiveUrl,
+  cleanupFixtureData,
+  createPrismaClient,
+  hashFixturePassword,
+  logFixtureFooter,
+  logFixtureHeader,
+  requireFixtureGuard,
+} from './live-fiba-fixture-utils'
 
 async function main() {
-  const prisma = await createPrismaClient()
+  requireFixtureGuard()
+
+  const { prisma, target } = createPrismaClient()
 
   try {
-    console.log('Preparando seed da mesa demo...')
+    logFixtureHeader('seed', target)
+    console.log('acao: removendo fixture anterior com cleanup seguro antes de recriar.')
 
-    await prisma.championship.deleteMany({
-      where: { name: CHAMPIONSHIP_NAME },
-    })
+    const cleanupResult = await cleanupFixtureData(prisma)
+    console.log(
+      `cleanup previo: removidos=${cleanupResult.removedIds.length} retidos=${cleanupResult.retainedIds.length}`
+    )
+    if (cleanupResult.retainedIds.length > 0) {
+      console.log(`cleanup previo: ids retidos=${cleanupResult.retainedIds.join(', ')}`)
+    }
+
+    const passwordHash = await hashFixturePassword()
 
     const admin = await prisma.user.upsert({
-      where: { email: 'mesa-demo-admin@fgb.com.br' },
+      where: { email: FIXTURE_ADMIN_EMAIL },
       update: {
-        name: 'Mesa Demo Admin',
+        name: FIXTURE_ADMIN_NAME,
+        password: passwordHash,
         defaultRole: 'ADMIN',
         isAdmin: true,
       },
       create: {
-        name: 'Mesa Demo Admin',
-        email: 'mesa-demo-admin@fgb.com.br',
-        password: 'senha123',
+        name: FIXTURE_ADMIN_NAME,
+        email: FIXTURE_ADMIN_EMAIL,
+        password: passwordHash,
         defaultRole: 'ADMIN',
         isAdmin: true,
       },
     })
 
-    const homeTeam = await prisma.team.upsert({
-      where: { name: HOME_TEAM_NAME },
-      update: {
+    const homeTeam = await prisma.team.create({
+      data: {
+        name: FIXTURE_HOME_TEAM_NAME,
         city: 'Porto Alegre',
         state: 'RS',
         sex: 'masculino',
-        responsible: 'Mesa Demo',
-      },
-      create: {
-        name: HOME_TEAM_NAME,
-        city: 'Porto Alegre',
-        state: 'RS',
-        sex: 'masculino',
-        responsible: 'Mesa Demo',
+        responsible: 'Fixture Mesa FIBA',
       },
     })
 
-    const awayTeam = await prisma.team.upsert({
-      where: { name: AWAY_TEAM_NAME },
-      update: {
+    const awayTeam = await prisma.team.create({
+      data: {
+        name: FIXTURE_AWAY_TEAM_NAME,
         city: 'Canoas',
         state: 'RS',
         sex: 'masculino',
-        responsible: 'Mesa Demo',
-      },
-      create: {
-        name: AWAY_TEAM_NAME,
-        city: 'Canoas',
-        state: 'RS',
-        sex: 'masculino',
-        responsible: 'Mesa Demo',
-      },
-    })
-
-    await prisma.athlete.deleteMany({
-      where: {
-        teamId: { in: [homeTeam.id, awayTeam.id] },
+        responsible: 'Fixture Mesa FIBA',
       },
     })
 
     const createAthletes = async (
       teamId: string,
-      sex: string,
       players: readonly (readonly [string, number, string])[]
     ) => {
       const athletes = []
@@ -135,7 +86,7 @@ async function main() {
           await prisma.athlete.create({
             data: {
               name,
-              sex,
+              sex: 'masculino',
               position,
               jerseyNumber,
               status: 'ACTIVE',
@@ -147,13 +98,13 @@ async function main() {
       return athletes
     }
 
-    const homeAthletes = await createAthletes(homeTeam.id, 'masculino', HOME_PLAYERS)
-    const awayAthletes = await createAthletes(awayTeam.id, 'masculino', AWAY_PLAYERS)
+    const homeAthletes = await createAthletes(homeTeam.id, FIXTURE_HOME_PLAYERS)
+    const awayAthletes = await createAthletes(awayTeam.id, FIXTURE_AWAY_PLAYERS)
 
     const championship = await prisma.championship.create({
       data: {
-        name: CHAMPIONSHIP_NAME,
-        description: 'Cenario de teste para a nova mesa ao vivo fiel ao demo FIBA.',
+        name: FIXTURE_CHAMPIONSHIP_NAME,
+        description: FIXTURE_CHAMPIONSHIP_DESCRIPTION,
         sex: 'masculino',
         format: 'todos_contra_todos',
         phases: 1,
@@ -167,7 +118,7 @@ async function main() {
     const category = await prisma.championshipCategory.create({
       data: {
         championshipId: championship.id,
-        name: 'Sub 18',
+        name: FIXTURE_CATEGORY_NAME,
         isViable: true,
       },
     })
@@ -181,8 +132,8 @@ async function main() {
         phase: 1,
         round: 1,
         dateTime: new Date('2026-05-10T17:00:00.000Z'),
-        location: 'Ginasio Demo FGB',
-        venue: 'Ginasio Demo FGB',
+        location: 'Ginasio Fixture FGB',
+        venue: 'Ginasio Fixture FGB',
         city: 'Porto Alegre',
         status: 'IN_PROGRESS',
         liveStatus: 'LIVE',
@@ -221,7 +172,7 @@ async function main() {
         {
           gameId: game.id,
           officialType: 'TABLE',
-          name: 'Mesa Demo FGB',
+          name: 'Mesa Fixture FGB',
           role: 'Operador',
         },
       ],
@@ -230,36 +181,41 @@ async function main() {
     const createRoster = async (
       teamId: string,
       coachName: string,
-      athletes: { id: string; jerseyNumber: number | null; name: string }[]
+      athletes: Array<{ id: string; jerseyNumber: number | null }>
     ) => {
       const roster = await prisma.gameRoster.create({
         data: {
           gameId: game.id,
           teamId,
           coachName,
-          assistantCoachName: 'Auxiliar Demo',
+          assistantCoachName: 'Auxiliar Fixture',
           isLocked: true,
         },
       })
 
-      await prisma.gameRosterPlayer.createMany({
-        data: athletes.map((athlete, index) => ({
-          gameRosterId: roster.id,
-          athleteId: athlete.id,
-          jerseyNumber: athlete.jerseyNumber,
-          isStarter: index < 5,
-          isCaptain: index === 0,
-          isAvailable: true,
-          isOnCourt: index < 5,
-          status: 'ACTIVE',
-        })),
-      })
+      const rosterTimestamp = new Date().toISOString()
+      for (const [index, athlete] of athletes.entries()) {
+        await prisma.$executeRawUnsafe(
+          'INSERT INTO "GameRosterPlayer" ("id", "gameRosterId", "athleteId", "jerseyNumber", "isStarter", "isCaptain", "isAvailable", "isOnCourt", "status", "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          randomUUID(),
+          roster.id,
+          athlete.id,
+          athlete.jerseyNumber,
+          index < 5 ? 1 : 0,
+          index === 0 ? 1 : 0,
+          1,
+          index < 5 ? 1 : 0,
+          'ACTIVE',
+          rosterTimestamp,
+          rosterTimestamp
+        )
+      }
 
       return roster
     }
 
-    await createRoster(homeTeam.id, 'Joao Demo', homeAthletes)
-    await createRoster(awayTeam.id, 'Marcos Demo', awayAthletes)
+    await createRoster(homeTeam.id, 'Joao Fixture', homeAthletes)
+    await createRoster(awayTeam.id, 'Marcos Fixture', awayAthletes)
 
     const homeStatSeed = [
       [homeAthletes[0], 8, 2, 3, 1],
@@ -277,64 +233,113 @@ async function main() {
       [awayAthletes[4], 4, 5, 0, 2],
     ] as const
 
-    await prisma.gamePlayerStatLine.createMany({
-      data: [
-        ...homeAthletes.map((athlete, index) => {
-          const seed = homeStatSeed[index]
-          return {
-            gameId: game.id,
-            athleteId: athlete.id,
-            teamId: homeTeam.id,
-            minutesPlayed: index < 5 ? 16 : 4,
-            points: seed?.[1] ?? 0,
-            assists: seed?.[2] ?? 0,
-            reboundsOffensive: 1,
-            reboundsDefensive: Math.max((seed?.[3] ?? 0) - 1, 0),
-            reboundsTotal: seed?.[3] ?? 0,
-            fouls: seed?.[4] ?? 0,
-            steals: index === 0 ? 1 : 0,
-            blocks: index === 4 ? 1 : 0,
-            turnovers: index === 1 ? 1 : 0,
-            twoPtMade: index < 5 ? 2 : 0,
-            twoPtAttempted: index < 5 ? 4 : 0,
-            threePtMade: index === 1 ? 1 : 0,
-            threePtAttempted: index === 1 ? 2 : 0,
-            freeThrowsMade: index === 0 ? 2 : 0,
-            freeThrowsAttempted: index === 0 ? 2 : 0,
-            isStarter: index < 5,
-            fouledOut: false,
-            disqualified: false,
-          }
-        }),
-        ...awayAthletes.map((athlete, index) => {
-          const seed = awayStatSeed[index]
-          return {
-            gameId: game.id,
-            athleteId: athlete.id,
-            teamId: awayTeam.id,
-            minutesPlayed: index < 5 ? 16 : 3,
-            points: seed?.[1] ?? 0,
-            assists: seed?.[2] ?? 0,
-            reboundsOffensive: 1,
-            reboundsDefensive: Math.max((seed?.[3] ?? 0) - 1, 0),
-            reboundsTotal: seed?.[3] ?? 0,
-            fouls: seed?.[4] ?? 0,
-            steals: index === 0 ? 1 : 0,
-            blocks: index === 4 ? 1 : 0,
-            turnovers: index === 1 ? 1 : 0,
-            twoPtMade: index < 5 ? 2 : 0,
-            twoPtAttempted: index < 5 ? 4 : 0,
-            threePtMade: index === 0 ? 1 : 0,
-            threePtAttempted: index === 0 ? 3 : 0,
-            freeThrowsMade: index === 3 ? 1 : 0,
-            freeThrowsAttempted: index === 3 ? 2 : 0,
-            isStarter: index < 5,
-            fouledOut: false,
-            disqualified: false,
-          }
-        }),
-      ],
-    })
+    const createPlayerStatLine = async (input: {
+      athleteId: string
+      teamId: string
+      minutesPlayed: number
+      points: number
+      assists: number
+      reboundsOffensive: number
+      reboundsDefensive: number
+      reboundsTotal: number
+      fouls: number
+      steals: number
+      blocks: number
+      turnovers: number
+      twoPtMade: number
+      twoPtAttempted: number
+      threePtMade: number
+      threePtAttempted: number
+      freeThrowsMade: number
+      freeThrowsAttempted: number
+      isStarter: boolean
+      fouledOut: boolean
+      disqualified: boolean
+    }) => {
+      const playerStatTimestamp = new Date().toISOString()
+      await prisma.$executeRawUnsafe(
+        'INSERT INTO "GamePlayerStatLine" ("id", "gameId", "athleteId", "teamId", "minutesPlayed", "points", "fouls", "assists", "reboundsOffensive", "reboundsDefensive", "reboundsTotal", "steals", "blocks", "turnovers", "twoPtMade", "twoPtAttempted", "threePtMade", "threePtAttempted", "freeThrowsMade", "freeThrowsAttempted", "plusMinus", "isStarter", "fouledOut", "disqualified", "updatedAt") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        randomUUID(),
+        game.id,
+        input.athleteId,
+        input.teamId,
+        input.minutesPlayed,
+        input.points,
+        input.fouls,
+        input.assists,
+        input.reboundsOffensive,
+        input.reboundsDefensive,
+        input.reboundsTotal,
+        input.steals,
+        input.blocks,
+        input.turnovers,
+        input.twoPtMade,
+        input.twoPtAttempted,
+        input.threePtMade,
+        input.threePtAttempted,
+        input.freeThrowsMade,
+        input.freeThrowsAttempted,
+        null,
+        input.isStarter ? 1 : 0,
+        input.fouledOut ? 1 : 0,
+        input.disqualified ? 1 : 0,
+        playerStatTimestamp
+      )
+    }
+
+    for (const [index, athlete] of homeAthletes.entries()) {
+      const seed = homeStatSeed[index]
+      await createPlayerStatLine({
+        athleteId: athlete.id,
+        teamId: homeTeam.id,
+        minutesPlayed: index < 5 ? 16 : 4,
+        points: seed?.[1] ?? 0,
+        assists: seed?.[2] ?? 0,
+        reboundsOffensive: 1,
+        reboundsDefensive: Math.max((seed?.[3] ?? 0) - 1, 0),
+        reboundsTotal: seed?.[3] ?? 0,
+        fouls: seed?.[4] ?? 0,
+        steals: index === 0 ? 1 : 0,
+        blocks: index === 4 ? 1 : 0,
+        turnovers: index === 1 ? 1 : 0,
+        twoPtMade: index < 5 ? 2 : 0,
+        twoPtAttempted: index < 5 ? 4 : 0,
+        threePtMade: index === 1 ? 1 : 0,
+        threePtAttempted: index === 1 ? 2 : 0,
+        freeThrowsMade: index === 0 ? 2 : 0,
+        freeThrowsAttempted: index === 0 ? 2 : 0,
+        isStarter: index < 5,
+        fouledOut: false,
+        disqualified: false,
+      })
+    }
+
+    for (const [index, athlete] of awayAthletes.entries()) {
+      const seed = awayStatSeed[index]
+      await createPlayerStatLine({
+        athleteId: athlete.id,
+        teamId: awayTeam.id,
+        minutesPlayed: index < 5 ? 16 : 3,
+        points: seed?.[1] ?? 0,
+        assists: seed?.[2] ?? 0,
+        reboundsOffensive: 1,
+        reboundsDefensive: Math.max((seed?.[3] ?? 0) - 1, 0),
+        reboundsTotal: seed?.[3] ?? 0,
+        fouls: seed?.[4] ?? 0,
+        steals: index === 0 ? 1 : 0,
+        blocks: index === 4 ? 1 : 0,
+        turnovers: index === 1 ? 1 : 0,
+        twoPtMade: index < 5 ? 2 : 0,
+        twoPtAttempted: index < 5 ? 4 : 0,
+        threePtMade: index === 0 ? 1 : 0,
+        threePtAttempted: index === 0 ? 3 : 0,
+        freeThrowsMade: index === 3 ? 1 : 0,
+        freeThrowsAttempted: index === 3 ? 2 : 0,
+        isStarter: index < 5,
+        fouledOut: false,
+        disqualified: false,
+      })
+    }
 
     await prisma.gameTeamStatLine.createMany({
       data: [
@@ -404,33 +409,64 @@ async function main() {
       pointsDelta: pointsDelta ?? null,
       createdByUserId: admin.id,
       payloadJson: null,
-      isReverted: false,
-    })
+        isReverted: false,
+      })
 
-    await prisma.gameEvent.createMany({
-      data: [
-        createEvent(1, 1, '09:48', 'GAME_START', homeTeam.id, null),
-        createEvent(2, 1, '09:16', 'SHOT_MADE_2', homeTeam.id, homeAthletes[0].id, 2),
-        createEvent(3, 1, '08:54', 'SHOT_MADE_3', awayTeam.id, awayAthletes[0].id, 3),
-        createEvent(4, 1, '07:43', 'ASSIST', homeTeam.id, homeAthletes[1].id),
-        createEvent(5, 1, '07:42', 'SHOT_MADE_2', homeTeam.id, homeAthletes[2].id, 2),
-        createEvent(6, 2, '08:11', 'FOUL_PERSONAL', awayTeam.id, awayAthletes[3].id),
-        createEvent(7, 2, '07:26', 'TIMEOUT_CONFIRMED', homeTeam.id, null),
-        createEvent(8, 2, '06:42', 'SHOT_MADE_2', awayTeam.id, awayAthletes[4].id, 2),
-      ],
-    })
+    for (const event of [
+      createEvent(1, 1, '09:48', 'GAME_START', homeTeam.id, null),
+      createEvent(2, 1, '09:16', 'SHOT_MADE_2', homeTeam.id, homeAthletes[0].id, 2),
+      createEvent(3, 1, '08:54', 'SHOT_MADE_3', awayTeam.id, awayAthletes[0].id, 3),
+      createEvent(4, 1, '07:43', 'ASSIST', homeTeam.id, homeAthletes[1].id),
+      createEvent(5, 1, '07:42', 'SHOT_MADE_2', homeTeam.id, homeAthletes[2].id, 2),
+      createEvent(6, 2, '08:11', 'FOUL_PERSONAL', awayTeam.id, awayAthletes[3].id),
+      createEvent(7, 2, '07:26', 'TIMEOUT_CONFIRMED', homeTeam.id, null),
+      createEvent(8, 2, '06:42', 'SHOT_MADE_2', awayTeam.id, awayAthletes[4].id, 2),
+    ]) {
+      const eventTimestamp = new Date().toISOString()
+      await prisma.$executeRawUnsafe(
+        'INSERT INTO "GameEvent" ("id", "gameId", "liveSessionId", "sequenceNumber", "period", "clockTime", "eventType", "teamId", "athleteId", "secondaryAthleteId", "pointsDelta", "payloadJson", "createdByUserId", "createdAt", "isReverted", "revertedAt", "revertedByUserId", "correctionReason", "sequence", "clockMs", "homeScoreAfter", "awayScoreAfter") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        randomUUID(),
+        event.gameId,
+        event.liveSessionId,
+        event.sequenceNumber,
+        event.period,
+        event.clockTime,
+        event.eventType,
+        event.teamId,
+        event.athleteId,
+        null,
+        event.pointsDelta,
+        event.payloadJson,
+        event.createdByUserId,
+        eventTimestamp,
+        event.isReverted ? 1 : 0,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+      )
+    }
 
-    console.log('Seed da mesa demo criada com sucesso.')
-    console.log(`Campeonato: ${championship.name}`)
-    console.log(`Jogo: ${homeTeam.name} x ${awayTeam.name}`)
-    console.log(`Game ID: ${game.id}`)
-    console.log(`Rota canonica: /admin/championships/${championship.id}/jogos/${game.id}/live`)
+    const liveUrl = buildFixtureLiveUrl(championship.id, game.id)
+
+    console.log('fixture seed criado com sucesso.')
+    console.log(`fixture marker: ${FIXTURE_CHAMPIONSHIP_DESCRIPTION}`)
+    console.log(`championshipId: ${championship.id}`)
+    console.log(`gameId: ${game.id}`)
+    console.log(`url: ${liveUrl}`)
+    console.log(`login: ${FIXTURE_ADMIN_EMAIL}`)
+    console.log(`senha: ${FIXTURE_ADMIN_PASSWORD}`)
+    console.log('cleanup: npm run cleanup:live-table')
+    logFixtureFooter('seed')
   } finally {
     await prisma.$disconnect()
   }
 }
 
 main().catch((error) => {
-  console.error('Erro ao criar seed da mesa demo:', error)
+  console.error('Erro ao criar fixture live FIBA:', error)
   process.exit(1)
 })
