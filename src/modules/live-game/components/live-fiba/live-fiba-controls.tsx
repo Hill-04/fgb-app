@@ -1,38 +1,86 @@
 'use client'
 
-import { Play, Flag, Square, TimerReset, RefreshCcw } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { Flag, Play, RefreshCcw, RotateCcw, Square, TimerReset } from 'lucide-react'
 
-import type { LiveGameTableModel, LiveTableTab } from '../live-game-table-adapter'
-import type { LiveAdminHandlers } from '../../types/live-admin'
+import type { LiveGameTableModel, LiveTableSide } from '../live-game-table-adapter'
 import { getLiveControlAvailability } from '../../live-fiba-config'
+import type { RecentLiveInteraction } from './live-fiba-table'
 
 type LiveFibaControlsProps = {
   tableModel: LiveGameTableModel
-  activeTab: LiveTableTab
+  shotClock: number
+  selectedPlayerLabel?: string | null
+  recentInteraction?: RecentLiveInteraction | null
   isSyncing?: boolean
   pendingCount?: number
   error?: string
-  onTabChange: (tab: LiveTableTab) => void
   onRefresh?: () => void
-  handlers?: Pick<LiveAdminHandlers, 'handleControlEvent' | 'handleTimeoutFromSide'>
+  onShotClockReset: (seconds: number) => void
+  onTimeout: (side: LiveTableSide) => void
+  onControlEvent: (eventType: string) => void
 }
 
-const tabs: Array<{ id: LiveTableTab; label: string }> = [
-  { id: 'home', label: 'HOME' },
-  { id: 'away', label: 'AWAY' },
-  { id: 'log', label: 'LOG' },
-  { id: 'box', label: 'BOXSCORE' },
-]
+function ControlButton({
+  icon,
+  label,
+  hint,
+  disabled,
+  tone,
+  active = false,
+  onClick,
+}: {
+  icon: ReactNode
+  label: string
+  hint: string
+  disabled: boolean
+  tone: 'start' | 'warn' | 'danger' | 'neutral'
+  active?: boolean
+  onClick: () => void
+}) {
+  const toneClass =
+    tone === 'start'
+      ? 'border-[#145530]/40 bg-[#145530]/18 text-emerald-100'
+      : tone === 'warn'
+        ? 'border-[#F5C200]/35 bg-[#F5C200]/12 text-[#F5C200]'
+        : tone === 'danger'
+          ? 'border-[#CC1016]/35 bg-[#CC1016]/14 text-[#FFB4B7]'
+          : 'border-white/10 bg-white/[0.05] text-white/80'
+
+  return (
+    <button
+      type="button"
+      title={hint}
+      disabled={disabled}
+      onClick={onClick}
+      className={[
+        'flex min-h-16 flex-col items-start justify-between rounded-[22px] border px-4 py-3 text-left transition duration-150',
+        toneClass,
+        active ? 'ring-2 ring-[#F5C200] ring-offset-0 shadow-[0_0_0_1px_rgba(245,194,0,0.28)]' : '',
+        disabled ? 'cursor-not-allowed opacity-35' : 'hover:bg-white/[0.1]',
+      ].join(' ')}
+    >
+      <span className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.1em]">
+        {icon}
+        {label}
+      </span>
+      <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">{hint}</span>
+    </button>
+  )
+}
 
 export function LiveFibaControls({
   tableModel,
-  activeTab,
+  shotClock,
+  selectedPlayerLabel = '',
+  recentInteraction = null,
   isSyncing = false,
   pendingCount = 0,
   error = '',
-  onTabChange,
   onRefresh,
-  handlers,
+  onShotClockReset,
+  onTimeout,
+  onControlEvent,
 }: LiveFibaControlsProps) {
   const isFinal = ['FINAL_PENDING_CONFIRMATION', 'FINAL_OFFICIAL'].includes(tableModel.liveStatus)
   const controlAvailability = getLiveControlAvailability({
@@ -41,143 +89,144 @@ export function LiveFibaControls({
     isFinal,
   })
 
-  const remainingHomeTimeouts = Math.max(0, 5 - tableModel.home.timeoutsUsed)
-  const remainingAwayTimeouts = Math.max(0, 5 - tableModel.away.timeoutsUsed)
   const timeoutDisabled = tableModel.liveStatus !== 'LIVE' || isFinal
+  const recentEventType = recentInteraction?.eventType ?? ''
+  const recentTimeoutSide = recentInteraction?.eventType === 'TIMEOUT_CONFIRMED' ? recentInteraction.side : null
+  const selectedModeActive = Boolean(selectedPlayerLabel)
 
   return (
-    <footer className="sticky bottom-3 z-20 rounded-[24px] border border-white/10 bg-[#070b12]/95 p-3 text-white shadow-[0_22px_70px_rgba(0,0,0,0.45)] backdrop-blur-xl">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
+    <footer className="rounded-[28px] border border-white/10 bg-[#070a10]/95 p-3 text-white shadow-[0_30px_90px_rgba(0,0,0,0.46)] backdrop-blur-xl">
+      <div className="grid gap-3 xl:grid-cols-[1.2fr_1fr]">
+        <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <ControlButton
+            icon={<Play className="h-4 w-4" />}
+            label={controlAvailability.startOrResume.label}
+            hint={controlAvailability.startOrResume.hint}
             disabled={controlAvailability.startOrResume.disabled}
-            title={controlAvailability.startOrResume.hint}
-            onClick={() => handlers?.handleControlEvent(controlAvailability.startOrResume.eventType)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-500/16 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-emerald-100 transition hover:bg-emerald-500/24 disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <Play className="h-4 w-4" />
-            {controlAvailability.startOrResume.label}
-          </button>
-          <button
-            type="button"
+            tone="start"
+            active={recentEventType === controlAvailability.startOrResume.eventType}
+            onClick={() => onControlEvent(controlAvailability.startOrResume.eventType)}
+          />
+
+          <ControlButton
+            icon={<Flag className="h-4 w-4" />}
+            label={controlAvailability.endPeriod.label}
+            hint={controlAvailability.endPeriod.hint}
             disabled={controlAvailability.endPeriod.disabled}
-            title={controlAvailability.endPeriod.hint}
-            onClick={() => handlers?.handleControlEvent(controlAvailability.endPeriod.eventType)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[#f5c849]/14 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-[#f5c849] transition hover:bg-[#f5c849]/22 disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <Flag className="h-4 w-4" />
-            {controlAvailability.endPeriod.label}
-          </button>
-          <button
-            type="button"
+            tone="warn"
+            active={recentEventType === controlAvailability.endPeriod.eventType}
+            onClick={() => onControlEvent(controlAvailability.endPeriod.eventType)}
+          />
+
+          <ControlButton
+            icon={<Square className="h-4 w-4" />}
+            label={controlAvailability.endGame.label}
+            hint={controlAvailability.endGame.hint}
             disabled={controlAvailability.endGame.disabled}
-            title={controlAvailability.endGame.hint}
-            onClick={() => handlers?.handleControlEvent(controlAvailability.endGame.eventType)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-red-500/14 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-red-100 transition hover:bg-red-500/22 disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <Square className="h-4 w-4" />
-            {controlAvailability.endGame.label}
-          </button>
-          <button
-            type="button"
-            disabled={timeoutDisabled || remainingHomeTimeouts === 0}
-            title={
-              remainingHomeTimeouts === 0
-                ? 'Equipe da casa sem timeouts restantes.'
+            tone="danger"
+            active={recentEventType === controlAvailability.endGame.eventType}
+            onClick={() => onControlEvent(controlAvailability.endGame.eventType)}
+          />
+
+          <ControlButton
+            icon={<TimerReset className="h-4 w-4" />}
+            label={`Timeout ${tableModel.home.shortName}`}
+            hint={
+              tableModel.home.remainingTimeouts === 0
+                ? 'Mandante sem timeout restante.'
                 : timeoutDisabled
-                  ? 'Timeout disponivel somente com o jogo ao vivo.'
-                  : 'Registra timeout da equipe da casa.'
+                  ? 'Timeout disponivel apenas com jogo ao vivo.'
+                  : `${tableModel.home.remainingTimeouts} timeout(s) restante(s).`
             }
-            onClick={() => handlers?.handleTimeoutFromSide('home')}
-            className="inline-flex items-center gap-2 rounded-2xl border border-emerald-300/20 bg-emerald-500/10 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-emerald-100 transition hover:bg-emerald-500/18 disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <TimerReset className="h-4 w-4" />
-            Timeout home ({remainingHomeTimeouts})
-          </button>
-          <button
-            type="button"
-            disabled={timeoutDisabled || remainingAwayTimeouts === 0}
-            title={
-              remainingAwayTimeouts === 0
-                ? 'Equipe visitante sem timeouts restantes.'
+            disabled={timeoutDisabled || tableModel.home.remainingTimeouts === 0}
+            tone="neutral"
+            active={recentTimeoutSide === 'home'}
+            onClick={() => onTimeout('home')}
+          />
+
+          <ControlButton
+            icon={<TimerReset className="h-4 w-4" />}
+            label={`Timeout ${tableModel.away.shortName}`}
+            hint={
+              tableModel.away.remainingTimeouts === 0
+                ? 'Visitante sem timeout restante.'
                 : timeoutDisabled
-                  ? 'Timeout disponivel somente com o jogo ao vivo.'
-                  : 'Registra timeout da equipe visitante.'
+                  ? 'Timeout disponivel apenas com jogo ao vivo.'
+                  : `${tableModel.away.remainingTimeouts} timeout(s) restante(s).`
             }
-            onClick={() => handlers?.handleTimeoutFromSide('away')}
-            className="inline-flex items-center gap-2 rounded-2xl border border-red-300/20 bg-red-500/10 px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-red-100 transition hover:bg-red-500/18 disabled:cursor-not-allowed disabled:opacity-35"
-          >
-            <TimerReset className="h-4 w-4" />
-            Timeout away ({remainingAwayTimeouts})
-          </button>
+            disabled={timeoutDisabled || tableModel.away.remainingTimeouts === 0}
+            tone="neutral"
+            active={recentTimeoutSide === 'away'}
+            onClick={() => onTimeout('away')}
+          />
+
+          <div className="grid min-h-14 gap-2 rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-black uppercase tracking-[0.1em] text-white">Shot clock</span>
+              <span className="text-2xl font-black leading-none text-[#F5C200]">{Math.max(shotClock, 0)}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => onShotClockReset(24)}
+                className="rounded-xl border border-[#F5C200]/35 bg-[#F5C200]/12 px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-[#F5C200] transition hover:bg-[#F5C200]/18"
+              >
+                24s
+              </button>
+              <button
+                type="button"
+                onClick={() => onShotClockReset(14)}
+                className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-white/78 transition hover:bg-white/[0.1]"
+              >
+                14s
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 lg:grid-cols-3">
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Estado</p>
-            <p className="mt-1 text-sm font-black uppercase text-white">{tableModel.liveStatus}</p>
-          </div>
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Acao disponivel</p>
-            <p className="mt-1 text-sm font-black uppercase text-[#f5c849]">{controlAvailability.startOrResume.label}</p>
-          </div>
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Orientacao</p>
-            <p className="mt-1 text-sm font-semibold text-white/70">{controlAvailability.startOrResume.hint}</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <nav className="grid grid-cols-4 gap-2 lg:w-[520px]" aria-label="FIBA live table tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => onTabChange(tab.id)}
-              className={[
-                'rounded-2xl px-3 py-3 text-xs font-black uppercase tracking-[0.16em] transition',
-                activeTab === tab.id
-                  ? 'bg-[#f5c849] text-black shadow-[0_0_24px_rgba(245,200,73,0.2)]'
-                  : 'border border-white/10 bg-white/[0.04] text-white/50 hover:bg-white/8 hover:text-white',
-              ].join(' ')}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-
-        <div className="flex flex-wrap items-center justify-between gap-2 lg:justify-end">
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2">
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Match</p>
-            <p className="text-sm font-black uppercase text-white">
+        <div className="grid gap-3 md:grid-cols-[1fr_auto]">
+          <div className="grid gap-2 rounded-[24px] border border-white/10 bg-white/[0.04] px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-white/38">Estado operacional</p>
+              <p className={['text-[10px] font-black uppercase tracking-[0.16em]', isSyncing ? 'text-[#F5C200]' : 'text-emerald-100'].join(' ')}>
+                {isSyncing ? `Sincronizando ${pendingCount}` : 'Mesa estavel'}
+              </p>
+            </div>
+            <p className="text-sm font-black uppercase tracking-[0.06em] text-white">
               {tableModel.home.shortName} {tableModel.home.score} x {tableModel.away.score} {tableModel.away.shortName}
             </p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2">
-            <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Sync</p>
-            <p className={['text-sm font-black uppercase', isSyncing ? 'text-[#f5c849]' : 'text-emerald-200'].join(' ')}>
-              {isSyncing ? `Pending ${pendingCount}` : 'Ready'}
+            <p className="text-sm font-semibold text-white/68">
+              Proxima acao principal: {controlAvailability.startOrResume.label}. {controlAvailability.startOrResume.hint}
             </p>
-          </div>
-          {error && (
-            <div className="rounded-2xl border border-red-400/20 bg-red-500/10 px-4 py-2">
-              <p className="text-[9px] font-black uppercase tracking-[0.18em] text-red-200">Alert</p>
-              <p className="max-w-[260px] truncate text-sm font-bold text-red-100">{error}</p>
+            <div
+              className={[
+                'rounded-2xl border px-3 py-2 transition',
+                selectedModeActive ? 'border-[#F5C200]/35 bg-[#F5C200]/10' : 'border-white/10 bg-black/20',
+              ].join(' ')}
+            >
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-white/38">Jogador ativo</p>
+              <p className="mt-1 truncate text-sm font-black uppercase tracking-[0.04em] text-white">
+                {selectedPlayerLabel || 'Selecione um jogador para operar com teclado'}
+              </p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white/42">
+                Atalhos: 1 +1 / 2 +2 / 3 +3 / F foul / R reb / A ast / S stl / B blk / T turnover
+              </p>
             </div>
-          )}
-          {onRefresh && (
+            {error ? <p className="text-sm font-semibold text-[#FFB4B7]">{error}</p> : null}
+          </div>
+
+          {onRefresh ? (
             <button
               type="button"
               onClick={onRefresh}
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:bg-white/10"
+              className="inline-flex min-h-14 items-center justify-center gap-2 rounded-[22px] border border-white/10 bg-white/[0.05] px-4 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-white/[0.1]"
             >
               <RefreshCcw className="h-4 w-4" />
               Refresh
+              <RotateCcw className="h-4 w-4" />
             </button>
-          )}
+          ) : null}
         </div>
-      </div>
       </div>
     </footer>
   )

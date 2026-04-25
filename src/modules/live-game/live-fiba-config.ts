@@ -1,4 +1,5 @@
 export type LivePlayerActionTone = 'score' | 'neutral' | 'alert'
+export type LiveEventTone = 'score' | 'foul' | 'turnover' | 'control' | 'neutral'
 
 export type LivePlayerInlineAction = {
   id: string
@@ -12,6 +13,7 @@ export type LiveEventPresentation = {
   actionLabel: string
   detailLabel: string
   icon: string
+  tone: LiveEventTone
 }
 
 export type LiveControlAvailability = {
@@ -38,126 +40,151 @@ const LIVE_EVENT_PRESENTATIONS: Record<string, LiveEventPresentation> = {
     actionLabel: '+2',
     detailLabel: '2 pontos convertidos',
     icon: '+2',
+    tone: 'score',
   },
   SHOT_MADE_3: {
     actionLabel: '+3',
     detailLabel: '3 pontos convertidos',
     icon: '+3',
+    tone: 'score',
   },
   FREE_THROW_MADE: {
     actionLabel: '+1',
     detailLabel: 'lance livre convertido',
     icon: '+1',
+    tone: 'score',
   },
   SHOT_MISSED_2: {
     actionLabel: 'MISS 2',
     detailLabel: 'arremesso de 2 perdido',
     icon: 'M2',
+    tone: 'neutral',
   },
   SHOT_MISSED_3: {
     actionLabel: 'MISS 3',
     detailLabel: 'arremesso de 3 perdido',
     icon: 'M3',
+    tone: 'neutral',
   },
   FREE_THROW_MISSED: {
     actionLabel: 'MISS 1',
     detailLabel: 'lance livre perdido',
     icon: 'M1',
+    tone: 'neutral',
   },
   REBOUND_OFFENSIVE: {
     actionLabel: 'REB',
     detailLabel: 'rebote ofensivo',
     icon: 'REB',
+    tone: 'neutral',
   },
   REBOUND_DEFENSIVE: {
     actionLabel: 'REB',
     detailLabel: 'rebote defensivo',
     icon: 'REB',
+    tone: 'neutral',
   },
   ASSIST: {
     actionLabel: 'AST',
     detailLabel: 'assistencia',
     icon: 'AST',
+    tone: 'neutral',
   },
   STEAL: {
     actionLabel: 'STL',
     detailLabel: 'roubo',
     icon: 'STL',
+    tone: 'neutral',
   },
   BLOCK: {
     actionLabel: 'BLK',
     detailLabel: 'toco',
     icon: 'BLK',
+    tone: 'neutral',
   },
   FOUL_PERSONAL: {
     actionLabel: 'FOUL',
     detailLabel: 'falta pessoal',
-    icon: 'FL',
+    icon: 'FOUL',
+    tone: 'foul',
   },
   FOUL_TECHNICAL: {
     actionLabel: 'FOUL',
     detailLabel: 'falta tecnica',
-    icon: 'FT',
+    icon: 'TECH',
+    tone: 'foul',
   },
   FOUL_UNSPORTSMANLIKE: {
     actionLabel: 'FOUL',
     detailLabel: 'falta antidesportiva',
-    icon: 'FU',
+    icon: 'U',
+    tone: 'foul',
   },
   FOUL_DISQUALIFYING: {
     actionLabel: 'FOUL',
     detailLabel: 'falta desqualificante',
-    icon: 'FD',
+    icon: 'DQ',
+    tone: 'foul',
   },
   TURNOVER: {
     actionLabel: 'TO',
     detailLabel: 'turnover',
     icon: 'TO',
+    tone: 'turnover',
   },
   SUBSTITUTION_IN: {
     actionLabel: 'SUB IN',
     detailLabel: 'entrada em quadra',
     icon: 'IN',
+    tone: 'control',
   },
   SUBSTITUTION_OUT: {
     actionLabel: 'SUB OUT',
     detailLabel: 'saida de quadra',
     icon: 'OUT',
+    tone: 'control',
   },
   TIMEOUT_CONFIRMED: {
     actionLabel: 'TM',
     detailLabel: 'timeout confirmado',
     icon: 'TM',
+    tone: 'control',
   },
   GAME_START: {
     actionLabel: 'START',
     detailLabel: 'jogo iniciado',
     icon: 'GO',
+    tone: 'control',
   },
   PERIOD_START: {
     actionLabel: 'P START',
     detailLabel: 'periodo iniciado',
     icon: 'PS',
+    tone: 'control',
   },
   PERIOD_END: {
     actionLabel: 'P END',
     detailLabel: 'periodo encerrado',
     icon: 'PE',
+    tone: 'control',
   },
   HALFTIME_START: {
     actionLabel: 'HALF',
     detailLabel: 'intervalo iniciado',
     icon: 'HT',
+    tone: 'control',
   },
   HALFTIME_END: {
     actionLabel: 'RESUME',
     detailLabel: 'intervalo encerrado',
     icon: 'RE',
+    tone: 'control',
   },
   GAME_END: {
     actionLabel: 'FINAL',
     detailLabel: 'jogo encerrado',
     icon: 'END',
+    tone: 'control',
   },
 }
 
@@ -167,6 +194,7 @@ export function getLiveEventPresentation(eventType?: string | null): LiveEventPr
       actionLabel: 'EV',
       detailLabel: 'evento',
       icon: 'EV',
+      tone: 'neutral',
     }
   }
 
@@ -175,6 +203,7 @@ export function getLiveEventPresentation(eventType?: string | null): LiveEventPr
       actionLabel: eventType,
       detailLabel: eventType.toLowerCase().replaceAll('_', ' '),
       icon: 'EV',
+      tone: 'neutral',
     }
   )
 }
@@ -227,6 +256,10 @@ export function buildCanonicalLiveEventDescription({
       return `${actor} cometeu falta desqualificante`
     case 'TIMEOUT_CONFIRMED':
       return `${teamName || 'Equipe'} pediu timeout`
+    case 'SUBSTITUTION_IN':
+      return `${actor} entrou em quadra`
+    case 'SUBSTITUTION_OUT':
+      return `${actor} saiu da quadra`
     case 'GAME_START':
       return 'Jogo iniciado'
     case 'PERIOD_START':
