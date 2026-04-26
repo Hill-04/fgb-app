@@ -6,6 +6,7 @@ import { LiveFibaTable } from './live-fiba/live-fiba-table'
 import { LiveAdminPregameMode } from './live-admin-pregame-mode'
 import { LiveAdminReportMode } from './live-admin-report-mode'
 import { LiveAdminReviewMode } from './live-admin-review-mode'
+import type { LiveAdminPresentation } from './live-game-admin-view'
 import type {
   AdminViewMode,
   LiveAdminHandlers,
@@ -27,6 +28,9 @@ type LiveAdminModeRendererProps = {
   selection: LiveAdminSelectionState
   selectionActions: LiveAdminSelectionActions
   handlers: LiveAdminHandlers
+  presentation?: LiveAdminPresentation
+  fullscreenHref?: string
+  exitHref?: string
 }
 
 export function LiveAdminModeRenderer({
@@ -43,6 +47,9 @@ export function LiveAdminModeRenderer({
   selection,
   selectionActions,
   handlers,
+  presentation = 'admin',
+  fullscreenHref = '',
+  exitHref = '',
 }: LiveAdminModeRendererProps) {
   if (mode === 'pregame') {
     return <LiveAdminPregameMode data={data} submitting={submitting} handlers={handlers} />
@@ -59,6 +66,9 @@ export function LiveAdminModeRenderer({
         pendingCount={pendingCount}
         error={error}
         onRefresh={handlers.retry}
+        presentation={presentation}
+        fullscreenHref={fullscreenHref}
+        exitHref={exitHref}
       />
     )
   }

@@ -80,6 +80,7 @@ export function LiveFibaBoxscore({ tableModel }: LiveFibaBoxscoreProps) {
     <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0e14] text-white shadow-[0_24px_72px_rgba(0,0,0,0.34)]">
       <header className="border-b border-white/10 bg-[linear-gradient(90deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] px-4 py-3">
         <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#F5C200]">Boxscore</p>
+        <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/42">Leitura rapida dos principais impact players</p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
             <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/35">{tableModel.home.shortName}</p>

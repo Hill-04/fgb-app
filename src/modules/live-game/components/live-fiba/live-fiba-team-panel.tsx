@@ -241,8 +241,6 @@ export function LiveFibaTeamPanel({
     [team.players]
   )
 
-  const rowsTemplate = players.length > 0 ? `repeat(${players.length}, minmax(0, 1fr))` : 'minmax(0, 1fr)'
-
   return (
     <section className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0e14] text-white shadow-[0_24px_72px_rgba(0,0,0,0.34)]">
       <header
@@ -287,7 +285,7 @@ export function LiveFibaTeamPanel({
             </div>
           </div>
         ) : (
-          <div className="grid h-full gap-2 overflow-hidden" style={{ gridTemplateRows: rowsTemplate }}>
+          <div className="grid h-full auto-rows-max gap-2 overflow-y-auto pr-1">
             {players.map((player) => {
               const interactionMatchesPlayer = recentInteraction?.athleteId === player.athleteId
               const actionPulse = interactionMatchesPlayer ? recentInteraction?.eventType ?? '' : ''
