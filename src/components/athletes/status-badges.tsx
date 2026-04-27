@@ -3,6 +3,7 @@ import {
   ATHLETE_CBB_STATUS_META,
   ATHLETE_FEDERATION_STATUS_META,
   ATHLETE_REQUEST_STATUS_META,
+  isPendingAthleteRequestStatus,
 } from '@/lib/athlete-registration-presentation'
 
 type BadgeProps = {
@@ -34,7 +35,13 @@ function StatusBadge({
 }
 
 export function AthleteRequestStatusBadge(props: BadgeProps) {
-  return <StatusBadge {...props} meta={ATHLETE_REQUEST_STATUS_META} />
+  return (
+    <StatusBadge
+      {...props}
+      meta={ATHLETE_REQUEST_STATUS_META}
+      className={cn(isPendingAthleteRequestStatus(props.status) && 'ring-2 ring-[var(--yellow)]/35 shadow-sm', props.className)}
+    />
+  )
 }
 
 export function AthleteCbbStatusBadge(props: BadgeProps) {

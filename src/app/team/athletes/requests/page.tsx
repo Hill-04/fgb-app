@@ -5,7 +5,11 @@ import { getServerSession } from 'next-auth'
 import { AthleteCbbStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { formatAthleteDate } from '@/lib/athlete-registration-presentation'
+import {
+  formatAthleteDate,
+  isPendingAthleteRequestStatus,
+  sortAthleteRequestsByStatus,
+} from '@/lib/athlete-registration-presentation'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +24,7 @@ export default async function TeamAthleteRequestsPage() {
     where: { teamId },
     orderBy: { createdAt: 'desc' },
   })
+  const sortedRequests = sortAthleteRequestsByStatus(requests)
 
   return (
     <div className="space-y-8">
@@ -37,26 +42,33 @@ export default async function TeamAthleteRequestsPage() {
       </div>
 
       <div className="space-y-4">
-        {requests.length === 0 ? (
+        {sortedRequests.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-[var(--border)] bg-white p-14 text-center text-sm text-[var(--gray)]">
             Nenhuma solicitacao cadastrada.
           </div>
         ) : (
-          requests.map((request) => (
+          sortedRequests.map((request) => (
             <Link
               key={request.id}
               href={`/team/athletes/requests/${request.id}`}
-              className="block rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm transition-all hover:border-[var(--verde)]"
+              className={`block rounded-[28px] border bg-white p-6 shadow-sm transition-all hover:border-[var(--verde)] ${
+                isPendingAthleteRequestStatus(request.status) ? 'border-[var(--yellow)]/40' : 'border-[var(--border)]'
+              }`}
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
                   <p className="text-lg font-black uppercase text-[var(--black)]">{request.fullName}</p>
                   <p className="mt-2 text-[11px] font-medium text-[var(--gray)]">
-                    {request.requestedCategoryLabel || 'Categoria nao informada'} | Documento {request.documentNumber}
+                    {request.requestedCategoryLabel || 'Categoria não informada'} | Documento {request.documentNumber}
                   </p>
                   <p className="mt-1 text-[10px] text-[var(--gray)]">
                     Criada em {formatAthleteDate(request.createdAt)}{request.rejectionReason ? ` | Motivo: ${request.rejectionReason}` : ''}
                   </p>
+                  {isPendingAthleteRequestStatus(request.status) ? (
+                    <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[var(--black)]">
+                      Em fila de análise federativa
+                    </p>
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <AthleteRequestStatusBadge status={request.status} />

@@ -6,6 +6,7 @@ import { FileClock, Plus, Shield, Users } from 'lucide-react'
 import { AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { isPendingAthleteRequestStatus, sortAthleteRequestsByStatus } from '@/lib/athlete-registration-presentation'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,7 @@ export default async function TeamAthletesPage() {
     acc[category].push(athlete)
     return acc
   }, {})
+  const sortedRequests = sortAthleteRequestsByStatus(requests)
 
   return (
     <div className="space-y-8">
@@ -142,24 +144,33 @@ export default async function TeamAthletesPage() {
             </div>
           </div>
           <div className="space-y-3">
-            {requests.length === 0 ? (
+            {sortedRequests.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--gray)]">
                 Nenhuma solicitacao criada ainda.
               </p>
             ) : (
-              requests.map((request) => (
+              sortedRequests.map((request) => (
                 <Link
                   key={request.id}
                   href={`/team/athletes/requests/${request.id}`}
-                  className="block rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3 transition-all hover:border-[var(--verde)]"
+                  className={`block rounded-2xl border px-4 py-3 transition-all hover:border-[var(--verde)] ${
+                    isPendingAthleteRequestStatus(request.status)
+                      ? 'border-[var(--yellow)]/35 bg-[var(--yellow)]/10'
+                      : 'border-[var(--border)] bg-[var(--gray-l)]'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-sm font-black uppercase text-[var(--black)]">{request.fullName}</p>
                       <p className="mt-1 text-[10px] text-[var(--gray)]">
-                        {request.requestedCategoryLabel || 'Categoria nao informada'} |{' '}
+                        {request.requestedCategoryLabel || 'Categoria não informada'} |{' '}
                         {new Date(request.createdAt).toLocaleDateString('pt-BR')}
                       </p>
+                      {isPendingAthleteRequestStatus(request.status) ? (
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[var(--black)]">
+                          Aguardando retorno da federação
+                        </p>
+                      ) : null}
                     </div>
                     <AthleteRequestStatusBadge status={request.status} />
                   </div>
