@@ -1,44 +1,48 @@
-import { prisma } from '@/lib/db'
-import { revalidatePath } from 'next/cache'
 import { randomUUID } from 'crypto'
-import { User as UserIcon, Shield } from 'lucide-react'
+import Link from 'next/link'
+import { revalidatePath } from 'next/cache'
+import { CheckCircle2, ClipboardList, Shield, User as UserIcon, Users } from 'lucide-react'
+
+import { AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
+import { prisma } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
 const POSITIONS = [
-  { value: 'PG', label: 'PG – Armador' },
-  { value: 'SG', label: 'SG – Ala-armador' },
-  { value: 'SF', label: 'SF – Ala' },
-  { value: 'PF', label: 'PF – Ala-pivô' },
-  { value: 'C',  label: 'C – Pivô' },
-  { value: 'COACH', label: 'Técnico' },
+  { value: 'PG', label: 'PG - Armador' },
+  { value: 'SG', label: 'SG - Ala-armador' },
+  { value: 'SF', label: 'SF - Ala' },
+  { value: 'PF', label: 'PF - Ala-pivo' },
+  { value: 'C', label: 'C - Pivo' },
+  { value: 'COACH', label: 'Tecnico' },
 ]
 
 async function createAthlete(formData: FormData) {
   'use server'
-  const name        = String(formData.get('name')        || '').trim()
-  const document    = String(formData.get('document')    || '').trim()
-  const teamId      = String(formData.get('teamId')      || '').trim()
-  const position    = String(formData.get('position')    || '').trim()
-  const jerseyRaw   = formData.get('jerseyNumber')
-  const sex         = String(formData.get('sex')         || '').trim()
-  const birthDate   = String(formData.get('birthDate')   || '').trim()
-  const photoUrl    = String(formData.get('photoUrl')    || '').trim()
+  const name = String(formData.get('name') || '').trim()
+  const document = String(formData.get('document') || '').trim()
+  const teamId = String(formData.get('teamId') || '').trim()
+  const position = String(formData.get('position') || '').trim()
+  const jerseyRaw = formData.get('jerseyNumber')
+  const sex = String(formData.get('sex') || '').trim()
+  const birthDate = String(formData.get('birthDate') || '').trim()
+  const photoUrl = String(formData.get('photoUrl') || '').trim()
 
   if (!name) return
 
   await prisma.athlete.create({
     data: {
       name,
-      document:     document     || null,
-      teamId:       teamId       || null,
-      position:     position     || null,
+      document: document || null,
+      teamId: teamId || null,
+      position: position || null,
       jerseyNumber: jerseyRaw ? Number(jerseyRaw) : null,
-      sex:          sex          || null,
-      birthDate:    birthDate    ? new Date(birthDate) : null,
-      photoUrl:     photoUrl     || null,
-    }
+      sex: sex || null,
+      birthDate: birthDate ? new Date(birthDate) : null,
+      photoUrl: photoUrl || null,
+    },
   })
+
   revalidatePath('/admin/athletes')
 }
 
@@ -47,174 +51,228 @@ async function issueCard(formData: FormData) {
   const athleteId = String(formData.get('athleteId') || '').trim()
   if (!athleteId) return
 
-  const token      = randomUUID()
-  const cardNumber = `FGB-${Date.now().toString(36).toUpperCase()}`
-
   await prisma.athleteIdCard.create({
-    data: { athleteId, qrToken: token, cardNumber }
+    data: {
+      athleteId,
+      qrToken: randomUUID(),
+      cardNumber: `FGB-${Date.now().toString(36).toUpperCase()}`,
+    },
   })
+
   revalidatePath('/admin/athletes')
 }
 
-const inputCls = 'h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm w-full focus:outline-none focus:border-[var(--verde)]'
+const inputCls =
+  'h-10 rounded-xl border border-[var(--border)] bg-white px-3 text-sm w-full focus:outline-none focus:border-[var(--verde)]'
 
 export default async function AdminAthletesPage() {
-  try {
-    const [athletes, teams] = await Promise.all([
-      prisma.athlete.findMany({
-        orderBy: { createdAt: 'desc' },
-        include: { team: true, cards: { orderBy: { createdAt: 'desc' }, take: 1 } }
-      }),
-      prisma.team.findMany({ orderBy: { name: 'asc' } }),
-    ])
+  const [athletes, teams, requests, athleteStatusSummary, requestStatusSummary] = await Promise.all([
+    prisma.athlete.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: {
+        team: true,
+        cards: { orderBy: { createdAt: 'desc' }, take: 1 },
+        registrationRequests: {
+          where: { status: 'APPROVED' },
+          orderBy: { approvedAt: 'desc' },
+          take: 1,
+          select: { requestedCategoryLabel: true },
+        },
+      },
+      take: 30,
+    }),
+    prisma.team.findMany({ orderBy: { name: 'asc' } }),
+    prisma.athleteRegistrationRequest.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { team: { select: { id: true, name: true } } },
+      take: 8,
+    }),
+    prisma.athlete.groupBy({ by: ['status'], _count: { _all: true } }),
+    prisma.athleteRegistrationRequest.groupBy({ by: ['status'], _count: { _all: true } }),
+  ])
 
-    return (
-      <div className="space-y-6 pb-12">
+  const countBy = (rows: Array<{ status: string; _count: { _all: number } }>, status: string) =>
+    rows.find((row) => row.status === status)?._count._all || 0
+
+  return (
+    <div className="space-y-8 pb-12">
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
-          <h1 className="fgb-display text-3xl text-[var(--black)]">BID de Atletas</h1>
-          <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>
-            Registro oficial e carteirinha digital com QR.
+          <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>BID Federativo</p>
+          <h1 className="fgb-display mt-2 text-3xl text-[var(--black)]">Atletas e Solicitacoes</h1>
+          <p className="mt-2 text-sm font-medium text-[var(--gray)]">
+            Operacao central do registro federativo: atletas ativos, solicitacoes pendentes e cadastro manual legado.
           </p>
         </div>
+        <div className="flex gap-3">
+          <Link
+            href="/admin/athletes/requests"
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--verde)]"
+          >
+            Abrir solicitacoes
+          </Link>
+        </div>
+      </div>
 
-        {/* Form */}
-        <div className="fgb-card p-5">
-          <p className="fgb-label text-[var(--gray)] mb-4" style={{ fontSize: 10 }}>Novo atleta</p>
-          <form action={createAthlete} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {/* Row 1 */}
-            <input name="name"     placeholder="Nome completo *"  required className={inputCls} />
-            <input name="document" placeholder="CPF / RG"                  className={inputCls} />
-            <select name="teamId" defaultValue="" className={inputCls}>
-              <option value="">Sem equipe</option>
-              {teams.map((t) => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+      <div className="grid gap-4 md:grid-cols-4">
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">Ativos</p>
+          <p className="fgb-display mt-3 text-4xl leading-none text-[var(--black)]">{countBy(athleteStatusSummary, 'ACTIVE')}</p>
+        </div>
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">Inativos</p>
+          <p className="fgb-display mt-3 text-4xl leading-none text-[var(--black)]">{countBy(athleteStatusSummary, 'INACTIVE')}</p>
+        </div>
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">Pendentes</p>
+          <p className="fgb-display mt-3 text-4xl leading-none text-[var(--black)]">
+            {countBy(requestStatusSummary, 'SUBMITTED') +
+              countBy(requestStatusSummary, 'UNDER_REVIEW') +
+              countBy(requestStatusSummary, 'CBB_CHECK_PENDING') +
+              countBy(requestStatusSummary, 'CBB_CHECKED')}
+          </p>
+        </div>
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">Aprovados</p>
+          <p className="fgb-display mt-3 text-4xl leading-none text-[var(--black)]">{countBy(requestStatusSummary, 'APPROVED')}</p>
+        </div>
+      </div>
 
-            {/* Row 2 */}
-            <select name="position" defaultValue="" className={inputCls}>
-              <option value="">Posição</option>
-              {POSITIONS.map((p) => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
-            </select>
-            <input
-              name="jerseyNumber"
-              type="number"
-              min={0}
-              max={99}
-              placeholder="Nº camisa"
-              className={inputCls}
-            />
-            <select name="sex" defaultValue="" className={inputCls}>
-              <option value="">Sexo</option>
-              <option value="masculino">Masculino</option>
-              <option value="feminino">Feminino</option>
-            </select>
-
-            {/* Row 3 */}
-            <div>
-              <label className="block text-[10px] font-black uppercase text-[var(--gray)] mb-1">Data de nascimento</label>
-              <input name="birthDate" type="date" className={inputCls} />
+      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <div className="space-y-6">
+          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--yellow)]/25 text-[var(--black)]">
+                <ClipboardList className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Fila operacional</p>
+                <h2 className="fgb-display text-xl leading-none text-[var(--black)]">Solicitacoes recentes</h2>
+              </div>
             </div>
-            <input name="photoUrl" placeholder="URL da foto (opcional)" className={inputCls + ' sm:col-span-2'} />
+            <div className="space-y-3">
+              {requests.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--gray)]">
+                  Nenhuma solicitacao registrada.
+                </p>
+              ) : (
+                requests.map((request) => (
+                  <Link
+                    key={request.id}
+                    href={`/admin/athletes/requests/${request.id}`}
+                    className="block rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3 transition-all hover:border-[var(--verde)]"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-black uppercase text-[var(--black)]">{request.fullName}</p>
+                        <p className="mt-1 text-[10px] text-[var(--gray)]">
+                          {request.team.name} | {request.requestedCategoryLabel || 'Categoria nao informada'}
+                        </p>
+                      </div>
+                      <AthleteRequestStatusBadge status={request.status} />
+                    </div>
+                  </Link>
+                ))
+              )}
+            </div>
+          </div>
 
-            <button
-              type="submit"
-              className="fgb-btn-primary h-10 rounded-xl sm:col-span-2 lg:col-span-3"
-            >
-              Cadastrar atleta
-            </button>
-          </form>
+          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Cadastro manual legado</p>
+            <h2 className="fgb-display mt-2 text-xl leading-none text-[var(--black)]">Criar atleta direto</h2>
+            <p className="mt-2 text-sm text-[var(--gray)]">
+              Mantido nesta sprint para nao quebrar o fluxo atual de operacao da federacao.
+            </p>
+            <form action={createAthlete} className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <input name="name" placeholder="Nome completo *" required className={inputCls} />
+              <input name="document" placeholder="CPF / RG" className={inputCls} />
+              <select name="teamId" defaultValue="" className={inputCls}>
+                <option value="">Sem equipe</option>
+                {teams.map((team) => (
+                  <option key={team.id} value={team.id}>
+                    {team.name}
+                  </option>
+                ))}
+              </select>
+              <select name="position" defaultValue="" className={inputCls}>
+                <option value="">Posicao</option>
+                {POSITIONS.map((position) => (
+                  <option key={position.value} value={position.value}>
+                    {position.label}
+                  </option>
+                ))}
+              </select>
+              <input name="jerseyNumber" type="number" min={0} max={99} placeholder="Nº camisa" className={inputCls} />
+              <select name="sex" defaultValue="" className={inputCls}>
+                <option value="">Sexo</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+              </select>
+              <input name="birthDate" type="date" className={inputCls} />
+              <input name="photoUrl" placeholder="URL da foto" className={`${inputCls} sm:col-span-2`} />
+              <button type="submit" className="fgb-btn-primary h-10 rounded-xl sm:col-span-2 lg:col-span-3">
+                Cadastrar atleta
+              </button>
+            </form>
+          </div>
         </div>
 
-        {/* List */}
-        <div className="fgb-card overflow-hidden">
-          <div className="px-6 py-4 border-b border-[var(--border)] bg-[var(--gray-l)] flex items-center justify-between">
-            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Atletas registrados</p>
-            <span className="text-[10px] font-black text-[var(--gray)]">{athletes.length} atleta{athletes.length !== 1 ? 's' : ''}</span>
+        <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--verde)]/10 text-[var(--verde)]">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Base federativa</p>
+              <h2 className="fgb-display text-xl leading-none text-[var(--black)]">Atletas aprovados</h2>
+            </div>
           </div>
-          <div className="divide-y divide-[var(--border)] bg-white">
+          <div className="space-y-3">
             {athletes.length === 0 ? (
-              <div className="p-10 text-center">
-                <UserIcon className="w-10 h-10 text-[var(--gray)] mx-auto mb-2 opacity-30" />
-                <p className="text-sm text-[var(--gray)]">Nenhum atleta cadastrado.</p>
-              </div>
+              <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--gray)]">
+                Nenhum atleta federado encontrado.
+              </p>
             ) : (
-              athletes.map((athlete) => {
-                const pos = POSITIONS.find(p => p.value === athlete.position)
-                return (
-                  <div key={athlete.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    {/* Avatar + info */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center shrink-0 overflow-hidden">
-                        {athlete.photoUrl ? (
-                          <img src={athlete.photoUrl} alt={athlete.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <UserIcon className="w-6 h-6 text-[var(--gray)]" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-black text-[var(--black)] uppercase leading-tight">{athlete.name}</p>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
-                          {athlete.jerseyNumber != null && (
-                            <span className="text-[10px] font-black text-[var(--verde)]">#{athlete.jerseyNumber}</span>
-                          )}
-                          {pos && (
-                            <span className="text-[10px] font-bold text-[var(--gray)] uppercase">{pos.value}</span>
-                          )}
-                          <span className="text-[10px] text-[var(--gray)]">
-                            {athlete.document || 'Sem doc'} · {athlete.team?.name || 'Sem equipe'}
-                          </span>
-                          {athlete.sex && (
-                            <span className="text-[10px] text-[var(--gray)] capitalize">{athlete.sex}</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Card */}
-                    <div className="flex items-center gap-3 shrink-0">
-                      {athlete.cards[0] ? (
-                        <div className="flex items-center gap-3">
-                          <img
-                            alt="QR"
-                            className="w-14 h-14 rounded-lg border border-[var(--border)]"
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${athlete.cards[0].qrToken}`}
-                          />
-                          <div>
-                            <div className="flex items-center gap-1 mb-0.5">
-                              <Shield className="w-3 h-3 text-[var(--verde)]" />
-                              <p className="text-[9px] font-black uppercase text-[var(--verde)]">Carteirinha ativa</p>
-                            </div>
-                            <p className="text-xs font-bold text-[var(--black)]">{athlete.cards[0].cardNumber}</p>
-                          </div>
-                        </div>
+              athletes.map((athlete) => (
+                <div key={athlete.id} className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border)] bg-white">
+                      {athlete.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={athlete.photoUrl} alt={athlete.name} className="h-full w-full rounded-xl object-cover" />
                       ) : (
-                        <form action={issueCard}>
-                          <input type="hidden" name="athleteId" value={athlete.id} />
-                          <button className="fgb-btn-outline h-9 rounded-xl text-xs" type="submit">
-                            Gerar carteirinha
-                          </button>
-                        </form>
+                        <UserIcon className="h-5 w-5 text-[var(--gray)]" />
                       )}
                     </div>
+                    <div>
+                      <p className="text-sm font-black uppercase text-[var(--black)]">{athlete.name}</p>
+                      <p className="mt-1 text-[10px] text-[var(--gray)]">
+                        {athlete.team?.name || 'Sem equipe'} | {athlete.registrationRequests[0]?.requestedCategoryLabel || 'Sem categoria'}
+                      </p>
+                    </div>
                   </div>
-                )
-              })
+                  <div className="flex items-center gap-2">
+                    <AthleteFederationStatusBadge status={athlete.status} />
+                    {athlete.cards[0] ? (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-[var(--verde)]/20 bg-[var(--verde)]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Carteira ativa
+                      </span>
+                    ) : (
+                      <form action={issueCard}>
+                        <input type="hidden" name="athleteId" value={athlete.id} />
+                        <button type="submit" className="inline-flex h-9 items-center justify-center rounded-xl border border-[var(--border)] bg-white px-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                          Gerar carteirinha
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
       </div>
-    )
-  } catch (error) {
-    console.error('[ADMIN ATHLETES ERROR]', error)
-    return (
-      <div className="fgb-card p-10 text-center">
-        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
-          Erro ao carregar atletas.
-        </p>
-      </div>
-    )
-  }
+    </div>
+  )
 }

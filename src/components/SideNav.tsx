@@ -63,6 +63,7 @@ const teamNavGroups = [
     label: 'Equipe',
     items: [
       { href: '/team/dashboard',      label: 'Painel',        icon: Home },
+      { href: '/team/athletes',       label: 'Atletas',       icon: Users },
       { href: '/team/registrations',  label: 'Inscricoes',    icon: ClipboardList },
       { href: '/team/championships',  label: 'Campeonatos',   icon: Trophy },
       { href: '/team/matches',        label: 'Jogos',         icon: Calendar },
