@@ -5,6 +5,8 @@ import { CheckCircle2, ClipboardList, Shield, User as UserIcon, Users } from 'lu
 
 import { AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import { prisma } from '@/lib/db'
+import { isPendingAthleteRequestStatus, sortAthleteRequestsByStatus } from '@/lib/athlete-registration-presentation'
+import { requireAdminSession } from '@/lib/athlete-registration-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +21,7 @@ const POSITIONS = [
 
 async function createAthlete(formData: FormData) {
   'use server'
+  if (!await requireAdminSession()) return
   const name = String(formData.get('name') || '').trim()
   const document = String(formData.get('document') || '').trim()
   const teamId = String(formData.get('teamId') || '').trim()
@@ -48,6 +51,7 @@ async function createAthlete(formData: FormData) {
 
 async function issueCard(formData: FormData) {
   'use server'
+  if (!await requireAdminSession()) return
   const athleteId = String(formData.get('athleteId') || '').trim()
   if (!athleteId) return
 
@@ -93,6 +97,7 @@ export default async function AdminAthletesPage() {
 
   const countBy = (rows: Array<{ status: string; _count: { _all: number } }>, status: string) =>
     rows.find((row) => row.status === status)?._count._all || 0
+  const sortedRequests = sortAthleteRequestsByStatus(requests)
 
   return (
     <div className="space-y-8 pb-12">
@@ -151,23 +156,32 @@ export default async function AdminAthletesPage() {
               </div>
             </div>
             <div className="space-y-3">
-              {requests.length === 0 ? (
+              {sortedRequests.length === 0 ? (
                 <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--gray)]">
                   Nenhuma solicitacao registrada.
                 </p>
               ) : (
-                requests.map((request) => (
+                sortedRequests.map((request) => (
                   <Link
                     key={request.id}
                     href={`/admin/athletes/requests/${request.id}`}
-                    className="block rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3 transition-all hover:border-[var(--verde)]"
+                    className={`block rounded-2xl border px-4 py-3 transition-all hover:border-[var(--verde)] ${
+                      isPendingAthleteRequestStatus(request.status)
+                        ? 'border-[var(--yellow)]/35 bg-[var(--yellow)]/10'
+                        : 'border-[var(--border)] bg-[var(--gray-l)]'
+                    }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-black uppercase text-[var(--black)]">{request.fullName}</p>
                         <p className="mt-1 text-[10px] text-[var(--gray)]">
-                          {request.team.name} | {request.requestedCategoryLabel || 'Categoria nao informada'}
+                          {request.team.name} | {request.requestedCategoryLabel || 'Categoria não informada'}
                         </p>
+                        {isPendingAthleteRequestStatus(request.status) ? (
+                          <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-[var(--black)]">
+                            Pendência operacional
+                          </p>
+                        ) : null}
                       </div>
                       <AthleteRequestStatusBadge status={request.status} />
                     </div>

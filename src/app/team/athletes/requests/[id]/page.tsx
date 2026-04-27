@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { ChevronLeft, Shield } from 'lucide-react'
 
+import { AthleteRequestAuditTimeline } from '@/components/athletes/athlete-request-audit-timeline'
 import { AthleteCbbStatusBadge, AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import { TeamAthleteRequestCancelButton } from '@/components/athletes/team-athlete-request-cancel-button'
 import { TeamAthleteRequestForm } from '@/components/athletes/team-athlete-request-form'
@@ -74,15 +75,15 @@ export default async function TeamAthleteRequestDetailPage({
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Categoria</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.requestedCategoryLabel || 'Nao informada'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.requestedCategoryLabel || 'Não informada'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">CBB</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.cbbRegistrationNumber || 'Nao informado'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.cbbRegistrationNumber || 'Não informado'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Mae</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.motherName || 'Nao informada'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.motherName || 'Não informada'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Contato</p>
@@ -136,9 +137,9 @@ export default async function TeamAthleteRequestDetailPage({
             </div>
             <div className="mt-5 space-y-3 text-sm text-[var(--gray)]">
               <p>Criada em {formatAthleteDate(athleteRequest.createdAt)}</p>
-              <p>Enviada em {formatAthleteDate(athleteRequest.submittedAt)}</p>
-              <p>Conferencia CBB em {formatAthleteDate(athleteRequest.cbbCheckedAt)}</p>
-              <p>Aprovada em {formatAthleteDate(athleteRequest.approvedAt)}</p>
+              {athleteRequest.submittedAt ? <p>Enviada em {formatAthleteDate(athleteRequest.submittedAt)}</p> : null}
+              {athleteRequest.cbbCheckedAt ? <p>Conferencia CBB em {formatAthleteDate(athleteRequest.cbbCheckedAt)}</p> : null}
+              {athleteRequest.approvedAt ? <p>Aprovada em {formatAthleteDate(athleteRequest.approvedAt)}</p> : null}
               {athleteRequest.athlete ? (
                 <p className="font-bold text-[var(--black)]">Atleta federativo criado e vinculado a esta equipe.</p>
               ) : null}
@@ -152,16 +153,8 @@ export default async function TeamAthleteRequestDetailPage({
 
           <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Historico</p>
-            <div className="mt-4 space-y-3">
-              {athleteRequest.auditLogs.map((log) => (
-                <div key={log.id} className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--black)]">{log.action}</p>
-                  <p className="mt-1 text-sm text-[var(--gray)]">{log.description}</p>
-                  <p className="mt-2 text-[10px] text-[var(--gray)]">
-                    {formatAthleteDate(log.createdAt)}{log.createdByUser ? ` | ${log.createdByUser.name}` : ''}
-                  </p>
-                </div>
-              ))}
+            <div className="mt-4">
+              <AthleteRequestAuditTimeline items={athleteRequest.auditLogs} />
             </div>
           </div>
         </aside>

@@ -269,7 +269,7 @@ export async function cancelTeamAthleteRequest(teamId: string, requestId: string
 
   const request = await prisma.athleteRegistrationRequest.update({
     where: { id: requestId },
-    data: { status: 'CANCELLED', reviewedAt: new Date() },
+    data: { status: 'CANCELLED' },
     include: ATHLETE_REQUEST_INCLUDE,
   })
 

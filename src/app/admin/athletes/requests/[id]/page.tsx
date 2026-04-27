@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { ChevronLeft } from 'lucide-react'
 
 import { AdminAthleteRequestActions } from '@/components/athletes/admin-athlete-request-actions'
+import { AthleteRequestAuditTimeline } from '@/components/athletes/athlete-request-audit-timeline'
 import { AthleteCbbStatusBadge, AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -69,7 +70,7 @@ export default async function AdminAthleteRequestDetailPage({
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Categoria</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.requestedCategoryLabel || 'Nao informada'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.requestedCategoryLabel || 'Não informada'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Nascimento</p>
@@ -81,7 +82,7 @@ export default async function AdminAthleteRequestDetailPage({
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Nome da mãe</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.motherName || 'Nao informada'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.motherName || 'Não informada'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Contato</p>
@@ -91,11 +92,11 @@ export default async function AdminAthleteRequestDetailPage({
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Registro CBB</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.cbbRegistrationNumber || 'Nao informado'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.cbbRegistrationNumber || 'Não informado'}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Referencia CBB</p>
-                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.cbbReference || 'Nao informada'}</p>
+                <p className="mt-1 text-sm font-bold text-[var(--black)]">{athleteRequest.cbbReference || 'Não informada'}</p>
               </div>
             </div>
 
@@ -116,16 +117,8 @@ export default async function AdminAthleteRequestDetailPage({
 
           <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Auditoria</p>
-            <div className="mt-4 space-y-3">
-              {athleteRequest.auditLogs.map((log) => (
-                <div key={log.id} className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--black)]">{log.action}</p>
-                  <p className="mt-1 text-sm text-[var(--gray)]">{log.description}</p>
-                  <p className="mt-2 text-[10px] text-[var(--gray)]">
-                    {formatAthleteDate(log.createdAt)}{log.createdByUser ? ` | ${log.createdByUser.name}` : ''}
-                  </p>
-                </div>
-              ))}
+            <div className="mt-4">
+              <AthleteRequestAuditTimeline items={athleteRequest.auditLogs} />
             </div>
           </div>
         </section>
@@ -135,17 +128,22 @@ export default async function AdminAthleteRequestDetailPage({
             <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Linha do tempo</p>
             <div className="mt-4 space-y-2 text-sm text-[var(--gray)]">
               <p>Criada em {formatAthleteDate(athleteRequest.createdAt)}</p>
-              <p>Enviada em {formatAthleteDate(athleteRequest.submittedAt)}</p>
-              <p>Revisada em {formatAthleteDate(athleteRequest.reviewedAt)}{athleteRequest.reviewedByUser ? ` | ${athleteRequest.reviewedByUser.name}` : ''}</p>
-              <p>CBB em {formatAthleteDate(athleteRequest.cbbCheckedAt)}{athleteRequest.cbbCheckedByUser ? ` | ${athleteRequest.cbbCheckedByUser.name}` : ''}</p>
-              <p>Aprovada em {formatAthleteDate(athleteRequest.approvedAt)}{athleteRequest.approvedByUser ? ` | ${athleteRequest.approvedByUser.name}` : ''}</p>
-              {athleteRequest.athlete ? <p className="font-bold text-[var(--black)]">Athlete ID: {athleteRequest.athlete.id}</p> : null}
+              {athleteRequest.submittedAt ? <p>Enviada em {formatAthleteDate(athleteRequest.submittedAt)}</p> : null}
+              {athleteRequest.reviewedAt ? <p>Revisada em {formatAthleteDate(athleteRequest.reviewedAt)}{athleteRequest.reviewedByUser ? ` | ${athleteRequest.reviewedByUser.name}` : ''}</p> : null}
+              {athleteRequest.cbbCheckedAt ? <p>CBB em {formatAthleteDate(athleteRequest.cbbCheckedAt)}{athleteRequest.cbbCheckedByUser ? ` | ${athleteRequest.cbbCheckedByUser.name}` : ''}</p> : null}
+              {athleteRequest.approvedAt ? <p>Aprovada em {formatAthleteDate(athleteRequest.approvedAt)}{athleteRequest.approvedByUser ? ` | ${athleteRequest.approvedByUser.name}` : ''}</p> : null}
+              {athleteRequest.athlete ? <p className="font-bold text-[var(--black)]">Atleta vinculado: {athleteRequest.athlete.name}</p> : null}
             </div>
           </div>
 
           <AdminAthleteRequestActions
             requestId={athleteRequest.id}
             initialCbbCheckStatus={athleteRequest.cbbCheckStatus}
+            initialCbbNotes={athleteRequest.cbbNotes}
+            initialCbbReference={athleteRequest.cbbReference}
+            initialCbbDocumentMatch={athleteRequest.cbbDocumentMatch ?? false}
+            initialCbbNameMatch={athleteRequest.cbbNameMatch ?? false}
+            initialCbbBirthDateMatch={athleteRequest.cbbBirthDateMatch ?? false}
             currentStatus={athleteRequest.status}
           />
         </aside>
