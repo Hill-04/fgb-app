@@ -62,10 +62,17 @@ type PublicPlayerLine = {
   turnovers: number
   fgMade: number
   fgAttempted: number
+  twoMade: number
+  twoAttempted: number
   threeMade: number
   threeAttempted: number
   ftMade: number
   ftAttempted: number
+  reboundsOffensive: number
+  reboundsDefensive: number
+  isStarter: boolean
+  disqualified: boolean
+  fouledOut: boolean
 }
 
 type TeamSummary = {
@@ -101,17 +108,25 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
     turnovers: toNumber(line.turnovers),
     fgMade: twoMade + threeMade,
     fgAttempted: twoAttempted + threeAttempted,
+    twoMade,
+    twoAttempted,
     threeMade,
     threeAttempted,
     ftMade: toNumber(line.freeThrowsMade),
     ftAttempted: toNumber(line.freeThrowsAttempted),
+    reboundsOffensive: toNumber(line.reboundsOffensive),
+    reboundsDefensive: toNumber(line.reboundsDefensive),
+    isStarter: Boolean(line.isStarter),
+    disqualified: Boolean(line.disqualified),
+    fouledOut: Boolean(line.fouledOut),
   }
 }
 
 function sortPlayerLines(players: PublicPlayerLine[]) {
-  return [...players].sort(
-    (a, b) => b.points - a.points || b.rebounds - a.rebounds || a.name.localeCompare(b.name)
-  )
+  return [...players].sort((a, b) => {
+    if (a.isStarter !== b.isStarter) return a.isStarter ? -1 : 1
+    return b.points - a.points || b.rebounds - a.rebounds || a.name.localeCompare(b.name)
+  })
 }
 
 function buildTeamSummary(
@@ -203,6 +218,13 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       occurredAt: event.createdAt,
     }))
 
+  const periods = (snapshot.boxScore?.periods ?? []).map((p) => ({
+    period: p.period,
+    label: p.period <= 4 ? `Q${p.period}` : `OT${p.period - 4}`,
+    homePoints: p.homePoints,
+    awayPoints: p.awayPoints,
+  }))
+
   return {
     game: {
       id: snapshot.game.id,
@@ -211,6 +233,9 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       isFinished,
       scheduledAt: snapshot.game.dateTime,
       venue: snapshot.game.venue || snapshot.game.location || null,
+      clockDisplay: snapshot.game.clockDisplay || null,
+      championship: snapshot.game.championship?.name ?? null,
+      category: snapshot.game.category?.name ?? null,
     },
     homeTeam: {
       id: snapshot.game.homeTeam.id,
@@ -242,6 +267,7 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       homePlayers,
       awayPlayers,
     },
+    periodScores: periods,
     summary: {
       totalEvents: events.length,
       lastEventAt: events.length > 0 ? events[events.length - 1].createdAt : null,

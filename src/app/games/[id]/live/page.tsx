@@ -1,10 +1,5 @@
-import { PublicLiveSnapshotView } from '@/modules/live-game/components/public-live-snapshot-view'
+import { GameOverviewContent } from '@/modules/live-game/components/public/game-overview-content'
 
-export default async function PublicLiveGamePage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = await params
-  return <PublicLiveSnapshotView gameId={id} />
+export default async function PublicLiveGamePage() {
+  return <GameOverviewContent />
 }

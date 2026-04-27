@@ -424,7 +424,7 @@ export function LiveFibaScoreboard({
               Abrir Mesa (Fullscreen)
             </Link>
           ) : null}
-          {presentation === 'fullscreen' && exitHref ? (
+          {(presentation as string) === 'fullscreen' && exitHref ? (
             <Link
               href={exitHref}
               className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white/72 transition hover:bg-white/[0.1]"

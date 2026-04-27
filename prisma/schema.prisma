@@ -21,6 +21,10 @@ model User {
   playerStats PlayerStat[]
   financialPaymentsCreated FinancialPayment[] @relation("FinancialPaymentCreatedBy")
   financialAuditLogsCreated FinancialAuditLog[] @relation("FinancialAuditLogCreatedBy")
+  athleteRegistrationRequestsReviewed   AthleteRegistrationRequest[] @relation("AthleteRegistrationReviewedBy")
+  athleteRegistrationRequestsApproved   AthleteRegistrationRequest[] @relation("AthleteRegistrationApprovedBy")
+  athleteRegistrationRequestsCbbChecked AthleteRegistrationRequest[] @relation("AthleteRegistrationCbbCheckedBy")
+  athleteRegistrationAuditLogsCreated   AthleteRegistrationAuditLog[] @relation("AthleteRegistrationAuditLogCreatedBy")
 }
 
 model Team {
@@ -53,6 +57,7 @@ model Team {
   bidEntriesFrom      AthleteBidEntry[]    @relation("BidTeamFrom")
   bidEntriesTo        AthleteBidEntry[]    @relation("BidTeamTo")
   financialInvoices   FinancialInvoice[]
+  athleteRegistrationRequests AthleteRegistrationRequest[]
 }
 
 model Gym {
@@ -350,6 +355,7 @@ model Game {
   officialReportId           String?
   homeScore                  Int?
   awayScore                  Int?
+  attendance                 Int?
   wasRescheduled             Boolean              @default(false)
   rescheduleReason           String?
   blockedByTeamId            String?
@@ -623,6 +629,7 @@ model Athlete {
   primaryEvents   GameEvent[]          @relation("GameEventAthlete")
   secondaryEvents GameEvent[]          @relation("GameEventSecondaryAthlete")
   liveStatLines   GamePlayerStatLine[]
+  registrationRequests AthleteRegistrationRequest[]
 
   @@index([teamId])
   @@index([document])
@@ -659,6 +666,65 @@ model AthleteBidEntry {
 
   @@index([athleteId])
   @@index([championshipId])
+}
+
+model AthleteRegistrationRequest {
+  id                       String       @id @default(uuid())
+  teamId                   String
+  athleteId                String?
+  status                   String       @default("DRAFT")
+  fullName                 String
+  birthDate                DateTime
+  documentNumber           String
+  documentNumberNormalized String
+  motherName               String?
+  phone                    String?
+  email                    String?
+  requestedCategoryLabel   String?
+  cbbRegistrationNumber    String?
+  cbbCheckStatus           String       @default("PENDING")
+  cbbCheckedAt             DateTime?
+  cbbCheckedByUserId       String?
+  cbbNotes                 String?
+  cbbReference             String?
+  cbbDocumentMatch         Boolean?
+  cbbNameMatch             Boolean?
+  cbbBirthDateMatch        Boolean?
+  submittedAt              DateTime?
+  reviewedAt               DateTime?
+  reviewedByUserId         String?
+  rejectionReason          String?
+  approvedAt               DateTime?
+  approvedByUserId         String?
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  team                     Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  athlete                  Athlete?     @relation(fields: [athleteId], references: [id], onDelete: SetNull)
+  cbbCheckedByUser         User?        @relation("AthleteRegistrationCbbCheckedBy", fields: [cbbCheckedByUserId], references: [id], onDelete: SetNull)
+  reviewedByUser           User?        @relation("AthleteRegistrationReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  approvedByUser           User?        @relation("AthleteRegistrationApprovedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  auditLogs                AthleteRegistrationAuditLog[]
+
+  @@index([teamId])
+  @@index([athleteId])
+  @@index([status])
+  @@index([cbbCheckStatus])
+  @@index([documentNumberNormalized])
+}
+
+model AthleteRegistrationAuditLog {
+  id              String                     @id @default(uuid())
+  requestId       String
+  action          String
+  description     String
+  metadataJson    String?
+  createdByUserId String?
+  createdAt       DateTime                   @default(now())
+  request         AthleteRegistrationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  createdByUser   User?                      @relation("AthleteRegistrationAuditLogCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([requestId])
+  @@index([createdByUserId])
 }
 
 model Referee {
