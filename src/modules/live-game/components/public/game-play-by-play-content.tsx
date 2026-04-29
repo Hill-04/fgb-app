@@ -24,89 +24,90 @@ type PeriodGroup = {
   events: PlayByPlayEvent[]
 }
 
-const SCORING_TYPES = new Set([
-  'SHOT_MADE_2',
-  'SHOT_MADE_3',
-  'FREE_THROW_MADE',
-])
+const SCORING_TYPES = new Set(['SHOT_MADE_2', 'SHOT_MADE_3', 'FREE_THROW_MADE'])
 
 function eventTone(eventType: string) {
   if (SCORING_TYPES.has(eventType)) return 'scoring'
   if (eventType.startsWith('FOUL_')) return 'foul'
   if (eventType === 'TURNOVER') return 'turnover'
-  if (eventType === 'GAME_START' || eventType === 'PERIOD_START' || eventType === 'HALFTIME_START') return 'control'
-  if (eventType === 'GAME_END' || eventType === 'PERIOD_END' || eventType === 'HALFTIME_END') return 'control'
+  if (
+    eventType === 'GAME_START' ||
+    eventType === 'PERIOD_START' ||
+    eventType === 'HALFTIME_START' ||
+    eventType === 'GAME_END' ||
+    eventType === 'PERIOD_END' ||
+    eventType === 'HALFTIME_END'
+  ) {
+    return 'control'
+  }
   return 'neutral'
 }
 
-function EventRow({ event, homeTeamName }: { event: PlayByPlayEvent; homeTeamName: string }) {
+function rowToneClasses(tone: ReturnType<typeof eventTone>) {
+  switch (tone) {
+    case 'scoring':
+      return 'border-[#F5C200]/30 bg-[#F5C200]/10'
+    case 'foul':
+      return 'border-[#CC1016]/20 bg-[#CC1016]/6'
+    case 'turnover':
+      return 'border-slate-200 bg-slate-50'
+    case 'control':
+      return 'border-[var(--border)] bg-[var(--gray-l)]'
+    default:
+      return 'border-[var(--border)] bg-white'
+  }
+}
+
+function EventRow({ event }: { event: PlayByPlayEvent }) {
   const tone = eventTone(event.eventType)
-  const isHome = event.teamName === homeTeamName
   const hasScore = event.homeScoreAfter !== null && event.awayScoreAfter !== null
 
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-2.5 ${
-        tone === 'scoring'
-          ? 'bg-[var(--verde)]/5'
-          : tone === 'control'
-          ? 'bg-[var(--gray-l)]'
-          : 'bg-white'
-      } border-t border-[var(--border)] first:border-t-0`}
+      className={`grid grid-cols-[3.75rem_minmax(0,1fr)_4.5rem] gap-3 rounded-2xl border px-3 py-3 sm:grid-cols-[4.5rem_minmax(0,1fr)_6.25rem] sm:px-4 ${rowToneClasses(tone)}`}
     >
-      {/* Clock */}
-      <span className="shrink-0 w-12 text-right text-[11px] font-semibold text-[var(--gray)] tabular-nums mt-0.5">
-        {event.clockTime || '—'}
-      </span>
-
-      {/* Description */}
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm leading-snug ${
-            tone === 'scoring'
-              ? 'font-semibold text-[var(--black)]'
-              : tone === 'control'
-              ? 'font-black text-[10px] uppercase tracking-widest text-[var(--gray)]'
-              : 'text-[var(--black)]'
-          }`}
-        >
-          {tone === 'scoring' && (
-            <span className="mr-1.5 inline-flex h-4 w-4 items-center justify-center rounded bg-[var(--verde)] text-[9px] font-black text-white">
-              +{event.pointsDelta}
-            </span>
-          )}
-          {event.description}
-        </p>
-        {event.teamName && tone !== 'control' && (
-          <p className="text-[10px] text-[var(--gray)]">{event.teamName}</p>
-        )}
+      <div className="text-right text-[11px] font-semibold tabular-nums text-[var(--gray)]">
+        {event.clockTime || '--'}
       </div>
 
-      {/* Running score */}
-      {hasScore && (
-        <span className="shrink-0 text-xs font-semibold tabular-nums text-[var(--gray)]">
-          <span className={isHome ? 'font-black text-[var(--black)]' : ''}>
-            {event.homeScoreAfter}
-          </span>
-          {' – '}
-          <span className={!isHome ? 'font-black text-[var(--black)]' : ''}>
-            {event.awayScoreAfter}
-          </span>
-        </span>
-      )}
+      <div className="min-w-0">
+        <div className="flex items-start gap-2">
+          {tone === 'scoring' ? (
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#F5C200]" />
+          ) : tone === 'foul' ? (
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#CC1016]" />
+          ) : tone === 'turnover' ? (
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-400" />
+          ) : (
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--gray)]/30" />
+          )}
+          <div className="min-w-0">
+            <p
+              className={`text-sm leading-snug ${
+                tone === 'control'
+                  ? 'text-[11px] font-black uppercase tracking-widest text-[var(--gray)]'
+                  : 'font-semibold text-[var(--black)]'
+              }`}
+            >
+              {event.description}
+            </p>
+            {event.teamName && tone !== 'control' ? (
+              <p className="mt-1 truncate text-[10px] text-[var(--gray)]">{event.teamName}</p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+
+      <div className="text-right text-sm font-black tabular-nums text-[var(--black)] sm:text-base">
+        {hasScore ? `${event.homeScoreAfter} - ${event.awayScoreAfter}` : '--'}
+      </div>
     </div>
   )
 }
 
-function PeriodSection({
-  group,
-  homeTeamName,
-}: {
-  group: PeriodGroup
-  homeTeamName: string
-}) {
+function PeriodSection({ group }: { group: PeriodGroup }) {
   return (
-    <div className="fgb-card overflow-hidden p-0">
+    <div className="fgb-card p-0">
       <div className="border-b border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
         <span className="text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
           {group.label}
@@ -115,15 +116,13 @@ function PeriodSection({
           {group.events.length} evento{group.events.length !== 1 ? 's' : ''}
         </span>
       </div>
-      <div>
+      <div className="space-y-2 p-3 sm:p-4">
         {group.events.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-[var(--gray)]">
-            Sem eventos neste período.
+          <div className="rounded-xl border border-dashed border-[var(--border)] px-4 py-6 text-center text-sm text-[var(--gray)]">
+            Sem eventos neste periodo.
           </div>
         ) : (
-          group.events.map((event) => (
-            <EventRow key={event.id} event={event} homeTeamName={homeTeamName} />
-          ))
+          group.events.map((event) => <EventRow key={event.id} event={event} />)
         )}
       </div>
     </div>
@@ -207,8 +206,6 @@ export function GamePlayByPlayContent() {
     }
   }, [fetchPlayByPlay, gameData?.game?.isLive, gameData?.game?.isFinished])
 
-  const homeTeamName = gameData?.homeTeam?.name ?? ''
-
   if (isLoading && periods.length === 0) {
     return (
       <div className="space-y-4 animate-pulse">
@@ -232,16 +229,23 @@ export function GamePlayByPlayContent() {
   if (gamePeriods.length === 0 && (!preGame || preGame.events.length === 0)) {
     return (
       <div className="rounded-[28px] border border-dashed border-[var(--border)] p-10 text-center text-sm text-[var(--gray)]">
-        O play-by-play será exibido assim que o jogo começar.
+        O play-by-play sera exibido assim que o jogo comecar.
       </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      {/* Game periods in reverse order (most recent first) */}
+      <div className="fgb-card px-4 py-3">
+        <div className="grid grid-cols-[3.75rem_minmax(0,1fr)_4.5rem] gap-3 text-[10px] font-black uppercase tracking-widest text-[var(--gray)] sm:grid-cols-[4.5rem_minmax(0,1fr)_6.25rem]">
+          <span className="text-right">Tempo</span>
+          <span>Evento</span>
+          <span className="text-right">Placar</span>
+        </div>
+      </div>
+
       {[...gamePeriods].reverse().map((group) => (
-        <PeriodSection key={group.period} group={group} homeTeamName={homeTeamName} />
+        <PeriodSection key={group.period} group={group} />
       ))}
     </div>
   )

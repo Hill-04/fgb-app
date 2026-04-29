@@ -3,6 +3,15 @@ import { LiveGameService } from '@/modules/live-game/services/live-game-service'
 type RawSnapshot = Awaited<ReturnType<typeof LiveGameService.getSnapshot>>
 type RawPlayer = RawSnapshot['boxScore']['players'][number]
 type RawTeam = RawSnapshot['boxScore']['teams'][number]
+type ScoreTimelineEvent = {
+  period: number | null
+  clockTime: string | null
+  eventType: string
+  teamId: string | null
+  homeScoreAfter: number | null
+  awayScoreAfter: number | null
+  pointsDelta: number | null
+}
 
 type PublicLeader = {
   athleteName: string
@@ -53,6 +62,8 @@ type PublicPlayerLine = {
   jerseyNumber: number | null
   teamId: string
   teamName: string
+  minutesPlayed: number
+  efficiency: number
   points: number
   rebounds: number
   assists: number
@@ -75,6 +86,17 @@ type PublicPlayerLine = {
   fouledOut: boolean
 }
 
+type KeyMomentValue = {
+  team: 'home' | 'away' | 'tie'
+  value: number
+  label: string
+}
+
+type LeadTrackerSegment = {
+  team: 'home' | 'away' | 'tie'
+  widthPct: number
+}
+
 type TeamSummary = {
   teamId: string
   teamName: string
@@ -92,6 +114,25 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
   const twoAttempted = toNumber(line.twoPtAttempted)
   const threeMade = toNumber(line.threePtMade)
   const threeAttempted = toNumber(line.threePtAttempted)
+  const ftMade = toNumber(line.freeThrowsMade)
+  const ftAttempted = toNumber(line.freeThrowsAttempted)
+  const rebounds = toNumber(line.reboundsTotal)
+  const assists = toNumber(line.assists)
+  const steals = toNumber(line.steals)
+  const blocks = toNumber(line.blocks)
+  const turnovers = toNumber(line.turnovers)
+  const points = toNumber(line.points)
+  const fgMade = twoMade + threeMade
+  const fgAttempted = twoAttempted + threeAttempted
+  const efficiency =
+    points +
+    rebounds +
+    assists +
+    steals +
+    blocks -
+    (fgAttempted - fgMade) -
+    (ftAttempted - ftMade) -
+    turnovers
 
   return {
     athleteId: line.athleteId,
@@ -99,21 +140,23 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
     jerseyNumber: line.jerseyNumber ?? null,
     teamId: line.teamId,
     teamName: line.teamName,
-    points: toNumber(line.points),
-    rebounds: toNumber(line.reboundsTotal),
-    assists: toNumber(line.assists),
+    minutesPlayed: toNumber(line.minutesPlayed),
+    efficiency,
+    points,
+    rebounds,
+    assists,
     fouls: toNumber(line.fouls),
-    steals: toNumber(line.steals),
-    blocks: toNumber(line.blocks),
-    turnovers: toNumber(line.turnovers),
-    fgMade: twoMade + threeMade,
-    fgAttempted: twoAttempted + threeAttempted,
+    steals,
+    blocks,
+    turnovers,
+    fgMade,
+    fgAttempted,
     twoMade,
     twoAttempted,
     threeMade,
     threeAttempted,
-    ftMade: toNumber(line.freeThrowsMade),
-    ftAttempted: toNumber(line.freeThrowsAttempted),
+    ftMade,
+    ftAttempted,
     reboundsOffensive: toNumber(line.reboundsOffensive),
     reboundsDefensive: toNumber(line.reboundsDefensive),
     isStarter: Boolean(line.isStarter),
@@ -179,7 +222,161 @@ function getLeader(
   }
 }
 
-export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
+function getPeriodDuration(period: number) {
+  return period <= 4 ? 600 : 300
+}
+
+function getElapsedSeconds(period: number | null, clockTime: string | null) {
+  if (!period || !clockTime) return null
+
+  const match = /^(\d{1,2}):(\d{2})$/.exec(clockTime.trim())
+  if (!match) return null
+
+  const minutes = Number(match[1])
+  const seconds = Number(match[2])
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null
+
+  let elapsed = 0
+  for (let current = 1; current < period; current += 1) {
+    elapsed += getPeriodDuration(current)
+  }
+
+  const remaining = minutes * 60 + seconds
+  return elapsed + Math.max(0, getPeriodDuration(period) - remaining)
+}
+
+function buildGameInsights(
+  snapshot: RawSnapshot,
+  scoreTimeline: ScoreTimelineEvent[]
+) {
+  const sortedEvents = [...scoreTimeline]
+    .filter(
+      (event) =>
+        typeof event.homeScoreAfter === 'number' &&
+        typeof event.awayScoreAfter === 'number'
+    )
+    .sort((a, b) => {
+      const aPeriod = a.period ?? 0
+      const bPeriod = b.period ?? 0
+      if (aPeriod !== bPeriod) return aPeriod - bPeriod
+      const aElapsed = getElapsedSeconds(a.period, a.clockTime) ?? 0
+      const bElapsed = getElapsedSeconds(b.period, b.clockTime) ?? 0
+      return aElapsed - bElapsed
+    })
+
+  const homeTeamId = snapshot.game.homeTeam.id
+  const awayTeamId = snapshot.game.awayTeam.id
+
+  let largestLead: KeyMomentValue = { team: 'tie', value: 0, label: 'Jogo parelho' }
+  let largestRun: KeyMomentValue = { team: 'tie', value: 0, label: 'Sem sequencia' }
+  let leadChanges = 0
+  let ties = 0
+
+  let previousLeader: 'home' | 'away' | 'tie' = 'tie'
+  let previousElapsed = 0
+  let activeRunTeam: 'home' | 'away' | 'tie' = 'tie'
+  let activeRunValue = 0
+
+  const segments: Array<{ team: 'home' | 'away' | 'tie'; start: number; end: number }> = []
+
+  const pushSegment = (team: 'home' | 'away' | 'tie', start: number, end: number) => {
+    if (end <= start) return
+    segments.push({ team, start, end })
+  }
+
+  for (const event of sortedEvents) {
+    const elapsed = getElapsedSeconds(event.period, event.clockTime) ?? previousElapsed
+    pushSegment(previousLeader, previousElapsed, elapsed)
+
+    const homeScore = Number(event.homeScoreAfter ?? 0)
+    const awayScore = Number(event.awayScoreAfter ?? 0)
+    const diff = homeScore - awayScore
+    const leader: 'home' | 'away' | 'tie' = diff > 0 ? 'home' : diff < 0 ? 'away' : 'tie'
+    const absoluteLead = Math.abs(diff)
+
+    if (absoluteLead > largestLead.value) {
+      largestLead = {
+        team: leader,
+        value: absoluteLead,
+        label:
+          leader === 'tie'
+            ? 'Jogo parelho'
+            : `${leader === 'home' ? 'Casa' : 'Visitante'} +${absoluteLead}`,
+      }
+    }
+
+    if (leader === 'tie') ties += 1
+    if (leader !== 'tie' && previousLeader !== 'tie' && leader !== previousLeader) leadChanges += 1
+
+    const scoringTeam: 'home' | 'away' | 'tie' =
+      event.teamId === homeTeamId ? 'home' : event.teamId === awayTeamId ? 'away' : 'tie'
+
+    if ((event.pointsDelta ?? 0) > 0 && scoringTeam !== 'tie') {
+      if (activeRunTeam === scoringTeam) {
+        activeRunValue += Number(event.pointsDelta ?? 0)
+      } else {
+        activeRunTeam = scoringTeam
+        activeRunValue = Number(event.pointsDelta ?? 0)
+      }
+
+      if (activeRunValue > largestRun.value) {
+        largestRun = {
+          team: activeRunTeam,
+          value: activeRunValue,
+          label: `${activeRunTeam === 'home' ? 'Casa' : 'Visitante'} ${activeRunValue}-0`,
+        }
+      }
+    }
+
+    previousLeader = leader
+    previousElapsed = elapsed
+  }
+
+  const lastPeriodFromEvents = sortedEvents[sortedEvents.length - 1]?.period ?? snapshot.game.currentPeriod ?? 4
+  const currentElapsed =
+    getElapsedSeconds(snapshot.game.currentPeriod ?? null, snapshot.game.clockDisplay ?? null) ?? previousElapsed
+  const regulationLength =
+    lastPeriodFromEvents > 4 ? 2400 + (lastPeriodFromEvents - 4) * 300 : 2400
+  const totalElapsed = snapshot.game.status === 'FINISHED'
+    ? Math.max(regulationLength, previousElapsed)
+    : Math.max(currentElapsed, previousElapsed, 1)
+
+  if (sortedEvents.length === 0) {
+    return {
+      keyMoments: {
+        largestLead,
+        largestRun,
+        leadChanges,
+        ties,
+      },
+      leadTracker: [{ team: 'tie' as const, widthPct: 100 }],
+    }
+  }
+
+  pushSegment(previousLeader, previousElapsed, totalElapsed)
+
+  const leadTracker: LeadTrackerSegment[] = segments
+    .map((segment) => ({
+      team: segment.team,
+      widthPct: (segment.end - segment.start) / totalElapsed * 100,
+    }))
+    .filter((segment) => segment.widthPct > 0)
+
+  return {
+    keyMoments: {
+      largestLead,
+      largestRun,
+      leadChanges,
+      ties,
+    },
+    leadTracker,
+  }
+}
+
+export function buildPublicLiveSnapshot(
+  snapshot: RawSnapshot,
+  scoreTimeline: ScoreTimelineEvent[] = []
+) {
   const normalizedStatus = normalizeStatus(snapshot.game)
   const isLive = normalizedStatus === 'LIVE'
   const isFinished = normalizedStatus === 'FINISHED'
@@ -224,6 +421,9 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
     homePoints: p.homePoints,
     awayPoints: p.awayPoints,
   }))
+  const insights = buildGameInsights(snapshot, scoreTimeline)
+
+  const playerEfficiencies = players.map((p) => ({ athleteId: p.athleteId, efficiency: p.efficiency }))
 
   return {
     game: {
@@ -259,6 +459,13 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       blocks: getLeader(players, 'blocks'),
     },
     recentEvents,
+    keyMoments: insights.keyMoments,
+    leadTracker: insights.leadTracker,
+    analytics: {
+      keyMoments: insights.keyMoments,
+      leadTracker: insights.leadTracker,
+      playerEfficiencies,
+    },
     teamSummary: {
       home: homeSummary,
       away: awaySummary,

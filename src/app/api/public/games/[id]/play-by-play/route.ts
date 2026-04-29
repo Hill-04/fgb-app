@@ -23,47 +23,48 @@ function describeEvent(
   pointsDelta: number | null
 ): string {
   const actor = athleteName || teamName || 'Equipe'
+
   switch (eventType) {
     case 'SHOT_MADE_2':
-      return `${actor} converteu 2 pontos`
+      return `Cesta 2 pts - ${actor}`
     case 'SHOT_MADE_3':
-      return `${actor} converteu 3 pontos`
+      return `Cesta 3 pts - ${actor}`
     case 'FREE_THROW_MADE':
-      return `${actor} converteu lance livre`
+      return `Lance livre - ${actor}`
     case 'SHOT_MISSED_2':
-      return `${actor} errou arremesso de 2`
+      return `Erro 2 pts - ${actor}`
     case 'SHOT_MISSED_3':
-      return `${actor} errou arremesso de 3`
+      return `Erro 3 pts - ${actor}`
     case 'FREE_THROW_MISSED':
-      return `${actor} errou lance livre`
+      return `LL perdido - ${actor}`
     case 'REBOUND_OFFENSIVE':
-      return `${actor} rebote ofensivo`
+      return `Rebote ofensivo - ${actor}`
     case 'REBOUND_DEFENSIVE':
-      return `${actor} rebote defensivo`
+      return `Rebote defensivo - ${actor}`
     case 'TURNOVER':
-      return `${actor} turnover`
+      return `TO - ${actor}`
     case 'STEAL':
-      return `${actor} roubo de bola`
+      return `Roubo - ${actor}`
     case 'BLOCK':
-      return `${actor} toco`
+      return `Toco - ${actor}`
     case 'ASSIST':
-      return `${actor} assistência`
+      return `Assistencia - ${actor}`
     case 'FOUL_PERSONAL':
-      return `${actor} falta pessoal`
+      return `Falta - ${actor}`
     case 'FOUL_TECHNICAL':
-      return `${actor} falta técnica`
+      return `Falta tecnica - ${actor}`
     case 'FOUL_UNSPORTSMANLIKE':
-      return `${actor} falta antidesportiva`
+      return `Falta antidesportiva - ${actor}`
     case 'FOUL_DISQUALIFYING':
-      return `${actor} falta disqualificante`
+      return `Falta desqualificante - ${actor}`
     case 'TIMEOUT_CONFIRMED':
-      return `${teamName || actor} pediu tempo`
+      return `Tempo tecnico - ${teamName || actor}`
     case 'GAME_START':
-      return 'Início do jogo'
+      return 'Inicio do jogo'
     case 'PERIOD_START':
-      return `Início do período ${pointsDelta ?? ''}`
+      return `Inicio do periodo ${pointsDelta ?? ''}`.trim()
     case 'PERIOD_END':
-      return `Fim do período ${pointsDelta ?? ''}`
+      return `Fim do periodo ${pointsDelta ?? ''}`.trim()
     case 'HALFTIME_START':
       return 'Intervalo'
     case 'HALFTIME_END':
@@ -71,7 +72,7 @@ function describeEvent(
     case 'GAME_END':
       return 'Fim do jogo'
     default:
-      return `${actor} — ${eventType}`
+      return `${actor} - ${eventType}`
   }
 }
 
@@ -89,7 +90,7 @@ export async function GET(
     })
 
     if (!game) {
-      return NextResponse.json({ error: 'Jogo não encontrado' }, { status: 404 })
+      return NextResponse.json({ error: 'Jogo nao encontrado' }, { status: 404 })
     }
 
     const isVisible =
@@ -98,7 +99,7 @@ export async function GET(
       game.status === 'FINISHED'
 
     if (!isVisible) {
-      return NextResponse.json({ error: 'Jogo ainda não publicado' }, { status: 403 })
+      return NextResponse.json({ error: 'Jogo ainda nao publicado' }, { status: 403 })
     }
 
     const events = await prisma.gameEvent.findMany({
@@ -131,6 +132,7 @@ export async function GET(
     for (const event of events) {
       const period = event.period ?? 0
       if (!periodMap.has(period)) periodMap.set(period, [])
+
       periodMap.get(period)!.push({
         id: event.id,
         sequenceNumber: event.sequenceNumber ?? 0,
@@ -156,7 +158,7 @@ export async function GET(
       .sort(([a], [b]) => a - b)
       .map(([period, evts]) => ({
         period,
-        label: period === 0 ? 'Pré-jogo' : periodLabel(period),
+        label: period === 0 ? 'Pre-jogo' : periodLabel(period),
         events: evts,
       }))
 

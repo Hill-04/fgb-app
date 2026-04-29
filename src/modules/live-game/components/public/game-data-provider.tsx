@@ -21,6 +21,8 @@ export type PublicPlayerLine = {
   jerseyNumber: number | null
   teamId: string
   teamName: string
+  minutesPlayed: number
+  efficiency: number
   points: number
   rebounds: number
   assists: number
@@ -53,6 +55,17 @@ export type PublicTeamSummary = {
   turnovers: number
   steals: number
   blocks: number
+}
+
+export type PublicKeyMomentValue = {
+  team: 'home' | 'away' | 'tie'
+  value: number
+  label: string
+}
+
+export type PublicLeadTrackerSegment = {
+  team: 'home' | 'away' | 'tie'
+  widthPct: number
 }
 
 export type PublicGameData = {
@@ -97,6 +110,23 @@ export type PublicGameData = {
     pointsDelta: number
     occurredAt: string | null
   }>
+  keyMoments: {
+    largestLead: PublicKeyMomentValue
+    largestRun: PublicKeyMomentValue
+    leadChanges: number
+    ties: number
+  }
+  leadTracker: PublicLeadTrackerSegment[]
+  analytics: {
+    keyMoments: {
+      largestLead: PublicKeyMomentValue
+      largestRun: PublicKeyMomentValue
+      leadChanges: number
+      ties: number
+    }
+    leadTracker: PublicLeadTrackerSegment[]
+    playerEfficiencies: Array<{ athleteId: string; efficiency: number }>
+  }
   teamSummary: {
     home: PublicTeamSummary
     away: PublicTeamSummary
