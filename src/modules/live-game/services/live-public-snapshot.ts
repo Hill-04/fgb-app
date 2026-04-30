@@ -481,8 +481,6 @@ export function buildPublicLiveSnapshot(
       blocks: getLeader(players, 'blocks'),
     },
     recentEvents,
-    keyMoments: insights.keyMoments,
-    leadTracker: insights.leadTracker,
     analytics: {
       keyMoments: insights.keyMoments,
       leadTracker: insights.leadTracker,

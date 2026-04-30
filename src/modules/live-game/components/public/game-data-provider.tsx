@@ -123,8 +123,6 @@ export type PublicGameData = {
     pointsDelta: number
     occurredAt: string | null
   }>
-  keyMoments: PublicKeyMomentsData
-  leadTracker: PublicLeadTrackerSegment[]
   analytics: PublicGameAnalytics
   teamSummary: {
     home: PublicTeamSummary

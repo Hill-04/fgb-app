@@ -158,7 +158,8 @@ export function GameOverviewContent() {
 
   if (!data) return null
 
-  const { leaders, recentEvents, teamSummary, game, keyMoments, leadTracker } = data
+  const { leaders, recentEvents, teamSummary, game, analytics } = data
+  const { keyMoments, leadTracker } = analytics
 
   const scheduledDate = game.scheduledAt
     ? new Date(game.scheduledAt).toLocaleDateString('pt-BR', {
