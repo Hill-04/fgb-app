@@ -104,7 +104,15 @@ function PlayerRow({ player, isHomeTeam }: { player: PublicPlayerLine; isHomeTea
       >
         {player.fouls}
       </td>
-      <td className="px-2 py-2.5 text-center text-xs font-black text-[var(--verde)]">
+      <td
+        className={`px-2 py-2.5 text-center text-xs font-black ${
+          player.efficiency > 0
+            ? 'text-[var(--verde)]'
+            : player.efficiency < 0
+              ? 'text-[#CC1016]'
+              : 'text-[var(--gray)]'
+        }`}
+      >
         {player.efficiency}
       </td>
     </tr>
@@ -299,7 +307,15 @@ function TeamBoxScore({
                 <td className="px-2 py-2.5 text-center text-xs text-[var(--black)]">{totals.steals}</td>
                 <td className="px-2 py-2.5 text-center text-xs text-[var(--black)]">{totals.blocks}</td>
                 <td className="px-2 py-2.5 text-center text-xs text-[var(--black)]">{totals.fouls}</td>
-                <td className="px-2 py-2.5 text-center text-xs font-black text-[var(--verde)]">
+                <td
+                  className={`px-2 py-2.5 text-center text-xs font-black ${
+                    totals.efficiency > 0
+                      ? 'text-[var(--verde)]'
+                      : totals.efficiency < 0
+                        ? 'text-[#CC1016]'
+                        : 'text-[var(--gray)]'
+                  }`}
+                >
                   {totals.efficiency}
                 </td>
               </tr>

@@ -86,7 +86,14 @@ export async function GET(
 
     const game = await prisma.game.findUnique({
       where: { id },
-      select: { id: true, isLivePublished: true, liveStatus: true, status: true },
+      select: {
+        id: true,
+        isLivePublished: true,
+        liveStatus: true,
+        status: true,
+        homeTeamId: true,
+        awayTeamId: true,
+      },
     })
 
     if (!game) {
@@ -128,8 +135,20 @@ export async function GET(
         pointsDelta: number
       }>
     >()
+    let runningHomeScore = 0
+    let runningAwayScore = 0
 
     for (const event of events) {
+      if (event.eventType.startsWith('SCORE_')) continue
+
+      if (typeof event.homeScoreAfter === 'number' && typeof event.awayScoreAfter === 'number') {
+        runningHomeScore = event.homeScoreAfter
+        runningAwayScore = event.awayScoreAfter
+      } else if ((event.pointsDelta ?? 0) > 0) {
+        if (event.teamId === game.homeTeamId) runningHomeScore += Number(event.pointsDelta ?? 0)
+        if (event.teamId === game.awayTeamId) runningAwayScore += Number(event.pointsDelta ?? 0)
+      }
+
       const period = event.period ?? 0
       if (!periodMap.has(period)) periodMap.set(period, [])
 
@@ -148,8 +167,8 @@ export async function GET(
         teamName: event.team?.name ?? null,
         athleteId: event.athleteId,
         athleteName: event.athlete?.name ?? null,
-        homeScoreAfter: event.homeScoreAfter,
-        awayScoreAfter: event.awayScoreAfter,
+        homeScoreAfter: runningHomeScore,
+        awayScoreAfter: runningAwayScore,
         pointsDelta: event.pointsDelta ?? 0,
       })
     }

@@ -98,8 +98,22 @@ function EventRow({ event }: { event: PlayByPlayEvent }) {
         </div>
       </div>
 
-      <div className="text-right text-sm font-black tabular-nums text-[var(--black)] sm:text-base">
-        {hasScore ? `${event.homeScoreAfter} - ${event.awayScoreAfter}` : '--'}
+      <div
+        className={`text-right text-sm font-black tabular-nums sm:text-base ${
+          tone === 'scoring' ? 'text-[var(--black)]' : 'text-[var(--gray)]'
+        }`}
+      >
+        {hasScore ? (
+          tone === 'scoring' ? (
+            <span className="rounded-lg bg-[#F5C200]/20 px-1.5 py-0.5">
+              {event.homeScoreAfter} — {event.awayScoreAfter}
+            </span>
+          ) : (
+            `${event.homeScoreAfter} — ${event.awayScoreAfter}`
+          )
+        ) : (
+          <span className="text-[var(--gray)]">—</span>
+        )}
       </div>
     </div>
   )

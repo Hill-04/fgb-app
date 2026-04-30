@@ -1,6 +1,12 @@
 'use client'
 
-import { useGameData, type PublicLeader, type PublicLeadTrackerSegment } from './game-data-provider'
+import { useGameData, type PublicLeader, type PublicLeadTrackerSegment, type PublicKeyMomentValue } from './game-data-provider'
+
+function teamAccent(team: PublicKeyMomentValue['team']): string {
+  if (team === 'home') return 'text-[var(--verde)]'
+  if (team === 'away') return 'text-[#CC1016]'
+  return 'text-[var(--gray)]'
+}
 
 function LeaderCard({ title, leader }: { title: string; leader: PublicLeader }) {
   return (
@@ -26,16 +32,20 @@ function KeyMomentCard({
   value,
   subtitle,
   accent = 'text-[var(--black)]',
+  isEmpty = false,
 }: {
   title: string
   value: string
   subtitle: string
   accent?: string
+  isEmpty?: boolean
 }) {
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
       <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">{title}</p>
-      <p className={`mt-2 text-3xl font-black ${accent}`}>{value}</p>
+      <p className={`mt-2 text-3xl font-black ${isEmpty ? 'text-[var(--gray)]' : accent}`}>
+        {isEmpty ? '—' : value}
+      </p>
       <p className="mt-1 text-xs text-[var(--gray)]">{subtitle}</p>
     </div>
   )
@@ -104,18 +114,24 @@ function LeadTracker({
         </div>
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-full border border-[var(--border)] bg-[var(--gray-l)]">
-        <div className="flex h-5 w-full">
-          {segments.map((segment, index) => (
-            <div
-              key={`${segment.team}-${index}`}
-              className={`${segmentTone(segment.team)} h-full`}
-              style={{ width: `${segment.widthPct}%` }}
-              title={`${segment.team} ${segment.widthPct.toFixed(1)}%`}
-            />
-          ))}
+      {segments.length === 1 && segments[0].team === 'tie' ? (
+        <div className="mt-4 rounded-xl border border-dashed border-[var(--border)] px-4 py-3 text-center text-xs text-[var(--gray)]">
+          Jogo sem lideranca definida ainda
         </div>
-      </div>
+      ) : (
+        <div className="mt-4 overflow-hidden rounded-full border border-[var(--border)] bg-[var(--gray-l)]">
+          <div className="flex h-5 w-full">
+            {segments.map((segment, index) => (
+              <div
+                key={`${segment.team}-${index}`}
+                className={`${segmentTone(segment.team)} h-full`}
+                style={{ width: `${segment.widthPct}%`, minWidth: segment.widthPct > 0 ? '2px' : undefined }}
+                title={`${segment.team === 'home' ? homeLabel : segment.team === 'away' ? awayLabel : 'Empate'} ${segment.widthPct.toFixed(1)}%`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -173,24 +189,28 @@ export function GameOverviewContent() {
             title="Maior vantagem"
             value={String(keyMoments.largestLead.value)}
             subtitle={keyMoments.largestLead.label}
-            accent="text-[var(--verde)]"
+            accent={teamAccent(keyMoments.largestLead.team)}
+            isEmpty={keyMoments.largestLead.value === 0}
           />
           <KeyMomentCard
             title="Maior sequencia"
             value={String(keyMoments.largestRun.value)}
             subtitle={keyMoments.largestRun.label}
-            accent="text-[#F5C200]"
+            accent={teamAccent(keyMoments.largestRun.team)}
+            isEmpty={keyMoments.largestRun.value === 0}
           />
           <KeyMomentCard
             title="Viradas"
             value={String(keyMoments.leadChanges)}
             subtitle="Trocas reais de lideranca"
             accent="text-[#CC1016]"
+            isEmpty={false}
           />
           <KeyMomentCard
             title="Empates"
             value={String(keyMoments.ties)}
             subtitle="Momentos com o placar igualado"
+            isEmpty={false}
           />
         </div>
 
