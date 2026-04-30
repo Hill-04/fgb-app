@@ -68,6 +68,19 @@ export type PublicLeadTrackerSegment = {
   widthPct: number
 }
 
+export type PublicKeyMomentsData = {
+  largestLead: PublicKeyMomentValue
+  largestRun: PublicKeyMomentValue
+  leadChanges: number
+  ties: number
+}
+
+export type PublicGameAnalytics = {
+  keyMoments: PublicKeyMomentsData
+  leadTracker: PublicLeadTrackerSegment[]
+  playerEfficiencies: Array<{ athleteId: string; efficiency: number }>
+}
+
 export type PublicGameData = {
   game: {
     id: string
@@ -110,23 +123,9 @@ export type PublicGameData = {
     pointsDelta: number
     occurredAt: string | null
   }>
-  keyMoments: {
-    largestLead: PublicKeyMomentValue
-    largestRun: PublicKeyMomentValue
-    leadChanges: number
-    ties: number
-  }
+  keyMoments: PublicKeyMomentsData
   leadTracker: PublicLeadTrackerSegment[]
-  analytics: {
-    keyMoments: {
-      largestLead: PublicKeyMomentValue
-      largestRun: PublicKeyMomentValue
-      leadChanges: number
-      ties: number
-    }
-    leadTracker: PublicLeadTrackerSegment[]
-    playerEfficiencies: Array<{ athleteId: string; efficiency: number }>
-  }
+  analytics: PublicGameAnalytics
   teamSummary: {
     home: PublicTeamSummary
     away: PublicTeamSummary

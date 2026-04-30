@@ -249,12 +249,13 @@ function buildGameInsights(
   snapshot: RawSnapshot,
   scoreTimeline: ScoreTimelineEvent[]
 ) {
+  const homeTeamId = snapshot.game.homeTeam.id
+  const awayTeamId = snapshot.game.awayTeam.id
+  let runningHome = 0
+  let runningAway = 0
+
   const sortedEvents = [...scoreTimeline]
-    .filter(
-      (event) =>
-        typeof event.homeScoreAfter === 'number' &&
-        typeof event.awayScoreAfter === 'number'
-    )
+    .filter((event) => !event.eventType.startsWith('SCORE_'))
     .sort((a, b) => {
       const aPeriod = a.period ?? 0
       const bPeriod = b.period ?? 0
@@ -263,9 +264,25 @@ function buildGameInsights(
       const bElapsed = getElapsedSeconds(b.period, b.clockTime) ?? 0
       return aElapsed - bElapsed
     })
+    .map((event) => {
+      if (typeof event.homeScoreAfter === 'number' && typeof event.awayScoreAfter === 'number') {
+        runningHome = event.homeScoreAfter
+        runningAway = event.awayScoreAfter
+      } else if ((event.pointsDelta ?? 0) > 0) {
+        if (event.teamId === homeTeamId) {
+          runningHome += Number(event.pointsDelta ?? 0)
+        } else if (event.teamId === awayTeamId) {
+          runningAway += Number(event.pointsDelta ?? 0)
+        }
+      }
 
-  const homeTeamId = snapshot.game.homeTeam.id
-  const awayTeamId = snapshot.game.awayTeam.id
+      return {
+        ...event,
+        homeScoreAfter: runningHome,
+        awayScoreAfter: runningAway,
+      }
+    })
+    .filter((event) => Number(event.pointsDelta ?? 0) > 0)
 
   let largestLead: KeyMomentValue = { team: 'tie', value: 0, label: 'Jogo parelho' }
   let largestRun: KeyMomentValue = { team: 'tie', value: 0, label: 'Sem sequencia' }
@@ -273,6 +290,7 @@ function buildGameInsights(
   let ties = 0
 
   let previousLeader: 'home' | 'away' | 'tie' = 'tie'
+  let lastNonTieLeader: 'home' | 'away' | null = null
   let previousElapsed = 0
   let activeRunTeam: 'home' | 'away' | 'tie' = 'tie'
   let activeRunValue = 0
@@ -305,8 +323,12 @@ function buildGameInsights(
       }
     }
 
-    if (leader === 'tie') ties += 1
-    if (leader !== 'tie' && previousLeader !== 'tie' && leader !== previousLeader) leadChanges += 1
+    if (leader === 'tie') {
+      ties += 1
+    } else {
+      if (lastNonTieLeader !== null && lastNonTieLeader !== leader) leadChanges += 1
+      lastNonTieLeader = leader
+    }
 
     const scoringTeam: 'home' | 'away' | 'tie' =
       event.teamId === homeTeamId ? 'home' : event.teamId === awayTeamId ? 'away' : 'tie'
