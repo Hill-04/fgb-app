@@ -97,6 +97,37 @@ type LeadTrackerSegment = {
   widthPct: number
 }
 
+type TeamStatPair = {
+  home: number
+  away: number
+  lowerIsBetter?: true
+}
+
+type PublicTeamComparison = {
+  points: TeamStatPair
+  rebounds: TeamStatPair
+  reboundsOffensive: TeamStatPair
+  reboundsDefensive: TeamStatPair
+  assists: TeamStatPair
+  steals: TeamStatPair
+  blocks: TeamStatPair
+  turnovers: TeamStatPair & { lowerIsBetter: true }
+  fouls: TeamStatPair & { lowerIsBetter: true }
+  twoPointMade: TeamStatPair
+  twoPointAttempted: TeamStatPair
+  twoPointPct: TeamStatPair
+  threePointMade: TeamStatPair
+  threePointAttempted: TeamStatPair
+  threePointPct: TeamStatPair
+  freeThrowMade: TeamStatPair
+  freeThrowAttempted: TeamStatPair
+  freeThrowPct: TeamStatPair
+  starterPoints: TeamStatPair
+  benchPoints: TeamStatPair
+  efficiency: TeamStatPair
+  possessionsEst: TeamStatPair
+}
+
 type TeamSummary = {
   teamId: string
   teamName: string
@@ -205,6 +236,107 @@ function buildTeamSummary(
     turnovers: teamPlayers.reduce((sum, line) => sum + line.turnovers, 0),
     steals: teamPlayers.reduce((sum, line) => sum + line.steals, 0),
     blocks: teamPlayers.reduce((sum, line) => sum + line.blocks, 0),
+  }
+}
+
+function sumBy(players: PublicPlayerLine[], selector: (line: PublicPlayerLine) => number) {
+  return players.reduce((sum, line) => sum + selector(line), 0)
+}
+
+function buildPair(home: number, away: number): TeamStatPair {
+  return { home, away }
+}
+
+function buildLowerIsBetterPair(
+  home: number,
+  away: number
+): TeamStatPair & { lowerIsBetter: true } {
+  return { home, away, lowerIsBetter: true }
+}
+
+function toPct(made: number, attempted: number) {
+  if (attempted <= 0) return -1
+  return Math.round((made / attempted) * 100)
+}
+
+function buildTeamComparison(
+  homePlayers: PublicPlayerLine[],
+  awayPlayers: PublicPlayerLine[],
+  homeSummary: TeamSummary,
+  awaySummary: TeamSummary
+): PublicTeamComparison {
+  const homeReboundsOffensive = sumBy(homePlayers, (line) => line.reboundsOffensive)
+  const awayReboundsOffensive = sumBy(awayPlayers, (line) => line.reboundsOffensive)
+  const homeReboundsDefensive = sumBy(homePlayers, (line) => line.reboundsDefensive)
+  const awayReboundsDefensive = sumBy(awayPlayers, (line) => line.reboundsDefensive)
+
+  const homeTwoPointMade = sumBy(homePlayers, (line) => line.twoMade)
+  const awayTwoPointMade = sumBy(awayPlayers, (line) => line.twoMade)
+  const homeTwoPointAttempted = sumBy(homePlayers, (line) => line.twoAttempted)
+  const awayTwoPointAttempted = sumBy(awayPlayers, (line) => line.twoAttempted)
+  const homeThreePointMade = sumBy(homePlayers, (line) => line.threeMade)
+  const awayThreePointMade = sumBy(awayPlayers, (line) => line.threeMade)
+  const homeThreePointAttempted = sumBy(homePlayers, (line) => line.threeAttempted)
+  const awayThreePointAttempted = sumBy(awayPlayers, (line) => line.threeAttempted)
+  const homeFreeThrowMade = sumBy(homePlayers, (line) => line.ftMade)
+  const awayFreeThrowMade = sumBy(awayPlayers, (line) => line.ftMade)
+  const homeFreeThrowAttempted = sumBy(homePlayers, (line) => line.ftAttempted)
+  const awayFreeThrowAttempted = sumBy(awayPlayers, (line) => line.ftAttempted)
+
+  const homeStarterPoints = sumBy(homePlayers, (line) => (line.isStarter ? line.points : 0))
+  const awayStarterPoints = sumBy(awayPlayers, (line) => (line.isStarter ? line.points : 0))
+  const homeBenchPoints = sumBy(homePlayers, (line) => (line.isStarter ? 0 : line.points))
+  const awayBenchPoints = sumBy(awayPlayers, (line) => (line.isStarter ? 0 : line.points))
+  const homeEfficiency = sumBy(homePlayers, (line) => line.efficiency)
+  const awayEfficiency = sumBy(awayPlayers, (line) => line.efficiency)
+
+  const homeFieldGoalAttempts = homeTwoPointAttempted + homeThreePointAttempted
+  const awayFieldGoalAttempts = awayTwoPointAttempted + awayThreePointAttempted
+  const homePossessions = Math.max(
+    0,
+    Math.round(
+      homeFieldGoalAttempts - homeReboundsOffensive + homeSummary.turnovers + 0.44 * homeFreeThrowAttempted
+    )
+  )
+  const awayPossessions = Math.max(
+    0,
+    Math.round(
+      awayFieldGoalAttempts - awayReboundsOffensive + awaySummary.turnovers + 0.44 * awayFreeThrowAttempted
+    )
+  )
+
+  return {
+    points: buildPair(homeSummary.points, awaySummary.points),
+    rebounds: buildPair(homeSummary.rebounds, awaySummary.rebounds),
+    reboundsOffensive: buildPair(homeReboundsOffensive, awayReboundsOffensive),
+    reboundsDefensive: buildPair(homeReboundsDefensive, awayReboundsDefensive),
+    assists: buildPair(homeSummary.assists, awaySummary.assists),
+    steals: buildPair(homeSummary.steals, awaySummary.steals),
+    blocks: buildPair(homeSummary.blocks, awaySummary.blocks),
+    turnovers: buildLowerIsBetterPair(homeSummary.turnovers, awaySummary.turnovers),
+    fouls: buildLowerIsBetterPair(homeSummary.fouls, awaySummary.fouls),
+    twoPointMade: buildPair(homeTwoPointMade, awayTwoPointMade),
+    twoPointAttempted: buildPair(homeTwoPointAttempted, awayTwoPointAttempted),
+    twoPointPct: buildPair(
+      toPct(homeTwoPointMade, homeTwoPointAttempted),
+      toPct(awayTwoPointMade, awayTwoPointAttempted)
+    ),
+    threePointMade: buildPair(homeThreePointMade, awayThreePointMade),
+    threePointAttempted: buildPair(homeThreePointAttempted, awayThreePointAttempted),
+    threePointPct: buildPair(
+      toPct(homeThreePointMade, homeThreePointAttempted),
+      toPct(awayThreePointMade, awayThreePointAttempted)
+    ),
+    freeThrowMade: buildPair(homeFreeThrowMade, awayFreeThrowMade),
+    freeThrowAttempted: buildPair(homeFreeThrowAttempted, awayFreeThrowAttempted),
+    freeThrowPct: buildPair(
+      toPct(homeFreeThrowMade, homeFreeThrowAttempted),
+      toPct(awayFreeThrowMade, awayFreeThrowAttempted)
+    ),
+    starterPoints: buildPair(homeStarterPoints, awayStarterPoints),
+    benchPoints: buildPair(homeBenchPoints, awayBenchPoints),
+    efficiency: buildPair(homeEfficiency, awayEfficiency),
+    possessionsEst: buildPair(homePossessions, awayPossessions),
   }
 }
 
@@ -446,6 +578,7 @@ export function buildPublicLiveSnapshot(
   const insights = buildGameInsights(snapshot, scoreTimeline)
 
   const playerEfficiencies = players.map((p) => ({ athleteId: p.athleteId, efficiency: p.efficiency }))
+  const teamComparison = buildTeamComparison(homePlayers, awayPlayers, homeSummary, awaySummary)
 
   return {
     game: {
@@ -485,6 +618,7 @@ export function buildPublicLiveSnapshot(
       keyMoments: insights.keyMoments,
       leadTracker: insights.leadTracker,
       playerEfficiencies,
+      teamComparison,
     },
     teamSummary: {
       home: homeSummary,

@@ -68,6 +68,12 @@ export type PublicLeadTrackerSegment = {
   widthPct: number
 }
 
+export type TeamStatPair = {
+  home: number
+  away: number
+  lowerIsBetter?: true
+}
+
 export type PublicKeyMomentsData = {
   largestLead: PublicKeyMomentValue
   largestRun: PublicKeyMomentValue
@@ -75,10 +81,36 @@ export type PublicKeyMomentsData = {
   ties: number
 }
 
+export type PublicTeamComparison = {
+  points: TeamStatPair
+  rebounds: TeamStatPair
+  reboundsOffensive: TeamStatPair
+  reboundsDefensive: TeamStatPair
+  assists: TeamStatPair
+  steals: TeamStatPair
+  blocks: TeamStatPair
+  turnovers: TeamStatPair & { lowerIsBetter: true }
+  fouls: TeamStatPair & { lowerIsBetter: true }
+  twoPointMade: TeamStatPair
+  twoPointAttempted: TeamStatPair
+  twoPointPct: TeamStatPair
+  threePointMade: TeamStatPair
+  threePointAttempted: TeamStatPair
+  threePointPct: TeamStatPair
+  freeThrowMade: TeamStatPair
+  freeThrowAttempted: TeamStatPair
+  freeThrowPct: TeamStatPair
+  starterPoints: TeamStatPair
+  benchPoints: TeamStatPair
+  efficiency: TeamStatPair
+  possessionsEst: TeamStatPair
+}
+
 export type PublicGameAnalytics = {
   keyMoments: PublicKeyMomentsData
   leadTracker: PublicLeadTrackerSegment[]
   playerEfficiencies: Array<{ athleteId: string; efficiency: number }>
+  teamComparison: PublicTeamComparison
 }
 
 export type PublicGameData = {
