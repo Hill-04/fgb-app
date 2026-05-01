@@ -39,11 +39,16 @@ function getWinnerState({
   }
 }
 
-function getBarWidth(home: number, away: number) {
-  const safeHome = Math.max(home, 0)
-  const safeAway = Math.max(away, 0)
-  const total = safeHome + safeAway
-  return total > 0 ? (safeHome / total) * 100 : 50
+function getComparisonShare(home: number, away: number, lowerIsBetter?: boolean) {
+  if (home <= 0 && away <= 0) return 50
+
+  if (!lowerIsBetter) {
+    return (home / Math.max(home + away, 1)) * 100
+  }
+
+  const homeScore = away
+  const awayScore = home
+  return (homeScore / Math.max(homeScore + awayScore, 1)) * 100
 }
 
 function StatComparisonRow({
@@ -58,7 +63,7 @@ function StatComparisonRow({
   const { homeBetter, awayBetter } = getWinnerState({ home, away, lowerIsBetter })
   const homeClass = homeBetter ? 'text-[var(--verde)]' : awayBetter ? 'text-[var(--gray)]' : 'text-[var(--black)]'
   const awayClass = awayBetter ? 'text-[#CC1016]' : homeBetter ? 'text-[var(--gray)]' : 'text-[var(--black)]'
-  const homeWidth = getBarWidth(home, away)
+  const homeWidth = getComparisonShare(home, away, lowerIsBetter)
 
   return (
     <div className="rounded-2xl border border-[var(--border)] bg-white px-4 py-3">

@@ -28,6 +28,18 @@ function formatShootingDetail(made: number, attempted: number, pct: number) {
   return `${made}/${attempted} ${pctLabel}`
 }
 
+function getComparisonShare(home: number, away: number, lowerIsBetter?: boolean) {
+  if (home <= 0 && away <= 0) return 50
+
+  if (!lowerIsBetter) {
+    return (home / Math.max(home + away, 1)) * 100
+  }
+
+  const homeScore = away
+  const awayScore = home
+  return (homeScore / Math.max(homeScore + awayScore, 1)) * 100
+}
+
 function getWinnerClass(pair: TeamStatPair, side: 'home' | 'away') {
   const homeBetter = pair.lowerIsBetter ? pair.home < pair.away : pair.home > pair.away
   const awayBetter = pair.lowerIsBetter ? pair.away < pair.home : pair.away > pair.home
@@ -90,8 +102,7 @@ function StatRow({
   pair: TeamStatPair
   format?: 'int' | 'pct'
 }) {
-  const total = pair.home + pair.away
-  const homePct = total > 0 ? (pair.home / total) * 100 : 50
+  const homePct = getComparisonShare(pair.home, pair.away, pair.lowerIsBetter)
 
   return (
     <div className="space-y-1.5">
@@ -125,8 +136,7 @@ function ShootingRow({
   pct: TeamStatPair
 }) {
   const pctPair: TeamStatPair = { home: Math.max(pct.home, 0), away: Math.max(pct.away, 0) }
-  const total = pctPair.home + pctPair.away
-  const homeWidth = total > 0 ? (pctPair.home / total) * 100 : 50
+  const homeWidth = getComparisonShare(pctPair.home, pctPair.away)
 
   return (
     <div className="space-y-1.5 rounded-2xl border border-[var(--border)]/70 bg-[#fcfbf6] px-4 py-3">
