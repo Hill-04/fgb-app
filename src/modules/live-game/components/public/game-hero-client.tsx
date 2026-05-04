@@ -154,6 +154,7 @@ export function GameHeroClient() {
   if (!data) return null
 
   const { game, homeTeam, awayTeam, periodScores, summary } = data
+  const isScheduled = game.status === 'SCHEDULED'
 
   const currentPeriodLabel = summary.currentPeriod
     ? summary.currentPeriod <= 4
@@ -189,7 +190,27 @@ export function GameHeroClient() {
 
           {/* Score */}
           <div className="text-center shrink-0">
-            <div className="flex items-baseline justify-center gap-3">
+            {isScheduled ? (
+              <div className="flex flex-col items-center justify-center gap-1">
+                <span className="text-5xl font-black uppercase tracking-[-0.08em] text-white sm:text-6xl">
+                  VS
+                </span>
+                {game.scheduledAt ? (
+                  <span className="text-[10px] font-black uppercase tracking-widest text-white/45">
+                    {new Date(game.scheduledAt).toLocaleDateString('pt-BR', {
+                      day: '2-digit',
+                      month: 'short',
+                    })}{' '}
+                    -{' '}
+                    {new Date(game.scheduledAt).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </span>
+                ) : null}
+              </div>
+            ) : (
+              <div className="flex items-baseline justify-center gap-3">
               <span
                 className={`text-5xl font-black tabular-nums sm:text-6xl ${
                   game.isFinished && homeTeam.score > awayTeam.score
@@ -209,7 +230,8 @@ export function GameHeroClient() {
               >
                 {awayTeam.score}
               </span>
-            </div>
+              </div>
+            )}
             <div className="mt-2 flex items-center justify-center gap-2">
               <StatusBadge isLive={game.isLive} isFinished={game.isFinished} />
               {currentPeriodLabel && (

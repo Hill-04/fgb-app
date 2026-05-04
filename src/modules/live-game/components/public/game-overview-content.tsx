@@ -16,13 +16,6 @@ function teamAccent(team: PublicKeyMomentValue['team']): string {
   return 'text-[var(--gray)]'
 }
 
-function formatValue(value: number, format: 'int' | 'pct' = 'int') {
-  if (format === 'pct') {
-    return value >= 0 ? `${value}%` : EMPTY_MARK
-  }
-  return String(value)
-}
-
 function formatShootingDetail(made: number, attempted: number, pct: number) {
   const pctLabel = pct >= 0 ? `${pct}%` : EMPTY_MARK
   return `${made}/${attempted} ${pctLabel}`
@@ -89,37 +82,6 @@ function KeyMomentCard({
         {isEmpty ? EMPTY_MARK : value}
       </p>
       <p className="mt-1 text-xs text-[var(--gray)]">{subtitle}</p>
-    </div>
-  )
-}
-
-function StatRow({
-  label,
-  pair,
-  format = 'int',
-}: {
-  label: string
-  pair: TeamStatPair
-  format?: 'int' | 'pct'
-}) {
-  const homePct = getComparisonShare(pair.home, pair.away, pair.lowerIsBetter)
-
-  return (
-    <div className="space-y-1.5">
-      <div className="flex items-center gap-3 text-xs">
-        <span className={`w-10 text-right font-black tabular-nums ${getWinnerClass(pair, 'home')}`}>
-          {formatValue(pair.home, format)}
-        </span>
-        <span className="flex-1 text-center text-[10px] font-black uppercase tracking-[0.24em] text-[var(--gray)]">
-          {label}
-        </span>
-        <span className={`w-10 text-left font-black tabular-nums ${getWinnerClass(pair, 'away')}`}>
-          {formatValue(pair.away, format)}
-        </span>
-      </div>
-      <div className="flex h-1.5 overflow-hidden rounded-full bg-[var(--gray-l)]">
-        <div className="h-full rounded-full bg-[var(--verde)] transition-all duration-500" style={{ width: `${homePct}%` }} />
-      </div>
     </div>
   )
 }
@@ -242,7 +204,7 @@ export function GameOverviewContent() {
 
   if (!data) return null
 
-  const { leaders, recentEvents, teamSummary, game, analytics } = data
+  const { leaders, game, analytics } = data
   const { keyMoments, leadTracker, teamComparison } = analytics
 
   const scheduledDate = game.scheduledAt
@@ -315,153 +277,83 @@ export function GameOverviewContent() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="fgb-card p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="fgb-display text-2xl text-[var(--black)]">Comparativo do jogo</h2>
-              <p className="mt-1 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--gray)]">
-                {homeLabel} x {awayLabel}
-              </p>
-            </div>
+      <div className="fgb-card p-6">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="fgb-display text-2xl text-[var(--black)]">Resumo tecnico</h2>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.24em] text-[var(--gray)]">
+              {homeLabel} x {awayLabel}
+            </p>
           </div>
-
-          <div className="space-y-6">
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-[0.22em] text-[var(--black)]">
-                  Resumo
-                </h3>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gray)]">
-                  Melhor desempenho em destaque
-                </span>
-              </div>
-              <div className="space-y-3">
-                <StatRow label="Pontos" pair={teamComparison.points} />
-                <StatRow label="Rebotes" pair={teamComparison.rebounds} />
-                <StatRow label="Assistencias" pair={teamComparison.assists} />
-                <StatRow label="Roubos" pair={teamComparison.steals} />
-                <StatRow label="Tocos" pair={teamComparison.blocks} />
-                <StatRow label="Turnovers" pair={teamComparison.turnovers} />
-                <StatRow label="Faltas" pair={teamComparison.fouls} />
-              </div>
-            </section>
-
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-[0.22em] text-[var(--black)]">
-                  Arremessos
-                </h3>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gray)]">
-                  Conversao e volume
-                </span>
-              </div>
-              <div className="space-y-3">
-                <ShootingRow
-                  label="2PT"
-                  made={teamComparison.twoPointMade}
-                  attempted={teamComparison.twoPointAttempted}
-                  pct={teamComparison.twoPointPct}
-                />
-                <ShootingRow
-                  label="3PT"
-                  made={teamComparison.threePointMade}
-                  attempted={teamComparison.threePointAttempted}
-                  pct={teamComparison.threePointPct}
-                />
-                <ShootingRow
-                  label="LL"
-                  made={teamComparison.freeThrowMade}
-                  attempted={teamComparison.freeThrowAttempted}
-                  pct={teamComparison.freeThrowPct}
-                />
-              </div>
-            </section>
-
-            <section>
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-black uppercase tracking-[0.22em] text-[var(--black)]">
-                  Profundidade
-                </h3>
-                <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gray)]">
-                  Impacto dos grupos
-                </span>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
-                    Titulares
-                  </p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <span className={`text-3xl font-black ${getWinnerClass(teamComparison.starterPoints, 'home')}`}>
-                      {teamComparison.starterPoints.home}
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
-                      Pontos
-                    </span>
-                    <span className={`text-3xl font-black ${getWinnerClass(teamComparison.starterPoints, 'away')}`}>
-                      {teamComparison.starterPoints.away}
-                    </span>
-                  </div>
-                </div>
-                <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
-                    Banco
-                  </p>
-                  <div className="mt-3 flex items-end justify-between gap-4">
-                    <span className={`text-3xl font-black ${getWinnerClass(teamComparison.benchPoints, 'home')}`}>
-                      {teamComparison.benchPoints.home}
-                    </span>
-                    <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
-                      Pontos
-                    </span>
-                    <span className={`text-3xl font-black ${getWinnerClass(teamComparison.benchPoints, 'away')}`}>
-                      {teamComparison.benchPoints.away}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--gray)]">
+            Mais detalhes na aba Estatisticas
+          </span>
         </div>
 
-        <div className="fgb-card p-6">
-          <h2 className="fgb-display text-2xl text-[var(--black)]">Ultimos eventos</h2>
-          <div className="mt-4 max-h-[760px] space-y-2 overflow-auto pr-1">
-            {recentEvents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-[var(--border)] p-4 text-sm text-[var(--gray)]">
-                Nenhum evento publicado ainda.
-              </div>
-            ) : (
-              recentEvents.map((event, index) => (
-                <div
-                  key={`${event.occurredAt}-${index}`}
-                  className={`rounded-xl border border-[var(--border)] px-4 py-3 ${
-                    event.pointsDelta > 0 ? 'bg-[#F5C200]/10' : 'bg-white'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p
-                        className={`text-sm leading-snug ${
-                          event.pointsDelta > 0 ? 'font-semibold text-[var(--black)]' : 'text-[var(--black)]'
-                        }`}
-                      >
-                        {event.description}
-                      </p>
-                      {event.teamName ? (
-                        <p className="mt-1 text-[10px] text-[var(--gray)]">{event.teamName}</p>
-                      ) : null}
-                    </div>
-                    <span className="shrink-0 text-[10px] font-semibold text-[var(--gray)]">
-                      {event.period ? `Q${event.period > 4 ? `OT${event.period - 4}` : event.period}` : '--'}
-                      {event.clockTime ? ` ${event.clockTime}` : ''}
-                    </span>
-                  </div>
+        <div className="grid gap-5 lg:grid-cols-[1.1fr_0.9fr]">
+          <section className="space-y-3">
+            <h3 className="text-sm font-black uppercase tracking-[0.22em] text-[var(--black)]">
+              Arremessos
+            </h3>
+            <ShootingRow
+              label="2PT"
+              made={teamComparison.twoPointMade}
+              attempted={teamComparison.twoPointAttempted}
+              pct={teamComparison.twoPointPct}
+            />
+            <ShootingRow
+              label="3PT"
+              made={teamComparison.threePointMade}
+              attempted={teamComparison.threePointAttempted}
+              pct={teamComparison.threePointPct}
+            />
+            <ShootingRow
+              label="LL"
+              made={teamComparison.freeThrowMade}
+              attempted={teamComparison.freeThrowAttempted}
+              pct={teamComparison.freeThrowPct}
+            />
+          </section>
+
+          <section>
+            <h3 className="mb-3 text-sm font-black uppercase tracking-[0.22em] text-[var(--black)]">
+              Profundidade
+            </h3>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
+                  Titulares
+                </p>
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <span className={`text-3xl font-black ${getWinnerClass(teamComparison.starterPoints, 'home')}`}>
+                    {teamComparison.starterPoints.home}
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
+                    Pontos
+                  </span>
+                  <span className={`text-3xl font-black ${getWinnerClass(teamComparison.starterPoints, 'away')}`}>
+                    {teamComparison.starterPoints.away}
+                  </span>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+              <div className="rounded-2xl border border-[var(--border)] bg-white p-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
+                  Banco
+                </p>
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <span className={`text-3xl font-black ${getWinnerClass(teamComparison.benchPoints, 'home')}`}>
+                    {teamComparison.benchPoints.home}
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">
+                    Pontos
+                  </span>
+                  <span className={`text-3xl font-black ${getWinnerClass(teamComparison.benchPoints, 'away')}`}>
+                    {teamComparison.benchPoints.away}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
 

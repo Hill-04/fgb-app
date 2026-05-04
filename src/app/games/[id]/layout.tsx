@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { GameDataProvider } from '@/modules/live-game/components/public/game-data-provider'
 import { GameHeroClient } from '@/modules/live-game/components/public/game-hero-client'
 import { GameTabNav } from '@/modules/live-game/components/public/game-tab-nav'
+import { LiveEventTicker } from '@/modules/live-game/components/public/live-event-ticker'
 
 export const metadata: Metadata = {
   title: 'Jogo ao vivo — FGB',
@@ -22,6 +23,7 @@ export default async function GamePublicLayout({
       <div className="mx-auto max-w-[1240px] px-4 pb-20 sm:px-6">
         <div className="pt-6">
           <GameHeroClient />
+          <LiveEventTicker />
           <GameTabNav gameId={id} />
           <div className="mt-6">{children}</div>
         </div>
