@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound, redirect, unstable_rethrow } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { Download } from 'lucide-react'
 
@@ -24,20 +24,21 @@ export default async function TeamFinancialInvoiceDetailPage({ params }: PagePro
   if (!teamId) redirect('/team/create')
 
   const { id } = await params
+
+  const invoice = await prisma.financialInvoice.findFirst({
+    where: { id, teamId },
+    include: {
+      championship: { select: { id: true, name: true, year: true } },
+      items: { orderBy: { createdAt: 'asc' } },
+      payments: { orderBy: { paidAt: 'desc' } },
+      auditLogs: { orderBy: { createdAt: 'desc' } },
+    },
+  })
+
+  if (!invoice) notFound()
+
   try {
-    const invoice = await prisma.financialInvoice.findFirst({
-      where: { id, teamId },
-      include: {
-        championship: { select: { id: true, name: true, year: true } },
-        items: { orderBy: { createdAt: 'asc' } },
-        payments: { orderBy: { paidAt: 'desc' } },
-        auditLogs: { orderBy: { createdAt: 'desc' } },
-      },
-    })
-
-    if (!invoice) notFound()
-
-    const effectiveStatus = getEffectiveInvoiceStatus(invoice)
+    const effectiveStatus = getEffectiveInvoiceStatus(invoice!)
 
     return (
       <div className="space-y-7 pb-10">
@@ -129,6 +130,7 @@ export default async function TeamFinancialInvoiceDetailPage({ params }: PagePro
       </div>
     )
   } catch (error: any) {
+    unstable_rethrow(error)
     console.error('[TEAM][FINANCE_INVOICE_DETAIL]', error)
     return (
       <div className="space-y-7 pb-10">
