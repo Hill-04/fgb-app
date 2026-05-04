@@ -7,6 +7,8 @@ import { PublicFooter } from '@/components/PublicFooter'
 import { CampeonatoTabs } from './CampeonatoTabs'
 import type { ChampionshipData } from './CampeonatoTabs'
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://basquetegaucho.com.br'
+
 type Props = { params: Promise<{ id: string }> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -154,8 +156,22 @@ export default async function CampeonatoPublicPage({ params }: Props) {
       })),
     })),
   }
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Início',       item: `${BASE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'Campeonatos',  item: `${BASE_URL}/campeonatos` },
+      { '@type': 'ListItem', position: 3, name: championship.name, item: `${BASE_URL}/campeonatos/${championship.id}` },
+    ],
+  }
+
   return (
     <div>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <PublicHeader />
 
       {/* ── Header (unchanged) ───────────────────────────────────── */}

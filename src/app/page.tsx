@@ -7,7 +7,38 @@ import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { SponsorsStrip } from '@/components/public/SponsorsStrip'
 
+const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://basquetegaucho.com.br'
 const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'SportsOrganization',
+  name: 'Federação Gaúcha de Basketball',
+  alternateName: 'FGB',
+  url: BASE_URL,
+  logo: FGB_LOGO,
+  foundingDate: '1952-04-18',
+  description: 'Entidade esportiva responsável pela gestão do basquete no Rio Grande do Sul. Fundada em 18 de abril de 1952.',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: 'Rua Marechal Floriano, 388',
+    addressLocality: 'Caxias do Sul',
+    addressRegion: 'RS',
+    addressCountry: 'BR',
+  },
+  contactPoint: {
+    '@type': 'ContactPoint',
+    telephone: '+55-54-3223-3858',
+    email: 'fgb@basquetegaucho.com.br',
+    contactType: 'customer service',
+    availableLanguage: 'Portuguese',
+    hoursAvailable: 'Mo-Fr 08:00-12:00, Mo-Fr 13:00-17:00',
+  },
+  sameAs: [
+    'https://www.facebook.com/fgb.basquetegaucho',
+    'https://www.instagram.com/fg_basquete/',
+  ],
+}
 const GALLERY_IMAGES = [
   'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436798402_17959816394740627_7133097296869973522_n.jpg',
   'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436953622_17959816355740627_4207539994510205825_n.jpg',
@@ -84,6 +115,10 @@ export default async function HomePage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
       <PublicHeader />
       <main>
         <section className="fgb-hero">
