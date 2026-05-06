@@ -226,6 +226,8 @@ model Game {
   wasRescheduled Boolean              @default(false)
   rescheduleReason String?
   blockedByTeamId String?
+  fibaFixtureId  String?
+  lastFibaSyncAt DateTime?
   createdAt      DateTime             @default(now())
   awayTeam       Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
   homeTeam       Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
@@ -374,6 +376,14 @@ model GamePlayerStatLine {
   isStarter              Boolean  @default(false)
   fouledOut              Boolean  @default(false)
   disqualified           Boolean  @default(false)
+  pointsInPaint          Int      @default(0)
+  fastBreakPoints        Int      @default(0)
+  secondChancePoints     Int      @default(0)
+  pointsFromTurnover     Int      @default(0)
+  dunks                  Int      @default(0)
+  blocksReceived         Int      @default(0)
+  foulsTechnical         Int      @default(0)
+  fibaIndex              Int      @default(0)
   updatedAt              DateTime @updatedAt
   game                   Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   athlete                Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)

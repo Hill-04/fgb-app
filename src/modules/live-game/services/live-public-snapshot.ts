@@ -53,8 +53,11 @@ type PublicPlayerLine = {
   jerseyNumber: number | null
   teamId: string
   teamName: string
+  isStarter: boolean
   points: number
   rebounds: number
+  reboundsOffensive: number
+  reboundsDefensive: number
   assists: number
   fouls: number
   steals: number
@@ -66,6 +69,7 @@ type PublicPlayerLine = {
   threeAttempted: number
   ftMade: number
   ftAttempted: number
+  plusMinus: number | null
 }
 
 type TeamSummary = {
@@ -92,8 +96,11 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
     jerseyNumber: line.jerseyNumber ?? null,
     teamId: line.teamId,
     teamName: line.teamName,
+    isStarter: Boolean(line.isStarter),
     points: toNumber(line.points),
     rebounds: toNumber(line.reboundsTotal),
+    reboundsOffensive: toNumber(line.reboundsOffensive),
+    reboundsDefensive: toNumber(line.reboundsDefensive),
     assists: toNumber(line.assists),
     fouls: toNumber(line.fouls),
     steals: toNumber(line.steals),
@@ -105,6 +112,7 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
     threeAttempted,
     ftMade: toNumber(line.freeThrowsMade),
     ftAttempted: toNumber(line.freeThrowsAttempted),
+    plusMinus: line.plusMinus != null ? toNumber(line.plusMinus) : null,
   }
 }
 
@@ -164,6 +172,9 @@ function getLeader(
   }
 }
 
+const SHOT_MADE_TYPES = new Set(['SHOT_MADE_2', 'SHOT_MADE_3', 'FREE_THROW_MADE'])
+const SHOT_MISSED_TYPES = new Set(['SHOT_MISSED_2', 'SHOT_MISSED_3', 'FREE_THROW_MISSED'])
+
 export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
   const normalizedStatus = normalizeStatus(snapshot.game)
   const isLive = normalizedStatus === 'LIVE'
@@ -190,18 +201,66 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
     toNumber(snapshot.game.awayScore)
   )
 
-  const recentEvents = events
+  const activeEvents = events.filter((e) => !e.isReverted)
+
+  const recentEvents = activeEvents
     .slice(-20)
     .reverse()
     .map((event) => ({
+      id: event.id,
       period: event.period,
       clockTime: event.clockTime,
+      eventType: event.eventType,
       description: event.description,
       teamName: event.teamName || null,
+      teamId: event.teamId || null,
       athleteName: event.athleteName || null,
       pointsDelta: event.pointsDelta ?? 0,
       occurredAt: event.createdAt,
     }))
+
+  const playByPlay = activeEvents
+    .slice()
+    .reverse()
+    .map((event) => ({
+      id: event.id,
+      period: event.period,
+      clockTime: event.clockTime,
+      eventType: event.eventType,
+      description: event.description,
+      teamName: event.teamName || null,
+      teamId: event.teamId || null,
+      athleteName: event.athleteName || null,
+      pointsDelta: event.pointsDelta ?? 0,
+      occurredAt: event.createdAt,
+    }))
+
+  const shots = activeEvents
+    .filter((e) => {
+      const payload = e.payload as Record<string, unknown> | undefined
+      return (SHOT_MADE_TYPES.has(e.eventType) || SHOT_MISSED_TYPES.has(e.eventType)) &&
+        payload?.x != null && payload?.y != null
+    })
+    .map((e) => {
+      const payload = e.payload as Record<string, unknown>
+      return {
+        x: Number(payload.x),
+        y: Number(payload.y),
+        made: SHOT_MADE_TYPES.has(e.eventType),
+        isThree: e.eventType === 'SHOT_MADE_3' || e.eventType === 'SHOT_MISSED_3',
+        teamId: e.teamId || null,
+        athleteName: e.athleteName || null,
+        period: e.period,
+        clockTime: e.clockTime,
+      }
+    })
+
+  const rawPeriods = snapshot.boxScore?.periods || []
+  const periodScores = rawPeriods.map((r) => ({
+    period: r.period,
+    home: r.homePoints,
+    away: r.awayPoints,
+  }))
 
   return {
     game: {
@@ -211,19 +270,30 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       isFinished,
       scheduledAt: snapshot.game.dateTime,
       venue: snapshot.game.venue || snapshot.game.location || null,
+      currentPeriod: snapshot.game.currentPeriod || null,
+      clockDisplay: snapshot.game.clockDisplay || null,
+      homeTimeoutsUsed: snapshot.game.homeTimeoutsUsed,
+      awayTimeoutsUsed: snapshot.game.awayTimeoutsUsed,
+      homeTeamFoulsCurrentPeriod: snapshot.game.homeTeamFoulsCurrentPeriod,
+      awayTeamFoulsCurrentPeriod: snapshot.game.awayTeamFoulsCurrentPeriod,
+      championship: {
+        name: snapshot.game.championship?.name || null,
+        year: snapshot.game.championship?.year || null,
+      },
+      category: snapshot.game.category?.name || null,
     },
     homeTeam: {
       id: snapshot.game.homeTeam.id,
       name: snapshot.game.homeTeam.name,
       shortName: toShortName(snapshot.game.homeTeam.name),
-      logoUrl: snapshot.game.homeTeam.logoUrl || null,
+      logoUrl: (snapshot.game.homeTeam as { logoUrl?: string | null }).logoUrl || null,
       score: Number(snapshot.game.homeScore ?? 0),
     },
     awayTeam: {
       id: snapshot.game.awayTeam.id,
       name: snapshot.game.awayTeam.name,
       shortName: toShortName(snapshot.game.awayTeam.name),
-      logoUrl: snapshot.game.awayTeam.logoUrl || null,
+      logoUrl: (snapshot.game.awayTeam as { logoUrl?: string | null }).logoUrl || null,
       score: Number(snapshot.game.awayScore ?? 0),
     },
     leaders: {
@@ -234,6 +304,9 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       blocks: getLeader(players, 'blocks'),
     },
     recentEvents,
+    playByPlay,
+    shots,
+    periodScores,
     teamSummary: {
       home: homeSummary,
       away: awaySummary,

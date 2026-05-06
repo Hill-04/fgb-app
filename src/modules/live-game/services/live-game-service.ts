@@ -917,6 +917,7 @@ export class LiveGameService {
           threePtAttempted: line.threePtAttempted,
           freeThrowsMade: line.freeThrowsMade,
           freeThrowsAttempted: line.freeThrowsAttempted,
+          plusMinus: line.plusMinus ?? null,
           isStarter: line.isStarter,
           fouledOut: line.fouledOut,
           disqualified: line.disqualified,
