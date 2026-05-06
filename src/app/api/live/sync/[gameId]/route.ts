@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/db'
+import { authOptions } from '@/lib/auth'
 import { fibaGetGameState, fibaGetBoxScore, fibaGetActions } from '@/lib/fiba/client'
 import { mapFibaBoxScoreToStatLine, mapFibaActionType, buildActionDescription, clockToMs } from '@/lib/fiba/mapper'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ gameId: string }> }) {
+  const session = await getServerSession(authOptions)
+  if (!session || !(session.user as any).isAdmin) {
+    return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
+  }
+
   const { gameId } = await params
   const body = await req.json().catch(() => ({}))
   const fixtureId: string = body.fixtureId

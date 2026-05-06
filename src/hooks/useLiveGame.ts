@@ -118,6 +118,8 @@ export type LiveGameSnapshot = {
   awayScore: number
   currentPeriod: number
   liveStatus: string
+  fibaFixtureId?: string | null
+  lastFibaSyncAt?: string | null
   clockDisplay?: string | null
   homeTimeoutsUsed: number
   awayTimeoutsUsed: number
@@ -394,6 +396,7 @@ export function useLiveGame(gameId: string) {
     isClockRunning,
     possession,
     executeAction,
+    refresh: fetchSnapshot,
     startClock,
     stopClock,
     resetShotClock,

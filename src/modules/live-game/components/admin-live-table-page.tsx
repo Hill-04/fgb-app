@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState } from 'react'
-import { AlertTriangle, ArrowUpDown, Pause, Play, RotateCcw } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AlertTriangle, ArrowUpDown, Pause, Play, RotateCcw, Wifi } from 'lucide-react'
 
 import { useLiveGame, type LiveEvent, type LivePlayerStatLine, type LiveRosterPlayer } from '@/hooks/useLiveGame'
 import { Button } from '@/components/ui/button'
@@ -94,6 +94,7 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
     shotClockMs,
     isClockRunning,
     executeAction,
+    refresh,
     startClock,
     stopClock,
     resetShotClock,
@@ -106,6 +107,68 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
   const [subTeamId, setSubTeamId] = useState('')
   const [subAthleteOutId, setSubAthleteOutId] = useState('')
   const [subAthleteInId, setSubAthleteInId] = useState('')
+  const [fixtureId, setFixtureId] = useState('')
+  const [autoFibaSync, setAutoFibaSync] = useState(false)
+  const [isFibaSyncing, setIsFibaSyncing] = useState(false)
+  const [fibaSyncMessage, setFibaSyncMessage] = useState<string | null>(null)
+  const [fibaSyncError, setFibaSyncError] = useState<string | null>(null)
+  const syncInFlightRef = useRef(false)
+
+  useEffect(() => {
+    if (!game?.fibaFixtureId || fixtureId) return
+    setFixtureId(game.fibaFixtureId)
+  }, [fixtureId, game?.fibaFixtureId])
+
+  const syncWithFiba = useCallback(async () => {
+    const safeFixtureId = fixtureId.trim()
+    if (!safeFixtureId || syncInFlightRef.current) return
+
+    syncInFlightRef.current = true
+    setIsFibaSyncing(true)
+    setFibaSyncError(null)
+    setFibaSyncMessage(null)
+
+    try {
+      const response = await fetch(`/api/live/sync/${gameId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fixtureId: safeFixtureId }),
+      })
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+        period?: number
+        homeScore?: number
+        awayScore?: number
+      }
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(payload.error || 'Falha ao sincronizar com o FIBA LiveStats')
+      }
+
+      setFibaSyncMessage(
+        `FIBA sincronizado: P${payload.period ?? '-'} · ${payload.homeScore ?? 0} x ${payload.awayScore ?? 0}`
+      )
+      await refresh()
+    } catch (currentError) {
+      setFibaSyncError(
+        currentError instanceof Error
+          ? currentError.message
+          : 'Falha ao sincronizar com o FIBA LiveStats'
+      )
+    } finally {
+      syncInFlightRef.current = false
+      setIsFibaSyncing(false)
+    }
+  }, [fixtureId, gameId, refresh])
+
+  useEffect(() => {
+    if (!autoFibaSync || !fixtureId.trim() || game?.liveStatus !== 'LIVE') return
+    const interval = window.setInterval(() => {
+      void syncWithFiba()
+    }, 5000)
+    return () => window.clearInterval(interval)
+  }, [autoFibaSync, fixtureId, game?.liveStatus, syncWithFiba])
 
   const technicalByAthlete = useMemo(() => {
     const map = new Map<string, number>()
@@ -437,6 +500,69 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
               Limite de timeout atingido
             </span>
           )}
+        </CardContent>
+      </Card>
+
+      <Card className="border border-[var(--border)] bg-white">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-lg font-black uppercase tracking-wide">
+            <Wifi className="size-4" />
+            Sincronizacao FIBA LiveStats
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-end">
+            <label className="block text-xs font-bold uppercase tracking-widest text-[var(--gray)]">
+              Fixture ID do FIBA
+              <input
+                className="mt-1 w-full rounded-md border border-[var(--border)] bg-white px-3 py-2 text-sm font-semibold text-[var(--black)] outline-none transition focus:border-[#1B7340] focus:ring-2 focus:ring-[#1B7340]/15"
+                value={fixtureId}
+                onChange={(event) => setFixtureId(event.target.value)}
+                placeholder="Ex.: fixtureId do LiveStats"
+              />
+            </label>
+
+            <Button variant="outline" disabled={!fixtureId.trim() || isFibaSyncing} onClick={() => void syncWithFiba()}>
+              {isFibaSyncing ? 'Sincronizando...' : 'Sincronizar agora'}
+            </Button>
+
+            <label className="flex min-h-10 items-center gap-2 rounded-md border border-[var(--border)] px-3 text-xs font-bold uppercase tracking-widest text-[var(--gray)]">
+              <input
+                type="checkbox"
+                checked={autoFibaSync}
+                onChange={(event) => setAutoFibaSync(event.target.checked)}
+                disabled={!fixtureId.trim()}
+              />
+              Auto 5s
+            </label>
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 font-semibold text-[var(--gray-d)]">
+              Status jogo: {game.liveStatus}
+            </span>
+            {game.lastFibaSyncAt ? (
+              <span className="rounded-full bg-[var(--gray-l)] px-3 py-1 font-semibold text-[var(--gray-d)]">
+                Ultimo sync: {new Date(game.lastFibaSyncAt).toLocaleTimeString('pt-BR')}
+              </span>
+            ) : null}
+            {autoFibaSync && game.liveStatus !== 'LIVE' ? (
+              <span className="rounded-full bg-[#F5C200]/25 px-3 py-1 font-semibold text-[var(--black)]">
+                Auto sync aguardando jogo LIVE
+              </span>
+            ) : null}
+          </div>
+
+          {fibaSyncMessage ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
+              {fibaSyncMessage}
+            </div>
+          ) : null}
+          {fibaSyncError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+              {fibaSyncError}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
