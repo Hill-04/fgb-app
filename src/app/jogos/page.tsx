@@ -4,6 +4,7 @@ import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { getActiveSeason } from '@/lib/queries/seasons'
 import { getGamesBySeasonId } from '@/lib/queries/games'
+import { prisma } from '@/lib/db'
 
 export const metadata: Metadata = {
   title: 'Jogos — FGB',
@@ -19,8 +20,31 @@ export default async function JogosPage() {
     games = await getGamesBySeasonId(activeSeason.id).catch(() => [])
   }
 
+  const publicLiveGames = await prisma.game.findMany({
+    where: {
+      isLivePublished: true,
+      liveStatus: {
+        in: ['PRE_GAME_READY', 'LIVE', 'HALFTIME', 'PERIOD_BREAK'],
+      },
+    },
+    select: {
+      id: true,
+      homeScore: true,
+      awayScore: true,
+      liveStatus: true,
+      currentPeriod: true,
+      clockDisplay: true,
+      venue: true,
+      dateTime: true,
+      championship: { select: { name: true } },
+      homeTeam: { select: { name: true } },
+      awayTeam: { select: { name: true } },
+    },
+    orderBy: [{ liveStatus: 'asc' }, { dateTime: 'asc' }],
+    take: 12,
+  }).catch(() => [])
+
   // Separar jogos por status
-  const liveGames = games.filter((g: any) => g.status === 'live')
   const scheduledGames = games.filter((g: any) => g.status === 'scheduled')
   const finishedGames = games.filter((g: any) => g.status === 'finished')
 
@@ -43,7 +67,7 @@ export default async function JogosPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-14">
 
-        {liveGames.length > 0 && (
+        {publicLiveGames.length > 0 && (
           <section className="mb-14">
             <h2 className="fgb-display text-2xl mb-6 flex items-center gap-3">
               <span className="relative flex h-3 w-3">
@@ -53,8 +77,8 @@ export default async function JogosPage() {
               AO VIVO AGORA
             </h2>
             <div className="grid gap-4">
-              {liveGames.map((game: any) => (
-                <GameCard key={game.id} game={game} />
+              {publicLiveGames.map((game: any) => (
+                <LiveGameCard key={game.id} game={game} />
               ))}
             </div>
           </section>
@@ -92,6 +116,64 @@ export default async function JogosPage() {
 
       <PublicFooter />
     </div>
+  )
+}
+
+function LiveGameCard({ game }: { game: any }) {
+  const statusLabel = game.liveStatus === 'PRE_GAME_READY'
+    ? 'Pre-jogo'
+    : game.liveStatus === 'HALFTIME'
+      ? 'Intervalo'
+      : game.liveStatus === 'PERIOD_BREAK'
+        ? 'Pausa'
+        : 'Ao vivo'
+
+  return (
+    <Link href={`/live/${game.id}`} className="block">
+      <div className="fgb-card bg-[#111111] text-white p-6 hover:-translate-y-1 transition-transform border border-white/10 cursor-pointer relative overflow-hidden group">
+        <div className="absolute inset-x-0 top-0 h-1 fgb-stripe" />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="text-xs font-semibold text-white/55 md:w-40 flex-shrink-0 uppercase tracking-[0.2em]">
+            <div className="text-[var(--yellow)]">{statusLabel}</div>
+            <div className="mt-2 text-white/45 normal-case tracking-normal">
+              {game.championship?.name ?? 'Jogo oficial'}
+            </div>
+            {game.venue && (
+              <div className="mt-1 text-white/35 normal-case tracking-normal truncate">
+                {game.venue}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4 flex-1 justify-center">
+            <div className="text-right flex-1">
+              <h3 className="fgb-display text-lg md:text-2xl">{game.homeTeam?.name}</h3>
+            </div>
+
+            <div className="flex flex-col items-center gap-1 bg-white/8 px-5 py-3 rounded-2xl min-w-32 border border-white/10">
+              <div className="flex items-center gap-3 text-3xl md:text-4xl font-bold">
+                <span>{game.homeScore ?? 0}</span>
+                <span className="text-white/25 text-xl">x</span>
+                <span>{game.awayScore ?? 0}</span>
+              </div>
+              <span className="text-[10px] uppercase tracking-[0.2em] text-white/45">
+                {game.clockDisplay || `P${game.currentPeriod ?? 1}`}
+              </span>
+            </div>
+
+            <div className="text-left flex-1">
+              <h3 className="fgb-display text-lg md:text-2xl">{game.awayTeam?.name}</h3>
+            </div>
+          </div>
+
+          <div className="md:w-40 text-right flex-shrink-0">
+            <span className="inline-flex items-center justify-center rounded-full bg-[var(--yellow)] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-black shadow-sm">
+              Ver ao vivo
+            </span>
+          </div>
+        </div>
+      </div>
+    </Link>
   )
 }
 

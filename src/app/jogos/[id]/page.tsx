@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { getGameWithStats } from '@/lib/queries/games'
+import { prisma } from '@/lib/db'
 
 type Props = { params: { id: string } }
 
@@ -35,6 +36,14 @@ export default async function GameSumulaPage({ params }: Props) {
   // Divide as estatísticas por time
   const homeStats = stats.filter((s: any) => s.team_id === game.home_team_id)
   const awayStats = stats.filter((s: any) => s.team_id === game.away_team_id)
+  const liveGame = await prisma.game.findUnique({
+    where: { id: params.id },
+    select: { isLivePublished: true, liveStatus: true },
+  }).catch(() => null)
+  const showLiveCta = Boolean(
+    liveGame?.isLivePublished &&
+    ['PRE_GAME_READY', 'LIVE', 'HALFTIME', 'PERIOD_BREAK'].includes(liveGame.liveStatus)
+  )
 
   const date = new Date(game.scheduled_at)
 
@@ -78,6 +87,14 @@ export default async function GameSumulaPage({ params }: Props) {
                    {date.toLocaleDateString('pt-BR')} às {date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                    {game.venue && <><br/>{game.venue}</>}
                 </div>
+                {showLiveCta && (
+                  <Link
+                    href={`/live/${game.id}`}
+                    className="mt-6 inline-flex items-center justify-center rounded-full bg-[var(--yellow)] px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-black/20 transition-transform hover:-translate-y-0.5 hover:bg-white"
+                  >
+                    Ver ao vivo
+                  </Link>
+                )}
              </div>
 
              {/* AWAY TEAM */}
