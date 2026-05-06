@@ -4,6 +4,38 @@ import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { Menu, X, ChevronDown } from 'lucide-react'
 
+function LiveBadge() {
+  const [count, setCount] = useState(0)
+
+  useEffect(() => {
+    const load = () => {
+      fetch('/api/public/live-count', { cache: 'no-store' })
+        .then((r) => r.json())
+        .then((d) => setCount(d.count ?? 0))
+        .catch(() => {})
+    }
+    load()
+    const id = setInterval(load, 30000)
+    return () => clearInterval(id)
+  }, [])
+
+  if (!count) return null
+
+  return (
+    <Link
+      href="/jogos"
+      className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-all"
+      style={{ background: 'rgba(27,115,64,0.18)', border: '1px solid rgba(27,115,64,0.35)', color: 'var(--verde)', textDecoration: 'none' }}
+    >
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--verde)] opacity-70" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--verde)]" />
+      </span>
+      {count} ao vivo
+    </Link>
+  )
+}
+
 const navItems = [
   { label: 'Início', href: '/' },
   {
@@ -129,6 +161,7 @@ export function PublicHeader() {
 
           {/* CTA + MOBILE TOGGLE */}
           <div className="flex items-center gap-3">
+            <div className="hidden lg:block"><LiveBadge /></div>
             <Link href="/login" className="fgb-btn-primary hidden lg:inline-block">
               Entrar
             </Link>

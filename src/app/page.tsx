@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/db'
-import { getLiveGames, getRecentResults } from '@/lib/queries/games'
+import { getRecentResults } from '@/lib/queries/games'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
@@ -33,7 +33,25 @@ export default async function HomePage() {
   }).catch(() => [])
 
   const recentGames = await getRecentResults(6).catch(() => [])
-  const liveGames = await getLiveGames().catch(() => [])
+
+  // Live games from Prisma (isLivePublished = source of truth for public visibility)
+  const liveGames = await prisma.game.findMany({
+    where: {
+      isLivePublished: true,
+      liveStatus: { in: ['LIVE', 'PRE_GAME_READY', 'HALFTIME', 'PERIOD_BREAK'] },
+    },
+    select: {
+      id: true,
+      homeScore: true,
+      awayScore: true,
+      liveStatus: true,
+      currentPeriod: true,
+      homeTeam: { select: { name: true } },
+      awayTeam: { select: { name: true } },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  }).catch(() => [])
 
   const allCategories = await prisma.championshipCategory.findMany({
     where: { championship: { status: { in: ['ONGOING', 'REGISTRATION_OPEN'] }, isSimulation: false, NOT: { name: { startsWith: 'TESTE' } } } },
@@ -221,29 +239,46 @@ export default async function HomePage() {
         </section>
 
         {liveGames.length > 0 && (
-          <div style={{ background: 'var(--black2)', borderBottom: '2px solid var(--red)' }}>
+          <div style={{ background: 'var(--black2)', borderBottom: '2px solid var(--verde)' }}>
             <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4 overflow-x-auto fgb-hide-scrollbar">
               <div className="flex items-center gap-2 flex-shrink-0">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--red)] opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--red)]" />
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--verde)] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--verde)]" />
                 </span>
-                <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 9, letterSpacing: '0.2em' }}>JOGOS DE HOJE</span>
+                <span className="fgb-label" style={{ color: 'var(--verde)', fontSize: 9, letterSpacing: '0.2em' }}>AO VIVO AGORA</span>
               </div>
               <div className="h-4 w-px bg-white/10 flex-shrink-0" />
-              {liveGames.map((game: any) => (
-                <div key={game.id} className="flex items-center gap-3 flex-shrink-0 px-4 py-1.5 rounded-full" style={{ background: game.status === 'live' ? 'rgba(204,16,22,0.15)' : 'rgba(255,255,255,0.05)', border: game.status === 'live' ? '1px solid rgba(204,16,22,0.3)' : '1px solid rgba(255,255,255,0.08)' }}>
-                  {game.status === 'live' && (
-                    <span className="fgb-label" style={{ color: 'var(--red)', fontSize: 8, letterSpacing: '0.15em' }}>● AO VIVO</span>
-                  )}
-                  <span className="fgb-display" style={{ fontSize: 11, color: '#fff', letterSpacing: '0.02em' }}>
-                    {game.home_team?.name}
-                    {game.home_score != null ? <span style={{ color: 'var(--yellow)', margin: '0 6px' }}>{game.home_score} × {game.away_score}</span> : <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 6px' }}>vs</span>}
-                    {game.away_team?.name}
-                  </span>
-                  <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>OFICIAL</span>
-                </div>
-              ))}
+              {liveGames.map((game) => {
+                const isLive = game.liveStatus === 'LIVE'
+                return (
+                  <Link
+                    key={game.id}
+                    href={`/live/${game.id}`}
+                    className="flex items-center gap-3 flex-shrink-0 px-4 py-1.5 rounded-full transition-all hover:scale-105"
+                    style={{
+                      background: isLive ? 'rgba(27,115,64,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: isLive ? '1px solid rgba(27,115,64,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    {isLive && (
+                      <span className="fgb-label" style={{ color: 'var(--verde)', fontSize: 8, letterSpacing: '0.15em' }}>● AO VIVO</span>
+                    )}
+                    <span className="fgb-display" style={{ fontSize: 11, color: '#fff', letterSpacing: '0.02em' }}>
+                      {game.homeTeam?.name}
+                      {game.homeScore != null
+                        ? <span style={{ color: 'var(--yellow)', margin: '0 6px' }}>{game.homeScore} × {game.awayScore}</span>
+                        : <span style={{ color: 'rgba(255,255,255,0.3)', margin: '0 6px' }}>vs</span>
+                      }
+                      {game.awayTeam?.name}
+                    </span>
+                    {game.currentPeriod ? (
+                      <span className="fgb-label" style={{ color: 'rgba(255,255,255,0.35)', fontSize: 8 }}>P{game.currentPeriod}</span>
+                    ) : null}
+                  </Link>
+                )
+              })}
             </div>
           </div>
         )}
