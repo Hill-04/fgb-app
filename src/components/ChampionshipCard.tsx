@@ -30,6 +30,7 @@ const statusBadge: Record<string, string> = {
 }
 
 const actionLabelMap: Record<string, string> = {
+  DRAFT: 'Continuar configuração',
   REGISTRATION_OPEN: 'Gerenciar Inscrições',
   REGISTRATION_CLOSED: 'Organizar com IA',
   ORGANIZING: 'Revisar Calendário',
@@ -41,11 +42,12 @@ const actionLabelMap: Record<string, string> = {
 const statusStepMap: Record<string, number> = {
   DRAFT: 1,
   REGISTRATION_OPEN: 2,
-  REGISTRATION_CLOSED: 2,
+  REGISTRATION_CLOSED: 3,
   ORGANIZING: 3,
   ONGOING: 4,
   ACTIVE: 4,
   FINISHED: 5,
+  ARCHIVED: 6,
 }
 
 export function ChampionshipCard({
@@ -93,7 +95,7 @@ export function ChampionshipCard({
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--verde)]"></span>
               </span>
             )}
-            {formatChampionshipStatus(status)}
+            {status === 'DRAFT' ? 'Em configuração' : formatChampionshipStatus(status)}
           </span>
         </div>
 
@@ -132,11 +134,11 @@ export function ChampionshipCard({
           <div className="flex items-center justify-between mb-2">
             <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Progresso do campeonato</p>
             <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>
-              Etapa {currentStep}/5
+              Etapa {currentStep}/6
             </span>
           </div>
           <div className="flex gap-1.5">
-            {[1, 2, 3, 4, 5].map((step) => (
+            {[1, 2, 3, 4, 5, 6].map((step) => (
               <span
                 key={step}
                 className={`h-2 flex-1 rounded-full border ${step <= currentStep ? 'bg-[var(--verde)] border-[var(--verde)]' : 'bg-white border-[var(--border)]'}`}
@@ -149,6 +151,7 @@ export function ChampionshipCard({
             <span>Organização</span>
             <span>Jogos</span>
             <span>Encerrado</span>
+            <span>Publicado</span>
           </div>
         </div>
 

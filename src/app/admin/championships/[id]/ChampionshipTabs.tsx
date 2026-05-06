@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart2, Calendar, FileText, LayoutDashboard, Settings, Sparkles, Users } from 'lucide-react'
+import { BarChart2, Calendar, FileText, FolderOpen, LayoutDashboard, Settings, Sparkles, Users } from 'lucide-react'
 
 interface Tab {
   label: string
@@ -13,34 +13,24 @@ interface Tab {
   badge?: string
 }
 
-const statusLabels: Record<string, string> = {
-  DRAFT: 'Criacao',
-  REGISTRATION_OPEN: 'Inscricoes',
-  REGISTRATION_CLOSED: 'Inscricoes',
-  ORGANIZING: 'Organizacao',
-  ONGOING: 'Em andamento',
-  ACTIVE: 'Em andamento',
-  FINISHED: 'Encerrado',
-}
-
 export function ChampionshipTabs({ id, status }: { id: string; status: string }) {
   const pathname = usePathname()
 
   const tabs: Tab[] = [
     {
-      label: 'Visao Geral',
+      label: 'Visão Geral',
       href: `/admin/championships/${id}`,
       icon: LayoutDashboard,
       alwaysActive: true,
     },
     {
-      label: 'Inscricoes',
+      label: 'Inscrições',
       href: `/admin/championships/${id}/registrations`,
       icon: Users,
       alwaysActive: true,
     },
     {
-      label: 'Organizacao',
+      label: 'Organização',
       href: `/admin/championships/${id}/organization`,
       icon: Sparkles,
       alwaysActive: true,
@@ -53,36 +43,40 @@ export function ChampionshipTabs({ id, status }: { id: string; status: string })
       requiresStatus: ['ORGANIZING', 'ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
-      label: 'Classificacao',
+      label: 'Classificação',
       href: `/admin/championships/${id}/standings`,
       icon: BarChart2,
       requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
     },
     {
-      label: 'Rankings',
-      href: `/admin/championships/${id}/cestinhas`,
-      icon: BarChart2,
-      requiresStatus: ['ONGOING', 'ACTIVE', 'FINISHED'],
-    },
-    {
-      label: 'Arbitragem',
+      label: 'Árbitros',
       href: `/admin/championships/${id}/arbitragem`,
       icon: FileText,
       alwaysActive: true,
     },
     {
-      label: 'Relatorios',
-      href: `/admin/championships/${id}/relatorios`,
-      icon: FileText,
+      label: 'Documentos',
+      href: `/admin/championships/${id}/documents`,
+      icon: FolderOpen,
       alwaysActive: true,
     },
     {
-      label: 'Configuracoes',
+      label: 'Configurações',
       href: `/admin/championships/${id}/settings`,
       icon: Settings,
       alwaysActive: true,
     },
   ]
+
+  const statusLabels: Record<string, string> = {
+    DRAFT: 'Criacao',
+    REGISTRATION_OPEN: 'Inscricoes',
+    REGISTRATION_CLOSED: 'Inscricoes',
+    ORGANIZING: 'Organizacao',
+    ONGOING: 'Em andamento',
+    ACTIVE: 'Em andamento',
+    FINISHED: 'Encerrado',
+  }
 
   return (
     <div className="flex items-center gap-0 shrink-0 overflow-x-auto border-b border-[var(--border)] bg-white no-scrollbar">

@@ -131,9 +131,54 @@ export default async function ChampionshipDetailsPage({
       'REGISTRATION_OPEN': 2,
       'REGISTRATION_CLOSED': 3,
       'ONGOING': 4,
-      'FINISHED': 5
+      'FINISHED': 5,
+      'ARCHIVED': 6,
     }
     const currentStep = statusMap[championship.status as keyof typeof statusMap] || 1
+
+    const nextStepConfig: Record<string, { title: string; description: string; ctaLabel?: string; ctaHref?: string; variant: 'warning' | 'green' | 'blue' | 'gray' }> = {
+      DRAFT: {
+        title: 'Configure e abra as inscrições',
+        description: 'Defina as categorias, datas e prazo de inscrição nas configurações do campeonato.',
+        ctaLabel: 'Configurações',
+        ctaHref: `/admin/championships/${id}/settings`,
+        variant: 'warning',
+      },
+      REGISTRATION_OPEN: {
+        title: 'Aguardando inscrições das equipes',
+        description: `${confirmedTeams} equipe(s) confirmada(s)${pendingRegistrations > 0 ? ` · ${pendingRegistrations} pendente(s)` : ''}. Gerencie as inscrições conforme chegam.`,
+        ctaLabel: 'Gerenciar Inscrições',
+        ctaHref: `/admin/championships/${id}/registrations`,
+        variant: 'blue',
+      },
+      REGISTRATION_CLOSED: {
+        title: 'Organize os jogos com IA',
+        description: `${confirmedTeams} equipes confirmadas em ${categoryCount} categoria(s). Gere o calendário completo agora.`,
+        ctaLabel: 'Organizar com IA',
+        ctaHref: `/admin/championships/${id}/organization`,
+        variant: 'green',
+      },
+      ONGOING: {
+        title: 'Registre os resultados dos jogos',
+        description: `${completedGames} de ${totalGames} jogos realizados. ${totalGames - completedGames} jogo(s) pendente(s).`,
+        ctaLabel: 'Ir para Jogos',
+        ctaHref: `/admin/championships/${id}/jogos`,
+        variant: 'blue',
+      },
+      FINISHED: {
+        title: 'Revise o encerramento',
+        description: 'Todos os jogos concluídos. Revise a classificação final e publique/arquive o campeonato.',
+        ctaLabel: 'Ver Classificação',
+        ctaHref: `/admin/championships/${id}/standings`,
+        variant: 'green',
+      },
+      ARCHIVED: {
+        title: 'Campeonato publicado e arquivado',
+        description: 'Este campeonato foi concluído e arquivado com sucesso.',
+        variant: 'gray',
+      },
+    }
+    const nextStep = nextStepConfig[championship.status] ?? nextStepConfig.DRAFT
 
     return (
       <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 pb-10">
@@ -504,29 +549,73 @@ export default async function ChampionshipDetailsPage({
 
             {/* ── STEP 5: ENCERRAMENTO ── */}
             <div className="flex gap-4">
+              <div className="flex flex-col items-center">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black shadow-sm ${
+                  currentStep > 5 ? 'bg-green-50 border border-green-200' :
+                  currentStep === 5 ? 'bg-[var(--amarelo)] text-[var(--black)]' :
+                  'bg-white border border-[var(--border)]'
+                }`}>
+                  {currentStep > 5
+                    ? <CheckCircle2 className="w-4 h-4 text-green-600" />
+                    : <span className={currentStep === 5 ? 'text-[var(--black)]' : 'text-[var(--gray)]'}>5</span>
+                  }
+                </div>
+                <div className="w-px flex-1 bg-[var(--border)] my-2 min-h-[24px]" />
+              </div>
+              <div className="pb-5 flex-1 min-w-0 font-sans">
+                <div className="flex items-center gap-2 mb-1">
+                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep >= 5 ? 'text-[var(--black)]' : 'text-[var(--gray)]'}`}>
+                    Encerramento
+                  </p>
+                  {currentStep === 5 && (
+                    <span className="text-[8px] font-black uppercase text-[var(--black)] bg-[var(--amarelo)] px-1.5 py-0.5 rounded-full">Ativo</span>
+                  )}
+                  {currentStep > 5 && (
+                    <span className="text-[8px] font-black uppercase text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">Concluído</span>
+                  )}
+                </div>
+                <p className="text-[10px] text-[var(--gray)]">
+                  {currentStep >= 5
+                    ? 'Campeonato encerrado. Revise classificação final.'
+                    : `Disponível quando todos os ${totalGames} jogos forem realizados`
+                  }
+                </p>
+                {currentStep === 5 && (
+                  <Link
+                    href={`/admin/championships/${id}/standings`}
+                    className="mt-2 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-[var(--black)] bg-white border border-[var(--border)] px-3 py-1.5 rounded-lg hover:bg-[var(--amarelo)] hover:border-[var(--amarelo)] transition-all shadow-sm"
+                  >
+                    Ver Classificação →
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            {/* ── STEP 6: PUBLICAÇÃO ── */}
+            <div className="flex gap-4">
               <div className="flex items-start">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 text-sm font-black shadow-sm ${
-                  currentStep === 5 ? 'bg-green-50 border border-green-200' : 'bg-white border border-[var(--border)]'
+                  currentStep === 6 ? 'bg-green-50 border border-green-200' : 'bg-white border border-[var(--border)]'
                 }`}>
-                  {currentStep === 5
+                  {currentStep === 6
                     ? <CheckCircle2 className="w-4 h-4 text-green-600" />
-                    : <span className="text-[var(--gray)]">5</span>
+                    : <span className="text-[var(--gray)]">6</span>
                   }
                 </div>
               </div>
               <div className="flex-1 min-w-0 pl-4 font-sans">
                 <div className="flex items-center gap-2 mb-1">
-                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep === 5 ? 'text-green-600' : 'text-[var(--gray)]'}`}>
-                    Encerramento
+                  <p className={`text-xs font-black uppercase tracking-tight ${currentStep === 6 ? 'text-green-600' : 'text-[var(--gray)]'}`}>
+                    Publicação
                   </p>
-                  {currentStep === 5 && (
-                    <span className="text-[8px] font-black uppercase text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">Finalizado</span>
+                  {currentStep === 6 && (
+                    <span className="text-[8px] font-black uppercase text-green-600 bg-green-100 px-1.5 py-0.5 rounded-full">Publicado</span>
                   )}
                 </div>
                 <p className="text-[10px] text-[var(--gray)]">
-                  {currentStep === 5
-                    ? 'Campeonato encerrado com sucesso'
-                    : `Disponível quando todos os ${totalGames} jogos forem realizados`
+                  {currentStep === 6
+                    ? 'Campeonato publicado e arquivado com sucesso'
+                    : 'Disponível após o encerramento do campeonato'
                   }
                 </p>
               </div>
@@ -537,6 +626,45 @@ export default async function ChampionshipDetailsPage({
 
         {/* ─── COLUNA DIREITA — Stats + Jogos + Resultados ─── */}
         <div className="space-y-6">
+
+          {/* ── Próximo passo recomendado ── */}
+          {(() => {
+            const variantStyles: Record<string, string> = {
+              warning: 'border-orange-200 bg-orange-50',
+              green: 'border-green-200 bg-green-50',
+              blue: 'border-blue-200 bg-blue-50',
+              gray: 'border-[var(--border)] bg-[var(--gray-l)]',
+            }
+            const titleStyles: Record<string, string> = {
+              warning: 'text-orange-700',
+              green: 'text-green-700',
+              blue: 'text-blue-700',
+              gray: 'text-[var(--gray)]',
+            }
+            const ctaStyles: Record<string, string> = {
+              warning: 'bg-orange-600 text-white hover:bg-orange-700',
+              green: 'bg-[var(--verde)] text-white hover:bg-[var(--verde)]/90',
+              blue: 'bg-blue-600 text-white hover:bg-blue-700',
+              gray: 'bg-white border border-[var(--border)] text-[var(--black)] hover:bg-[var(--gray-l)]',
+            }
+            return (
+              <div className={`rounded-2xl border p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${variantStyles[nextStep.variant]}`}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)] mb-1">Próximo passo recomendado</p>
+                  <p className={`text-sm font-black ${titleStyles[nextStep.variant]}`}>{nextStep.title}</p>
+                  <p className="text-[11px] text-[var(--gray)] mt-1">{nextStep.description}</p>
+                </div>
+                {nextStep.ctaLabel && nextStep.ctaHref && (
+                  <Link
+                    href={nextStep.ctaHref}
+                    className={`flex-shrink-0 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-[10px] font-black uppercase tracking-widest transition-all ${ctaStyles[nextStep.variant]}`}
+                  >
+                    {nextStep.ctaLabel} →
+                  </Link>
+                )}
+              </div>
+            )
+          })()}
 
           {/* Stat Cards */}
           <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
