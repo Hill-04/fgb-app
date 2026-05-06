@@ -376,13 +376,21 @@ export function SumulaEletronicoView({ data }: { data: SumulaData }) {
           </div>
         </div>
 
-        <div className="mt-4 flex justify-center">
+        <div className="mt-4 flex justify-center gap-3 flex-wrap">
           <button
             onClick={exportPdf}
             className="rounded-xl bg-[#f5c849] px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-black"
           >
             Baixar PDF Oficial
           </button>
+          <a
+            href={`/sumula/${game.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-xl border border-white/20 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-white/70 hover:text-white hover:border-white/40 transition-colors"
+          >
+            Súmula Pública ↗
+          </a>
         </div>
       </div>
 

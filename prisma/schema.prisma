@@ -492,12 +492,13 @@ model Athlete {
   photoUrl     String?
   position     String?
   jerseyNumber Int?
-  status       String    @default("ACTIVE")
-  teamId       String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  team         Team?     @relation(fields: [teamId], references: [id])
-  cards        AthleteIdCard[]
+  status           String    @default("ACTIVE")
+  federationStatus String    @default("ACTIVE")
+  teamId           String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  team             Team?     @relation(fields: [teamId], references: [id])
+  cards            AthleteIdCard[]
   bidEntries   AthleteBidEntry[]
   rosterEntries GameRosterPlayer[]
   primaryEvents GameEvent[] @relation("GameEventAthlete")
@@ -548,6 +549,7 @@ model Referee {
   phone         String?
   email         String?
   city          String?
+  state         String?
   status        String   @default("ACTIVE")
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
