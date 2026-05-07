@@ -1,11 +1,13 @@
-import { AdminLiveTablePage } from '@/modules/live-game/components/admin-live-table-page'
+import { notFound, redirect } from 'next/navigation'
+import { buildAdminGamePath, findChampionshipIdByGameId } from '@/lib/admin-game-routing'
 
-export default async function AdminJogoLivePage({
+export default async function AdminJogoLiveCompatibilityPage({
   params,
 }: {
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  return <AdminLiveTablePage gameId={id} />
+  const championshipId = await findChampionshipIdByGameId(id)
+  if (!championshipId) notFound()
+  redirect(buildAdminGamePath(id, 'live', championshipId))
 }
-
