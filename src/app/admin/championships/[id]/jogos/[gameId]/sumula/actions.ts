@@ -3,11 +3,11 @@ import { revalidatePath } from 'next/cache'
 import { prisma } from '@/lib/db'
 
 const OFFICIAL_DEFS = [
-  { key: 'mainReferee',   role: 'Árbitro Principal', type: 'MAIN_REFEREE' },
-  { key: 'auxReferee',    role: 'Árbitro Auxiliar',  type: 'AUX_REFEREE' },
-  { key: 'scorer',        role: 'Anotador',           type: 'SCORER' },
-  { key: 'timekeeper',    role: 'Cronometrista',      type: 'TIMEKEEPER' },
-  { key: 'commissioner',  role: 'Comissário',         type: 'COMMISSIONER' },
+  { key: 'mainReferee',  role: 'Árbitro Principal', type: 'MAIN_REFEREE' },
+  { key: 'auxReferee',   role: 'Árbitro Auxiliar',  type: 'AUX_REFEREE' },
+  { key: 'scorer',       role: 'Anotador',           type: 'SCORER' },
+  { key: 'timekeeper',   role: 'Cronometrista',      type: 'TIMEKEEPER' },
+  { key: 'commissioner', role: 'Comissário',         type: 'COMMISSIONER' },
 ]
 
 export async function saveSumulaData(formData: FormData) {
@@ -67,6 +67,80 @@ export async function saveSumulaData(formData: FormData) {
       await tx.gameOfficial.createMany({ data: toCreate })
     }
   })
+
+  revalidatePath(`/sumula/${gameId}`)
+}
+
+type StatInput = {
+  athleteId: string
+  teamId: string
+  twoPtMade: number
+  twoPtAttempted: number
+  threePtMade: number
+  threePtAttempted: number
+  freeThrowsMade: number
+  freeThrowsAttempted: number
+  reboundsOffensive: number
+  reboundsDefensive: number
+  assists: number
+  turnovers: number
+  fouls: number
+  steals: number
+  blocks: number
+  minutesPlayed: number
+}
+
+export async function savePlayerStats(gameId: string, stats: StatInput[]) {
+  if (!gameId || !stats.length) return
+
+  await prisma.$transaction(
+    stats.map(s => {
+      const pts =
+        s.twoPtMade * 2 + s.threePtMade * 3 + s.freeThrowsMade
+      return prisma.gamePlayerStatLine.upsert({
+        where: { gameId_athleteId: { gameId, athleteId: s.athleteId } },
+        create: {
+          gameId,
+          athleteId: s.athleteId,
+          teamId: s.teamId,
+          points: pts,
+          twoPtMade: s.twoPtMade,
+          twoPtAttempted: s.twoPtAttempted,
+          threePtMade: s.threePtMade,
+          threePtAttempted: s.threePtAttempted,
+          freeThrowsMade: s.freeThrowsMade,
+          freeThrowsAttempted: s.freeThrowsAttempted,
+          reboundsOffensive: s.reboundsOffensive,
+          reboundsDefensive: s.reboundsDefensive,
+          reboundsTotal: s.reboundsOffensive + s.reboundsDefensive,
+          assists: s.assists,
+          turnovers: s.turnovers,
+          fouls: s.fouls,
+          steals: s.steals,
+          blocks: s.blocks,
+          minutesPlayed: s.minutesPlayed,
+        },
+        update: {
+          points: pts,
+          twoPtMade: s.twoPtMade,
+          twoPtAttempted: s.twoPtAttempted,
+          threePtMade: s.threePtMade,
+          threePtAttempted: s.threePtAttempted,
+          freeThrowsMade: s.freeThrowsMade,
+          freeThrowsAttempted: s.freeThrowsAttempted,
+          reboundsOffensive: s.reboundsOffensive,
+          reboundsDefensive: s.reboundsDefensive,
+          reboundsTotal: s.reboundsOffensive + s.reboundsDefensive,
+          assists: s.assists,
+          turnovers: s.turnovers,
+          fouls: s.fouls,
+          steals: s.steals,
+          blocks: s.blocks,
+          minutesPlayed: s.minutesPlayed,
+        },
+      })
+    })
+  )
 
   revalidatePath(`/sumula/${gameId}`)
 }
