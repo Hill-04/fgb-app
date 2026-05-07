@@ -70,19 +70,37 @@ export default async function AdminArbitragemPage() {
     const [referees, games, assignments] = await Promise.all([
       prisma.referee.findMany({ orderBy: { name: 'asc' } }),
       prisma.game.findMany({
-        where: { dateTime: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
+        where: {
+          dateTime: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+            lte: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000),
+          },
+        },
         orderBy: { dateTime: 'asc' },
-        take: 30,
-        include: { homeTeam: true, awayTeam: true, category: true }
+        take: 50,
+        select: {
+          id: true,
+          dateTime: true,
+          venue: true,
+          location: true,
+          homeTeam: { select: { id: true, name: true } },
+          awayTeam: { select: { id: true, name: true } },
+        },
       }),
       prisma.refereeAssignment.findMany({
         orderBy: { createdAt: 'desc' },
         include: {
-          referee: true,
-          game: { include: { homeTeam: true, awayTeam: true } }
+          referee: { select: { id: true, name: true, city: true, state: true } },
+          game: {
+            select: {
+              id: true,
+              homeTeam: { select: { id: true, name: true } },
+              awayTeam: { select: { id: true, name: true } },
+            },
+          },
         },
-        take: 40
-      })
+        take: 40,
+      }),
     ])
 
     // Group assignments by game
@@ -242,9 +260,9 @@ export default async function AdminArbitragemPage() {
                               {ROLE_LABEL[a.role] ?? a.role}
                             </span>
                             <span className="text-sm font-bold text-[var(--black)]">{a.referee.name}</span>
-                            {(a.referee.city || (a.referee as any).state) && (
+                            {(a.referee.city || a.referee.state) && (
                               <span className="text-[10px] text-[var(--gray)]">
-                                <MapPin className="w-2.5 h-2.5 inline" /> {[a.referee.city, (a.referee as any).state].filter(Boolean).join('/')}
+                                <MapPin className="w-2.5 h-2.5 inline" /> {[a.referee.city, a.referee.state].filter(Boolean).join('/')}
                               </span>
                             )}
                           </div>
@@ -291,12 +309,14 @@ export default async function AdminArbitragemPage() {
       </div>
     )
   } catch (error) {
-    console.error('[ADMIN ARBITRAGEM ERROR]', error)
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error('[ADMIN ARBITRAGEM ERROR]', msg)
     return (
-      <div className="fgb-card p-10 text-center">
+      <div className="fgb-card p-10 text-center space-y-2">
         <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
           Erro ao carregar arbitragem.
         </p>
+        <p className="text-xs text-[var(--gray)] font-mono break-all">{msg}</p>
       </div>
     )
   }
