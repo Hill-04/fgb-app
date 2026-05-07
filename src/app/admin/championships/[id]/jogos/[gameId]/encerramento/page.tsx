@@ -1,10 +1,10 @@
-import { LiveGameAdminView } from '@/modules/live-game/components/live-game-admin-view'
+import { redirect } from 'next/navigation'
 
-export default async function ChampionshipGameReviewPage({
+export default async function ChampionshipGameEncerramentoPage({
   params,
 }: {
   params: Promise<{ id: string; gameId: string }>
 }) {
   const { id, gameId } = await params
-  return <LiveGameAdminView gameId={gameId} mode="review" championshipId={id} />
+  redirect(`/admin/championships/${id}/jogos/${gameId}/sumula`)
 }

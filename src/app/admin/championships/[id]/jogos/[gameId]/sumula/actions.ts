@@ -71,6 +71,64 @@ export async function saveSumulaData(formData: FormData) {
   revalidatePath(`/sumula/${gameId}`)
 }
 
+export async function finalizeGame(gameId: string) {
+  if (!gameId) return
+
+  const game = await prisma.game.findUnique({
+    where: { id: gameId },
+    select: { categoryId: true, championshipId: true },
+  })
+  if (!game) return
+
+  await prisma.game.update({
+    where: { id: gameId },
+    data: { status: 'FINISHED' },
+  })
+
+  await recalcCategoryStandings(game.categoryId)
+
+  revalidatePath(`/sumula/${gameId}`)
+  revalidatePath(`/admin/championships`)
+  revalidatePath(`/admin/championships/${game.championshipId}/jogos`)
+  revalidatePath(`/admin/championships/${game.championshipId}/jogos/${gameId}`)
+}
+
+async function recalcCategoryStandings(categoryId: string) {
+  const games = await prisma.game.findMany({
+    where: { categoryId, status: 'FINISHED' },
+    select: { homeTeamId: true, awayTeamId: true, homeScore: true, awayScore: true },
+  })
+  if (games.length === 0) return
+
+  const map: Record<string, { played: number; wins: number; losses: number; ptsFor: number; ptsAg: number }> = {}
+  const ensure = (id: string) => {
+    if (!map[id]) map[id] = { played: 0, wins: 0, losses: 0, ptsFor: 0, ptsAg: 0 }
+  }
+
+  for (const g of games) {
+    if (g.homeScore === null || g.awayScore === null) continue
+    ensure(g.homeTeamId); ensure(g.awayTeamId)
+    map[g.homeTeamId].played++; map[g.awayTeamId].played++
+    map[g.homeTeamId].ptsFor += g.homeScore; map[g.homeTeamId].ptsAg += g.awayScore
+    map[g.awayTeamId].ptsFor += g.awayScore; map[g.awayTeamId].ptsAg += g.homeScore
+    if (g.homeScore > g.awayScore) {
+      map[g.homeTeamId].wins++; map[g.awayTeamId].losses++
+    } else {
+      map[g.awayTeamId].wins++; map[g.homeTeamId].losses++
+    }
+  }
+
+  for (const [teamId, s] of Object.entries(map)) {
+    const pts  = s.wins * 2 + s.losses * 1
+    const diff = s.ptsFor - s.ptsAg
+    await prisma.standing.upsert({
+      where: { teamId_categoryId: { teamId, categoryId } },
+      create: { teamId, categoryId, played: s.played, wins: s.wins, losses: s.losses, draws: 0, points: pts, pointsFor: s.ptsFor, pointsAg: s.ptsAg, pointsAgainst: s.ptsAg, diff },
+      update: { played: s.played, wins: s.wins, losses: s.losses, draws: 0, points: pts, pointsFor: s.ptsFor, pointsAg: s.ptsAg, pointsAgainst: s.ptsAg, diff },
+    })
+  }
+}
+
 type StatInput = {
   athleteId: string
   teamId: string

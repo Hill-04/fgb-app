@@ -1,9 +1,10 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle2, ExternalLink, Save, BarChart2, ClipboardList } from 'lucide-react'
-import { saveSumulaData, savePlayerStats } from './actions'
+import { CheckCircle2, ExternalLink, Save, BarChart2, ClipboardList, Loader2, FlagTriangleRight } from 'lucide-react'
+import { saveSumulaData, savePlayerStats, finalizeGame } from './actions'
 
 // ──────────────────────────────────────────────────────────────
 // Types
@@ -62,6 +63,8 @@ type RosterPlayer = {
 
 export type MesaGameData = {
   id: string
+  championshipId: string
+  status: string
   homeTeamId: string
   awayTeamId: string
   homeTeam: { name: string }
@@ -253,12 +256,17 @@ function StatsTable({
 // ──────────────────────────────────────────────────────────────
 
 export default function MesaClient({ game }: { game: MesaGameData }) {
+  const router = useRouter()
   const formRef = useRef<HTMLFormElement>(null)
   const [pendingInfo, startInfoTransition] = useTransition()
   const [pendingStats, startStatsTransition] = useTransition()
+  const [pendingFinalize, startFinalizeTransition] = useTransition()
   const [savedInfo, setSavedInfo] = useState(false)
   const [savedStats, setSavedStats] = useState(false)
+  const [isFinished, setIsFinished] = useState(game.status === 'FINISHED')
   const [tab, setTab] = useState<'info' | 'stats'>('info')
+
+  const hubUrl = `/admin/championships/${game.championshipId}/jogos/${game.id}`
 
   // ── Game info state ──────────────────────────────────────────
   const initPeriods = (): Record<string, PeriodRow> => {
@@ -321,6 +329,15 @@ export default function MesaClient({ game }: { game: MesaGameData }) {
       await savePlayerStats(game.id, all)
       setSavedStats(true)
       setTimeout(() => setSavedStats(false), 4000)
+    })
+  }
+
+  function handleFinalize() {
+    if (!confirm('Encerrar o jogo? O status será marcado como Finalizado e a classificação será atualizada.')) return
+    startFinalizeTransition(async () => {
+      await finalizeGame(game.id)
+      setIsFinished(true)
+      router.push(hubUrl)
     })
   }
 
@@ -548,6 +565,15 @@ export default function MesaClient({ game }: { game: MesaGameData }) {
         </form>
       )}
 
+      {/* ── Status banner if already finished ── */}
+      {isFinished && (
+        <div className="rounded-[20px] bg-[var(--verde)]/8 border border-[var(--verde)]/30 px-5 py-3 flex flex-wrap items-center gap-3">
+          <CheckCircle2 className="h-4 w-4 text-[var(--verde)] shrink-0" />
+          <span className="text-sm font-black text-[var(--verde)]">Jogo Finalizado</span>
+          <span className="text-[11px] text-[var(--gray)]">Você ainda pode editar os dados e salvar novamente.</span>
+        </div>
+      )}
+
       {/* ── TAB: ESTATÍSTICAS ── */}
       {tab === 'stats' && (
         <div className="space-y-6">
@@ -609,6 +635,54 @@ export default function MesaClient({ game }: { game: MesaGameData }) {
               {pendingStats ? 'Salvando...' : 'Salvar Estatísticas'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* ── Encerrar Jogo ── */}
+      {isFinished ? (
+        <div className="rounded-[24px] border border-[var(--verde)]/40 bg-[var(--verde)]/6 p-5 flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 text-[var(--verde)] shrink-0" />
+            <div>
+              <p className="text-sm font-black text-[var(--verde)]">Jogo Encerrado</p>
+              <p className="text-[11px] text-[var(--gray)] mt-0.5">Súmula disponível para compartilhamento.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <Link
+              href={hubUrl}
+              className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] px-4 text-[10px] font-black uppercase text-[var(--gray)] hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors"
+            >
+              ← Voltar
+            </Link>
+            <Link
+              href={`/sumula/${game.id}`}
+              target="_blank"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--verde)] px-4 text-[10px] font-black uppercase text-white hover:opacity-90 transition-opacity"
+            >
+              <ExternalLink className="h-3.5 w-3.5" /> Ver Súmula
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-black text-[var(--black)]">Encerrar Jogo</p>
+            <p className="text-[11px] text-[var(--gray)] mt-0.5">
+              Após confirmar todos os dados e estatísticas, finalize o jogo para atualizar a classificação.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleFinalize}
+            disabled={pendingFinalize}
+            className="inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--black)] px-5 text-[10px] font-black uppercase text-white hover:opacity-80 transition-opacity disabled:opacity-50"
+          >
+            {pendingFinalize
+              ? <><Loader2 className="h-4 w-4 animate-spin" /> Encerrando...</>
+              : <><FlagTriangleRight className="h-4 w-4" /> Encerrar Jogo</>
+            }
+          </button>
         </div>
       )}
     </div>

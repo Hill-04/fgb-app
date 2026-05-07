@@ -9,7 +9,7 @@ export default async function SumulaAdminPage({
 }: {
   params: Promise<{ id: string; gameId: string }>
 }) {
-  const { gameId } = await params
+  const { id: championshipId, gameId } = await params
 
   const game = await prisma.game.findUnique({
     where: { id: gameId },
@@ -57,6 +57,8 @@ export default async function SumulaAdminPage({
     <MesaClient
       game={{
         id: game.id,
+        championshipId,
+        status: game.status,
         homeTeamId: game.homeTeamId,
         awayTeamId: game.awayTeamId,
         homeTeam: game.homeTeam,
