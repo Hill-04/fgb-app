@@ -1,13 +1,13 @@
 import { randomUUID } from 'crypto'
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
-import { CheckCircle2, ClipboardList, Shield, User as UserIcon, Users } from 'lucide-react'
+import { CheckCircle2, ClipboardList, Users } from 'lucide-react'
 
 import { AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import { prisma } from '@/lib/db'
 import { isPendingAthleteRequestStatus, sortAthleteRequestsByStatus } from '@/lib/athlete-registration-presentation'
 import { requireAdminSession } from '@/lib/athlete-registration-server'
-import { toggleFederationStatus } from './actions'
+import { AthleteListClient } from './AthleteListClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -85,7 +85,7 @@ export default async function AdminAthletesPage() {
             select: { requestedCategoryLabel: true },
           },
         },
-        take: 50,
+        take: 500,
       }),
       prisma.team.findMany({ orderBy: { name: 'asc' } }),
       prisma.athleteRegistrationRequest.findMany({
@@ -229,8 +229,8 @@ export default async function AdminAthletesPage() {
             </div>
           </div>
 
-          <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-            <div className="mb-5 flex items-center gap-3">
+          <div>
+            <div className="mb-3 flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--verde)]/10 text-[var(--verde)]">
                 <Users className="h-5 w-5" />
               </div>
@@ -239,69 +239,7 @@ export default async function AdminAthletesPage() {
                 <h2 className="fgb-display text-xl leading-none text-[var(--black)]">Atletas registrados</h2>
               </div>
             </div>
-            <div className="space-y-3">
-              {athletes.length === 0 ? (
-                <p className="rounded-2xl border border-dashed border-[var(--border)] px-4 py-5 text-sm text-[var(--gray)]">
-                  Nenhum atleta federado encontrado.
-                </p>
-              ) : (
-                athletes.map((athlete) => {
-                  const isFedActive = athlete.federationStatus === 'ACTIVE'
-                  return (
-                    <div key={athlete.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[var(--border)] bg-white">
-                          {athlete.photoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={athlete.photoUrl} alt={athlete.name} className="h-full w-full rounded-xl object-cover" />
-                          ) : (
-                            <UserIcon className="h-5 w-5 text-[var(--gray)]" />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-black uppercase text-[var(--black)]">{athlete.name}</p>
-                          <p className="mt-0.5 text-[10px] text-[var(--gray)]">
-                            {athlete.team?.name || 'Sem equipe'} · {athlete.registrationRequests[0]?.requestedCategoryLabel || 'Sem categoria'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-2">
-                        <AthleteFederationStatusBadge status={athlete.status} />
-                        {athlete.cards[0] ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-[var(--verde)]/20 bg-[var(--verde)]/10 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
-                            <CheckCircle2 className="h-2.5 w-2.5" />
-                            Carteira
-                          </span>
-                        ) : (
-                          <form action={issueCard}>
-                            <input type="hidden" name="athleteId" value={athlete.id} />
-                            <button type="submit" className="inline-flex h-8 items-center justify-center rounded-xl border border-[var(--border)] bg-white px-3 text-[9px] font-black uppercase tracking-widest text-[var(--black)]">
-                              Gerar carteira
-                            </button>
-                          </form>
-                        )}
-                        <form action={toggleFederationStatus}>
-                          <input type="hidden" name="id" value={athlete.id} />
-                          <input type="hidden" name="current" value={athlete.federationStatus} />
-                          <button type="submit"
-                            className="h-8 px-3 rounded-xl text-[9px] font-black uppercase transition-colors border"
-                            style={isFedActive
-                              ? { borderColor: 'rgba(180,0,0,0.3)', color: '#b44', background: 'rgba(180,0,0,0.06)' }
-                              : { borderColor: 'rgba(27,115,64,0.35)', color: 'var(--verde)', background: 'rgba(27,115,64,0.08)' }
-                            }>
-                            {isFedActive ? 'Liberar' : 'Reativar'}
-                          </button>
-                        </form>
-                        <Link href={`/admin/athletes/${athlete.id}`}
-                          className="inline-flex h-8 items-center rounded-xl border border-[var(--border)] bg-white px-3 text-[9px] font-black uppercase tracking-widest text-[var(--gray)] hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors">
-                          Perfil
-                        </Link>
-                      </div>
-                    </div>
-                  )
-                })
-              )}
-            </div>
+            <AthleteListClient athletes={athletes} />
           </div>
         </div>
       </div>
