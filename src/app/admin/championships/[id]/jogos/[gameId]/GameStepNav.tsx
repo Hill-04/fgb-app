@@ -4,12 +4,8 @@ import { usePathname } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 
 const STEPS = [
-  { segment: 'roster',       label: 'Roster',        num: '01' },
-  { segment: 'stats',        label: 'Stats',         num: '02' },
-  { segment: 'live',         label: 'Live',          num: '03' },
-  { segment: 'encerramento', label: 'Encerramento',  num: '04' },
-  { segment: 'sumula',       label: 'Súmula',        num: '05' },
-  { segment: 'auditoria',    label: 'Auditoria',     num: '06' },
+  { segment: 'roster', label: 'Escalação', num: '01' },
+  { segment: 'sumula', label: 'Súmula',    num: '02' },
 ]
 
 interface Props {
@@ -21,7 +17,7 @@ interface Props {
 
 export function GameStepNav({ championshipId, gameId, homeTeamName, awayTeamName }: Props) {
   const pathname = usePathname()
-  const hubPath = `/admin/championships/${championshipId}/jogos/${gameId}`
+  const hubPath  = `/admin/championships/${championshipId}/jogos/${gameId}`
 
   if (pathname === hubPath) return null
 
@@ -33,7 +29,7 @@ export function GameStepNav({ championshipId, gameId, homeTeamName, awayTeamName
         href={hubPath}
         className="inline-flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-[var(--gray)] hover:text-[var(--black)] transition-colors shrink-0"
       >
-        <ArrowLeft className="h-3 w-3" /> Hub
+        <ArrowLeft className="h-3 w-3" /> Jogo
       </Link>
 
       <span className="hidden sm:inline text-[10px] text-[var(--gray)] shrink-0">
@@ -42,16 +38,17 @@ export function GameStepNav({ championshipId, gameId, homeTeamName, awayTeamName
 
       <div className="flex flex-wrap gap-1.5 ml-auto">
         {STEPS.map(step => {
-          const href = `${hubPath}/${step.segment}`
+          const href     = `${hubPath}/${step.segment}`
           const isActive = step.segment === activeSegment
           return (
             <Link
               key={step.segment}
               href={href}
               className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest transition-colors"
-              style={isActive
-                ? { background: 'var(--verde)', color: 'white' }
-                : { background: 'var(--gray-l)', color: 'var(--gray)', border: '1px solid var(--border)' }
+              style={
+                isActive
+                  ? { background: 'var(--verde)', color: 'white' }
+                  : { background: 'var(--gray-l)', color: 'var(--gray)', border: '1px solid var(--border)' }
               }
             >
               <span style={{ opacity: isActive ? 0.8 : 0.5 }}>{step.num}</span>&nbsp;{step.label}

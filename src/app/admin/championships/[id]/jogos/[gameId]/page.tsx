@@ -1,69 +1,23 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import {
-  Activity,
-  ArrowLeft,
-  BarChart3,
-  ClipboardList,
-  FileText,
-  Gavel,
-  Globe,
-  Info,
-  ShieldCheck,
-} from 'lucide-react'
+import { ArrowLeft, ClipboardList, FileText, ExternalLink } from 'lucide-react'
 import { prisma } from '@/lib/db'
-import { buildChampionshipGamePath } from '@/lib/admin-game-routing'
 
-const OFFICIAL_FLOW = [
-  {
-    step: '01',
-    segment: 'roster',
-    title: 'Roster',
-    description: 'Pre-jogo, atletas elegiveis, oficiais e travamento de roster.',
-    status: 'Base da partida',
-    icon: ClipboardList,
-  },
-  {
-    step: '02',
-    segment: 'stats',
-    title: 'Stats',
-    description: 'Leitura consolidada por atleta e por equipe durante e apos a operacao.',
-    status: 'Consolidado automatico',
-    icon: BarChart3,
-  },
-  {
-    step: '03',
-    segment: 'live',
-    title: 'Live',
-    description: 'Mesa oficial com eventos, placar, play-by-play e sincronizacao do jogo.',
-    status: 'Operacao em quadra',
-    icon: Activity,
-  },
-  {
-    step: '04',
-    segment: 'encerramento',
-    title: 'Encerramento',
-    description: 'Checklist final da partida e fechamento oficial do jogo.',
-    status: 'Validacao final',
-    icon: ShieldCheck,
-  },
-  {
-    step: '05',
-    segment: 'sumula',
-    title: 'Sumula',
-    description: 'Documento oficial consolidado com box score e saida final da partida.',
-    status: 'Documento oficial',
-    icon: FileText,
-  },
-  {
-    step: '06',
-    segment: 'auditoria',
-    title: 'Auditoria',
-    description: 'Historico tecnico, eventos e trilha de operacao da mesa.',
-    status: 'Rastreabilidade',
-    icon: Gavel,
-  },
-] as const
+const STATUS_LABEL: Record<string, string> = {
+  SCHEDULED: 'Agendado',
+  LIVE:      'Ao vivo',
+  FINISHED:  'Finalizado',
+  CANCELLED: 'Cancelado',
+  POSTPONED: 'Adiado',
+}
+
+const STATUS_COLOR: Record<string, string> = {
+  SCHEDULED: 'bg-gray-100 text-gray-600',
+  LIVE:      'bg-green-100 text-green-700',
+  FINISHED:  'bg-blue-100 text-blue-700',
+  CANCELLED: 'bg-red-100 text-red-600',
+  POSTPONED: 'bg-yellow-100 text-yellow-700',
+}
 
 export default async function ChampionshipGameHubPage({
   params,
@@ -72,132 +26,122 @@ export default async function ChampionshipGameHubPage({
 }) {
   const { id: championshipId, gameId } = await params
 
-  const [game, eventsCount] = await Promise.all([
-    prisma.game.findFirst({
-      where: { id: gameId, championshipId },
-      include: {
-        championship: { select: { name: true } },
-        category: { select: { name: true } },
-        homeTeam: { select: { name: true } },
-        awayTeam: { select: { name: true } },
-      },
-    }),
-    prisma.gameEvent.count({ where: { gameId } }),
-  ])
+  const game = await prisma.game.findFirst({
+    where: { id: gameId, championshipId },
+    include: {
+      championship: { select: { name: true, year: true } },
+      category:     { select: { name: true } },
+      homeTeam:     { select: { name: true } },
+      awayTeam:     { select: { name: true } },
+      rosters:      { include: { players: true } },
+    },
+  })
 
   if (!game) notFound()
 
-  const gameStatusLabel: Record<string, string> = {
-    SCHEDULED: 'Agendado',
-    LIVE: 'Ao vivo',
-    FINISHED: 'Finalizado',
-    CANCELLED: 'Cancelado',
-    POSTPONED: 'Adiado',
-  }
-
   const scheduledAt = new Date(game.dateTime)
-  const officialCycleStatus =
-    game.status === 'FINISHED'
-      ? 'Jogo finalizado e pronto para conferencia oficial.'
-      : game.status === 'LIVE'
-        ? 'Jogo em operacao. O fluxo oficial segue de live para encerramento, sumula e auditoria.'
-        : 'Use o ciclo oficial abaixo para operar o jogo do inicio ao fim dentro do campeonato.'
+  const homeRoster  = game.rosters.find(r => r.teamId === game.homeTeamId)
+  const awayRoster  = game.rosters.find(r => r.teamId === game.awayTeamId)
+  const homePlayers = homeRoster?.players.length ?? 0
+  const awayPlayers = awayRoster?.players.length ?? 0
+  const hasLineup   = homePlayers > 0 || awayPlayers > 0
+  const isFinished  = game.status === 'FINISHED'
+  const base        = `/admin/championships/${championshipId}/jogos/${gameId}`
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 pb-10">
+    <div className="max-w-4xl space-y-6 pb-10">
       <Link
         href={`/admin/championships/${championshipId}/jogos`}
         className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[var(--gray)] hover:text-[var(--black)]"
       >
-        <ArrowLeft className="h-4 w-4" />
-        Voltar para Jogos do Campeonato
+        <ArrowLeft className="h-4 w-4" /> Todos os jogos
       </Link>
 
-      <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-        <p className="fgb-label text-[var(--gray)]">
-          {game.championship.name} · {game.category.name}
-        </p>
-        <h1 className="mt-2 fgb-display text-4xl leading-none text-[var(--black)]">
+      {/* Game header */}
+      <div className="fgb-card p-6">
+        <div className="flex items-center gap-2 mb-3 flex-wrap">
+          <span className="fgb-label text-[var(--gray)]">
+            {game.championship.name} {game.championship.year} · {game.category.name}
+          </span>
+          <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${STATUS_COLOR[game.status] ?? 'bg-gray-100 text-gray-600'}`}>
+            {STATUS_LABEL[game.status] ?? game.status}
+          </span>
+        </div>
+        <h1 className="fgb-display text-4xl text-[var(--black)] leading-none">
           {game.homeTeam.name}{' '}
-          <span className="text-[var(--verde)]">{game.homeScore ?? '-'}</span> ×{' '}
+          <span className="text-[var(--verde)]">{game.homeScore ?? '-'}</span>
+          {' × '}
           <span className="text-[var(--verde)]">{game.awayScore ?? '-'}</span>{' '}
           {game.awayTeam.name}
         </h1>
-        <p className="mt-3 text-sm text-[var(--gray)]">
-          {gameStatusLabel[game.status] || game.status} · {scheduledAt.toLocaleDateString('pt-BR')} ·{' '}
-          {scheduledAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} ·{' '}
-          {game.venue || 'Local a definir'}
+        <p className="text-sm text-[var(--gray)] mt-3">
+          {scheduledAt.toLocaleDateString('pt-BR', {
+            weekday: 'long', day: '2-digit', month: 'long', year: 'numeric',
+          })}
+          {' · '}
+          {scheduledAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          {game.venue ? ` · ${game.venue}` : ''}
         </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <div className="inline-flex rounded-full border border-[var(--border)] bg-[var(--gray-l)] px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-            {eventsCount} evento(s) live registrado(s)
-          </div>
-          <div className="inline-flex rounded-full bg-[var(--verde)]/10 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
-            Ciclo oficial do jogo ativo
-          </div>
-        </div>
       </div>
 
-      <div className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="fgb-label text-[var(--verde)]">Fluxo Canônico da Partida</p>
-            <h2 className="mt-2 fgb-display text-3xl leading-none text-[var(--black)]">
-              Operacao oficial do jogo dentro do campeonato
-            </h2>
-            <p className="mt-3 max-w-3xl text-sm text-[var(--gray)]">{officialCycleStatus}</p>
-          </div>
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3 text-xs text-[var(--gray)]">
-            Ordem oficial: Roster → Stats → Live → Encerramento → Sumula → Auditoria
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {OFFICIAL_FLOW.map((item) => {
-          const Icon = item.icon
-
-          return (
-            <Link
-              key={item.segment}
-              href={buildChampionshipGamePath(championshipId, gameId, item.segment)}
-              className="rounded-2xl border border-[var(--border)] bg-white p-5 shadow-sm transition-all hover:border-[var(--verde)] hover:-translate-y-0.5"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 text-[var(--black)]">
-                  <Icon className="h-4 w-4" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">
-                    Etapa {item.step}
-                  </p>
-                </div>
-                <span className="rounded-full bg-[var(--gray-l)] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                  {item.status}
-                </span>
-              </div>
-              <h3 className="mt-4 text-lg font-black text-[var(--black)]">{item.title}</h3>
-              <p className="mt-2 text-sm text-[var(--gray)]">{item.description}</p>
-            </Link>
-          )
-        })}
-      </div>
-
-      <div className="flex flex-wrap gap-3">
+      {/* Action cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Link
-          href={`/games/${gameId}/live`}
+          href={`${base}/roster`}
+          className="fgb-card p-5 hover:border-[var(--verde)] hover:-translate-y-0.5 transition-all group"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">01</span>
+            <ClipboardList className="h-4 w-4 text-[var(--gray)] group-hover:text-[var(--verde)] transition-colors" />
+          </div>
+          <h3 className="fgb-display text-xl text-[var(--black)] mb-2">Escalação</h3>
+          <p className="text-sm text-[var(--gray)] mb-4">
+            Selecione os atletas que vão jogar e informe os técnicos.
+          </p>
+          {hasLineup ? (
+            <span className="text-[10px] font-black text-[var(--verde)]">
+              ✓ {homePlayers} + {awayPlayers} atletas escalados
+            </span>
+          ) : (
+            <span className="text-[10px] text-[var(--gray)]">Escalação não definida</span>
+          )}
+        </Link>
+
+        <Link
+          href={`${base}/sumula`}
+          className="fgb-card p-5 hover:border-[var(--verde)] hover:-translate-y-0.5 transition-all group"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">02</span>
+            <FileText className="h-4 w-4 text-[var(--gray)] group-hover:text-[var(--verde)] transition-colors" />
+          </div>
+          <h3 className="fgb-display text-xl text-[var(--black)] mb-2">Súmula</h3>
+          <p className="text-sm text-[var(--gray)] mb-4">
+            Placar por quarto, estatísticas de cada atleta e oficiais.
+          </p>
+          {isFinished ? (
+            <span className="text-[10px] font-black text-[var(--verde)]">✓ Jogo finalizado</span>
+          ) : (
+            <span className="text-[10px] text-[var(--gray)]">Preencher dados do jogo</span>
+          )}
+        </Link>
+
+        <a
+          href={`/sumula/${gameId}`}
           target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
+          rel="noopener noreferrer"
+          className="fgb-card p-5 hover:border-[var(--verde)] hover:-translate-y-0.5 transition-all group"
         >
-          <Globe className="h-4 w-4" />
-          Ver Live Público
-        </Link>
-        <Link
-          href={`/admin/championships/${championshipId}/jogos/${gameId}/info`}
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
-        >
-          <Info className="h-4 w-4" />
-          Informações da Partida
-        </Link>
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">03</span>
+            <ExternalLink className="h-4 w-4 text-[var(--gray)] group-hover:text-[var(--verde)] transition-colors" />
+          </div>
+          <h3 className="fgb-display text-xl text-[var(--black)] mb-2">Ver Súmula</h3>
+          <p className="text-sm text-[var(--gray)] mb-4">
+            Documento oficial para compartilhar com as equipes.
+          </p>
+          <span className="text-[10px] text-[var(--gray)]">Abre em nova aba ↗</span>
+        </a>
       </div>
     </div>
   )

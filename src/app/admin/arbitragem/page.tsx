@@ -88,6 +88,14 @@ export default async function AdminArbitragemPage() {
         },
       }),
       prisma.refereeAssignment.findMany({
+        where: {
+          game: {
+            dateTime: {
+              gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+              lte: new Date(Date.now() + 120 * 24 * 60 * 60 * 1000),
+            },
+          },
+        },
         orderBy: { createdAt: 'desc' },
         include: {
           referee: { select: { id: true, name: true, city: true, state: true } },
