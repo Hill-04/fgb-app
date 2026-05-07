@@ -20,6 +20,7 @@ const inputCls = 'h-10 rounded-xl border border-[var(--border)] bg-white px-3 te
 export default async function AthleteProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
+  try {
   const [athlete, teams] = await Promise.all([
     prisma.athlete.findUnique({
       where: { id },
@@ -241,4 +242,14 @@ export default async function AthleteProfilePage({ params }: { params: Promise<{
       )}
     </div>
   )
+  } catch (error) {
+    console.error('[ADMIN ATHLETE PROFILE ERROR]', error)
+    return (
+      <div className="fgb-card p-10 text-center">
+        <p className="fgb-label text-[var(--red)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+          Erro ao carregar perfil do atleta.
+        </p>
+      </div>
+    )
+  }
 }

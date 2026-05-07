@@ -70,7 +70,7 @@ export default async function AdminArbitragemPage() {
     const [referees, games, assignments] = await Promise.all([
       prisma.referee.findMany({ orderBy: { name: 'asc' } }),
       prisma.game.findMany({
-        where: { dateTime: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
+        where: { dateTime: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
         orderBy: { dateTime: 'asc' },
         take: 30,
         include: { homeTeam: true, awayTeam: true, category: true }
