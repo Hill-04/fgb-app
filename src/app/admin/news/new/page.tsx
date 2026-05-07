@@ -1,4 +1,5 @@
-import { createPost, CATEGORIES } from '../actions'
+import { createPost } from '../actions'
+import { CATEGORIES } from '../categories'
 
 export default function NewPostPage() {
   return (

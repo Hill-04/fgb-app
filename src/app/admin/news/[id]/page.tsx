@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/db'
-import { updatePost, deletePost, CATEGORIES } from '../actions'
+import { updatePost, deletePost } from '../actions'
+import { CATEGORIES } from '../categories'
 
 export const dynamic = 'force-dynamic'
 

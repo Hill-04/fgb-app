@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { CATEGORIES } from './actions'
+import { CATEGORIES } from './categories'
 import NewsListClient from './NewsListClient'
 
 export const dynamic = 'force-dynamic'
