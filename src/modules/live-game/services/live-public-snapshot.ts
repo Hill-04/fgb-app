@@ -3,6 +3,15 @@ import { LiveGameService } from '@/modules/live-game/services/live-game-service'
 type RawSnapshot = Awaited<ReturnType<typeof LiveGameService.getSnapshot>>
 type RawPlayer = RawSnapshot['boxScore']['players'][number]
 type RawTeam = RawSnapshot['boxScore']['teams'][number]
+type ScoreTimelineEvent = {
+  period: number | null
+  clockTime: string | null
+  eventType: string
+  teamId: string | null
+  homeScoreAfter: number | null
+  awayScoreAfter: number | null
+  pointsDelta: number | null
+}
 
 type PublicLeader = {
   athleteName: string
@@ -53,11 +62,10 @@ type PublicPlayerLine = {
   jerseyNumber: number | null
   teamId: string
   teamName: string
-  isStarter: boolean
+  minutesPlayed: number
+  efficiency: number
   points: number
   rebounds: number
-  reboundsOffensive: number
-  reboundsDefensive: number
   assists: number
   fouls: number
   steals: number
@@ -65,11 +73,59 @@ type PublicPlayerLine = {
   turnovers: number
   fgMade: number
   fgAttempted: number
+  twoMade: number
+  twoAttempted: number
   threeMade: number
   threeAttempted: number
   ftMade: number
   ftAttempted: number
-  plusMinus: number | null
+  reboundsOffensive: number
+  reboundsDefensive: number
+  isStarter: boolean
+  disqualified: boolean
+  fouledOut: boolean
+}
+
+type KeyMomentValue = {
+  team: 'home' | 'away' | 'tie'
+  value: number
+  label: string
+}
+
+type LeadTrackerSegment = {
+  team: 'home' | 'away' | 'tie'
+  widthPct: number
+}
+
+type TeamStatPair = {
+  home: number
+  away: number
+  lowerIsBetter?: true
+}
+
+type PublicTeamComparison = {
+  points: TeamStatPair
+  rebounds: TeamStatPair
+  reboundsOffensive: TeamStatPair
+  reboundsDefensive: TeamStatPair
+  assists: TeamStatPair
+  steals: TeamStatPair
+  blocks: TeamStatPair
+  turnovers: TeamStatPair & { lowerIsBetter: true }
+  fouls: TeamStatPair & { lowerIsBetter: true }
+  twoPointMade: TeamStatPair
+  twoPointAttempted: TeamStatPair
+  twoPointPct: TeamStatPair
+  threePointMade: TeamStatPair
+  threePointAttempted: TeamStatPair
+  threePointPct: TeamStatPair
+  freeThrowMade: TeamStatPair
+  freeThrowAttempted: TeamStatPair
+  freeThrowPct: TeamStatPair
+  starterPoints: TeamStatPair
+  benchPoints: TeamStatPair
+  efficiency: TeamStatPair
+  possessionsEst: TeamStatPair
 }
 
 type TeamSummary = {
@@ -89,6 +145,25 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
   const twoAttempted = toNumber(line.twoPtAttempted)
   const threeMade = toNumber(line.threePtMade)
   const threeAttempted = toNumber(line.threePtAttempted)
+  const ftMade = toNumber(line.freeThrowsMade)
+  const ftAttempted = toNumber(line.freeThrowsAttempted)
+  const rebounds = toNumber(line.reboundsTotal)
+  const assists = toNumber(line.assists)
+  const steals = toNumber(line.steals)
+  const blocks = toNumber(line.blocks)
+  const turnovers = toNumber(line.turnovers)
+  const points = toNumber(line.points)
+  const fgMade = twoMade + threeMade
+  const fgAttempted = twoAttempted + threeAttempted
+  const efficiency =
+    points +
+    rebounds +
+    assists +
+    steals +
+    blocks -
+    (fgAttempted - fgMade) -
+    (ftAttempted - ftMade) -
+    turnovers
 
   return {
     athleteId: line.athleteId,
@@ -96,30 +171,36 @@ function mapPlayerLine(line: RawPlayer): PublicPlayerLine {
     jerseyNumber: line.jerseyNumber ?? null,
     teamId: line.teamId,
     teamName: line.teamName,
-    isStarter: Boolean(line.isStarter),
-    points: toNumber(line.points),
-    rebounds: toNumber(line.reboundsTotal),
-    reboundsOffensive: toNumber(line.reboundsOffensive),
-    reboundsDefensive: toNumber(line.reboundsDefensive),
-    assists: toNumber(line.assists),
+    minutesPlayed: toNumber(line.minutesPlayed),
+    efficiency,
+    points,
+    rebounds,
+    assists,
     fouls: toNumber(line.fouls),
-    steals: toNumber(line.steals),
-    blocks: toNumber(line.blocks),
-    turnovers: toNumber(line.turnovers),
-    fgMade: twoMade + threeMade,
-    fgAttempted: twoAttempted + threeAttempted,
+    steals,
+    blocks,
+    turnovers,
+    fgMade,
+    fgAttempted,
+    twoMade,
+    twoAttempted,
     threeMade,
     threeAttempted,
-    ftMade: toNumber(line.freeThrowsMade),
-    ftAttempted: toNumber(line.freeThrowsAttempted),
-    plusMinus: line.plusMinus != null ? toNumber(line.plusMinus) : null,
+    ftMade,
+    ftAttempted,
+    reboundsOffensive: toNumber(line.reboundsOffensive),
+    reboundsDefensive: toNumber(line.reboundsDefensive),
+    isStarter: Boolean(line.isStarter),
+    disqualified: Boolean(line.disqualified),
+    fouledOut: Boolean(line.fouledOut),
   }
 }
 
 function sortPlayerLines(players: PublicPlayerLine[]) {
-  return [...players].sort(
-    (a, b) => b.points - a.points || b.rebounds - a.rebounds || a.name.localeCompare(b.name)
-  )
+  return [...players].sort((a, b) => {
+    if (a.isStarter !== b.isStarter) return a.isStarter ? -1 : 1
+    return b.points - a.points || b.rebounds - a.rebounds || a.name.localeCompare(b.name)
+  })
 }
 
 function buildTeamSummary(
@@ -158,6 +239,116 @@ function buildTeamSummary(
   }
 }
 
+function sumBy(players: PublicPlayerLine[], selector: (line: PublicPlayerLine) => number) {
+  return players.reduce((sum, line) => sum + selector(line), 0)
+}
+
+function buildPair(home: number, away: number): TeamStatPair {
+  return { home, away }
+}
+
+function buildLowerIsBetterPair(
+  home: number,
+  away: number
+): TeamStatPair & { lowerIsBetter: true } {
+  return { home, away, lowerIsBetter: true }
+}
+
+function toPct(made: number, attempted: number) {
+  if (attempted <= 0) return -1
+  return Math.round((made / attempted) * 100)
+}
+
+function buildTeamComparison(
+  homePlayers: PublicPlayerLine[],
+  awayPlayers: PublicPlayerLine[]
+): PublicTeamComparison {
+  const homePoints = sumBy(homePlayers, (line) => line.points)
+  const awayPoints = sumBy(awayPlayers, (line) => line.points)
+  const homeRebounds = sumBy(homePlayers, (line) => line.rebounds)
+  const awayRebounds = sumBy(awayPlayers, (line) => line.rebounds)
+  const homeAssists = sumBy(homePlayers, (line) => line.assists)
+  const awayAssists = sumBy(awayPlayers, (line) => line.assists)
+  const homeSteals = sumBy(homePlayers, (line) => line.steals)
+  const awaySteals = sumBy(awayPlayers, (line) => line.steals)
+  const homeBlocks = sumBy(homePlayers, (line) => line.blocks)
+  const awayBlocks = sumBy(awayPlayers, (line) => line.blocks)
+  const homeTurnovers = sumBy(homePlayers, (line) => line.turnovers)
+  const awayTurnovers = sumBy(awayPlayers, (line) => line.turnovers)
+  const homeFouls = sumBy(homePlayers, (line) => line.fouls)
+  const awayFouls = sumBy(awayPlayers, (line) => line.fouls)
+
+  const homeReboundsOffensive = sumBy(homePlayers, (line) => line.reboundsOffensive)
+  const awayReboundsOffensive = sumBy(awayPlayers, (line) => line.reboundsOffensive)
+  const homeReboundsDefensive = sumBy(homePlayers, (line) => line.reboundsDefensive)
+  const awayReboundsDefensive = sumBy(awayPlayers, (line) => line.reboundsDefensive)
+
+  const homeTwoPointMade = sumBy(homePlayers, (line) => line.twoMade)
+  const awayTwoPointMade = sumBy(awayPlayers, (line) => line.twoMade)
+  const homeTwoPointAttempted = sumBy(homePlayers, (line) => line.twoAttempted)
+  const awayTwoPointAttempted = sumBy(awayPlayers, (line) => line.twoAttempted)
+  const homeThreePointMade = sumBy(homePlayers, (line) => line.threeMade)
+  const awayThreePointMade = sumBy(awayPlayers, (line) => line.threeMade)
+  const homeThreePointAttempted = sumBy(homePlayers, (line) => line.threeAttempted)
+  const awayThreePointAttempted = sumBy(awayPlayers, (line) => line.threeAttempted)
+  const homeFreeThrowMade = sumBy(homePlayers, (line) => line.ftMade)
+  const awayFreeThrowMade = sumBy(awayPlayers, (line) => line.ftMade)
+  const homeFreeThrowAttempted = sumBy(homePlayers, (line) => line.ftAttempted)
+  const awayFreeThrowAttempted = sumBy(awayPlayers, (line) => line.ftAttempted)
+
+  const homeStarterPoints = sumBy(homePlayers, (line) => (line.isStarter ? line.points : 0))
+  const awayStarterPoints = sumBy(awayPlayers, (line) => (line.isStarter ? line.points : 0))
+  const homeBenchPoints = sumBy(homePlayers, (line) => (line.isStarter ? 0 : line.points))
+  const awayBenchPoints = sumBy(awayPlayers, (line) => (line.isStarter ? 0 : line.points))
+  const homeEfficiency = sumBy(homePlayers, (line) => line.efficiency)
+  const awayEfficiency = sumBy(awayPlayers, (line) => line.efficiency)
+
+  const homeFieldGoalAttempts = homeTwoPointAttempted + homeThreePointAttempted
+  const awayFieldGoalAttempts = awayTwoPointAttempted + awayThreePointAttempted
+  const homePossessions = Math.max(
+    0,
+    Math.round(homeFieldGoalAttempts - homeReboundsOffensive + homeTurnovers + 0.44 * homeFreeThrowAttempted)
+  )
+  const awayPossessions = Math.max(
+    0,
+    Math.round(awayFieldGoalAttempts - awayReboundsOffensive + awayTurnovers + 0.44 * awayFreeThrowAttempted)
+  )
+
+  return {
+    points: buildPair(homePoints, awayPoints),
+    rebounds: buildPair(homeRebounds, awayRebounds),
+    reboundsOffensive: buildPair(homeReboundsOffensive, awayReboundsOffensive),
+    reboundsDefensive: buildPair(homeReboundsDefensive, awayReboundsDefensive),
+    assists: buildPair(homeAssists, awayAssists),
+    steals: buildPair(homeSteals, awaySteals),
+    blocks: buildPair(homeBlocks, awayBlocks),
+    turnovers: buildLowerIsBetterPair(homeTurnovers, awayTurnovers),
+    fouls: buildLowerIsBetterPair(homeFouls, awayFouls),
+    twoPointMade: buildPair(homeTwoPointMade, awayTwoPointMade),
+    twoPointAttempted: buildPair(homeTwoPointAttempted, awayTwoPointAttempted),
+    twoPointPct: buildPair(
+      toPct(homeTwoPointMade, homeTwoPointAttempted),
+      toPct(awayTwoPointMade, awayTwoPointAttempted)
+    ),
+    threePointMade: buildPair(homeThreePointMade, awayThreePointMade),
+    threePointAttempted: buildPair(homeThreePointAttempted, awayThreePointAttempted),
+    threePointPct: buildPair(
+      toPct(homeThreePointMade, homeThreePointAttempted),
+      toPct(awayThreePointMade, awayThreePointAttempted)
+    ),
+    freeThrowMade: buildPair(homeFreeThrowMade, awayFreeThrowMade),
+    freeThrowAttempted: buildPair(homeFreeThrowAttempted, awayFreeThrowAttempted),
+    freeThrowPct: buildPair(
+      toPct(homeFreeThrowMade, homeFreeThrowAttempted),
+      toPct(awayFreeThrowMade, awayFreeThrowAttempted)
+    ),
+    starterPoints: buildPair(homeStarterPoints, awayStarterPoints),
+    benchPoints: buildPair(homeBenchPoints, awayBenchPoints),
+    efficiency: buildPair(homeEfficiency, awayEfficiency),
+    possessionsEst: buildPair(homePossessions, awayPossessions),
+  }
+}
+
 function getLeader(
   players: PublicPlayerLine[],
   stat: 'points' | 'assists' | 'rebounds' | 'steals' | 'blocks'
@@ -172,10 +363,183 @@ function getLeader(
   }
 }
 
-const SHOT_MADE_TYPES = new Set(['SHOT_MADE_2', 'SHOT_MADE_3', 'FREE_THROW_MADE'])
-const SHOT_MISSED_TYPES = new Set(['SHOT_MISSED_2', 'SHOT_MISSED_3', 'FREE_THROW_MISSED'])
+function getPeriodDuration(period: number) {
+  return period <= 4 ? 600 : 300
+}
 
-export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
+function getElapsedSeconds(period: number | null, clockTime: string | null) {
+  if (!period || !clockTime) return null
+
+  const match = /^(\d{1,2}):(\d{2})$/.exec(clockTime.trim())
+  if (!match) return null
+
+  const minutes = Number(match[1])
+  const seconds = Number(match[2])
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null
+
+  let elapsed = 0
+  for (let current = 1; current < period; current += 1) {
+    elapsed += getPeriodDuration(current)
+  }
+
+  const remaining = minutes * 60 + seconds
+  return elapsed + Math.max(0, getPeriodDuration(period) - remaining)
+}
+
+function buildGameInsights(
+  snapshot: RawSnapshot,
+  scoreTimeline: ScoreTimelineEvent[]
+) {
+  const homeTeamId = snapshot.game.homeTeam.id
+  const awayTeamId = snapshot.game.awayTeam.id
+  let runningHome = 0
+  let runningAway = 0
+
+  const sortedEvents = [...scoreTimeline]
+    .filter((event) => !event.eventType.startsWith('SCORE_'))
+    .sort((a, b) => {
+      const aPeriod = a.period ?? 0
+      const bPeriod = b.period ?? 0
+      if (aPeriod !== bPeriod) return aPeriod - bPeriod
+      const aElapsed = getElapsedSeconds(a.period, a.clockTime) ?? 0
+      const bElapsed = getElapsedSeconds(b.period, b.clockTime) ?? 0
+      return aElapsed - bElapsed
+    })
+    .map((event) => {
+      if (typeof event.homeScoreAfter === 'number' && typeof event.awayScoreAfter === 'number') {
+        runningHome = event.homeScoreAfter
+        runningAway = event.awayScoreAfter
+      } else if ((event.pointsDelta ?? 0) > 0) {
+        if (event.teamId === homeTeamId) {
+          runningHome += Number(event.pointsDelta ?? 0)
+        } else if (event.teamId === awayTeamId) {
+          runningAway += Number(event.pointsDelta ?? 0)
+        }
+      }
+
+      return {
+        ...event,
+        homeScoreAfter: runningHome,
+        awayScoreAfter: runningAway,
+      }
+    })
+    .filter((event) => Number(event.pointsDelta ?? 0) > 0)
+
+  let largestLead: KeyMomentValue = { team: 'tie', value: 0, label: 'Jogo parelho' }
+  let largestRun: KeyMomentValue = { team: 'tie', value: 0, label: 'Sem sequencia' }
+  let leadChanges = 0
+  let ties = 0
+
+  let previousLeader: 'home' | 'away' | 'tie' = 'tie'
+  let lastNonTieLeader: 'home' | 'away' | null = null
+  let previousElapsed = 0
+  let activeRunTeam: 'home' | 'away' | 'tie' = 'tie'
+  let activeRunValue = 0
+
+  const segments: Array<{ team: 'home' | 'away' | 'tie'; start: number; end: number }> = []
+
+  const pushSegment = (team: 'home' | 'away' | 'tie', start: number, end: number) => {
+    if (end <= start) return
+    segments.push({ team, start, end })
+  }
+
+  for (const event of sortedEvents) {
+    const elapsed = getElapsedSeconds(event.period, event.clockTime) ?? previousElapsed
+    pushSegment(previousLeader, previousElapsed, elapsed)
+
+    const homeScore = Number(event.homeScoreAfter ?? 0)
+    const awayScore = Number(event.awayScoreAfter ?? 0)
+    const diff = homeScore - awayScore
+    const leader: 'home' | 'away' | 'tie' = diff > 0 ? 'home' : diff < 0 ? 'away' : 'tie'
+    const absoluteLead = Math.abs(diff)
+
+    if (absoluteLead > largestLead.value) {
+      largestLead = {
+        team: leader,
+        value: absoluteLead,
+        label:
+          leader === 'tie'
+            ? 'Jogo parelho'
+            : `${leader === 'home' ? 'Casa' : 'Visitante'} +${absoluteLead}`,
+      }
+    }
+
+    if (leader === 'tie') {
+      ties += 1
+    } else {
+      if (lastNonTieLeader !== null && lastNonTieLeader !== leader) leadChanges += 1
+      lastNonTieLeader = leader
+    }
+
+    const scoringTeam: 'home' | 'away' | 'tie' =
+      event.teamId === homeTeamId ? 'home' : event.teamId === awayTeamId ? 'away' : 'tie'
+
+    if ((event.pointsDelta ?? 0) > 0 && scoringTeam !== 'tie') {
+      if (activeRunTeam === scoringTeam) {
+        activeRunValue += Number(event.pointsDelta ?? 0)
+      } else {
+        activeRunTeam = scoringTeam
+        activeRunValue = Number(event.pointsDelta ?? 0)
+      }
+
+      if (activeRunValue > largestRun.value) {
+        largestRun = {
+          team: activeRunTeam,
+          value: activeRunValue,
+          label: `${activeRunTeam === 'home' ? 'Casa' : 'Visitante'} ${activeRunValue}-0`,
+        }
+      }
+    }
+
+    previousLeader = leader
+    previousElapsed = elapsed
+  }
+
+  const lastPeriodFromEvents = sortedEvents[sortedEvents.length - 1]?.period ?? snapshot.game.currentPeriod ?? 4
+  const currentElapsed =
+    getElapsedSeconds(snapshot.game.currentPeriod ?? null, snapshot.game.clockDisplay ?? null) ?? previousElapsed
+  const regulationLength =
+    lastPeriodFromEvents > 4 ? 2400 + (lastPeriodFromEvents - 4) * 300 : 2400
+  const totalElapsed = snapshot.game.status === 'FINISHED'
+    ? Math.max(regulationLength, previousElapsed)
+    : Math.max(currentElapsed, previousElapsed, 1)
+
+  if (sortedEvents.length === 0) {
+    return {
+      keyMoments: {
+        largestLead,
+        largestRun,
+        leadChanges,
+        ties,
+      },
+      leadTracker: [{ team: 'tie' as const, widthPct: 100 }],
+    }
+  }
+
+  pushSegment(previousLeader, previousElapsed, totalElapsed)
+
+  const leadTracker: LeadTrackerSegment[] = segments
+    .map((segment) => ({
+      team: segment.team,
+      widthPct: (segment.end - segment.start) / totalElapsed * 100,
+    }))
+    .filter((segment) => segment.widthPct > 0)
+
+  return {
+    keyMoments: {
+      largestLead,
+      largestRun,
+      leadChanges,
+      ties,
+    },
+    leadTracker,
+  }
+}
+
+export function buildPublicLiveSnapshot(
+  snapshot: RawSnapshot,
+  scoreTimeline: ScoreTimelineEvent[] = []
+) {
   const normalizedStatus = normalizeStatus(snapshot.game)
   const isLive = normalizedStatus === 'LIVE'
   const isFinished = normalizedStatus === 'FINISHED'
@@ -201,66 +565,29 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
     toNumber(snapshot.game.awayScore)
   )
 
-  const activeEvents = events.filter((e) => !e.isReverted)
-
-  const recentEvents = activeEvents
+  const recentEvents = events
     .slice(-20)
     .reverse()
     .map((event) => ({
-      id: event.id,
       period: event.period,
       clockTime: event.clockTime,
-      eventType: event.eventType,
       description: event.description,
       teamName: event.teamName || null,
-      teamId: event.teamId || null,
       athleteName: event.athleteName || null,
       pointsDelta: event.pointsDelta ?? 0,
       occurredAt: event.createdAt,
     }))
 
-  const playByPlay = activeEvents
-    .slice()
-    .reverse()
-    .map((event) => ({
-      id: event.id,
-      period: event.period,
-      clockTime: event.clockTime,
-      eventType: event.eventType,
-      description: event.description,
-      teamName: event.teamName || null,
-      teamId: event.teamId || null,
-      athleteName: event.athleteName || null,
-      pointsDelta: event.pointsDelta ?? 0,
-      occurredAt: event.createdAt,
-    }))
-
-  const shots = activeEvents
-    .filter((e) => {
-      const payload = e.payload as Record<string, unknown> | undefined
-      return (SHOT_MADE_TYPES.has(e.eventType) || SHOT_MISSED_TYPES.has(e.eventType)) &&
-        payload?.x != null && payload?.y != null
-    })
-    .map((e) => {
-      const payload = e.payload as Record<string, unknown>
-      return {
-        x: Number(payload.x),
-        y: Number(payload.y),
-        made: SHOT_MADE_TYPES.has(e.eventType),
-        isThree: e.eventType === 'SHOT_MADE_3' || e.eventType === 'SHOT_MISSED_3',
-        teamId: e.teamId || null,
-        athleteName: e.athleteName || null,
-        period: e.period,
-        clockTime: e.clockTime,
-      }
-    })
-
-  const rawPeriods = snapshot.boxScore?.periods || []
-  const periodScores = rawPeriods.map((r) => ({
-    period: r.period,
-    home: r.homePoints,
-    away: r.awayPoints,
+  const periods = (snapshot.boxScore?.periods ?? []).map((p) => ({
+    period: p.period,
+    label: p.period <= 4 ? `Q${p.period}` : `OT${p.period - 4}`,
+    homePoints: p.homePoints,
+    awayPoints: p.awayPoints,
   }))
+  const insights = buildGameInsights(snapshot, scoreTimeline)
+
+  const playerEfficiencies = players.map((p) => ({ athleteId: p.athleteId, efficiency: p.efficiency }))
+  const teamComparison = buildTeamComparison(homePlayers, awayPlayers)
 
   return {
     game: {
@@ -270,30 +597,22 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       isFinished,
       scheduledAt: snapshot.game.dateTime,
       venue: snapshot.game.venue || snapshot.game.location || null,
-      currentPeriod: snapshot.game.currentPeriod || null,
       clockDisplay: snapshot.game.clockDisplay || null,
-      homeTimeoutsUsed: snapshot.game.homeTimeoutsUsed,
-      awayTimeoutsUsed: snapshot.game.awayTimeoutsUsed,
-      homeTeamFoulsCurrentPeriod: snapshot.game.homeTeamFoulsCurrentPeriod,
-      awayTeamFoulsCurrentPeriod: snapshot.game.awayTeamFoulsCurrentPeriod,
-      championship: {
-        name: snapshot.game.championship?.name || null,
-        year: snapshot.game.championship?.year || null,
-      },
-      category: snapshot.game.category?.name || null,
+      championship: snapshot.game.championship?.name ?? null,
+      category: snapshot.game.category?.name ?? null,
     },
     homeTeam: {
       id: snapshot.game.homeTeam.id,
       name: snapshot.game.homeTeam.name,
       shortName: toShortName(snapshot.game.homeTeam.name),
-      logoUrl: (snapshot.game.homeTeam as { logoUrl?: string | null }).logoUrl || null,
+      logoUrl: snapshot.game.homeTeam.logoUrl || null,
       score: Number(snapshot.game.homeScore ?? 0),
     },
     awayTeam: {
       id: snapshot.game.awayTeam.id,
       name: snapshot.game.awayTeam.name,
       shortName: toShortName(snapshot.game.awayTeam.name),
-      logoUrl: (snapshot.game.awayTeam as { logoUrl?: string | null }).logoUrl || null,
+      logoUrl: snapshot.game.awayTeam.logoUrl || null,
       score: Number(snapshot.game.awayScore ?? 0),
     },
     leaders: {
@@ -304,9 +623,12 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       blocks: getLeader(players, 'blocks'),
     },
     recentEvents,
-    playByPlay,
-    shots,
-    periodScores,
+    analytics: {
+      keyMoments: insights.keyMoments,
+      leadTracker: insights.leadTracker,
+      playerEfficiencies,
+      teamComparison,
+    },
     teamSummary: {
       home: homeSummary,
       away: awaySummary,
@@ -315,6 +637,7 @@ export function buildPublicLiveSnapshot(snapshot: RawSnapshot) {
       homePlayers,
       awayPlayers,
     },
+    periodScores: periods,
     summary: {
       totalEvents: events.length,
       lastEventAt: events.length > 0 ? events[events.length - 1].createdAt : null,

@@ -1,10 +1,10 @@
-import { AdminLiveTablePage } from '@/modules/live-game/components/admin-live-table-page'
+import { LiveGameAdminView } from '@/modules/live-game/components/live-game-admin-view'
 
 export default async function ChampionshipGameLivePage({
   params,
 }: {
   params: Promise<{ id: string; gameId: string }>
 }) {
-  const { gameId } = await params
-  return <AdminLiveTablePage gameId={gameId} />
+  const { id, gameId } = await params
+  return <LiveGameAdminView gameId={gameId} mode="live" championshipId={id} />
 }

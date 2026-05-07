@@ -8,6 +8,7 @@ import {
   FileText,
   Gavel,
   Globe,
+  Info,
   ShieldCheck,
 } from 'lucide-react'
 import { prisma } from '@/lib/db'
@@ -189,6 +190,13 @@ export default async function ChampionshipGameHubPage({
         >
           <Globe className="h-4 w-4" />
           Ver Live Público
+        </Link>
+        <Link
+          href={`/admin/championships/${championshipId}/jogos/${gameId}/info`}
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
+        >
+          <Info className="h-4 w-4" />
+          Informações da Partida
         </Link>
       </div>
     </div>

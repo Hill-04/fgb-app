@@ -16,6 +16,7 @@
 # next.js
 /.next/
 /out/
+.next/
 
 # production
 /build
@@ -29,6 +30,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -46,7 +48,22 @@ next-env.d.ts
 prisma/dev.db
 prisma/dev.db-shm
 prisma/dev.db-wal
+prisma/prisma/dev.db
+prisma/prisma/dev.db-shm
+prisma/prisma/dev.db-wal
 dist-seed/
+
+# arquivos temporarios e artefatos locais
+*.tmp
+*.temp
+*.bak
+*.orig
+*.local
+*.pid
+*.seed
+*debug*.png
+*.sqlite
+*.sqlite3
 
 # agentes
 .agent/

@@ -1,6 +1,12 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
 import { withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { summarizeRegistrationFees } from '@/lib/fees'
+import {
+  assertRegistrationHasBillableFees,
+  createInvoiceFromRegistration,
+  RegistrationInvoiceGenerationError,
+} from '@/lib/finance-invoice-service'
 
 export async function GET(
   request: Request,
@@ -20,6 +26,27 @@ export async function GET(
           athletePlayers: {
             orderBy: { createdAt: 'asc' }
           },
+          fees: {
+            select: {
+              id: true,
+              feeKey: true,
+              feeLabel: true,
+              quantity: true,
+              unitValue: true,
+              totalValue: true,
+              status: true,
+              paidAt: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+            orderBy: { createdAt: 'asc' },
+          },
+          financialInvoices: {
+            where: { status: { not: 'VOID' } },
+            select: { id: true, number: true, status: true, totalCents: true, balanceCents: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
           categories: {
             include: {
               category: { select: { id: true, name: true } }
@@ -33,7 +60,9 @@ export async function GET(
     // Map to flatten categories for the frontend
     const formatted = registrations.map(reg => ({
       ...reg,
-      categories: reg.categories.map(rc => rc.category)
+      categories: reg.categories.map(rc => rc.category),
+      feeSummary: summarizeRegistrationFees(reg.fees),
+      financialInvoice: reg.financialInvoices[0] || null,
     }))
 
     return NextResponse.json(formatted)
@@ -75,6 +104,16 @@ export async function POST(
       })
     )
 
+    if (status === 'CONFIRMED') {
+      if (!existingRegistration) {
+        return NextResponse.json({
+          error: 'Para confirmar a inscricao, salve primeiro como pendente, gere as taxas e depois confirme para emitir a fatura automaticamente.',
+        }, { status: 400 })
+      }
+
+      await assertRegistrationHasBillableFees(existingRegistration.id)
+    }
+
     let registration
 
     if (existingRegistration) {
@@ -111,6 +150,12 @@ export async function POST(
         },
         include: {
           team: true,
+          financialInvoices: {
+            where: { status: { not: 'VOID' } },
+            select: { id: true, number: true, status: true, totalCents: true, balanceCents: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
           blockedDates: { orderBy: { startDate: 'asc' } },
           athletePlayers: true,
           categories: { include: { category: true } }
@@ -149,12 +194,23 @@ export async function POST(
         },
         include: {
           team: true,
+          financialInvoices: {
+            where: { status: { not: 'VOID' } },
+            select: { id: true, number: true, status: true, totalCents: true, balanceCents: true },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
           blockedDates: { orderBy: { startDate: 'asc' } },
           athletePlayers: true,
           categories: { include: { category: true } }
         }
       })
     }
+
+    const financialInvoiceGeneration =
+      registration.status === 'CONFIRMED'
+        ? await createInvoiceFromRegistration(registration.id, { context: 'REGISTRATION_POST_CONFIRMATION' })
+        : null
 
     const formatted = {
       ...registration,
@@ -163,11 +219,17 @@ export async function POST(
         ...athlete,
         categoryIds: athlete.categoryIds,
       })),
+      financialInvoice: financialInvoiceGeneration?.invoice || registration.financialInvoices[0] || null,
+      financialInvoiceGeneration,
     }
 
     return NextResponse.json(formatted)
   } catch (error: any) {
     console.error('API Error (Registration Create):', error)
+
+    if (error instanceof RegistrationInvoiceGenerationError) {
+      return NextResponse.json({ error: error.message }, { status: error.status })
+    }
     
     if (error.code === 'P2002') {
       return NextResponse.json({ 

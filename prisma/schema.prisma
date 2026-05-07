@@ -19,36 +19,45 @@ model User {
   updatedAt   DateTime         @updatedAt
   memberships TeamMembership[]
   playerStats PlayerStat[]
+  financialPaymentsCreated FinancialPayment[] @relation("FinancialPaymentCreatedBy")
+  financialAuditLogsCreated FinancialAuditLog[] @relation("FinancialAuditLogCreatedBy")
+  athleteRegistrationRequestsReviewed   AthleteRegistrationRequest[] @relation("AthleteRegistrationReviewedBy")
+  athleteRegistrationRequestsApproved   AthleteRegistrationRequest[] @relation("AthleteRegistrationApprovedBy")
+  athleteRegistrationRequestsCbbChecked AthleteRegistrationRequest[] @relation("AthleteRegistrationCbbCheckedBy")
+  athleteRegistrationAuditLogsCreated   AthleteRegistrationAuditLog[] @relation("AthleteRegistrationAuditLogCreatedBy")
 }
 
 model Team {
-  id            String           @id @default(uuid())
-  name          String           @unique
-  logoUrl       String?
-  city          String?
-  state         String?          @default("RS")
-  phone         String?
-  sex           String?
-  responsible   String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  awayGames     Game[]           @relation("AwayTeam")
-  homeGames     Game[]           @relation("HomeTeam")
-  gym           Gym?
-  sentMessages  Message[]        @relation("SentMessages")
-  notifications Notification[]
-  registrations Registration[]
-  standings     Standing[]
-  members       TeamMembership[]
-  playerStats   PlayerStat[]
-  gameRosters   GameRoster[]
-  gameEvents    GameEvent[]
+  id                  String               @id @default(uuid())
+  name                String               @unique
+  logoUrl             String?
+  city                String?
+  state               String?              @default("RS")
+  phone               String?
+  sex                 String?
+  responsible         String?
+  totalFeesOwed       Float                @default(0)
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  awayGames           Game[]               @relation("AwayTeam")
+  homeGames           Game[]               @relation("HomeTeam")
+  gym                 Gym?
+  sentMessages        Message[]            @relation("SentMessages")
+  notifications       Notification[]
+  registrations       Registration[]
+  standings           Standing[]
+  members             TeamMembership[]
+  playerStats         PlayerStat[]
+  gameRosters         GameRoster[]
+  gameEvents          GameEvent[]
   livePlayerStatLines GamePlayerStatLine[]
   liveTeamStatLines   GameTeamStatLine[]
-  athletes      Athlete[]
-  seasonRankings SeasonRanking[]
-  bidEntriesFrom AthleteBidEntry[] @relation("BidTeamFrom")
-  bidEntriesTo   AthleteBidEntry[] @relation("BidTeamTo")
+  athletes            Athlete[]
+  seasonRankings      SeasonRanking[]
+  bidEntriesFrom      AthleteBidEntry[]    @relation("BidTeamFrom")
+  bidEntriesTo        AthleteBidEntry[]    @relation("BidTeamTo")
+  financialInvoices   FinancialInvoice[]
+  athleteRegistrationRequests AthleteRegistrationRequest[]
 }
 
 model Gym {
@@ -64,47 +73,48 @@ model Gym {
 }
 
 model Championship {
-  id             String                 @id @default(uuid())
-  name           String
-  year           Int                    @default(2026)
-  description    String?
-  sex            String                 @default("masculino")
-  format         String                 @default("todos_contra_todos")
-  turns          Int                    @default(1)
-  phases         Int                    @default(1)
-  fieldControl   String                 @default("alternado")
-  tiebreakers    String                 @default("pontos,saldo,confronto_direto,pontos_marcados")
-  hasRelegation  Boolean                @default(false)
-  relegationDown Int                    @default(0)
-  promotionUp    Int                    @default(0)
-  hasPlayoffs    Boolean                @default(false)
-  playoffTeams   Int                    @default(4)
-  playoffFormat  String                 @default("melhor_de_1")
-  hasThirdPlace  Boolean                @default(true)
-  hasBlocks      Boolean                @default(false)
-  minTeamsPerCat Int                    @default(3)
-  startDate      DateTime?
-  endDate        DateTime?
-  regDeadline    DateTime               @default(now())
-  status         String                 @default("DRAFT")
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
-  numberOfCourts              Int                    @default(1)
-  dayStartTime                String                 @default("08:00")
-  regularDayEndTime           String                 @default("19:00")
-  extendedDayEndTime          String                 @default("20:30")
-  slotDurationMinutes         Int                    @default(75)
-  minRestSlotsPerTeam         Int                    @default(1)
-  maxGamesPerTeamPerDay       Int                    @default(2)
-  scheduleOptimizationMode    String                 @default("less_travel")
-  blockFormat                 String                 @default("SAT_SUN")
-  isSimulation                Boolean                @default(false)
-  blocks         Block[]
-  categories     ChampionshipCategory[]
-  documents      Document[]
-  games          Game[]
-  registrations  Registration[]
-  bidEntries     AthleteBidEntry[]
+  id                       String                 @id @default(uuid())
+  name                     String
+  year                     Int                    @default(2026)
+  description              String?
+  sex                      String                 @default("masculino")
+  format                   String                 @default("todos_contra_todos")
+  turns                    Int                    @default(1)
+  phases                   Int                    @default(1)
+  fieldControl             String                 @default("alternado")
+  tiebreakers              String                 @default("pontos,saldo,confronto_direto,pontos_marcados")
+  hasRelegation            Boolean                @default(false)
+  relegationDown           Int                    @default(0)
+  promotionUp              Int                    @default(0)
+  hasPlayoffs              Boolean                @default(false)
+  playoffTeams             Int                    @default(4)
+  playoffFormat            String                 @default("melhor_de_1")
+  hasThirdPlace            Boolean                @default(true)
+  hasBlocks                Boolean                @default(false)
+  minTeamsPerCat           Int                    @default(3)
+  startDate                DateTime?
+  endDate                  DateTime?
+  regDeadline              DateTime               @default(now())
+  status                   String                 @default("DRAFT")
+  createdAt                DateTime               @default(now())
+  updatedAt                DateTime               @updatedAt
+  numberOfCourts           Int                    @default(1)
+  dayStartTime             String                 @default("08:00")
+  regularDayEndTime        String                 @default("19:00")
+  extendedDayEndTime       String                 @default("20:30")
+  slotDurationMinutes      Int                    @default(75)
+  minRestSlotsPerTeam      Int                    @default(1)
+  maxGamesPerTeamPerDay    Int                    @default(2)
+  scheduleOptimizationMode String                 @default("less_travel")
+  blockFormat              String                 @default("SAT_SUN")
+  isSimulation             Boolean                @default(false)
+  blocks                   Block[]
+  categories               ChampionshipCategory[]
+  documents                Document[]
+  games                    Game[]
+  registrations            Registration[]
+  bidEntries               AthleteBidEntry[]
+  financialInvoices        FinancialInvoice[]
 }
 
 model ChampionshipCategory {
@@ -121,32 +131,154 @@ model ChampionshipCategory {
 }
 
 model Registration {
-  id             String                 @id @default(uuid())
+  id             String   @id @default(uuid())
   championshipId String
   teamId         String
-  status         String                 @default("PENDING")
+  status         String   @default("PENDING")
   observations   String?
-  registeredAt   DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  registeredAt   DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   coachName      String?
   coachPhone     String?
   coachEmail     String?
-  coachMultiTeam Boolean                @default(false)
+  coachMultiTeam Boolean  @default(false)
 
   // Gym Hosting / Sede
-  canHost        Boolean                @default(false)
-  gymName        String?
-  gymAddress     String?
-  gymCity        String?
-  gymMapsLink    String?
+  canHost     Boolean @default(false)
+  gymName     String?
+  gymAddress  String?
+  gymCity     String?
+  gymMapsLink String?
 
   blockedDates   BlockedDate[]
   athletePlayers AthleteCategory[]
+  fees           RegistrationFee[]
   team           Team                   @relation(fields: [teamId], references: [id])
   championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
   categories     RegistrationCategory[]
+  financialInvoices FinancialInvoice[]
 
   @@unique([championshipId, teamId])
+}
+
+model FeeConfig {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  label       String
+  value       Float
+  category    String
+  description String?
+  isActive    Boolean  @default(true)
+  appliesFrom DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RegistrationFee {
+  id             String       @id @default(uuid())
+  registrationId String
+  feeKey         String
+  feeLabel       String
+  quantity       Int          @default(1)
+  unitValue      Float
+  totalValue     Float
+  notes          String?
+  status         String       @default("PENDING")
+  paidAt         DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  registration   Registration @relation(fields: [registrationId], references: [id], onDelete: Cascade)
+  financialInvoiceItems FinancialInvoiceItem[]
+
+  @@index([registrationId])
+}
+
+model FinancialInvoice {
+  id             String   @id @default(uuid())
+  number         String   @unique
+  teamId         String
+  championshipId String?
+  registrationId String?
+  status         String   @default("DRAFT")
+  issueDate      DateTime @default(now())
+  dueDate        DateTime?
+  subtotalCents  Int      @default(0)
+  discountCents  Int      @default(0)
+  totalCents     Int      @default(0)
+  paidCents      Int      @default(0)
+  balanceCents   Int      @default(0)
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  team           Team          @relation(fields: [teamId], references: [id])
+  championship   Championship? @relation(fields: [championshipId], references: [id])
+  registration   Registration? @relation(fields: [registrationId], references: [id])
+  items          FinancialInvoiceItem[]
+  payments       FinancialPayment[]
+  auditLogs      FinancialAuditLog[]
+
+  @@index([teamId])
+  @@index([championshipId])
+  @@index([registrationId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([issueDate])
+}
+
+model FinancialInvoiceItem {
+  id                String   @id @default(uuid())
+  invoiceId         String
+  registrationFeeId String?
+  feeKey            String?
+  description       String
+  quantity          Int      @default(1)
+  unitValueCents    Int
+  totalCents        Int
+  sourceType        String   @default("MANUAL")
+  createdAt         DateTime @default(now())
+
+  invoice           FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  registrationFee   RegistrationFee? @relation(fields: [registrationFeeId], references: [id])
+
+  @@index([invoiceId])
+  @@index([registrationFeeId])
+}
+
+model FinancialPayment {
+  id              String   @id @default(uuid())
+  invoiceId       String
+  amountCents     Int
+  method          String   @default("MANUAL")
+  status          String   @default("CONFIRMED")
+  paidAt          DateTime @default(now())
+  reference       String?
+  notes           String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  invoice         FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy       User?            @relation("FinancialPaymentCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@index([invoiceId])
+  @@index([status])
+  @@index([paidAt])
+}
+
+model FinancialAuditLog {
+  id              String   @id @default(uuid())
+  invoiceId       String
+  action          String
+  description     String
+  metadataJson    String?
+  createdByUserId String?
+  createdAt       DateTime @default(now())
+
+  invoice         FinancialInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  createdBy       User?            @relation("FinancialAuditLogCreatedBy", fields: [createdByUserId], references: [id])
+
+  @@index([invoiceId])
+  @@index([createdAt])
 }
 
 model RegistrationCategory {
@@ -195,89 +327,90 @@ model Block {
 }
 
 model Game {
-  id             String               @id @default(uuid())
-  championshipId String
-  categoryId     String
-  blockId        String?
-  homeTeamId     String
-  awayTeamId     String
-  phase          Int                  @default(1)
-  round          Int?                 @default(1)
-  dateTime       DateTime
-  altDateTime    DateTime?
-  location       String
-  city           String
-  court          String?
-  venue          String?
-  isReturn       Boolean              @default(false)
-  period         String?
-  status         String               @default("SCHEDULED")
-  liveStatus     String               @default("SCHEDULED")
-  currentPeriod  Int                  @default(0)
-  clockDisplay   String?
-  homeTimeoutsUsed Int                @default(0)
-  awayTimeoutsUsed Int                @default(0)
-  homeTeamFoulsCurrentPeriod Int      @default(0)
-  awayTeamFoulsCurrentPeriod Int      @default(0)
-  isLivePublished Boolean             @default(false)
-  officialReportId String?
-  homeScore      Int?
-  awayScore      Int?
-  wasRescheduled Boolean              @default(false)
-  rescheduleReason String?
-  blockedByTeamId String?
-  fibaFixtureId  String?
-  lastFibaSyncAt DateTime?
-  createdAt      DateTime             @default(now())
-  awayTeam       Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  homeTeam       Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  block          Block?               @relation(fields: [blockId], references: [id])
-  category       ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  championship   Championship         @relation(fields: [championshipId], references: [id], onDelete: Cascade)
-  playerStats    PlayerStat[]
-  refereeAssignments RefereeAssignment[]
-  liveSessions   GameLiveSession[]
-  rosters        GameRoster[]
-  officials      GameOfficial[]
-  events         GameEvent[]
-  playerStatLines GamePlayerStatLine[]
-  teamStatLines  GameTeamStatLine[]
-  periodScores   GamePeriodScore[]
-  auditLogs      GameAuditLog[]
-  officialReport GameOfficialReport?
+  id                         String               @id @default(uuid())
+  championshipId             String
+  categoryId                 String
+  blockId                    String?
+  homeTeamId                 String
+  awayTeamId                 String
+  phase                      Int                  @default(1)
+  round                      Int?                 @default(1)
+  dateTime                   DateTime
+  altDateTime                DateTime?
+  location                   String
+  city                       String
+  court                      String?
+  venue                      String?
+  isReturn                   Boolean              @default(false)
+  period                     String?
+  status                     String               @default("SCHEDULED")
+  liveStatus                 String               @default("SCHEDULED")
+  currentPeriod              Int                  @default(0)
+  clockDisplay               String?
+  homeTimeoutsUsed           Int                  @default(0)
+  awayTimeoutsUsed           Int                  @default(0)
+  homeTeamFoulsCurrentPeriod Int                  @default(0)
+  awayTeamFoulsCurrentPeriod Int                  @default(0)
+  isLivePublished            Boolean              @default(false)
+  officialReportId           String?
+  homeScore                  Int?
+  awayScore                  Int?
+  attendance                 Int?
+  wasRescheduled             Boolean              @default(false)
+  rescheduleReason           String?
+  blockedByTeamId            String?
+  fibaFixtureId              String?
+  lastFibaSyncAt             DateTime?
+  createdAt                  DateTime             @default(now())
+  awayTeam                   Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  homeTeam                   Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  block                      Block?               @relation(fields: [blockId], references: [id])
+  category                   ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  championship               Championship         @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  playerStats                PlayerStat[]
+  refereeAssignments         RefereeAssignment[]
+  liveSessions               GameLiveSession[]
+  rosters                    GameRoster[]
+  officials                  GameOfficial[]
+  events                     GameEvent[]
+  playerStatLines            GamePlayerStatLine[]
+  teamStatLines              GameTeamStatLine[]
+  periodScores               GamePeriodScore[]
+  auditLogs                  GameAuditLog[]
+  officialReport             GameOfficialReport?
 }
 
 model GameLiveSession {
-  id                     String    @id @default(uuid())
+  id                     String      @id @default(uuid())
   gameId                 String
-  status                 String    @default("PRE_GAME_READY")
+  status                 String      @default("PRE_GAME_READY")
   startedAt              DateTime?
   endedAt                DateTime?
   openedByUserId         String?
   closedByUserId         String?
   notes                  String?
-  publicVisibilityStatus String    @default("PRE_GAME")
-  currentPeriod          Int       @default(0)
-  clockStatus            String    @default("STOPPED")
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
-  game                   Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  publicVisibilityStatus String      @default("PRE_GAME")
+  currentPeriod          Int         @default(0)
+  clockStatus            String      @default("STOPPED")
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+  game                   Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
   events                 GameEvent[]
 
   @@index([gameId])
 }
 
 model GameRoster {
-  id                 String   @id @default(uuid())
+  id                 String             @id @default(uuid())
   gameId             String
   teamId             String
   coachName          String?
   assistantCoachName String?
-  isLocked           Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  game               Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  isLocked           Boolean            @default(false)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  game               Game               @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team               Team               @relation(fields: [teamId], references: [id], onDelete: Cascade)
   players            GameRosterPlayer[]
 
   @@unique([gameId, teamId])
@@ -285,19 +418,20 @@ model GameRoster {
 }
 
 model GameRosterPlayer {
-  id            String    @id @default(uuid())
-  gameRosterId  String
-  athleteId     String
-  jerseyNumber  Int?
-  isStarter     Boolean   @default(false)
-  isCaptain     Boolean   @default(false)
-  isAvailable   Boolean   @default(true)
-  isOnCourt     Boolean   @default(false)
-  status        String    @default("ACTIVE")
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  gameRoster    GameRoster @relation(fields: [gameRosterId], references: [id], onDelete: Cascade)
-  athlete       Athlete    @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  id             String     @id @default(uuid())
+  gameRosterId   String
+  athleteId      String
+  jerseyNumber   Int?
+  isStarter      Boolean    @default(false)
+  isCaptain      Boolean    @default(false)
+  isAvailable    Boolean    @default(true)
+  isOnCourt      Boolean    @default(false)
+  isDisqualified Boolean    @default(false)
+  status         String     @default("ACTIVE")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  gameRoster     GameRoster @relation(fields: [gameRosterId], references: [id], onDelete: Cascade)
+  athlete        Athlete    @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@unique([gameRosterId, athleteId])
   @@index([gameRosterId])
@@ -306,20 +440,20 @@ model GameRosterPlayer {
 
 model GameOfficial {
   id           String   @id @default(uuid())
-  gameId        String
-  officialType  String
-  name          String
-  refereeId     String?
-  role          String
-  createdAt     DateTime @default(now())
-  game          Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  referee       Referee? @relation(fields: [refereeId], references: [id], onDelete: SetNull)
+  gameId       String
+  officialType String
+  name         String
+  refereeId    String?
+  role         String
+  createdAt    DateTime @default(now())
+  game         Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  referee      Referee? @relation(fields: [refereeId], references: [id], onDelete: SetNull)
 
   @@index([gameId])
 }
 
 model GameEvent {
-  id                 String    @id @default(uuid())
+  id                 String          @id @default(uuid())
   gameId             String
   liveSessionId      String
   sequenceNumber     Int
@@ -336,42 +470,44 @@ model GameEvent {
   awayScoreAfter     Int?
   payloadJson        String?
   createdByUserId    String?
-  createdAt          DateTime  @default(now())
-  isReverted         Boolean   @default(false)
+  createdAt          DateTime        @default(now())
+  isCancelled        Boolean         @default(false)
+  isReverted         Boolean         @default(false)
   revertedAt         DateTime?
   revertedByUserId   String?
   correctionReason   String?
-  game               Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game               Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
   liveSession        GameLiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
-  team               Team?     @relation(fields: [teamId], references: [id], onDelete: SetNull)
-  athlete            Athlete?  @relation("GameEventAthlete", fields: [athleteId], references: [id], onDelete: SetNull)
-  secondaryAthlete   Athlete?  @relation("GameEventSecondaryAthlete", fields: [secondaryAthleteId], references: [id], onDelete: SetNull)
+  team               Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  athlete            Athlete?        @relation("GameEventAthlete", fields: [athleteId], references: [id], onDelete: SetNull)
+  secondaryAthlete   Athlete?        @relation("GameEventSecondaryAthlete", fields: [secondaryAthleteId], references: [id], onDelete: SetNull)
 
   @@index([gameId, sequenceNumber])
   @@index([liveSessionId])
 }
 
 model GamePlayerStatLine {
-  id                    String   @id @default(uuid())
-  gameId                 String
-  athleteId              String
-  teamId                 String
-  minutesPlayed          Int      @default(0)
-  points                 Int      @default(0)
-  fouls                  Int      @default(0)
-  assists                Int      @default(0)
-  reboundsOffensive      Int      @default(0)
-  reboundsDefensive      Int      @default(0)
-  reboundsTotal          Int      @default(0)
-  steals                 Int      @default(0)
-  blocks                 Int      @default(0)
-  turnovers              Int      @default(0)
-  twoPtMade              Int      @default(0)
-  twoPtAttempted         Int      @default(0)
-  threePtMade            Int      @default(0)
-  threePtAttempted       Int      @default(0)
-  freeThrowsMade         Int      @default(0)
-  freeThrowsAttempted    Int      @default(0)
+  id                  String   @id @default(uuid())
+  gameId              String
+  athleteId           String
+  teamId              String
+  minutesPlayed       Int      @default(0)
+  points              Int      @default(0)
+  fouls               Int      @default(0)
+  technicalFouls      Int      @default(0)
+  assists             Int      @default(0)
+  reboundsOffensive   Int      @default(0)
+  reboundsDefensive   Int      @default(0)
+  reboundsTotal       Int      @default(0)
+  steals              Int      @default(0)
+  blocks              Int      @default(0)
+  turnovers           Int      @default(0)
+  twoPtMade           Int      @default(0)
+  twoPtAttempted      Int      @default(0)
+  threePtMade         Int      @default(0)
+  threePtAttempted    Int      @default(0)
+  freeThrowsMade      Int      @default(0)
+  freeThrowsAttempted Int      @default(0)
   plusMinus              Int?
   isStarter              Boolean  @default(false)
   fouledOut              Boolean  @default(false)
@@ -394,26 +530,26 @@ model GamePlayerStatLine {
 }
 
 model GameTeamStatLine {
-  id                 String   @id @default(uuid())
-  gameId             String
-  teamId             String
-  points             Int      @default(0)
-  fouls              Int      @default(0)
-  timeoutsUsed       Int      @default(0)
-  reboundsTotal      Int      @default(0)
-  assists            Int      @default(0)
-  steals             Int      @default(0)
-  turnovers          Int      @default(0)
-  blocks             Int      @default(0)
-  twoPtMade          Int      @default(0)
-  twoPtAttempted     Int      @default(0)
-  threePtMade        Int      @default(0)
-  threePtAttempted   Int      @default(0)
-  freeThrowsMade     Int      @default(0)
-  freeThrowsAttempted Int     @default(0)
-  updatedAt          DateTime @updatedAt
-  game               Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  team               Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(uuid())
+  gameId              String
+  teamId              String
+  points              Int      @default(0)
+  fouls               Int      @default(0)
+  timeoutsUsed        Int      @default(0)
+  reboundsTotal       Int      @default(0)
+  assists             Int      @default(0)
+  steals              Int      @default(0)
+  turnovers           Int      @default(0)
+  blocks              Int      @default(0)
+  twoPtMade           Int      @default(0)
+  twoPtAttempted      Int      @default(0)
+  threePtMade         Int      @default(0)
+  threePtAttempted    Int      @default(0)
+  freeThrowsMade      Int      @default(0)
+  freeThrowsAttempted Int      @default(0)
+  updatedAt           DateTime @updatedAt
+  game                Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team                Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, teamId])
   @@index([gameId])
@@ -421,35 +557,35 @@ model GameTeamStatLine {
 
 model GamePeriodScore {
   id         String   @id @default(uuid())
-  gameId      String
-  period      Int
-  homePoints  Int      @default(0)
-  awayPoints  Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  game        Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  gameId     String
+  period     Int
+  homePoints Int      @default(0)
+  awayPoints Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, period])
   @@index([gameId])
 }
 
 model GameOfficialReport {
-  id               String   @id @default(uuid())
-  gameId            String   @unique
-  finalHomeScore    Int      @default(0)
-  finalAwayScore    Int      @default(0)
-  overtimeCount     Int      @default(0)
+  id                String    @id @default(uuid())
+  gameId            String    @unique
+  finalHomeScore    Int       @default(0)
+  finalAwayScore    Int       @default(0)
+  overtimeCount     Int       @default(0)
   officialPdfUrl    String?
   boxScoreJson      String?
   playByPlayJson    String?
   signedOffByUserId String?
   finalizedAt       DateTime?
-  createdAt         DateTime @default(now())
-  game              Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  createdAt         DateTime  @default(now())
+  game              Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 model GameAuditLog {
-  id            String   @id @default(uuid())
+  id             String   @id @default(uuid())
   gameId         String
   actionType     String
   actorUserId    String?
@@ -464,160 +600,220 @@ model GameAuditLog {
 }
 
 model Standing {
-  id         String               @id @default(uuid())
-  teamId     String
-  categoryId String
-  played     Int                  @default(0)
-  wins       Int                  @default(0)
-  losses     Int                  @default(0)
-  draws      Int                  @default(0)
-  points     Int                  @default(0)
-  pointsFor  Int                  @default(0)
-  pointsAg   Int                  @default(0)
-  pointsAgainst Int               @default(0)
-  diff       Int                  @default(0)
-  updatedAt  DateTime             @updatedAt
-  category   ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  team       Team                 @relation(fields: [teamId], references: [id])
+  id            String               @id @default(uuid())
+  teamId        String
+  categoryId    String
+  played        Int                  @default(0)
+  wins          Int                  @default(0)
+  losses        Int                  @default(0)
+  draws         Int                  @default(0)
+  points        Int                  @default(0)
+  pointsFor     Int                  @default(0)
+  pointsAg      Int                  @default(0)
+  pointsAgainst Int                  @default(0)
+  diff          Int                  @default(0)
+  updatedAt     DateTime             @updatedAt
+  category      ChampionshipCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  team          Team                 @relation(fields: [teamId], references: [id])
 
   @@unique([teamId, categoryId])
 }
 
 model Athlete {
-  id           String    @id @default(uuid())
-  name         String
-  birthDate    DateTime?
-  document     String?
-  sex          String?
-  photoUrl     String?
-  position     String?
-  jerseyNumber Int?
-  status           String    @default("ACTIVE")
-  federationStatus String    @default("ACTIVE")
+  id              String               @id @default(uuid())
+  name            String
+  birthDate       DateTime?
+  document        String?
+  sex             String?
+  photoUrl        String?
+  position        String?
+  jerseyNumber    Int?
+  status           String               @default("ACTIVE")
+  federationStatus String               @default("ACTIVE")
   teamId           String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-  team             Team?     @relation(fields: [teamId], references: [id])
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  team             Team?                @relation(fields: [teamId], references: [id])
   cards            AthleteIdCard[]
-  bidEntries   AthleteBidEntry[]
-  rosterEntries GameRosterPlayer[]
-  primaryEvents GameEvent[] @relation("GameEventAthlete")
-  secondaryEvents GameEvent[] @relation("GameEventSecondaryAthlete")
-  liveStatLines GamePlayerStatLine[]
+  bidEntries       AthleteBidEntry[]
+  rosterEntries   GameRosterPlayer[]
+  primaryEvents   GameEvent[]          @relation("GameEventAthlete")
+  secondaryEvents GameEvent[]          @relation("GameEventSecondaryAthlete")
+  liveStatLines   GamePlayerStatLine[]
+  registrationRequests AthleteRegistrationRequest[]
 
   @@index([teamId])
   @@index([document])
 }
 
 model AthleteIdCard {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   athleteId  String
-  cardNumber String   @unique
-  qrToken    String   @unique
-  issuedAt   DateTime @default(now())
+  cardNumber String    @unique
+  qrToken    String    @unique
+  issuedAt   DateTime  @default(now())
   expiresAt  DateTime?
-  status     String   @default("ACTIVE")
-  createdAt  DateTime @default(now())
-  athlete    Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  status     String    @default("ACTIVE")
+  createdAt  DateTime  @default(now())
+  athlete    Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 
   @@index([athleteId])
 }
 
 model AthleteBidEntry {
-  id             String   @id @default(uuid())
+  id             String        @id @default(uuid())
   athleteId      String
   championshipId String?
   teamFromId     String?
   teamToId       String?
-  type           String   @default("REGISTRATION")
-  status         String   @default("PENDING")
+  type           String        @default("REGISTRATION")
+  status         String        @default("PENDING")
   reason         String?
-  createdAt      DateTime @default(now())
-  athlete        Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now())
+  athlete        Athlete       @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   championship   Championship? @relation(fields: [championshipId], references: [id], onDelete: SetNull)
-  teamFrom       Team?    @relation("BidTeamFrom", fields: [teamFromId], references: [id], onDelete: SetNull)
-  teamTo         Team?    @relation("BidTeamTo", fields: [teamToId], references: [id], onDelete: SetNull)
+  teamFrom       Team?         @relation("BidTeamFrom", fields: [teamFromId], references: [id], onDelete: SetNull)
+  teamTo         Team?         @relation("BidTeamTo", fields: [teamToId], references: [id], onDelete: SetNull)
 
   @@index([athleteId])
   @@index([championshipId])
 }
 
+model AthleteRegistrationRequest {
+  id                       String       @id @default(uuid())
+  teamId                   String
+  athleteId                String?
+  status                   String       @default("DRAFT")
+  fullName                 String
+  birthDate                DateTime
+  documentNumber           String
+  documentNumberNormalized String
+  motherName               String?
+  phone                    String?
+  email                    String?
+  requestedCategoryLabel   String?
+  cbbRegistrationNumber    String?
+  cbbCheckStatus           String       @default("PENDING")
+  cbbCheckedAt             DateTime?
+  cbbCheckedByUserId       String?
+  cbbNotes                 String?
+  cbbReference             String?
+  cbbDocumentMatch         Boolean?
+  cbbNameMatch             Boolean?
+  cbbBirthDateMatch        Boolean?
+  submittedAt              DateTime?
+  reviewedAt               DateTime?
+  reviewedByUserId         String?
+  rejectionReason          String?
+  approvedAt               DateTime?
+  approvedByUserId         String?
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  team                     Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  athlete                  Athlete?     @relation(fields: [athleteId], references: [id], onDelete: SetNull)
+  cbbCheckedByUser         User?        @relation("AthleteRegistrationCbbCheckedBy", fields: [cbbCheckedByUserId], references: [id], onDelete: SetNull)
+  reviewedByUser           User?        @relation("AthleteRegistrationReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  approvedByUser           User?        @relation("AthleteRegistrationApprovedBy", fields: [approvedByUserId], references: [id], onDelete: SetNull)
+  auditLogs                AthleteRegistrationAuditLog[]
+
+  @@index([teamId])
+  @@index([athleteId])
+  @@index([status])
+  @@index([cbbCheckStatus])
+  @@index([documentNumberNormalized])
+}
+
+model AthleteRegistrationAuditLog {
+  id              String                     @id @default(uuid())
+  requestId       String
+  action          String
+  description     String
+  metadataJson    String?
+  createdByUserId String?
+  createdAt       DateTime                   @default(now())
+  request         AthleteRegistrationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  createdByUser   User?                      @relation("AthleteRegistrationAuditLogCreatedBy", fields: [createdByUserId], references: [id], onDelete: SetNull)
+
+  @@index([requestId])
+  @@index([createdByUserId])
+}
+
 model Referee {
-  id            String   @id @default(uuid())
+  id            String              @id @default(uuid())
   name          String
   licenseNumber String?
   phone         String?
   email         String?
   city          String?
   state         String?
-  status        String   @default("ACTIVE")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  status        String              @default("ACTIVE")
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
   assignments   RefereeAssignment[]
   gameOfficials GameOfficial[]
 }
 
 model RefereeAssignment {
-  id         String   @id @default(uuid())
-  gameId     String
-  refereeId  String
-  role       String   @default("MAIN")
-  status     String   @default("ASSIGNED")
-  notes      String?
-  createdAt  DateTime @default(now())
-  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  referee    Referee  @relation(fields: [refereeId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  gameId    String
+  refereeId String
+  role      String   @default("MAIN")
+  status    String   @default("ASSIGNED")
+  notes     String?
+  createdAt DateTime @default(now())
+  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  referee   Referee  @relation(fields: [refereeId], references: [id], onDelete: Cascade)
 
   @@index([gameId])
   @@index([refereeId])
 }
 
 model Sponsor {
-  id         String   @id @default(uuid())
+  id         String         @id @default(uuid())
   name       String
   logoUrl    String?
   websiteUrl String?
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isActive   Boolean        @default(true)
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
   clicks     SponsorClick[]
 }
 
 model SponsorClick {
-  id         String   @id @default(uuid())
-  sponsorId  String
-  source     String?
-  referrer   String?
-  createdAt  DateTime @default(now())
-  sponsor    Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  sponsorId String
+  source    String?
+  referrer  String?
+  createdAt DateTime @default(now())
+  sponsor   Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
 
   @@index([sponsorId])
 }
 
 model NewsPost {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  slug        String   @unique
+  slug        String    @unique
   excerpt     String?
   content     String
   coverUrl    String?
-  status      String   @default("DRAFT")
+  status      String    @default("DRAFT")
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model VideoPost {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
   title       String
-  slug        String   @unique
+  slug        String    @unique
   description String?
   videoUrl    String
   coverUrl    String?
-  status      String   @default("DRAFT")
+  status      String    @default("DRAFT")
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model SeasonRanking {
@@ -667,12 +863,12 @@ model Message {
 }
 
 model Holiday {
-  id               String   @id @default(uuid())
-  date             DateTime
-  name             String
-  year             Int
-  reason           String?
-  isFamilyHoliday  Boolean  @default(false)
+  id              String   @id @default(uuid())
+  date            DateTime
+  name            String
+  year            Int
+  reason          String?
+  isFamilyHoliday Boolean  @default(false)
 }
 
 model TeamMembership {
@@ -694,21 +890,21 @@ model TeamMembership {
 }
 
 model PlayerStat {
-  id          String   @id @default(uuid())
+  id          String @id @default(uuid())
   gameId      String
   teamId      String
   userId      String
-  points      Int      @default(0)
-  fouls       Int      @default(0)
-  assists     Int      @default(0)
-  rebounds    Int      @default(0)
-  blocks      Int      @default(0)
-  steals      Int      @default(0)
-  threePoints Int      @default(0)
+  points      Int    @default(0)
+  fouls       Int    @default(0)
+  assists     Int    @default(0)
+  rebounds    Int    @default(0)
+  blocks      Int    @default(0)
+  steals      Int    @default(0)
+  threePoints Int    @default(0)
 
-  game      Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  game Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, userId])
 }

@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { Sparkles, Users, Calendar, ArrowRight, ShieldCheck, AlertTriangle, Wand2 } from 'lucide-react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  Calendar,
+  CheckCircle2,
+  ShieldCheck,
+  Sparkles,
+  Target,
+  Users,
+} from 'lucide-react'
 import { OrganizationPlannerClient } from './OrganizationPlannerClient'
 
 export default async function OrganizationPage({
@@ -19,8 +28,8 @@ export default async function OrganizationPage({
       minTeamsPerCat: true,
       hasPlayoffs: true,
       startDate: true,
-      endDate: true
-    }
+      endDate: true,
+    },
   })
 
   const categoriesWithTeams = await prisma.championshipCategory.findMany({
@@ -29,222 +38,269 @@ export default async function OrganizationPage({
       _count: {
         select: {
           registrations: {
-            where: { registration: { status: 'CONFIRMED' } }
-          }
-        }
+            where: { registration: { status: 'CONFIRMED' } },
+          },
+        },
       },
       games: {
         where: { phase: 1 },
         take: 1,
-        select: { id: true }
-      }
+        select: { id: true },
+      },
     },
-    orderBy: { name: 'asc' }
+    orderBy: { name: 'asc' },
   })
 
   if (!championship) return <div>Campeonato nao encontrado</div>
 
   const minTeams = championship.minTeamsPerCat || 3
-
-  const categoriesReady = categoriesWithTeams.filter(
-    cat => cat._count.registrations >= minTeams
-  )
+  const categoriesReady = categoriesWithTeams.filter((cat) => cat._count.registrations >= minTeams)
+  const categoriesMissing = categoriesWithTeams.filter((cat) => cat._count.registrations < minTeams)
+  const categoriesOrganized = categoriesWithTeams.filter((cat) => cat.games.length > 0)
   const hasAnyReady = categoriesReady.length > 0
-  
-  const categoriesMissing = categoriesWithTeams.filter(cat => cat._count.registrations < minTeams)
+  const readinessScore = categoriesWithTeams.length > 0
+    ? Math.round((categoriesReady.length / categoriesWithTeams.length) * 100)
+    : 0
+  const totalConfirmedTeams = categoriesWithTeams.reduce((acc, cat) => acc + cat._count.registrations, 0)
+  const totalMissingTeams = categoriesMissing.reduce(
+    (acc, cat) => acc + Math.max(0, minTeams - cat._count.registrations),
+    0
+  )
+
+  const startLabel = championship.startDate
+    ? championship.startDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    : 'sem inicio'
+  const endLabel = championship.endDate
+    ? championship.endDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+    : 'sem fim'
 
   return (
-    <div className="space-y-8 pb-10 font-sans">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8 bg-[var(--gray-l)] p-8 rounded-[32px] border border-[var(--border)]">
-        <div>
-          <h2 className="fgb-display text-4xl text-[var(--black)] leading-none">
-            Organizacao
-          </h2>
-          <p className="fgb-label text-[var(--gray)] mt-2" style={{ fontSize: 10, letterSpacing: 2 }}>
-            Logistica, calendario e viabilidade por categoria
-          </p>
-        </div>
-      </div>
+    <div className="space-y-8 pb-10">
+      <section className="relative overflow-hidden rounded-[36px] border border-[var(--border)] bg-white p-6 shadow-sm md:p-8">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(245,194,0,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(27,115,64,0.13),transparent_32%)]" />
 
-      {/* Alerta de Viabilidade */}
-      {!hasAnyReady && (
-        <div className="bg-orange-50 border border-orange-200 rounded-[28px] p-8 flex flex-col md:flex-row items-start md:items-center gap-6 animate-in fade-in slide-in-from-top-2 duration-500 shadow-sm">
-          <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center flex-shrink-0 border border-orange-300">
-            <AlertTriangle className="w-6 h-6 text-orange-600" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-600 mb-2">
-              Acao requerida: categorias incompletas
-            </p>
-            <p className="text-sm text-[var(--gray)] font-medium leading-relaxed">
-              Nenhuma categoria atingiu o minimo de {minTeams} equipes confirmadas. A organizacao so sera possivel quando ao menos uma categoria estiver pronta.
-            </p>
-            <div className="flex flex-wrap gap-2 mt-4">
-               {categoriesMissing.map(cat => (
-                 <span key={cat.id} className="text-[9px] font-black uppercase px-3 py-1 bg-white border border-[var(--border)] rounded-lg text-orange-600 shadow-sm">
-                    {cat.name}: falta {minTeams - cat._count.registrations}
-                 </span>
-               ))}
+        <div className="relative grid gap-8 xl:grid-cols-[1fr_360px] xl:items-end">
+          <div>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-[var(--verde)] px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-white">
+                Organizacao IA
+              </span>
+              <span className="rounded-full border border-[var(--border)] bg-white px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--gray)]">
+                {startLabel} - {endLabel}
+              </span>
             </div>
+            <h1 className="fgb-display max-w-4xl text-4xl leading-none text-[var(--black)] md:text-6xl">
+              Centro de organizacao do campeonato
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-[var(--gray)]">
+              Antes de gerar jogos, a tela mostra se cada categoria esta pronta, o que ainda falta
+              e qual acao destrava a proxima etapa.
+            </p>
           </div>
-          <Link
-            href={`/admin/championships/${id}/registrations`}
-            className="px-6 h-11 bg-white border border-[var(--border)] hover:bg-[var(--amarelo)] hover:border-[#E66000] text-[var(--black)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 whitespace-nowrap shadow-sm"
-          >
-            Gerenciar inscricoes <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="rounded-[30px] border border-[var(--border)] bg-[var(--black)] p-5 text-white shadow-premium">
+            <div className="mb-5 flex items-center justify-between">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/55">Prontidao</p>
+              <Target className="h-5 w-5 text-[var(--yellow)]" />
+            </div>
+            <div className="flex items-end gap-2">
+              <p className="fgb-display text-6xl leading-none text-white">{readinessScore}</p>
+              <p className="mb-2 text-xl font-black text-[var(--yellow)]">%</p>
+            </div>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/12">
+              <div className="h-full rounded-full bg-[var(--yellow)]" style={{ width: `${readinessScore}%` }} />
+            </div>
+            <p className="mt-4 text-xs font-semibold leading-5 text-white/65">
+              {hasAnyReady
+                ? `${categoriesReady.length} de ${categoriesWithTeams.length} categorias prontas para planejamento.`
+                : `Faltam ${totalMissingTeams} equipe(s) para liberar a primeira organizacao.`}
+            </p>
+          </div>
         </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Categorias prontas</p>
+          <p className="fgb-display mt-4 text-4xl leading-none text-[var(--black)]">{categoriesReady.length}</p>
+        </div>
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Equipes confirmadas</p>
+          <p className="fgb-display mt-4 text-4xl leading-none text-[var(--black)]">{totalConfirmedTeams}</p>
+        </div>
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Minimo por categoria</p>
+          <p className="fgb-display mt-4 text-4xl leading-none text-[var(--black)]">{minTeams}</p>
+        </div>
+        <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">
+          <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 9 }}>Ja organizadas</p>
+          <p className="fgb-display mt-4 text-4xl leading-none text-[var(--black)]">{categoriesOrganized.length}</p>
+        </div>
+      </section>
+
+      {!hasAnyReady && (
+        <section className="rounded-[28px] border border-orange-200 bg-orange-50 p-6 shadow-sm md:p-7">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-orange-200 bg-white">
+              <AlertTriangle className="h-6 w-6 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700">
+                Acao requerida
+              </p>
+              <h2 className="mt-2 text-lg font-black text-[var(--black)]">Ainda nao ha categoria viavel</h2>
+              <p className="mt-1 text-sm font-medium leading-6 text-orange-800/75">
+                Confirme mais equipes antes de usar a IA. O sistema precisa de ao menos {minTeams}
+                equipes em uma categoria para montar confrontos com seguranca.
+              </p>
+            </div>
+            <Link
+              href={`/admin/championships/${id}/registrations`}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:-translate-y-0.5 hover:bg-[var(--yellow)]"
+            >
+              Gerenciar inscricoes
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </div>
+        </section>
       )}
 
       {hasAnyReady && categoriesMissing.length > 0 && (
-        <div className="bg-white border border-[var(--border)] rounded-[24px] p-6 flex flex-col md:flex-row items-start md:items-center gap-5">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--gray-l)] flex items-center justify-center flex-shrink-0 border border-[var(--border)]">
-            <Sparkles className="w-5 h-5 text-[var(--gray)]" />
+        <section className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm md:p-7">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-[var(--border)] bg-[var(--gray-l)]">
+              <Sparkles className="h-6 w-6 text-[var(--verde)]" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--verde)]">
+                Organizacao parcial liberada
+              </p>
+              <h2 className="mt-2 text-lg font-black text-[var(--black)]">A IA vai planejar somente o que esta pronto</h2>
+              <p className="mt-1 text-sm font-medium leading-6 text-[var(--gray)]">
+                Categorias pendentes continuam visiveis no painel, sem bloquear as categorias que ja atingiram o minimo.
+              </p>
+            </div>
+            <Link
+              href={`/admin/championships/${id}/registrations`}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--yellow)] hover:bg-[var(--yellow)]"
+            >
+              Ver pendencias
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
           </div>
-          <div className="flex-1">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)] mb-2">
-              Organizacao parcial liberada
-            </p>
-            <p className="text-sm text-[var(--gray)] font-medium leading-relaxed">
-              A IA vai organizar apenas as categorias que ja atingiram o minimo. As demais permanecem pendentes.
-            </p>
-          </div>
-          <Link
-            href={`/admin/championships/${id}/registrations`}
-            className="px-5 h-10 bg-[var(--gray-l)] border border-[var(--border)] text-[var(--black)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 whitespace-nowrap"
-          >
-            Ver pendencias <ArrowRight className="w-3 h-3" />
-          </Link>
-        </div>
+        </section>
       )}
 
       {hasAnyReady && (
-        <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <section className="space-y-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)]">Planejamento com IA</p>
-              <h3 className="fgb-display text-2xl text-[var(--black)] mt-2">Organizacao automatica</h3>
-              <p className="text-sm text-[var(--gray)] mt-1">
-                A IA monta o calendario completo dentro das regras e janelas configuradas.
+              <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Planejamento com IA</p>
+              <h2 className="fgb-display mt-2 text-3xl leading-none text-[var(--black)]">Gerar tabela de jogos</h2>
+              <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-[var(--gray)]">
+                Use quando as inscricoes ja estiverem validadas. Depois de aplicar o calendario,
+                os ajustes finos ficam na tela de jogos.
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="fgb-badge fgb-badge-verde">IA</span>
-              <span className="fgb-badge fgb-badge-outline">Planejamento</span>
-            </div>
+            <Link
+              href={`/admin/championships/${id}/jogos`}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--yellow)] hover:bg-[var(--yellow)]"
+            >
+              Ajustar manualmente
+              <Calendar className="h-3.5 w-3.5" />
+            </Link>
           </div>
 
           <OrganizationPlannerClient
             championshipId={id}
             championshipName={championship.name}
           />
-
-          <div className="fgb-card bg-white p-6 border border-[var(--border)] rounded-[28px]">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--gray)]">Gestao e otimizacao</p>
-                <h4 className="text-lg font-black text-[var(--black)] mt-2">Ajustes finos apos planejamento</h4>
-                <p className="text-sm text-[var(--gray)] mt-1">
-                  Depois de aplicar o calendario, use a IA para otimizar datas ou ajuste manualmente.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button className="flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
-                  <Wand2 className="h-3.5 w-3.5" />
-                  Otimizar com IA
-                </button>
-                <Link
-                  href={`/admin/championships/${id}/jogos`}
-                  className="flex items-center gap-2 rounded-xl bg-[var(--amarelo)] px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[var(--black)]"
-                >
-                  Ajustar manualmente
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        </section>
       )}
 
-      {/* Grid de Categorias */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categoriesWithTeams.map(cat => {
-          const count = cat._count.registrations
-          const ready = count >= minTeams
-          const hasGames = cat.games.length > 0
-          const pct = Math.min(100, Math.round((count / minTeams) * 100))
+      <section className="space-y-4">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10 }}>Mapa de categorias</p>
+            <h2 className="fgb-display mt-2 text-2xl leading-none text-[var(--black)]">Prontidao por categoria</h2>
+          </div>
+          <p className="text-xs font-semibold leading-5 text-[var(--gray)]">
+            Verde: pronta ou organizada. Amarelo: precisa de inscricoes.
+          </p>
+        </div>
 
-          return (
-            <div
-              key={cat.id}
-              className={`fgb-card bg-white p-8 transition-all group ${
-                ready ? 'border-green-200 hover:border-green-400 shadow-sm' : 'hover:border-orange-200'
-              }`}
-            >
-              <div className="flex items-start justify-between mb-8">
-                <div className="space-y-1">
-                  <p className="fgb-display text-xl text-[var(--black)] leading-none group-hover:text-green-600 transition-colors">
-                    {cat.name}
-                  </p>
-                  <p className="fgb-label text-[var(--gray)]" style={{ fontSize: 10, letterSpacing: 2 }}>Categoria Oficial</p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {categoriesWithTeams.map((cat) => {
+            const count = cat._count.registrations
+            const ready = count >= minTeams
+            const hasGames = cat.games.length > 0
+            const pct = Math.min(100, Math.round((count / minTeams) * 100))
+
+            return (
+              <div
+                key={cat.id}
+                className="group rounded-[26px] border border-[var(--border)] bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="mb-5 flex items-start justify-between gap-4">
+                  <div>
+                    <p className="fgb-display text-2xl leading-none text-[var(--black)]">{cat.name}</p>
+                    <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[var(--gray)]">
+                      Categoria oficial
+                    </p>
+                  </div>
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${
+                    hasGames
+                      ? 'border-green-200 bg-green-50 text-green-600'
+                      : ready
+                        ? 'border-[var(--yellow)]/40 bg-[var(--yellow-light)] text-[var(--black)]'
+                        : 'border-[var(--border)] bg-[var(--gray-l)] text-[var(--gray)]'
+                  }`}>
+                    {hasGames ? <ShieldCheck className="h-5 w-5" /> : ready ? <CheckCircle2 className="h-5 w-5" /> : <Users className="h-5 w-5" />}
+                  </div>
                 </div>
-                {hasGames ? (
-                  <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center border border-green-200">
-                    <ShieldCheck className="w-5 h-5 text-green-600" />
+
+                <div className="mb-5">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
+                      Equipes confirmadas
+                    </span>
+                    <span className={`text-sm font-black ${ready ? 'text-[var(--verde)]' : 'text-orange-600'}`}>
+                      {count}/{minTeams}
+                    </span>
                   </div>
-                ) : ready ? (
-                  <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-200">
-                    <Users className="w-5 h-5 text-orange-600" />
+                  <div className="h-2 overflow-hidden rounded-full border border-[var(--border)] bg-[var(--gray-l)]">
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${ready ? 'bg-[var(--verde)]' : 'bg-[var(--yellow)]'}`}
+                      style={{ width: `${pct}%` }}
+                    />
                   </div>
-                ) : (
-                  <div className="w-10 h-10 rounded-xl bg-[var(--gray-l)] flex items-center justify-center border border-[var(--border)]">
-                    <Users className="w-5 h-5 text-[var(--gray)]" />
-                  </div>
-                )}
+                </div>
+
+                <div className="flex items-center justify-between border-t border-[var(--border)] pt-4">
+                  <span className={`rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${
+                    hasGames
+                      ? 'bg-green-50 text-green-700'
+                      : ready
+                        ? 'bg-[var(--yellow-light)] text-[var(--black)]'
+                        : 'bg-[var(--gray-l)] text-[var(--gray)]'
+                  }`}>
+                    {hasGames ? 'Organizada' : ready ? 'Pronta para IA' : `Faltam ${Math.max(0, minTeams - count)}`}
+                  </span>
+                  {hasGames && (
+                    <Link
+                      href={`/admin/championships/${id}/jogos`}
+                      className="inline-flex h-8 items-center gap-1.5 rounded-xl border border-[var(--border)] bg-[var(--gray-l)] px-3 text-[9px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--yellow)] hover:bg-[var(--yellow)]"
+                    >
+                      Jogos
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  )}
+                </div>
               </div>
-
-              <div className="space-y-6">
-                <div>
-                   <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest">
-                        Equipes Confirmadas
-                      </span>
-                      <span className={`text-lg font-black ${ready ? 'text-green-600' : 'text-orange-600'}`}>
-                        {count} <span className="text-slate-400 text-xs">/ {minTeams}</span>
-                      </span>
-                   </div>
-                   <div className="h-2 bg-[var(--gray-l)] rounded-full overflow-hidden border border-[var(--border)]">
-                      <div
-                        className={`h-full rounded-full transition-all duration-700 ${ready ? 'bg-[var(--verde)] shadow-sm' : 'bg-[var(--amarelo)]'}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                   </div>
-                </div>
-
-                <div className="pt-6 border-t border-[var(--border)] flex items-center justify-between">
-                   <div className="flex flex-col">
-                      <span className="text-[8px] font-black text-[var(--gray)] uppercase tracking-widest">Estado</span>
-                      <span className={`text-[10px] font-black uppercase mt-1 ${
-                        hasGames ? 'text-green-600' : ready ? 'text-orange-600' : 'text-[var(--gray)]'
-                      }`}>
-                         {hasGames ? '✓ Organizado' : ready ? 'Ready to IA' : 'Aguardando'}
-                      </span>
-                   </div>
-                   {hasGames && (
-                      <Link
-                        href={`/admin/championships/${id}/jogos`}
-                        className="text-[9px] font-black uppercase tracking-widest text-[var(--black)] hover:bg-[var(--amarelo)] hover:border-[#E66000] border border-[var(--border)] flex items-center gap-1.5 bg-[var(--gray-l)] px-4 h-8 rounded-lg transition-all shadow-sm"
-                      >
-                         Jogos <Calendar className="w-3 h-3 text-[var(--black)]" />
-                      </Link>
-                   )}
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+            )
+          })}
+        </div>
+      </section>
     </div>
   )
 }

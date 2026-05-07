@@ -1,10 +1,5 @@
-import { LiveGamePublicView } from '@/modules/live-game/components/live-game-public-view'
+import { GamePlayByPlayContent } from '@/modules/live-game/components/public/game-play-by-play-content'
 
-export default async function PublicPlayByPlayPage({
-  params,
-}: {
-  params: Promise<{ id: string }>
-}) {
-  const { id } = await params
-  return <LiveGamePublicView gameId={id} mode="play-by-play" />
+export default async function PublicPlayByPlayPage() {
+  return <GamePlayByPlayContent />
 }

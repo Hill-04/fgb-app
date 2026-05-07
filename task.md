@@ -1,0 +1,22 @@
+# Tarefas - Fase 4: Roster Oficial e Elegibilidade por Jogo
+
+- [x] API de Roster (`src/app/api/admin/jogos/[id]/roster/route.ts`)
+    - [x] Endpoint GET
+    - [x] Endpoint POST com validações (5 titulares, travar/destravar, bloqueio finished)
+- [x] UI de Roster/Pré-Jogo (`src/app/admin/jogos/[id]/roster/page.tsx`)
+    - [x] Layout de duas colunas
+    - [x] Seleção de atletas e edição de Jersey/Titular/DNP
+    - [x] Ações de Salvar e Travar
+- [x] Integração no Detalhe do Jogo (`src/app/admin/jogos/[id]/page.tsx`)
+    - [x] Botão "Gerenciar Roster"
+    - [x] Indicador de status (Não definido, Salvo, Travado)
+- [x] Ajustes na Tela de Stats (`src/app/admin/jogos/[id]/stats/page.tsx`)
+    - [x] Filtrar por roster oficial
+    - [x] Tratamento visual de DNP
+    - [x] Banner de aviso de roster
+- [x] Ajustes na API de Stats (`src/app/api/admin/jogos/[id]/stats/route.ts`)
+    - [x] Validação de pertencimento ao roster
+    - [x] Bloqueio de stats para DNP
+- [x] Validação Final
+    - [x] `npx tsc --noEmit`
+    - [x] Commit e Push

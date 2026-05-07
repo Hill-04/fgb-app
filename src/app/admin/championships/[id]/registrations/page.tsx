@@ -1,8 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { Loader2, Pencil, Plus, Shield, Trash2 } from 'lucide-react'
+import { FileText, Loader2, Pencil, Plus, Receipt, Shield, Trash2 } from 'lucide-react'
+
+import { formatCurrencyBRL } from '@/lib/fees'
+import { formatCurrencyCentsBRL } from '@/lib/finance'
 
 type Category = { id: string; name: string }
 type Team = { id: string; name: string }
@@ -34,6 +38,18 @@ type Registration = {
   coachMultiTeam?: boolean
   blockedDates: BlockedDateEntry[]
   athletePlayers: Array<Omit<AthleteEntry, 'categoryIds'> & { categoryIds: string | string[] }>
+  feeSummary?: {
+    total: number
+    pendingTotal: number
+    paidTotal: number
+  }
+  financialInvoice?: {
+    id: string
+    number: string
+    status: string
+    totalCents: number
+    balanceCents: number
+  } | null
 }
 
 type Championship = {
@@ -341,6 +357,7 @@ export default function RegistrationsPage() {
                 <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Equipe</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Categorias</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Restricoes</th>
+                <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Taxas</th>
                 <th className="px-6 py-4 text-left text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Status</th>
                 <th className="px-6 py-4 text-right text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">Acoes</th>
               </tr>
@@ -380,6 +397,32 @@ export default function RegistrationsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
+                    <Link
+                      href={`/admin/championships/${id}/registrations/${registration.id}/fees`}
+                      className="inline-flex flex-col gap-1 rounded-2xl border border-[var(--border)] bg-white px-3 py-2 text-left shadow-sm transition-all hover:border-orange-200 hover:bg-orange-50"
+                    >
+                      <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
+                        <Receipt className="h-3 w-3 text-orange-600" />
+                        Total {formatCurrencyBRL(registration.feeSummary?.total || 0)}
+                      </span>
+                      <span className="text-[9px] font-bold text-red-600">
+                        Pendente {formatCurrencyBRL(registration.feeSummary?.pendingTotal || 0)}
+                      </span>
+                      <span className="text-[9px] font-bold text-green-700">
+                        Pago {formatCurrencyBRL(registration.feeSummary?.paidTotal || 0)}
+                      </span>
+                      {registration.financialInvoice ? (
+                        <span className="mt-1 border-t border-[var(--border)] pt-1 text-[9px] font-black uppercase tracking-widest text-[var(--verde)]">
+                          Fatura {registration.financialInvoice.number} | {formatCurrencyCentsBRL(registration.financialInvoice.balanceCents)}
+                        </span>
+                      ) : (
+                        <span className="mt-1 border-t border-[var(--border)] pt-1 text-[9px] font-bold text-[var(--gray)]">
+                          Sem fatura vinculada
+                        </span>
+                      )}
+                    </Link>
+                  </td>
+                  <td className="px-6 py-4">
                     <span
                       className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm ${
                         registration.status === 'CONFIRMED'
@@ -398,6 +441,22 @@ export default function RegistrationsPage() {
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
+                      <Link
+                        href={`/admin/championships/${id}/registrations/${registration.id}/fees`}
+                        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-green-50 hover:text-green-700"
+                        title="Taxas da inscricao"
+                      >
+                        <Receipt className="h-4 w-4" />
+                      </Link>
+                      {registration.financialInvoice ? (
+                        <Link
+                          href={`/admin/financeiro/faturas/${registration.financialInvoice.id}`}
+                          className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-yellow-50 hover:text-yellow-700"
+                          title={`Fatura ${registration.financialInvoice.number}`}
+                        >
+                          <FileText className="h-4 w-4" />
+                        </Link>
+                      ) : null}
                       <button
                         onClick={() => handleDelete(registration.id)}
                         className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-red-50 hover:text-red-500"
