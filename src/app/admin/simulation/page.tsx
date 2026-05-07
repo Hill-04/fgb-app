@@ -19,6 +19,8 @@ type Step = {
     championshipId: string
     championshipName: string
     totalGames: number
+    totalAthletes: number
+    totalStatLines: number
     isSimulation: boolean
   }
 }
@@ -37,7 +39,9 @@ const INITIAL_STEPS: Step[] = [
   { step: 4, label: 'Gerar Confrontos da Fase 1', status: 'idle' },
   { step: 5, label: 'Definir Datas e Locais', status: 'idle' },
   { step: 6, label: 'Simular Resultados', status: 'idle' },
-  { step: 7, label: 'Resumo Final', status: 'idle' },
+  { step: 7, label: 'Criar Atletas Simulados', status: 'idle' },
+  { step: 8, label: 'Gerar Súmulas Completas', status: 'idle' },
+  { step: 9, label: 'Resumo Final', status: 'idle' },
 ]
 
 const ALL_CATEGORIES = ['Sub 11', 'Sub 12', 'Sub 13', 'Sub 14', 'Sub 15', 'Sub 16', 'Sub 17', 'Sub 18', 'Sub 19', 'Sub 20']
@@ -508,8 +512,16 @@ export default function SimulationPage() {
                       <span className="text-white font-black truncate max-w-[150px]">{summary.championshipName}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs border-t border-white/10 pt-4">
-                      <span className="text-white/60 font-bold uppercase tracking-tight">Jogos Criados</span>
+                      <span className="text-white/60 font-bold uppercase tracking-tight">Jogos</span>
                       <span className="text-white font-black">{summary.totalGames}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs border-t border-white/10 pt-4">
+                      <span className="text-white/60 font-bold uppercase tracking-tight">Atletas</span>
+                      <span className="text-white font-black">{summary.totalAthletes}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-xs border-t border-white/10 pt-4">
+                      <span className="text-white/60 font-bold uppercase tracking-tight">Linhas de Stats</span>
+                      <span className="text-white font-black">{summary.totalStatLines}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs border-t border-white/10 pt-4">
                       <span className="text-white/60 font-bold uppercase tracking-tight">Tipo de Dados</span>
@@ -519,12 +531,12 @@ export default function SimulationPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-3 pt-2">
-                  <Link href="/admin/standings">
+                  <Link href="/admin/championships">
                     <Button className="w-full bg-white text-[var(--verde)] font-bold font-sans h-12 rounded-xl text-xs uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02]">
-                      Explorar Classificação <ChevronRight className="w-4 h-4 ml-1" />
+                      Ver Campeonato <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </Link>
-                  <Link href="/admin/results">
+                  <Link href={`/admin/championships/${summary.championshipId}/jogos`}>
                     <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 font-bold h-12 rounded-xl text-xs uppercase tracking-widest font-sans">
                       Validar Súmulas
                     </Button>
