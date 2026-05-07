@@ -47,7 +47,7 @@ const adminNavGroups = [
     label: 'Publicacao',
     items: [
       { href: '/admin/sponsors',      label: 'Patrocinadores', icon: Trophy },
-      { href: '/admin/news',          label: 'Noticias',      icon: Newspaper },
+      { href: '/admin/news',          label: 'Conteúdo',      icon: Newspaper },
       { href: '/admin/videos',        label: 'Videos',        icon: Video },
     ],
   },
