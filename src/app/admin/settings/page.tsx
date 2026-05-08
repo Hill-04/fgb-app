@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { Settings, Shield, Globe, Bell, Database, Lock } from 'lucide-react'
+import { SeedDataButton } from '@/components/SeedDataButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -136,6 +137,22 @@ export default async function AdminSettingsPage() {
             </div>
           )
         })}
+      </div>
+
+      {/* Importação de Dados Reais */}
+      <div className="bg-white rounded-[32px] border border-[var(--border)] shadow-sm p-8">
+        <div className="flex items-start gap-5 mb-6">
+          <div className="w-14 h-14 rounded-2xl bg-[#E8F4FF] flex items-center justify-center flex-shrink-0">
+            <Database className="w-7 h-7 text-[#0066CC]" />
+          </div>
+          <div>
+            <h2 className="fgb-display text-xl text-[var(--black)] leading-none">Importação de Dados Reais</h2>
+            <p className="fgb-label text-[var(--gray)] mt-1.5" style={{ fontSize: 10, textTransform: 'none', letterSpacing: 0, opacity: 0.7 }}>
+              Importa os dados originais da FGB: 18 clubes, 676 atletas e 48 treinadores. Remove dados fictícios de teste.
+            </p>
+          </div>
+        </div>
+        <SeedDataButton />
       </div>
 
       <div className="relative group p-1 bg-gradient-to-r from-[var(--verde)] via-[var(--yellow)] to-[var(--red)] rounded-[28px] overflow-hidden shadow-lg transition-all hover:scale-[1.01] hover:shadow-premium">
