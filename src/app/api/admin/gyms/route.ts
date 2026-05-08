@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function GET(req: NextRequest) {
   try {
+    await ensureDatabaseSchema()
     const { searchParams } = new URL(req.url)
     const teamId = searchParams.get('teamId')
     const city = searchParams.get('city')

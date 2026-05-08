@@ -38,18 +38,17 @@ const adminNavGroups = [
     ],
   },
   {
-    label: 'Gestao',
+    label: 'Financeiro',
     items: [
-      { href: '/admin/fees',          label: 'Taxas de Clube', icon: DollarSign },
-      { href: '/admin/financeiro',    label: 'Financeiro',    icon: Wallet },
-      { href: '/admin/financeiro/faturas', label: 'Faturas', icon: Receipt },
-      { href: '/admin/financeiro/taxas', label: 'Config. Taxas', icon: Coins },
+      { href: '/admin/fees',               label: 'Taxas de Clube',  icon: DollarSign },
+      { href: '/admin/financeiro',         label: 'Financeiro',      icon: Wallet },
+      { href: '/admin/financeiro/faturas', label: 'Faturas',         icon: Receipt },
+      { href: '/admin/financeiro/taxas',   label: 'Config. Taxas',   icon: Coins },
     ],
   },
   {
     label: 'Ferramentas',
     items: [
-      { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
       { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
     ],
   },

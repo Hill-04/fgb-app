@@ -34,13 +34,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'championshipId é obrigatório' }, { status: 400 })
   }
 
+  const teamSel = { select: { id: true, name: true, logoUrl: true, city: true } }
   const games = await prisma.game.findMany({
     where: { championshipId },
-    include: {
-      homeTeam: true,
-      awayTeam: true,
-      category: true,
-    },
+    include: { homeTeam: teamSel, awayTeam: teamSel, category: true },
     orderBy: [{ dateTime: 'asc' }, { round: 'asc' }],
   })
 
@@ -100,6 +97,7 @@ export async function POST(request: Request) {
     }
   }
 
+  const gameSel = { select: { id: true, name: true, logoUrl: true, city: true } }
   const game = await prisma.game.create({
     data: {
       championshipId: category.championshipId,
@@ -114,11 +112,7 @@ export async function POST(request: Request) {
       round: Number(round) || 1,
       status: 'SCHEDULED',
     },
-    include: {
-      homeTeam: true,
-      awayTeam: true,
-      category: true,
-    },
+    include: { homeTeam: gameSel, awayTeam: gameSel, category: true },
   })
 
   return NextResponse.json({

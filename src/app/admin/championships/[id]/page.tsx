@@ -8,6 +8,7 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { DashboardErrorActions } from '@/components/DashboardErrorActions'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +20,8 @@ export default async function ChampionshipDetailsPage({
   const { id } = await params
 
   try {
+    await ensureDatabaseSchema()
+
     const championship = await prisma.championship.findUnique({
       where: { id },
       include: {
@@ -81,35 +84,29 @@ export default async function ChampionshipDetailsPage({
       where: { categoryId: firstCategory.id },
       orderBy: [{ points: 'desc' }, { wins: 'desc' }],
       take: 5,
-      include: {
-        team: {
-          select: {
-            id: true,
-            name: true,
-            logoUrl: true,
-          }
-        }
-      }
+      include: { team: { select: { id: true, name: true, logoUrl: true, city: true } } }
     }) : []
+
+    const teamSelect = { select: { id: true, name: true, logoUrl: true, city: true } }
 
     const nextGame = await prisma.game.findFirst({
       where: { championshipId: id, status: 'SCHEDULED', dateTime: { gt: new Date() } },
       orderBy: { dateTime: 'asc' },
-      include: { homeTeam: true, awayTeam: true, category: true }
+      include: { homeTeam: teamSelect, awayTeam: teamSelect, category: true }
     })
 
     const lastResults = await prisma.game.findMany({
       where: { championshipId: id, status: 'FINISHED' },
       orderBy: { dateTime: 'desc' },
       take: 5,
-      include: { homeTeam: true, awayTeam: true, category: true }
+      include: { homeTeam: teamSelect, awayTeam: teamSelect, category: true }
     })
 
     const upcomingGames = await prisma.game.findMany({
       where: { championshipId: id, status: 'SCHEDULED' },
       orderBy: { dateTime: 'asc' },
       take: 5,
-      include: { homeTeam: true, awayTeam: true, category: true }
+      include: { homeTeam: teamSelect, awayTeam: teamSelect, category: true }
     })
 
     const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({

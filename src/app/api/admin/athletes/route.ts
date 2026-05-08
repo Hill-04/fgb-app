@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
 import { requireAdminSession } from '@/lib/athlete-registration-server'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function GET() {
+  await ensureDatabaseSchema()
   const session = await requireAdminSession()
   if (!session) {
     return NextResponse.json({ error: 'Nao autorizado' }, { status: 401 })
