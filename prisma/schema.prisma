@@ -39,6 +39,26 @@ model Team {
   totalFeesOwed       Float                @default(0)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  // Diretoria
+  presidentName       String?
+  presidentPhone      String?
+  presidentMobile     String?
+  presidentEmail      String?
+  secretaryName       String?
+  secretaryPhone      String?
+  secretaryMobile     String?
+  secretaryEmail      String?
+  financialName       String?
+  financialPhone      String?
+  financialMobile     String?
+  financialEmail      String?
+  // Institucional
+  cnpj                String?
+  website             String?
+  instagram           String?
+  whatsapp            String?
+  observations        String?
+  isActive            Boolean              @default(true)
   awayGames           Game[]               @relation("AwayTeam")
   homeGames           Game[]               @relation("HomeTeam")
   gym                 Gym?
@@ -58,18 +78,31 @@ model Team {
   bidEntriesTo        AthleteBidEntry[]    @relation("BidTeamTo")
   financialInvoices   FinancialInvoice[]
   athleteRegistrationRequests AthleteRegistrationRequest[]
+  coachStaff          CoachStaff[]
+  teamFees            TeamFee[]
+  officialRosters     OfficialRoster[]
 }
 
 model Gym {
-  id           String  @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
-  address      String
+  address      String?
   city         String
-  capacity     Int
-  availability String
-  canHost      Boolean @default(true)
-  teamId       String  @unique
-  team         Team    @relation(fields: [teamId], references: [id])
+  state        String   @default("RS")
+  capacity     Int?
+  courts       Int      @default(1)
+  phone        String?
+  lat          Float?
+  lng          Float?
+  observations String?
+  availability String?
+  canHost      Boolean  @default(true)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  teamId       String?  @unique
+  team         Team?    @relation(fields: [teamId], references: [id])
+
+  @@index([city])
 }
 
 model Championship {
@@ -115,6 +148,7 @@ model Championship {
   registrations            Registration[]
   bidEntries               AthleteBidEntry[]
   financialInvoices        FinancialInvoice[]
+  officialRosters          OfficialRoster[]
 }
 
 model ChampionshipCategory {
@@ -620,30 +654,77 @@ model Standing {
 }
 
 model Athlete {
-  id              String               @id @default(uuid())
-  name            String
-  birthDate       DateTime?
-  document        String?
-  sex             String?
-  photoUrl        String?
-  position        String?
-  jerseyNumber    Int?
+  id               String               @id @default(uuid())
+  name             String
+  birthDate        DateTime?
+  document         String?
+  sex              String?
+  photoUrl         String?
+  position         String?
+  jerseyNumber     Int?
   status           String               @default("ACTIVE")
   federationStatus String               @default("ACTIVE")
   teamId           String?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
+  // Identificação FGB/CBB
+  registrationNumber  Int?
+  registrationCBB     String?
+  registrationPrev    String?
+  filiationDate       DateTime?
+  // Pessoal
+  birthCity           String?
+  nationality         String?            @default("Brasileira")
+  education           String?
+  maritalStatus       String?
+  // Documentos
+  rg                  String?
+  rgOrgan             String?
+  rgDate              DateTime?
+  cpf                 String?
+  // Endereço
+  cep                 String?
+  state               String?
+  city                String?
+  address             String?
+  addressNum          String?
+  addressComp         String?
+  // Família
+  fatherName          String?
+  motherName          String?
+  // Contato
+  phone               String?
+  mobile              String?
+  // Esportivo
+  height              Float?
+  weight              Float?
+  shirtNumber         Int?
+  // Status FGB
+  situation           String             @default("PENDING")
+  activatedAt         DateTime?
+  activatedBy         String?
+  // Documentos digitais
+  docCPFUrl           String?
+  docRGFrontUrl       String?
+  docRGBackUrl        String?
+  docBirthCertUrl     String?
+  docOtherUrl         String?
+  notes               String?
+  saveWithoutValidation Boolean          @default(false)
   team             Team?                @relation(fields: [teamId], references: [id])
   cards            AthleteIdCard[]
   bidEntries       AthleteBidEntry[]
-  rosterEntries   GameRosterPlayer[]
-  primaryEvents   GameEvent[]          @relation("GameEventAthlete")
-  secondaryEvents GameEvent[]          @relation("GameEventSecondaryAthlete")
-  liveStatLines   GamePlayerStatLine[]
+  rosterEntries    GameRosterPlayer[]
+  primaryEvents    GameEvent[]          @relation("GameEventAthlete")
+  secondaryEvents  GameEvent[]          @relation("GameEventSecondaryAthlete")
+  liveStatLines    GamePlayerStatLine[]
   registrationRequests AthleteRegistrationRequest[]
+  officialRosterEntries OfficialRosterAthlete[]
 
   @@index([teamId])
   @@index([document])
+  @@index([cpf])
+  @@index([situation])
 }
 
 model AthleteIdCard {
@@ -739,18 +820,33 @@ model AthleteRegistrationAuditLog {
 }
 
 model Referee {
-  id            String              @id @default(uuid())
-  name          String
-  licenseNumber String?
-  phone         String?
-  email         String?
-  city          String?
-  state         String?
-  status        String              @default("ACTIVE")
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  assignments   RefereeAssignment[]
-  gameOfficials GameOfficial[]
+  id                 String              @id @default(uuid())
+  name               String
+  licenseNumber      String?
+  phone              String?
+  email              String?
+  city               String?
+  state              String?
+  status             String              @default("ACTIVE")
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  // Campos expandidos FGB
+  registrationNumber Int?
+  sex                String?
+  birthDate          DateTime?
+  rg                 String?
+  cpf                String?
+  cep                String?
+  address            String?
+  motherName         String?
+  mobile             String?
+  notes              String?
+  photoUrl           String?
+  isActive           Boolean             @default(true)
+  categoryId         String?
+  category           RefereeCategory?    @relation(fields: [categoryId], references: [id])
+  assignments        RefereeAssignment[]
+  gameOfficials      GameOfficial[]
 }
 
 model RefereeAssignment {
@@ -914,4 +1010,116 @@ model PlayerStat {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([gameId, userId])
+}
+
+// ─── Comissão Técnica ────────────────────────────────────────────────────────
+
+model CoachStaff {
+  id              String    @id @default(cuid())
+  teamId          String
+  team            Team      @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name            String
+  email           String?
+  role            String
+  crefi           String?
+  sex             String?
+  birthDate       DateTime?
+  rg              String?
+  cpf             String?
+  cep             String?
+  state           String?
+  city            String?
+  address         String?
+  addressNum      String?
+  addressComp     String?
+  fatherName      String?
+  motherName      String?
+  phone           String?
+  phone2          String?
+  mobile          String?
+  notes           String?
+  photoUrl        String?
+  isActive        Boolean   @default(true)
+  situation       String    @default("ACTIVE")
+  activatedAt     DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([teamId])
+}
+
+// ─── Categorias de Arbitragem ────────────────────────────────────────────────
+
+model RefereeCategory {
+  id           String    @id @default(cuid())
+  name         String
+  remuneration Float     @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  referees     Referee[]
+}
+
+// ─── Listagem Oficial ────────────────────────────────────────────────────────
+
+model OfficialRoster {
+  id              String                  @id @default(cuid())
+  teamId          String
+  team            Team                    @relation(fields: [teamId], references: [id])
+  championshipId  String
+  championship    Championship            @relation(fields: [championshipId], references: [id])
+  categoryId      String?
+  season          Int                     @default(2026)
+  coachId         String?
+  authorized1Id   String?
+  authorized2Id   String?
+  authorized3Id   String?
+  status          String                  @default("DRAFT")
+  submittedAt     DateTime?
+  approvedAt      DateTime?
+  approvedBy      String?
+  rejectionReason String?
+  pdfUrl          String?
+  athletes        OfficialRosterAthlete[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([teamId])
+  @@index([championshipId])
+}
+
+model OfficialRosterAthlete {
+  id          String         @id @default(cuid())
+  rosterId    String
+  roster      OfficialRoster @relation(fields: [rosterId], references: [id], onDelete: Cascade)
+  athleteId   String
+  athlete     Athlete        @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  shirtNumber Int?
+  position    String?
+  order       Int            @default(0)
+
+  @@unique([rosterId, athleteId])
+  @@index([rosterId])
+}
+
+// ─── Taxas de Clube (simples) ────────────────────────────────────────────────
+
+model TeamFee {
+  id           String    @id @default(cuid())
+  teamId       String
+  team         Team      @relation(fields: [teamId], references: [id])
+  type         String
+  description  String
+  amount       Float
+  dueDate      DateTime
+  paidAt       DateTime?
+  paidAmount   Float?
+  paymentProof String?
+  status       String    @default("PENDING")
+  season       Int       @default(2026)
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([teamId, status])
+  @@index([season, status])
 }

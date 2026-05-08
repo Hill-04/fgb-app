@@ -12,6 +12,9 @@ import {
   ShieldCheck,
   Trophy,
   Users,
+  UserCheck,
+  Building2,
+  DollarSign,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -23,17 +26,22 @@ function formatDate(date: Date | null) {
 
 export default async function FederationDashboardPage() {
   try {
-    const activeChampionships = await prisma.championship.findMany({
-      where: { status: { not: 'ARCHIVED' } },
-      include: {
-        _count: {
-          select: {
-            registrations: { where: { status: 'CONFIRMED' } },
-            games: true,
+    const [activeChampionships, pendingAthletes, totalActiveAthletes, pendingRosters] = await Promise.all([
+      prisma.championship.findMany({
+        where: { status: { not: 'ARCHIVED' } },
+        include: {
+          _count: {
+            select: {
+              registrations: { where: { status: 'CONFIRMED' } },
+              games: true,
+            },
           },
         },
-      },
-    })
+      }),
+      prisma.athlete.count({ where: { situation: 'PENDING' } }).catch(() => 0),
+      prisma.athlete.count({ where: { situation: 'ACTIVE' } }).catch(() => 0),
+      prisma.officialRoster.count({ where: { status: 'SUBMITTED' } }).catch(() => 0),
+    ])
 
     const totalActive = activeChampionships.length
     const totalTeams = activeChampionships.reduce((acc, curr) => acc + curr._count.registrations, 0)
@@ -216,6 +224,53 @@ export default async function FederationDashboardPage() {
             accent="orange"
             icon={<Flag className="h-5 w-5" />}
           />
+        </section>
+
+        {/* KPIs BID — linha 2 */}
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Link href="/admin/athletes?situation=PENDING"
+            className="group flex items-center gap-4 rounded-[20px] border border-[var(--border)] bg-white p-5 shadow-sm hover:border-[var(--yellow)] transition-all">
+            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${pendingAthletes > 0 ? 'bg-[var(--yellow)]/20 text-[var(--black)]' : 'bg-[var(--gray-l)] text-[var(--gray)]'}`}>
+              <UserCheck className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Atletas Pendentes</p>
+                {pendingAthletes > 0 && (
+                  <span className="rounded-full bg-[var(--yellow)] px-2 py-0.5 text-[9px] font-black text-[var(--black)]">{pendingAthletes}</span>
+                )}
+              </div>
+              <p className="fgb-display text-2xl text-[var(--black)]">{pendingAthletes}</p>
+              <p className="text-[10px] text-[var(--gray)]">{totalActiveAthletes} ativos na base</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-[var(--gray)] group-hover:translate-x-1 transition-transform" />
+          </Link>
+
+          <Link href="/admin/championships"
+            className="group flex items-center gap-4 rounded-[20px] border border-[var(--border)] bg-white p-5 shadow-sm hover:border-[var(--verde)] transition-all">
+            <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${pendingRosters > 0 ? 'bg-[var(--verde)]/10 text-[var(--verde)]' : 'bg-[var(--gray-l)] text-[var(--gray)]'}`}>
+              <Building2 className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Listagens p/ Aprovar</p>
+              <p className="fgb-display text-2xl text-[var(--black)]">{pendingRosters}</p>
+              <p className="text-[10px] text-[var(--gray)]">submetidas aguardando aprovação</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-[var(--gray)] group-hover:translate-x-1 transition-transform" />
+          </Link>
+
+          <Link href="/admin/fees"
+            className="group flex items-center gap-4 rounded-[20px] border border-[var(--border)] bg-white p-5 shadow-sm hover:border-[var(--verde)] transition-all">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--gray-l)] text-[var(--gray)]">
+              <DollarSign className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">Taxas de Clube</p>
+              <p className="fgb-display text-2xl text-[var(--black)]">Temp. 2026</p>
+              <p className="text-[10px] text-[var(--gray)]">gestão financeira básica</p>
+            </div>
+            <ArrowRight className="h-4 w-4 text-[var(--gray)] group-hover:translate-x-1 transition-transform" />
+          </Link>
         </section>
 
         <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_360px]">

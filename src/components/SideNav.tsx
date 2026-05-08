@@ -7,6 +7,7 @@ import {
   LayoutDashboard, Trophy, Users, Settings,
   Calendar, CalendarDays, BarChart2, Globe, Home, ClipboardList,
   FileText, Bell, MessageSquare, User, FlaskConical, Newspaper, Video, Coins, Receipt, Wallet, Gavel,
+  UserCheck, Shield, Building2, DollarSign,
 } from 'lucide-react'
 
 type SideNavProps = {
@@ -27,20 +28,29 @@ const adminNavGroups = [
     ],
   },
   {
-    label: 'Operacao',
+    label: 'Cadastros',
     items: [
-      { href: '/admin/teams',         label: 'Times',         icon: Users },
       { href: '/admin/athletes',      label: 'Atletas (BID)', icon: Users },
-      { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
-      { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
+      { href: '/admin/coaches',       label: 'Comissão Técnica', icon: UserCheck },
+      { href: '/admin/referees',      label: 'Árbitros',      icon: Shield },
+      { href: '/admin/gyms',          label: 'Ginásios',      icon: Building2 },
+      { href: '/admin/teams',         label: 'Times',         icon: Users },
     ],
   },
   {
-    label: 'Financeiro',
+    label: 'Gestao',
     items: [
-      { href: '/admin/financeiro',    label: 'Painel',       icon: Wallet },
+      { href: '/admin/fees',          label: 'Taxas de Clube', icon: DollarSign },
+      { href: '/admin/financeiro',    label: 'Financeiro',    icon: Wallet },
       { href: '/admin/financeiro/faturas', label: 'Faturas', icon: Receipt },
-      { href: '/admin/financeiro/taxas', label: 'Taxas',     icon: Coins },
+      { href: '/admin/financeiro/taxas', label: 'Config. Taxas', icon: Coins },
+    ],
+  },
+  {
+    label: 'Ferramentas',
+    items: [
+      { href: '/admin/arbitragem',    label: 'Arbitragem',    icon: Gavel },
+      { href: '/admin/simulation',    label: 'Simulacao',     icon: FlaskConical },
     ],
   },
   {
