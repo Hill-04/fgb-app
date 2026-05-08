@@ -693,6 +693,7 @@ model Athlete {
   fatherName          String?
   motherName          String?
   // Contato
+  email               String?
   phone               String?
   mobile              String?
   // Esportivo

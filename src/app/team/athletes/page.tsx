@@ -20,7 +20,13 @@ export default async function TeamAthletesPage() {
   const [athletes, requests] = await Promise.all([
     prisma.athlete.findMany({
       where: { teamId },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        document: true,
+        jerseyNumber: true,
+        status: true,
+        photoUrl: true,
         registrationRequests: {
           where: { status: 'APPROVED' },
           orderBy: { approvedAt: 'desc' },

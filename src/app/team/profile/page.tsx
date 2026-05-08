@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Shield, MapPin, Phone, Building2, Users, CheckCircle2, AlertCircle, Loader2, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
+import { FileUpload } from '@/components/FileUpload'
 
 interface GymData {
   id?: string
@@ -194,18 +195,15 @@ export default function TeamProfilePage() {
               />
             </div>
 
-            <div className="md:col-span-2 space-y-2">
-              <Label className="fgb-label text-[var(--gray)]">URL do Logotipo</Label>
-              <Input
-                value={logoUrl}
-                onChange={(e) => setLogoUrl(e.target.value)}
-                placeholder="https://..."
-                type="url"
-                className="bg-white border-[var(--border)] text-[var(--black)] placeholder:text-[var(--gray)] rounded-xl h-12 px-4 focus-visible:ring-1 focus-visible:ring-[var(--verde)] focus-visible:border-[var(--verde)] shadow-sm font-sans"
+            <div className="md:col-span-2">
+              <FileUpload
+                fieldName="logoUrl"
+                currentUrl={logoUrl}
+                label="Logotipo da Equipe"
+                accept="image/*"
+                variant="photo"
+                onUrlChange={(url) => setLogoUrl(url)}
               />
-              <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 10 }}>
-                Link direto para a imagem do escudo (PNG ou JPG, preferencialmente quadrado).
-              </p>
             </div>
 
             <div className="space-y-2">
