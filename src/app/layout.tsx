@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, DM_Sans } from "next/font/google";
+import {
+  Barlow_Condensed,
+  DM_Sans,
+  Anton,
+  Big_Shoulders,
+  Big_Shoulders_Stencil,
+} from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 
@@ -12,6 +18,24 @@ const barlowCondensed = Barlow_Condensed({
 const dmSans = DM_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
+});
+
+const anton = Anton({
+  variable: "--font-anton",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const bigShoulders = Big_Shoulders({
+  variable: "--font-accent",
+  subsets: ["latin"],
+  weight: ["400", "600", "700", "800", "900"],
+});
+
+const bigShouldersStencil = Big_Shoulders_Stencil({
+  variable: "--font-stencil",
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -49,7 +73,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${dmSans.variable} ${barlowCondensed.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${barlowCondensed.variable} ${anton.variable} ${bigShoulders.variable} ${bigShouldersStencil.variable} antialiased`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

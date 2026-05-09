@@ -1,60 +1,166 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* ── TOKENS DE COR ───────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────────
+   FGB DESIGN SYSTEM v7 — TOKENS BASE
+   Manual de Identidade Visual da Federação Gaúcha de Basketball
+   Escalas 50→950 + tokens semânticos + gradientes
+   ──────────────────────────────────────────────────────────── */
 :root {
+  /* ── FGB GREEN (cor dominante / brand primary) ────────── */
+  --fgb-green-50:  #E6F4EB;
+  --fgb-green-100: #C9E6D3;
+  --fgb-green-200: #97CDA8;
+  --fgb-green-300: #61B07F;
+  --fgb-green-400: #2D9456;
+  --fgb-green-500: #178848;
+  --fgb-green-600: #137940;
+  --fgb-green-700: #106B33;  /* ★ brand */
+  --fgb-green-800: #0C5C2D;  /* ★ brand dark */
+  --fgb-green-900: #084E26;
+  --fgb-green-950: #06391C;
+
+  /* ── FGB NAVY (superfícies esportivas / scoreboards) ──── */
+  --fgb-navy-50:  #E8ECF2;
+  --fgb-navy-100: #C7D0DD;
+  --fgb-navy-200: #9AAABF;
+  --fgb-navy-300: #6E83A0;
+  --fgb-navy-400: #4A6181;
+  --fgb-navy-500: #2F4669;
+  --fgb-navy-600: #233853;
+  --fgb-navy-700: #1A2C42;
+  --fgb-navy-800: #122033;
+  --fgb-navy-900: #0B1726;
+  --fgb-navy-950: #060E18;
+
+  /* ── FGB YELLOW (CTA destacado) ──────────────────────── */
+  --fgb-yellow-50:  #FFF8E0;
+  --fgb-yellow-100: #FEEDB0;
+  --fgb-yellow-200: #FDDF7A;
+  --fgb-yellow-300: #FDD143;
+  --fgb-yellow-400: #F2BD17;
+  --fgb-yellow-500: #E5AB00;  /* ★ brand */
+  --fgb-yellow-600: #C29200;
+  --fgb-yellow-700: #9A7400;
+  --fgb-yellow-800: #6F5400;
+  --fgb-yellow-900: #4A3700;
+  --fgb-yellow-950: #2A2000;
+
+  /* ── FGB RED (live/alerta — uso restrito) ─────────────── */
+  --fgb-red-50:  #FCE8E8;
+  --fgb-red-100: #F8C2C2;
+  --fgb-red-200: #F08C8C;
+  --fgb-red-300: #E55757;
+  --fgb-red-400: #DC3535;
+  --fgb-red-500: #D72020;  /* ★ brand */
+  --fgb-red-600: #B71717;
+  --fgb-red-700: #921212;
+  --fgb-red-800: #6E0E0E;
+  --fgb-red-900: #4A0909;
+  --fgb-red-950: #2C0606;
+
+  /* ── INK (neutros — substituem preto puro) ────────────── */
+  --fgb-ink-50:  #F8F9FA;
+  --fgb-ink-100: #ECEEF1;
+  --fgb-ink-200: #DCE0E5;
+  --fgb-ink-300: #B7BDC6;
+  --fgb-ink-400: #8A92A0;
+  --fgb-ink-500: #5E6675;
+  --fgb-ink-600: #3F4754;
+  --fgb-ink-700: #2A3140;
+  --fgb-ink-800: #1A1F2B;
+  --fgb-ink-900: #0E121B;
+  --fgb-ink-950: #060812;
+
+  /* ── GRADIENTES OFICIAIS ──────────────────────────────── */
+  --fgb-gradient-tricolor: linear-gradient(
+    to right,
+    var(--fgb-green-700) 0% 33.3%,
+    var(--fgb-yellow-500) 33.3% 66.6%,
+    var(--fgb-red-500) 66.6% 100%
+  );
+  --fgb-gradient-court: linear-gradient(
+    135deg,
+    var(--fgb-green-800) 0%,
+    var(--fgb-green-700) 50%,
+    var(--fgb-green-600) 100%
+  );
+  --fgb-gradient-night: linear-gradient(
+    180deg,
+    var(--fgb-navy-800) 0%,
+    var(--fgb-navy-950) 100%
+  );
+
+  /* ── MOTION ───────────────────────────────────────────── */
+  --fgb-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --fgb-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fgb-duration-fast: 150ms;
+  --fgb-duration-base: 220ms;
+  --fgb-duration-slow: 360ms;
+
+  /* ── ESPAÇAMENTO BRAND (CTA cut-corner) ───────────────── */
+  --fgb-cut: 12px;
+
+  /* ────────────────────────────────────────────────────────
+     SHADCN HSL TOKENS (compat — agora alinhados ao FGB green)
+     ──────────────────────────────────────────────────────── */
   --background: 210 20% 98%;
   --foreground: 210 11% 15%;
   --card: 0 0% 100%;
   --card-foreground: 210 11% 15%;
   --popover: 0 0% 100%;
   --popover-foreground: 210 11% 15%;
-  --primary: 211 100% 35%;
+  --primary: 142 74% 24%;          /* FGB green-700 #106B33 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 16 100% 50%;
-  --secondary-foreground: 0 0% 100%;
+  --secondary: 45 100% 45%;        /* FGB yellow-500 #E5AB00 */
+  --secondary-foreground: 210 11% 15%;
   --muted: 210 14% 96%;
   --muted-foreground: 210 11% 45%;
-  --accent: 210 14% 94%;
-  --accent-foreground: 211 100% 35%;
-  --destructive: 0 84% 60%;
+  --accent: 142 74% 24%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 73% 49%;        /* FGB red-500 #D72020 */
   --destructive-foreground: 0 0% 100%;
   --border-hsl: 210 14% 89%;
   --input: 210 14% 83%;
-  --ring: 211 100% 35%;
+  --ring: 142 74% 24%;
   --radius: 0.5rem;
 
+  /* ────────────────────────────────────────────────────────
+     LEGACY ALIASES (preservam componentes existentes,
+     agora apontando para os hex corretos do manual v7)
+     ──────────────────────────────────────────────────────── */
+
   /* Verde FGB */
-  --verde:       #1B7340;
-  --verde-dark:  #145530;
-  --verde-light: #E8F5EE;
-  --verde-mid:   #2A9D5C;
+  --verde:       var(--fgb-green-700);
+  --verde-dark:  var(--fgb-green-800);
+  --verde-light: var(--fgb-green-50);
+  --verde-mid:   var(--fgb-green-500);
 
   /* Vermelho FGB */
-  --red:         #CC1016;
-  --red-dark:    #A50D12;
-  --red-light:   #FEE8E9;
+  --red:         var(--fgb-red-500);
+  --red-dark:    var(--fgb-red-700);
+  --red-light:   var(--fgb-red-50);
 
   /* Amarelo FGB */
-  --yellow:      #F5C200;
-  --yellow-dark: #C9A000;
-  --yellow-light:#FEF9E3;
+  --yellow:      var(--fgb-yellow-500);
+  --yellow-dark: var(--fgb-yellow-600);
+  --yellow-light:var(--fgb-yellow-50);
 
-  /* Laranja FGB */
+  /* Laranja FGB (mantido como cor auxiliar — não-brand v7) */
   --orange:      #FF6B00;
   --orange-dark: #E65500;
   --orange-light:#FFF0E6;
 
-  /* Neutros */
-  --black:    #0D0D0D;
-  --black2:   #141414;
-  --black3:   #1C1C1C;
-  --gray-d:   #444444;
-  --gray:     #888888;
-  --gray-l:   #F4F4F4;
-  --border:   #E2E2E2;
+  /* Neutros (alinhados à escala ink) */
+  --black:    var(--fgb-ink-900);
+  --black2:   var(--fgb-ink-800);
+  --black3:   var(--fgb-ink-700);
+  --gray-d:   var(--fgb-ink-600);
+  --gray:     var(--fgb-ink-400);
+  --gray-l:   var(--fgb-ink-100);
+  --border:   var(--fgb-ink-200);
   --white:    #FFFFFF;
-  --bg-admin: #F8F9FA;
+  --bg-admin: var(--fgb-ink-50);
 
   /* Shadows */
   --shadow-sm:      0 2px 4px rgba(0,0,0,0.05);
@@ -71,7 +177,82 @@
   --font-body: var(--font-sans, 'DM Sans', sans-serif);
 
   /* Retrocompatibilidade */
-  --amarelo: #F5C200;
+  --amarelo: var(--fgb-yellow-500);
+}
+
+/* ────────────────────────────────────────────────────────────
+   FGB v7 — TAILWIND 4 THEME BLOCK
+   Expõe tokens FGB como utilities: bg-fgb-green-700, text-fgb-yellow-500,
+   font-anton, font-accent, font-stencil, etc.
+   ──────────────────────────────────────────────────────────── */
+@theme inline {
+  /* Cores FGB — escalas completas */
+  --color-fgb-green-50:  var(--fgb-green-50);
+  --color-fgb-green-100: var(--fgb-green-100);
+  --color-fgb-green-200: var(--fgb-green-200);
+  --color-fgb-green-300: var(--fgb-green-300);
+  --color-fgb-green-400: var(--fgb-green-400);
+  --color-fgb-green-500: var(--fgb-green-500);
+  --color-fgb-green-600: var(--fgb-green-600);
+  --color-fgb-green-700: var(--fgb-green-700);
+  --color-fgb-green-800: var(--fgb-green-800);
+  --color-fgb-green-900: var(--fgb-green-900);
+  --color-fgb-green-950: var(--fgb-green-950);
+
+  --color-fgb-navy-50:  var(--fgb-navy-50);
+  --color-fgb-navy-100: var(--fgb-navy-100);
+  --color-fgb-navy-200: var(--fgb-navy-200);
+  --color-fgb-navy-300: var(--fgb-navy-300);
+  --color-fgb-navy-400: var(--fgb-navy-400);
+  --color-fgb-navy-500: var(--fgb-navy-500);
+  --color-fgb-navy-600: var(--fgb-navy-600);
+  --color-fgb-navy-700: var(--fgb-navy-700);
+  --color-fgb-navy-800: var(--fgb-navy-800);
+  --color-fgb-navy-900: var(--fgb-navy-900);
+  --color-fgb-navy-950: var(--fgb-navy-950);
+
+  --color-fgb-yellow-50:  var(--fgb-yellow-50);
+  --color-fgb-yellow-100: var(--fgb-yellow-100);
+  --color-fgb-yellow-200: var(--fgb-yellow-200);
+  --color-fgb-yellow-300: var(--fgb-yellow-300);
+  --color-fgb-yellow-400: var(--fgb-yellow-400);
+  --color-fgb-yellow-500: var(--fgb-yellow-500);
+  --color-fgb-yellow-600: var(--fgb-yellow-600);
+  --color-fgb-yellow-700: var(--fgb-yellow-700);
+  --color-fgb-yellow-800: var(--fgb-yellow-800);
+  --color-fgb-yellow-900: var(--fgb-yellow-900);
+  --color-fgb-yellow-950: var(--fgb-yellow-950);
+
+  --color-fgb-red-50:  var(--fgb-red-50);
+  --color-fgb-red-100: var(--fgb-red-100);
+  --color-fgb-red-200: var(--fgb-red-200);
+  --color-fgb-red-300: var(--fgb-red-300);
+  --color-fgb-red-400: var(--fgb-red-400);
+  --color-fgb-red-500: var(--fgb-red-500);
+  --color-fgb-red-600: var(--fgb-red-600);
+  --color-fgb-red-700: var(--fgb-red-700);
+  --color-fgb-red-800: var(--fgb-red-800);
+  --color-fgb-red-900: var(--fgb-red-900);
+  --color-fgb-red-950: var(--fgb-red-950);
+
+  --color-fgb-ink-50:  var(--fgb-ink-50);
+  --color-fgb-ink-100: var(--fgb-ink-100);
+  --color-fgb-ink-200: var(--fgb-ink-200);
+  --color-fgb-ink-300: var(--fgb-ink-300);
+  --color-fgb-ink-400: var(--fgb-ink-400);
+  --color-fgb-ink-500: var(--fgb-ink-500);
+  --color-fgb-ink-600: var(--fgb-ink-600);
+  --color-fgb-ink-700: var(--fgb-ink-700);
+  --color-fgb-ink-800: var(--fgb-ink-800);
+  --color-fgb-ink-900: var(--fgb-ink-900);
+  --color-fgb-ink-950: var(--fgb-ink-950);
+
+  /* Fontes FGB v7 */
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+  --font-anton: var(--font-anton);
+  --font-accent: var(--font-accent);
+  --font-stencil: var(--font-stencil);
 }
 
 /* ── RESET ────────────────────────────────────────────────── */
