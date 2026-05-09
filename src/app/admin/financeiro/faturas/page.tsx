@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic'
 export default async function AdminFinancialInvoicesPage() {
   try {
     const invoices = await prisma.financialInvoice.findMany({
+      take: 200,
       include: {
         team: { select: { id: true, name: true } },
         championship: { select: { id: true, name: true, year: true } },

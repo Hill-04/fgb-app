@@ -193,6 +193,8 @@ model Registration {
   financialInvoices FinancialInvoice[]
 
   @@unique([championshipId, teamId])
+  @@index([championshipId, status])
+  @@index([teamId])
 }
 
 model FeeConfig {
@@ -412,6 +414,11 @@ model Game {
   periodScores               GamePeriodScore[]
   auditLogs                  GameAuditLog[]
   officialReport             GameOfficialReport?
+
+  @@index([championshipId, status])
+  @@index([championshipId, dateTime])
+  @@index([categoryId, status])
+  @@index([dateTime])
 }
 
 model GameLiveSession {

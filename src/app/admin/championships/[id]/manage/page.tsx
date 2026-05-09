@@ -28,13 +28,14 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
         }
       },
       registrations: {
+        take: 200,
+        orderBy: { registeredAt: 'desc' },
         include: {
-          team: true,
+          team: { select: { id: true, name: true, city: true } },
           categories: {
-            include: { category: true }
+            include: { category: { select: { id: true, name: true } } }
           }
         },
-        orderBy: { registeredAt: 'desc' }
       }
     }
   })

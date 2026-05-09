@@ -17,9 +17,9 @@ type EditableFee = FeeConfigLike & {
   appliesFrom: string
 }
 
-export default function AdminFeesPage() {
-  const [fees, setFees] = useState<EditableFee[]>([])
-  const [loading, setLoading] = useState(true)
+export default function AdminFeesPage({ initialFees }: { initialFees?: EditableFee[] } = {}) {
+  const [fees, setFees] = useState<EditableFee[]>(initialFees ?? [])
+  const [loading, setLoading] = useState(!initialFees)
   const [submitting, setSubmitting] = useState(false)
   const [activeCategory, setActiveCategory] = useState<(typeof FEE_CATEGORIES)[number]>('FILIACAO')
   const [editingFee, setEditingFee] = useState<EditableFee | null>(null)
@@ -47,8 +47,8 @@ export default function AdminFeesPage() {
   }
 
   useEffect(() => {
-    loadFees()
-  }, [])
+    if (!initialFees) loadFees()
+  }, [initialFees])
 
   const groupedFees = useMemo(() => groupFeeConfigsByCategory(fees), [fees])
 

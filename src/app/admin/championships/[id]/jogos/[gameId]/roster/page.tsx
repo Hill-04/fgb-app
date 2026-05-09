@@ -6,9 +6,10 @@ export const dynamic = 'force-dynamic'
 
 async function saveEscalacao(formData: FormData) {
   'use server'
-  const gameId     = String(formData.get('gameId')     || '').trim()
-  const homeTeamId = String(formData.get('homeTeamId') || '').trim()
-  const awayTeamId = String(formData.get('awayTeamId') || '').trim()
+  const gameId         = String(formData.get('gameId')         || '').trim()
+  const championshipId = String(formData.get('championshipId') || '').trim()
+  const homeTeamId     = String(formData.get('homeTeamId')     || '').trim()
+  const awayTeamId     = String(formData.get('awayTeamId')     || '').trim()
   if (!gameId) return
 
   const homeCoach     = String(formData.get('homeCoach')     || '').trim() || null
@@ -50,7 +51,10 @@ async function saveEscalacao(formData: FormData) {
     }
   }
 
-  revalidatePath(`/admin/championships`)
+  if (championshipId) {
+    revalidatePath(`/admin/championships/${championshipId}/jogos/${gameId}`)
+    revalidatePath(`/admin/championships/${championshipId}/jogos/${gameId}/roster`)
+  }
 }
 
 export default async function RosterPage({
@@ -104,9 +108,10 @@ export default async function RosterPage({
       </div>
 
       <form action={saveEscalacao}>
-        <input type="hidden" name="gameId"     value={gameId} />
-        <input type="hidden" name="homeTeamId" value={game.homeTeamId} />
-        <input type="hidden" name="awayTeamId" value={game.awayTeamId} />
+        <input type="hidden" name="gameId"         value={gameId} />
+        <input type="hidden" name="championshipId" value={championshipId} />
+        <input type="hidden" name="homeTeamId"     value={game.homeTeamId} />
+        <input type="hidden" name="awayTeamId"     value={game.awayTeamId} />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Home team */}

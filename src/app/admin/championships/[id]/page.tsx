@@ -43,34 +43,76 @@ export default async function ChampionshipDetailsPage({
 
     const confirmedTeams = championship._count.registrations
     const totalGames = championship._count.games
-    const completedGames = await prisma.game.count({
-      where: { championshipId: id, status: 'FINISHED' }
-    })
-
-    const registrationCount = await prisma.registration.count({
-      where: { championshipId: id, status: 'CONFIRMED' }
-    })
-    const pendingRegistrations = await prisma.registration.count({
-      where: { championshipId: id, status: 'PENDING' }
-    })
     const categoryCount = championship.categories.length
     const minTeams = championship.minTeamsPerCat || 3
     const firstCategory = championship.categories[0]
     const activeChampionshipId = id
+    const teamSelect = { select: { id: true, name: true, logoUrl: true, city: true } }
 
-    // Métricas para o Pipeline
-    const categoriesWithTeams = await prisma.championshipCategory.findMany({
-      where: { championshipId: id },
-      include: {
-        _count: {
-          select: {
-            registrations: {
-              where: { registration: { status: 'CONFIRMED' } }
-            }
-          }
-        }
-      }
-    })
+    // ─── Todas as queries seguintes são independentes ─ paralelizar via Promise.all
+    const [
+      completedGames,
+      registrationCount,
+      pendingRegistrations,
+      categoriesWithTeams,
+      topStandings,
+      nextGame,
+      lastResults,
+      upcomingGames,
+      playoffCategory,
+    ] = await Promise.all([
+      prisma.game.count({ where: { championshipId: id, status: 'FINISHED' } }),
+      prisma.registration.count({ where: { championshipId: id, status: 'CONFIRMED' } }),
+      prisma.registration.count({ where: { championshipId: id, status: 'PENDING' } }),
+      prisma.championshipCategory.findMany({
+        where: { championshipId: id },
+        include: {
+          _count: {
+            select: { registrations: { where: { registration: { status: 'CONFIRMED' } } } },
+          },
+        },
+      }),
+      firstCategory
+        ? prisma.standing.findMany({
+            where: { categoryId: firstCategory.id },
+            orderBy: [{ points: 'desc' }, { wins: 'desc' }],
+            take: 5,
+            include: { team: teamSelect },
+          })
+        : Promise.resolve([]),
+      prisma.game.findFirst({
+        where: { championshipId: id, status: 'SCHEDULED', dateTime: { gt: new Date() } },
+        orderBy: { dateTime: 'asc' },
+        include: { homeTeam: teamSelect, awayTeam: teamSelect, category: { select: { id: true, name: true } } },
+      }),
+      prisma.game.findMany({
+        where: { championshipId: id, status: 'FINISHED' },
+        orderBy: { dateTime: 'desc' },
+        take: 5,
+        include: { homeTeam: teamSelect, awayTeam: teamSelect, category: { select: { id: true, name: true } } },
+      }),
+      prisma.game.findMany({
+        where: { championshipId: id, status: 'SCHEDULED' },
+        orderBy: { dateTime: 'asc' },
+        take: 5,
+        include: { homeTeam: teamSelect, awayTeam: teamSelect, category: { select: { id: true, name: true } } },
+      }),
+      championship.hasPlayoffs
+        ? prisma.championshipCategory.findFirst({
+            where: { championshipId: id, games: { some: { phase: { gt: 1 } } } },
+            include: {
+              games: {
+                where: { phase: { gt: 1 } },
+                include: {
+                  homeTeam: { select: { name: true, logoUrl: true } },
+                  awayTeam: { select: { name: true, logoUrl: true } },
+                },
+                orderBy: { dateTime: 'asc' },
+              },
+            },
+          })
+        : Promise.resolve(null),
+    ])
 
     const missingPerCategory = categoriesWithTeams.map(cat => ({
       name: cat.name,
@@ -79,49 +121,6 @@ export default async function ChampionshipDetailsPage({
     }))
     const totalMissing = missingPerCategory.reduce((acc, c) => acc + c.missing, 0)
     const allCategoriesReady = totalMissing === 0
-
-    const topStandings = firstCategory ? await prisma.standing.findMany({
-      where: { categoryId: firstCategory.id },
-      orderBy: [{ points: 'desc' }, { wins: 'desc' }],
-      take: 5,
-      include: { team: { select: { id: true, name: true, logoUrl: true, city: true } } }
-    }) : []
-
-    const teamSelect = { select: { id: true, name: true, logoUrl: true, city: true } }
-
-    const nextGame = await prisma.game.findFirst({
-      where: { championshipId: id, status: 'SCHEDULED', dateTime: { gt: new Date() } },
-      orderBy: { dateTime: 'asc' },
-      include: { homeTeam: teamSelect, awayTeam: teamSelect, category: true }
-    })
-
-    const lastResults = await prisma.game.findMany({
-      where: { championshipId: id, status: 'FINISHED' },
-      orderBy: { dateTime: 'desc' },
-      take: 5,
-      include: { homeTeam: teamSelect, awayTeam: teamSelect, category: true }
-    })
-
-    const upcomingGames = await prisma.game.findMany({
-      where: { championshipId: id, status: 'SCHEDULED' },
-      orderBy: { dateTime: 'asc' },
-      take: 5,
-      include: { homeTeam: teamSelect, awayTeam: teamSelect, category: true }
-    })
-
-    const playoffCategory = championship.hasPlayoffs ? await prisma.championshipCategory.findFirst({
-      where: { championshipId: id, games: { some: { phase: { gt: 1 } } } },
-      include: {
-        games: {
-          where: { phase: { gt: 1 } },
-          include: {
-            homeTeam: { select: { name: true, logoUrl: true } },
-            awayTeam: { select: { name: true, logoUrl: true } }
-          },
-          orderBy: { dateTime: 'asc' }
-        }
-      }
-    }) : null
 
     const statusMap = {
       'DRAFT': 1,

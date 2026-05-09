@@ -597,6 +597,14 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'RegistrationFee_registrationId_idx', sql: 'CREATE INDEX IF NOT EXISTS RegistrationFee_registrationId_idx ON RegistrationFee(registrationId);' },
   { kind: 'sql', name: 'FeeConfig_key_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS FeeConfig_key_key ON FeeConfig(key);' },
 
+  // ─── Performance indexes para Game e Registration (paineis de campeonato) ───
+  { kind: 'sql', name: 'Game_championshipId_status_idx',   sql: 'CREATE INDEX IF NOT EXISTS Game_championshipId_status_idx ON Game(championshipId, status);' },
+  { kind: 'sql', name: 'Game_championshipId_dateTime_idx', sql: 'CREATE INDEX IF NOT EXISTS Game_championshipId_dateTime_idx ON Game(championshipId, dateTime);' },
+  { kind: 'sql', name: 'Game_categoryId_status_idx',       sql: 'CREATE INDEX IF NOT EXISTS Game_categoryId_status_idx ON Game(categoryId, status);' },
+  { kind: 'sql', name: 'Game_dateTime_idx',                sql: 'CREATE INDEX IF NOT EXISTS Game_dateTime_idx ON Game(dateTime);' },
+  { kind: 'sql', name: 'Registration_championshipId_status_idx', sql: 'CREATE INDEX IF NOT EXISTS Registration_championshipId_status_idx ON Registration(championshipId, status);' },
+  { kind: 'sql', name: 'Registration_teamId_idx',          sql: 'CREATE INDEX IF NOT EXISTS Registration_teamId_idx ON Registration(teamId);' },
+
   { kind: 'column', table: 'PlayerStat', column: 'assists',     sql: 'ALTER TABLE PlayerStat ADD COLUMN assists     INTEGER DEFAULT 0;', critical: true },
   { kind: 'column', table: 'PlayerStat', column: 'rebounds',    sql: 'ALTER TABLE PlayerStat ADD COLUMN rebounds    INTEGER DEFAULT 0;', critical: true },
   { kind: 'column', table: 'PlayerStat', column: 'blocks',      sql: 'ALTER TABLE PlayerStat ADD COLUMN blocks      INTEGER DEFAULT 0;', critical: true },
