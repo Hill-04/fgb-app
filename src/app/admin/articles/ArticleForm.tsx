@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link'
+import { useRef, useState } from 'react'
 
 const CATEGORIES = ['Conhecimento', 'Notícias', 'Basquete Gaúcho', 'Institucional']
 
@@ -32,6 +35,100 @@ function tagsToInput(tagsJson: string | null | undefined) {
 const labelCls = 'fgb-label block mb-1.5'
 const labelStyle: React.CSSProperties = { fontSize: 10, color: 'var(--fgb-ink-500)', letterSpacing: '0.14em' }
 const inputCls = 'w-full px-3 py-2 border border-[var(--fgb-ink-200)] rounded bg-white text-[var(--fgb-ink-900)] focus:outline-none focus:border-[var(--fgb-green-700)] transition-colors'
+
+function CoverImageUpload({ initialUrl }: { initialUrl: string | null | undefined }) {
+  const [url, setUrl] = useState<string>(initialUrl ?? '')
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function handleFile(file: File) {
+    setError(null)
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await fetch('/api/admin/upload-image', { method: 'POST', body: fd })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data?.error || `Upload falhou (${res.status})`)
+      setUrl(data.url)
+    } catch (e: any) {
+      setError(e?.message ?? 'Erro ao enviar imagem')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div>
+      <label className={labelCls} style={labelStyle}>Imagem de capa *</label>
+      <input type="hidden" name="coverImage" value={url} required />
+
+      <div className="flex flex-col sm:flex-row gap-4 items-start">
+        <div
+          className="relative w-full sm:w-48 aspect-[16/9] rounded border border-[var(--fgb-ink-200)] overflow-hidden bg-[var(--fgb-ink-50)] flex items-center justify-center shrink-0"
+        >
+          {url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={url} alt="Pré-visualização" className="w-full h-full object-cover" />
+          ) : (
+            <span className="fgb-label text-[var(--fgb-ink-400)]" style={{ fontSize: 9 }}>
+              sem imagem
+            </span>
+          )}
+        </div>
+
+        <div className="flex-1 w-full">
+          <input
+            ref={inputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0]
+              if (f) void handleFile(f)
+              e.target.value = ''
+            }}
+          />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              disabled={uploading}
+              className="fgb-btn-secondary h-9 px-4 text-sm"
+            >
+              {uploading ? 'Enviando…' : url ? 'Trocar imagem' : 'Enviar imagem'}
+            </button>
+            {url && !uploading && (
+              <button
+                type="button"
+                onClick={() => setUrl('')}
+                className="fgb-label h-9 px-3"
+                style={{ fontSize: 10, color: 'var(--fgb-red-500)' }}
+              >
+                Remover
+              </button>
+            )}
+          </div>
+          <p
+            className="fgb-label mt-2"
+            style={{ fontSize: 9, color: 'var(--fgb-ink-400)', textTransform: 'none', letterSpacing: 0 }}
+          >
+            JPG, PNG, WEBP ou GIF · até 8 MB · proporção 16:9 recomendada
+          </p>
+          {error && (
+            <p
+              className="fgb-label mt-2"
+              style={{ fontSize: 10, color: 'var(--fgb-red-500)', textTransform: 'none', letterSpacing: 0 }}
+            >
+              {error}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function ArticleForm({
   values,
@@ -111,16 +208,7 @@ export function ArticleForm({
         </div>
       </div>
 
-      <div>
-        <label className={labelCls} style={labelStyle}>URL da imagem de capa *</label>
-        <input
-          name="coverImage"
-          defaultValue={v.coverImage ?? ''}
-          className={inputCls}
-          placeholder="https://..."
-          required
-        />
-      </div>
+      <CoverImageUpload initialUrl={v.coverImage} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
