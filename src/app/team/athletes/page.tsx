@@ -1,12 +1,14 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
-import { FileClock, Plus, Shield, Users } from 'lucide-react'
+import { FileClock, Plus } from 'lucide-react'
 
-import { AthleteFederationStatusBadge, AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
+import { AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
+import type { DrawerAthlete } from '@/components/AthleteDrawer'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { isPendingAthleteRequestStatus, sortAthleteRequestsByStatus } from '@/lib/athlete-registration-presentation'
+import { TeamAthletesListClient } from './TeamAthletesListClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,16 +19,11 @@ export default async function TeamAthletesPage() {
   const teamId = (session.user as any).teamId
   if (!teamId) redirect('/team/onboarding')
 
-  const [athletes, requests] = await Promise.all([
+  const [athletesRaw, requests] = await Promise.all([
     prisma.athlete.findMany({
       where: { teamId },
-      select: {
-        id: true,
-        name: true,
-        document: true,
-        jerseyNumber: true,
-        status: true,
-        photoUrl: true,
+      orderBy: [{ status: 'asc' }, { name: 'asc' }],
+      include: {
         registrationRequests: {
           where: { status: 'APPROVED' },
           orderBy: { approvedAt: 'desc' },
@@ -34,7 +31,6 @@ export default async function TeamAthletesPage() {
           select: { requestedCategoryLabel: true },
         },
       },
-      orderBy: [{ status: 'asc' }, { name: 'asc' }],
     }),
     prisma.athleteRegistrationRequest.findMany({
       where: { teamId },
@@ -50,12 +46,52 @@ export default async function TeamAthletesPage() {
     }),
   ])
 
-  const grouped = athletes.reduce<Record<string, typeof athletes>>((acc, athlete) => {
-    const category = athlete.registrationRequests[0]?.requestedCategoryLabel || 'Sem categoria'
-    acc[category] = acc[category] || []
-    acc[category].push(athlete)
-    return acc
-  }, {})
+  const athletes: DrawerAthlete[] = athletesRaw.map((a) => ({
+    id: a.id,
+    name: a.name,
+    photoUrl: a.photoUrl,
+    status: a.status,
+    federationStatus: a.federationStatus,
+    situation: a.situation,
+    registrationNumber: a.registrationNumber,
+    registrationCBB: a.registrationCBB,
+    registrationPrev: a.registrationPrev,
+    filiationDate: a.filiationDate,
+    birthDate: a.birthDate,
+    birthCity: a.birthCity,
+    sex: a.sex,
+    nationality: a.nationality,
+    maritalStatus: a.maritalStatus,
+    education: a.education,
+    position: a.position,
+    jerseyNumber: a.jerseyNumber,
+    height: a.height,
+    weight: a.weight,
+    document: a.document,
+    cpf: a.cpf,
+    rg: a.rg,
+    rgOrgan: a.rgOrgan,
+    rgDate: a.rgDate,
+    email: (a as any).email ?? null,
+    mobile: a.mobile,
+    phone: a.phone,
+    cep: a.cep,
+    state: a.state,
+    city: a.city,
+    address: a.address,
+    addressNum: a.addressNum,
+    addressComp: a.addressComp,
+    motherName: a.motherName,
+    fatherName: a.fatherName,
+    notes: a.notes,
+    docCPFUrl: a.docCPFUrl,
+    docRGFrontUrl: a.docRGFrontUrl,
+    docRGBackUrl: a.docRGBackUrl,
+    docBirthCertUrl: a.docBirthCertUrl,
+    docOtherUrl: a.docOtherUrl,
+    category: a.registrationRequests[0]?.requestedCategoryLabel ?? null,
+  }))
+
   const sortedRequests = sortAthleteRequestsByStatus(requests)
 
   return (
@@ -103,40 +139,8 @@ export default async function TeamAthletesPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <section className="space-y-4">
-          {Object.keys(grouped).length === 0 ? (
-            <div className="rounded-[28px] border border-dashed border-[var(--border)] bg-white p-14 text-center">
-              <Users className="mx-auto h-10 w-10 text-[var(--gray)] opacity-40" />
-              <p className="mt-4 text-sm font-medium text-[var(--gray)]">Nenhum atleta federado vinculado a esta equipe ainda.</p>
-            </div>
-          ) : (
-            Object.entries(grouped).map(([category, categoryAthletes]) => (
-              <div key={category} className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">
-                <div className="mb-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--gray)]">Categoria</p>
-                    <h2 className="fgb-display mt-1 text-xl leading-none text-[var(--black)]">{category}</h2>
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
-                    {categoryAthletes.length} atleta(s)
-                  </span>
-                </div>
-                <div className="space-y-3">
-                  {categoryAthletes.map((athlete) => (
-                    <div key={athlete.id} className="flex items-center justify-between rounded-2xl border border-[var(--border)] bg-[var(--gray-l)] px-4 py-3">
-                      <div>
-                        <p className="text-sm font-black uppercase text-[var(--black)]">{athlete.name}</p>
-                        <p className="text-[10px] text-[var(--gray)]">
-                          {athlete.document || 'Sem documento'}{athlete.jerseyNumber != null ? ` | #${athlete.jerseyNumber}` : ''}
-                        </p>
-                      </div>
-                      <AthleteFederationStatusBadge status={athlete.status} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))
-          )}
+        <section>
+          <TeamAthletesListClient athletes={athletes} />
         </section>
 
         <aside className="rounded-[28px] border border-[var(--border)] bg-white p-6 shadow-sm">

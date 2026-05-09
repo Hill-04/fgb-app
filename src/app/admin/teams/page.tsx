@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Users, Plus, Edit2, Trash2, Search, MapPin, Phone, Shield } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Users, Plus, Edit2, Trash2, Search, MapPin, Phone, Shield, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/Badge'
 
 type Team = {
@@ -23,6 +24,7 @@ type Team = {
 }
 
 export default function AdminTeamsPage() {
+  const router = useRouter()
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -188,8 +190,13 @@ export default function AdminTeamsPage() {
             ) : (
               filteredTeams.map((team) => {
                 const headCoach = team.members[0]?.user
+                const goToDetail = () => router.push(`/admin/teams/${team.id}`)
                 return (
-                  <tr key={team.id} className="hover:bg-[var(--gray-l)] transition-colors group">
+                  <tr
+                    key={team.id}
+                    onClick={goToDetail}
+                    className="hover:bg-[var(--gray-l)] transition-colors group cursor-pointer"
+                  >
                     <td className="px-8 py-5">
                       <div className="flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-[var(--gray-l)] border border-[var(--border)] flex items-center justify-center overflow-hidden shrink-0">
@@ -219,14 +226,17 @@ export default function AdminTeamsPage() {
                     <td className="px-8 py-5">
                       <div className="text-xs text-[var(--gray)] flex items-center gap-1.5 font-sans"><Phone className="w-3 h-3 text-[var(--verde)]" /> {team.phone || '--'}</div>
                     </td>
-                    <td className="px-8 py-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(team)} className="text-[var(--gray)] hover:text-[var(--black)] hover:bg-[var(--gray-l)]">
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)} className="text-[var(--gray)] hover:text-[var(--red)] hover:bg-[var(--red)]/10">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                    <td className="px-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end items-center gap-2">
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(team)} className="text-[var(--gray)] hover:text-[var(--black)] hover:bg-[var(--gray-l)]">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(team.id)} className="text-[var(--gray)] hover:text-[var(--red)] hover:bg-[var(--red)]/10">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-[var(--gray)]" />
                       </div>
                     </td>
                   </tr>
