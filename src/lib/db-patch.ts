@@ -926,6 +926,162 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'Article_category_isPublished_idx', sql: 'CREATE INDEX IF NOT EXISTS "Article_category_isPublished_idx" ON "Article"("category","isPublished")' },
   { kind: 'sql', name: 'Article_publishedAt_idx', sql: 'CREATE INDEX IF NOT EXISTS "Article_publishedAt_idx" ON "Article"("publishedAt")' },
   { kind: 'sql', name: 'Article_slug_idx', sql: 'CREATE INDEX IF NOT EXISTS "Article_slug_idx" ON "Article"("slug")' },
+
+  // ─── Sprint 1: Championship — sancionamento + scheduling flexível + lifecycle ───
+  { kind: 'column', table: 'Championship', column: 'sanctioning', sql: `ALTER TABLE "Championship" ADD COLUMN "sanctioning" TEXT NOT NULL DEFAULT 'FGB_OFFICIAL'` },
+  { kind: 'column', table: 'Championship', column: 'countsForRanking', sql: `ALTER TABLE "Championship" ADD COLUMN "countsForRanking" BOOLEAN NOT NULL DEFAULT 1` },
+  { kind: 'column', table: 'Championship', column: 'countsForBidEligibility', sql: `ALTER TABLE "Championship" ADD COLUMN "countsForBidEligibility" BOOLEAN NOT NULL DEFAULT 1` },
+  { kind: 'column', table: 'Championship', column: 'sanctionNumber', sql: `ALTER TABLE "Championship" ADD COLUMN "sanctionNumber" TEXT` },
+  { kind: 'column', table: 'Championship', column: 'modality', sql: `ALTER TABLE "Championship" ADD COLUMN "modality" TEXT NOT NULL DEFAULT '5x5'` },
+  { kind: 'column', table: 'Championship', column: 'ageRangeMin', sql: `ALTER TABLE "Championship" ADD COLUMN "ageRangeMin" INTEGER` },
+  { kind: 'column', table: 'Championship', column: 'ageRangeMax', sql: `ALTER TABLE "Championship" ADD COLUMN "ageRangeMax" INTEGER` },
+  { kind: 'column', table: 'Championship', column: 'allowedWeekdaysJson', sql: `ALTER TABLE "Championship" ADD COLUMN "allowedWeekdaysJson" TEXT NOT NULL DEFAULT '[6,0]'` },
+  { kind: 'column', table: 'Championship', column: 'timeSlotsJson', sql: `ALTER TABLE "Championship" ADD COLUMN "timeSlotsJson" TEXT NOT NULL DEFAULT '[]'` },
+  { kind: 'column', table: 'Championship', column: 'blackoutDatesJson', sql: `ALTER TABLE "Championship" ADD COLUMN "blackoutDatesJson" TEXT NOT NULL DEFAULT '[]'` },
+  { kind: 'column', table: 'Championship', column: 'minRestHoursBetweenGames', sql: `ALTER TABLE "Championship" ADD COLUMN "minRestHoursBetweenGames" REAL NOT NULL DEFAULT 20` },
+  { kind: 'column', table: 'Championship', column: 'maxGamesPerTeamPerWeek', sql: `ALTER TABLE "Championship" ADD COLUMN "maxGamesPerTeamPerWeek" INTEGER NOT NULL DEFAULT 3` },
+  { kind: 'column', table: 'Championship', column: 'homePattern', sql: `ALTER TABLE "Championship" ADD COLUMN "homePattern" TEXT NOT NULL DEFAULT 'ALTERNATED'` },
+  { kind: 'column', table: 'Championship', column: 'regulationPdfUrl', sql: `ALTER TABLE "Championship" ADD COLUMN "regulationPdfUrl" TEXT` },
+  { kind: 'column', table: 'Championship', column: 'regulationVersion', sql: `ALTER TABLE "Championship" ADD COLUMN "regulationVersion" INTEGER NOT NULL DEFAULT 1` },
+  { kind: 'column', table: 'Championship', column: 'regulationPublishedAt', sql: `ALTER TABLE "Championship" ADD COLUMN "regulationPublishedAt" DATETIME` },
+  { kind: 'column', table: 'Championship', column: 'publishedAt', sql: `ALTER TABLE "Championship" ADD COLUMN "publishedAt" DATETIME` },
+  { kind: 'column', table: 'Championship', column: 'registrationOpenedAt', sql: `ALTER TABLE "Championship" ADD COLUMN "registrationOpenedAt" DATETIME` },
+  { kind: 'column', table: 'Championship', column: 'technicalCongressDate', sql: `ALTER TABLE "Championship" ADD COLUMN "technicalCongressDate" DATETIME` },
+  { kind: 'column', table: 'Championship', column: 'drawDate', sql: `ALTER TABLE "Championship" ADD COLUMN "drawDate" DATETIME` },
+  { kind: 'column', table: 'Championship', column: 'finishedAt', sql: `ALTER TABLE "Championship" ADD COLUMN "finishedAt" DATETIME` },
+
+  // ─── Sprint 1: ChampionshipCategory ───
+  { kind: 'column', table: 'ChampionshipCategory', column: 'minBirthYear', sql: `ALTER TABLE "ChampionshipCategory" ADD COLUMN "minBirthYear" INTEGER` },
+  { kind: 'column', table: 'ChampionshipCategory', column: 'maxBirthYear', sql: `ALTER TABLE "ChampionshipCategory" ADD COLUMN "maxBirthYear" INTEGER` },
+  { kind: 'column', table: 'ChampionshipCategory', column: 'modality', sql: `ALTER TABLE "ChampionshipCategory" ADD COLUMN "modality" TEXT NOT NULL DEFAULT '5x5'` },
+
+  // ─── Sprint 1: Athlete BID ───
+  { kind: 'column', table: 'Athlete', column: 'bidPublishedAt', sql: `ALTER TABLE "Athlete" ADD COLUMN "bidPublishedAt" DATETIME` },
+  { kind: 'column', table: 'Athlete', column: 'bidNumber', sql: `ALTER TABLE "Athlete" ADD COLUMN "bidNumber" TEXT` },
+
+  // ─── Sprint 1: Registration elegibilidade ───
+  { kind: 'column', table: 'Registration', column: 'eligibilityWindowStart', sql: `ALTER TABLE "Registration" ADD COLUMN "eligibilityWindowStart" DATETIME` },
+  { kind: 'column', table: 'Registration', column: 'eligibilityWindowEnd', sql: `ALTER TABLE "Registration" ADD COLUMN "eligibilityWindowEnd" DATETIME` },
+  { kind: 'column', table: 'Registration', column: 'certNegativaUrl', sql: `ALTER TABLE "Registration" ADD COLUMN "certNegativaUrl" TEXT` },
+
+  // ─── Sprint 1: Tabelas novas ───
+  {
+    kind: 'table',
+    table: 'TiebreakerRule',
+    sql: `CREATE TABLE IF NOT EXISTS "TiebreakerRule" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "championshipId" TEXT NOT NULL,
+      "order" INTEGER NOT NULL,
+      "type" TEXT NOT NULL
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'TiebreakerRule_championship_order_idx', sql: 'CREATE INDEX IF NOT EXISTS "TiebreakerRule_championshipId_order_idx" ON "TiebreakerRule"("championshipId","order")' },
+
+  {
+    kind: 'table',
+    table: 'ChampionshipPhase',
+    sql: `CREATE TABLE IF NOT EXISTS "ChampionshipPhase" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "championshipId" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      "formatType" TEXT NOT NULL DEFAULT 'ROUND_ROBIN',
+      "formatConfigJson" TEXT NOT NULL DEFAULT '{}',
+      "tiebreakerChain" TEXT NOT NULL DEFAULT 'h2h_record,h2h_diff,h2h_for,all_diff,all_for,draw',
+      "startDate" DATETIME,
+      "endDate" DATETIME,
+      "qualifiesNextCount" INTEGER,
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'ChampionshipPhase_championship_order_idx', sql: 'CREATE INDEX IF NOT EXISTS "ChampionshipPhase_championshipId_order_idx" ON "ChampionshipPhase"("championshipId","order")' },
+
+  {
+    kind: 'table',
+    table: 'ChampionshipPhaseCategory',
+    sql: `CREATE TABLE IF NOT EXISTS "ChampionshipPhaseCategory" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "phaseId" TEXT NOT NULL,
+      "categoryId" TEXT NOT NULL
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'ChampionshipPhaseCategory_unique', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "ChampionshipPhaseCategory_phaseId_categoryId_key" ON "ChampionshipPhaseCategory"("phaseId","categoryId")' },
+
+  {
+    kind: 'table',
+    table: 'ChampionshipGroup',
+    sql: `CREATE TABLE IF NOT EXISTS "ChampionshipGroup" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "phaseId" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'ChampionshipGroup_phase_idx', sql: 'CREATE INDEX IF NOT EXISTS "ChampionshipGroup_phaseId_idx" ON "ChampionshipGroup"("phaseId")' },
+
+  {
+    kind: 'table',
+    table: 'GameSeries',
+    sql: `CREATE TABLE IF NOT EXISTS "GameSeries" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "phaseId" TEXT NOT NULL,
+      "team1Id" TEXT NOT NULL,
+      "team2Id" TEXT NOT NULL,
+      "bestOf" INTEGER NOT NULL DEFAULT 1,
+      "homePattern" TEXT NOT NULL DEFAULT 'ALTERNATED',
+      "winnerTeamId" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'SCHEDULED',
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'GameSeries_phase_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameSeries_phaseId_idx" ON "GameSeries"("phaseId")' },
+  { kind: 'sql', name: 'GameSeries_team1_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameSeries_team1Id_idx" ON "GameSeries"("team1Id")' },
+  { kind: 'sql', name: 'GameSeries_team2_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameSeries_team2Id_idx" ON "GameSeries"("team2Id")' },
+
+  {
+    kind: 'table',
+    table: 'TournamentDocument',
+    sql: `CREATE TABLE IF NOT EXISTS "TournamentDocument" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "championshipId" TEXT NOT NULL,
+      "type" TEXT NOT NULL,
+      "title" TEXT NOT NULL,
+      "fileUrl" TEXT NOT NULL,
+      "version" INTEGER NOT NULL DEFAULT 1,
+      "publishedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "supersedesId" TEXT,
+      "notes" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'TournamentDocument_championship_type_idx', sql: 'CREATE INDEX IF NOT EXISTS "TournamentDocument_championshipId_type_idx" ON "TournamentDocument"("championshipId","type")' },
+
+  {
+    kind: 'table',
+    table: 'ChampionshipStatusTransition',
+    sql: `CREATE TABLE IF NOT EXISTS "ChampionshipStatusTransition" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "championshipId" TEXT NOT NULL,
+      "fromStatus" TEXT NOT NULL,
+      "toStatus" TEXT NOT NULL,
+      "reason" TEXT,
+      "performedBy" TEXT,
+      "metadataJson" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'ChampionshipStatusTransition_championship_createdAt_idx', sql: 'CREATE INDEX IF NOT EXISTS "ChampionshipStatusTransition_championshipId_createdAt_idx" ON "ChampionshipStatusTransition"("championshipId","createdAt")' },
 ]
 
 let schemaEnsured = false
