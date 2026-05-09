@@ -299,13 +299,10 @@ a, button {
 .fgb-accent-orange { background: var(--orange); }
 
 /* ── TRICOLOR STRIPE ─────────────────────────────────────── */
+/* Ordem oficial v7: verde → amarelo → vermelho */
 .fgb-tricolor {
   height: 4px;
-  background: linear-gradient(to right,
-    var(--verde) 0%, var(--verde) 33.3%,
-    var(--red) 33.3%, var(--red) 66.6%,
-    var(--yellow) 66.6%, var(--yellow) 100%
-  );
+  background: var(--fgb-gradient-tricolor);
 }
 
 /* ── TICKER ─────────────────────────────────────────────── */
@@ -389,24 +386,35 @@ a, button {
 
 /* ── BOTÕES ─────────────────────────────────────────────── */
 .fgb-btn-primary {
-  background: var(--yellow);
-  color: var(--black);
+  background: var(--fgb-yellow-500);
+  color: var(--fgb-ink-900);
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  padding: 10px 22px;
+  padding: 12px 24px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s;
-  clip-path: polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px));
+  transition: background var(--fgb-duration-base) var(--fgb-ease),
+              transform var(--fgb-duration-fast) var(--fgb-ease);
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--fgb-cut)) 0,
+    100% var(--fgb-cut),
+    100% 100%,
+    var(--fgb-cut) 100%,
+    0 calc(100% - var(--fgb-cut))
+  );
   text-decoration: none;
   display: inline-block;
 }
 .fgb-btn-primary:hover {
-  background: var(--yellow-dark);
+  background: var(--fgb-yellow-600);
   transform: translateY(-1px);
+}
+.fgb-btn-primary:active {
+  transform: translateY(0);
 }
 .fgb-btn-secondary {
   background: transparent;
@@ -566,11 +574,7 @@ a, button {
 /* ── HERO TRICOLOR ──────────────────────────────────────── */
 .fgb-hero-tricolor {
   height: 6px;
-  background: linear-gradient(to right,
-    var(--verde) 0%, var(--verde) 33.3%,
-    var(--yellow) 33.3%, var(--yellow) 66.6%,
-    var(--red) 66.6%, var(--red) 100%
-  );
+  background: var(--fgb-gradient-tricolor);
 }
 
 /* ── CARDS ───────────────────────────────────────────────── */

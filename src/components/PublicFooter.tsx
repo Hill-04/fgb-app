@@ -23,7 +23,7 @@ export function PublicFooter() {
                 <p className="fgb-heading text-white" style={{ fontSize: 12, letterSpacing: '0.05em', lineHeight: 1 }}>
                   Federação Gaúcha
                 </p>
-                <p className="fgb-label" style={{ color: '#F5C200', fontSize: 9, marginTop: 2, letterSpacing: '0.18em' }}>
+                <p className="fgb-label" style={{ color: 'var(--fgb-yellow-500)', fontSize: 9, marginTop: 2, letterSpacing: '0.18em' }}>
                   de Basketball
                 </p>
               </div>
@@ -97,7 +97,7 @@ export function PublicFooter() {
 
             <div className="mt-6 pt-5" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
               <Link href="/login" className="fgb-btn-primary block text-center"
-                style={{ color: 'var(--black)', textAlign: 'center' }}>
+                style={{ color: 'var(--fgb-ink-900)', textAlign: 'center' }}>
                 Acessar Painel
               </Link>
             </div>
