@@ -7,6 +7,7 @@ import {
   createInvoiceFromRegistration,
   RegistrationInvoiceGenerationError,
 } from '@/lib/finance-invoice-service'
+import { checkTeamEligibility } from '@/lib/competition-eligibility'
 
 export async function GET(
   request: Request,
@@ -112,6 +113,20 @@ export async function POST(
       }
 
       await assertRegistrationHasBillableFees(existingRegistration.id)
+    }
+
+    if (!existingRegistration && teamId) {
+      const eligibility = await checkTeamEligibility(teamId, id)
+      if (!eligibility.eligible) {
+        return NextResponse.json(
+          {
+            error: 'EXTERNAL_COMPETITION_BLOCK',
+            message: 'Há atletas bloqueadas por inscrição em competição externa',
+            blockedAthletes: eligibility.blockedAthletes,
+          },
+          { status: 409 },
+        )
+      }
     }
 
     let registration

@@ -822,6 +822,83 @@ const schemaPatches: SchemaPatch[] = [
   },
   { kind: 'sql', name: 'TeamFee_teamId_status_idx', sql: 'CREATE INDEX IF NOT EXISTS "TeamFee_teamId_status_idx" ON "TeamFee"("teamId","status")' },
   { kind: 'sql', name: 'TeamFee_season_status_idx', sql: 'CREATE INDEX IF NOT EXISTS "TeamFee_season_status_idx" ON "TeamFee"("season","status")' },
+  // ─── Competições Externas ────────────────────────────────────────────────
+  {
+    kind: 'table',
+    table: 'ExternalCompetition',
+    sql: `CREATE TABLE IF NOT EXISTS "ExternalCompetition" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "name" TEXT NOT NULL,
+      "organizer" TEXT NOT NULL,
+      "city" TEXT,
+      "state" TEXT,
+      "startDate" DATETIME NOT NULL,
+      "endDate" DATETIME NOT NULL,
+      "categoriesJson" TEXT NOT NULL DEFAULT '[]',
+      "gender" TEXT,
+      "description" TEXT,
+      "websiteUrl" TEXT,
+      "logoUrl" TEXT,
+      "isPublished" BOOLEAN NOT NULL DEFAULT false,
+      "season" INTEGER NOT NULL DEFAULT 2026,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  {
+    kind: 'table',
+    table: 'ExternalCompetitionBlock',
+    sql: `CREATE TABLE IF NOT EXISTS "ExternalCompetitionBlock" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "externalCompetitionId" TEXT NOT NULL,
+      "championshipId" TEXT NOT NULL,
+      "categoryId" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'ExternalCompetitionBlock_unique', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "ExternalCompetitionBlock_externalCompetitionId_championshipId_categoryId_key" ON "ExternalCompetitionBlock"("externalCompetitionId","championshipId","categoryId")' },
+  {
+    kind: 'table',
+    table: 'ExternalRegistration',
+    sql: `CREATE TABLE IF NOT EXISTS "ExternalRegistration" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "externalCompetitionId" TEXT NOT NULL,
+      "athleteId" TEXT,
+      "teamId" TEXT,
+      "categoryId" TEXT,
+      "declaredBy" TEXT NOT NULL,
+      "status" TEXT NOT NULL DEFAULT 'DECLARED',
+      "notes" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'ExternalRegistration_athleteId_idx', sql: 'CREATE INDEX IF NOT EXISTS "ExternalRegistration_athleteId_idx" ON "ExternalRegistration"("athleteId")' },
+  { kind: 'sql', name: 'ExternalRegistration_teamId_idx', sql: 'CREATE INDEX IF NOT EXISTS "ExternalRegistration_teamId_idx" ON "ExternalRegistration"("teamId")' },
+  {
+    kind: 'table',
+    table: 'FGBRegistrationBlock',
+    sql: `CREATE TABLE IF NOT EXISTS "FGBRegistrationBlock" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "athleteId" TEXT,
+      "teamId" TEXT,
+      "championshipId" TEXT NOT NULL,
+      "categoryId" TEXT,
+      "reason" TEXT NOT NULL,
+      "externalRegistrationId" TEXT NOT NULL,
+      "isActive" BOOLEAN NOT NULL DEFAULT true,
+      "liftedAt" DATETIME,
+      "liftedBy" TEXT,
+      "liftReason" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'FGBRegistrationBlock_athlete_championship_idx', sql: 'CREATE INDEX IF NOT EXISTS "FGBRegistrationBlock_athleteId_championshipId_idx" ON "FGBRegistrationBlock"("athleteId","championshipId")' },
+  { kind: 'sql', name: 'FGBRegistrationBlock_team_championship_idx', sql: 'CREATE INDEX IF NOT EXISTS "FGBRegistrationBlock_teamId_championshipId_idx" ON "FGBRegistrationBlock"("teamId","championshipId")' },
 ]
 
 let schemaEnsured = false

@@ -149,6 +149,8 @@ model Championship {
   bidEntries               AthleteBidEntry[]
   financialInvoices        FinancialInvoice[]
   officialRosters          OfficialRoster[]
+  externalBlocks           ExternalCompetitionBlock[]
+  registrationBlocks       FGBRegistrationBlock[]
 }
 
 model ChampionshipCategory {
@@ -1130,4 +1132,79 @@ model TeamFee {
 
   @@index([teamId, status])
   @@index([season, status])
+}
+
+// ─── Competições Externas (Conflito + Exclusividade) ────────────────────────
+
+model ExternalCompetition {
+  id              String   @id @default(cuid())
+  name            String
+  organizer       String
+  city            String?
+  state           String?
+  startDate       DateTime
+  endDate         DateTime
+  categoriesJson  String   @default("[]")
+  gender          String?
+  description     String?
+  websiteUrl      String?
+  logoUrl         String?
+  isPublished     Boolean  @default(false)
+  season          Int      @default(2026)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  blocks          ExternalCompetitionBlock[]
+  registrations   ExternalRegistration[]
+}
+
+model ExternalCompetitionBlock {
+  id                    String   @id @default(cuid())
+  externalCompetitionId String
+  externalCompetition   ExternalCompetition @relation(fields: [externalCompetitionId], references: [id], onDelete: Cascade)
+  championshipId        String
+  championship          Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  categoryId            String?
+  createdAt             DateTime @default(now())
+
+  @@unique([externalCompetitionId, championshipId, categoryId])
+}
+
+model ExternalRegistration {
+  id                    String   @id @default(cuid())
+  externalCompetitionId String
+  externalCompetition   ExternalCompetition @relation(fields: [externalCompetitionId], references: [id])
+  athleteId             String?
+  teamId                String?
+  categoryId            String?
+  declaredBy            String
+  status                String   @default("DECLARED")
+  notes                 String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  blocksGenerated       FGBRegistrationBlock[]
+
+  @@index([athleteId])
+  @@index([teamId])
+}
+
+model FGBRegistrationBlock {
+  id                      String   @id @default(cuid())
+  athleteId               String?
+  teamId                  String?
+  championshipId          String
+  championship            Championship @relation(fields: [championshipId], references: [id])
+  categoryId              String?
+  reason                  String
+  externalRegistrationId  String
+  externalRegistration    ExternalRegistration @relation(fields: [externalRegistrationId], references: [id])
+  isActive                Boolean  @default(true)
+  liftedAt                DateTime?
+  liftedBy                String?
+  liftReason              String?
+  createdAt               DateTime @default(now())
+
+  @@index([athleteId, championshipId])
+  @@index([teamId, championshipId])
 }

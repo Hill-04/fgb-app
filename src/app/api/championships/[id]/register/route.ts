@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { recalculateIsViable } from '@/services/registration-service'
 import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { checkTeamEligibility } from '@/lib/competition-eligibility'
 
 export async function POST(
   request: Request,
@@ -65,6 +66,19 @@ export async function POST(
 
     if (categories.length === 0) {
       return NextResponse.json({ error: 'Nenhuma categoria válida encontrada para este campeonato' }, { status: 400 })
+    }
+
+    // Verificar bloqueios por competição externa (exclusividade FGB)
+    const eligibility = await checkTeamEligibility(teamId, championshipId)
+    if (!eligibility.eligible) {
+      return NextResponse.json(
+        {
+          error: 'EXTERNAL_COMPETITION_BLOCK',
+          message: 'Há atletas bloqueadas por inscrição em competição externa',
+          blockedAthletes: eligibility.blockedAthletes,
+        },
+        { status: 409 },
+      )
     }
 
     // Criar inscrição

@@ -1,9 +1,11 @@
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, User as UserIcon, Shield, CheckCircle, XCircle } from 'lucide-react'
+import { ArrowLeft, User as UserIcon, Shield, CheckCircle, XCircle, Trophy, AlertTriangle } from 'lucide-react'
 import { updateAthlete, toggleFederationStatus, issueCard } from '../actions'
 import { FileUpload } from '@/components/FileUpload'
+import { ensureDatabaseSchema } from '@/lib/db-patch'
+import { AthleteCompetitionsTab } from './AthleteCompetitionsTab'
 
 export const dynamic = 'force-dynamic'
 
@@ -38,6 +40,7 @@ function SectionTitle({ title }: { title: string }) {
 
 export default async function AthleteProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+  await ensureDatabaseSchema()
 
   try {
     const [athlete, teams] = await Promise.all([
@@ -84,6 +87,27 @@ export default async function AthleteProfilePage({ params }: { params: Promise<{
     ])
 
     if (!athlete) notFound()
+
+    const [activeBlocks, externalDeclarations] = await Promise.all([
+      prisma.fGBRegistrationBlock.findMany({
+        where: { athleteId: id, isActive: true },
+        include: {
+          championship: { select: { id: true, name: true } },
+          externalRegistration: {
+            include: { externalCompetition: { select: { name: true, organizer: true } } },
+          },
+        },
+      }).catch(() => []),
+      prisma.externalRegistration.findMany({
+        where: { athleteId: id },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          externalCompetition: {
+            select: { name: true, organizer: true, startDate: true, endDate: true, season: true },
+          },
+        },
+      }).catch(() => []),
+    ])
 
     const isFedActive = athlete.federationStatus === 'ACTIVE'
     const fmt = (d: Date | null | undefined) => d ? new Date(d).toISOString().split('T')[0] : ''
@@ -383,6 +407,25 @@ export default async function AthleteProfilePage({ params }: { params: Promise<{
             </div>
           </div>
         )}
+
+        {/* Competições */}
+        <AthleteCompetitionsTab
+          activeBlocks={activeBlocks.map((b) => ({
+            id: b.id,
+            championshipName: b.championship.name,
+            reason: b.reason,
+            externalCompetitionName: b.externalRegistration.externalCompetition.name,
+          }))}
+          externalDeclarations={externalDeclarations.map((d) => ({
+            id: d.id,
+            name: d.externalCompetition.name,
+            organizer: d.externalCompetition.organizer,
+            startDate: d.externalCompetition.startDate.toISOString(),
+            endDate: d.externalCompetition.endDate.toISOString(),
+            season: d.externalCompetition.season,
+            status: d.status,
+          }))}
+        />
 
         {/* BID history */}
         {athlete.bidEntries.length > 0 && (

@@ -25,11 +25,11 @@ function LiveBadge() {
     <Link
       href="/jogos"
       className="flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] transition-all"
-      style={{ background: 'rgba(27,115,64,0.18)', border: '1px solid rgba(27,115,64,0.35)', color: 'var(--verde)', textDecoration: 'none' }}
+      style={{ background: 'rgba(16,107,51,0.18)', border: '1px solid rgba(16,107,51,0.35)', color: 'var(--fgb-green-700)', textDecoration: 'none' }}
     >
       <span className="relative flex h-1.5 w-1.5">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--verde)] opacity-70" />
-        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--verde)]" />
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--fgb-green-700)] opacity-70" />
+        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[var(--fgb-green-700)]" />
       </span>
       {count} ao vivo
     </Link>
@@ -58,6 +58,7 @@ const navItems = [
   {
     label: 'Campeonatos', href: '#',
     children: [
+      { label: 'Competições 2026', href: '/competicoes' },
       { label: 'Todos os Campeonatos', href: '/campeonatos' },
       { label: 'Normas do Estadual', href: '/campeonatos/normas' },
       { label: 'Calendário', href: '/calendario' },
@@ -87,7 +88,7 @@ export function PublicHeader() {
   return (
     <>
       {/* TOP BAR */}
-      <div style={{ background: '#145530' }} className="hidden md:block">
+      <div style={{ background: 'var(--fgb-green-800)' }} className="hidden md:block">
         <div className="max-w-7xl mx-auto px-6 py-1.5 flex items-center justify-between">
           <div className="flex items-center gap-5">
             {['(54) 3223-3858', '8h–12h · 13h–17h', 'fgb@basquetegaucho.com.br'].map(t => (
@@ -128,7 +129,7 @@ export function PublicHeader() {
               <p className="fgb-heading text-white" style={{ fontSize: 13, lineHeight: 1, letterSpacing: '0.04em' }}>
                 Federação Gaúcha
               </p>
-              <p className="fgb-label" style={{ color: '#F5C200', fontSize: 9, marginTop: 1, letterSpacing: '0.2em' }}>
+              <p className="fgb-label" style={{ color: 'var(--fgb-yellow-500)', fontSize: 9, marginTop: 1, letterSpacing: '0.2em' }}>
                 de Basketball
               </p>
             </div>
@@ -175,7 +176,7 @@ export function PublicHeader() {
 
         {/* MOBILE MENU */}
         {mobileOpen && (
-          <div style={{ background: '#145530', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ background: 'var(--fgb-green-800)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
             <div className="px-4 py-3 space-y-0.5">
               {navItems.map(item => (
                 <div key={item.label}>
@@ -196,7 +197,7 @@ export function PublicHeader() {
                 </div>
               ))}
               <div className="pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                <Link href="/login" className="fgb-btn-primary block text-center" style={{ color: 'var(--black)' }}>
+                <Link href="/login" className="fgb-btn-primary block text-center" style={{ color: 'var(--fgb-ink-900)' }}>
                   Entrar na Plataforma
                 </Link>
               </div>
