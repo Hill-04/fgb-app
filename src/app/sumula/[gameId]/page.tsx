@@ -39,6 +39,16 @@ export default async function SumulaPage({
         include: { athlete: true, team: true },
         orderBy: [{ teamId: 'asc' }, { points: 'desc' }],
       },
+      events: {
+        where: {
+          isReverted: false,
+          isCancelled: false,
+          eventType: { in: ['SHOT_MADE_2', 'SHOT_MADE_3', 'FREE_THROW_MADE', 'SCORE_2', 'SCORE_3', 'FREE_THROW'] },
+        },
+        orderBy: [{ period: 'asc' }, { sequenceNumber: 'asc' }],
+        include: { athlete: { select: { name: true, jerseyNumber: true } }, team: { select: { id: true, name: true } } },
+        take: 400,
+      },
     },
   })
 
@@ -61,6 +71,7 @@ export default async function SumulaPage({
 
   function teamTotal(stats: typeof homeStats) {
     return {
+      min: stats.reduce((s, r) => s + r.minutesPlayed, 0),
       pts: stats.reduce((s, r) => s + r.points, 0),
       fg2m: stats.reduce((s, r) => s + r.twoPtMade, 0),
       fg2a: stats.reduce((s, r) => s + r.twoPtAttempted, 0),
@@ -68,6 +79,8 @@ export default async function SumulaPage({
       fg3a: stats.reduce((s, r) => s + r.threePtAttempted, 0),
       ftm: stats.reduce((s, r) => s + r.freeThrowsMade, 0),
       fta: stats.reduce((s, r) => s + r.freeThrowsAttempted, 0),
+      rbo: stats.reduce((s, r) => s + r.reboundsOffensive, 0),
+      rbd: stats.reduce((s, r) => s + r.reboundsDefensive, 0),
       reb: stats.reduce((s, r) => s + r.reboundsTotal, 0),
       ast: stats.reduce((s, r) => s + r.assists, 0),
       stl: stats.reduce((s, r) => s + r.steals, 0),
@@ -77,19 +90,31 @@ export default async function SumulaPage({
     }
   }
 
+  function totalsCells(t: ReturnType<typeof teamTotal>) {
+    return [
+      '—', 'TOTAIS', '—', t.min, t.pts,
+      `${t.fg2m}/${t.fg2a}`, `${t.fg3m}/${t.fg3a}`, `${t.ftm}/${t.fta}`,
+      t.rbo, t.rbd, t.reb, t.ast, t.stl, t.blk, t.to, t.pf,
+    ]
+  }
+
   const homeTot = teamTotal(homeStats)
   const awayTot = teamTotal(awayStats)
 
-  const statCols = ['#', 'Atleta', 'PTS', '2PT', '3PT', 'LL', 'REB', 'AST', 'STL', 'BLK', 'TO', 'PF']
+  const statCols = ['#', 'Atleta', 'Pos', 'MIN', 'PTS', '2PT', '3PT', 'LL', 'RBO', 'RBD', 'REB', 'AST', 'STL', 'BLK', 'TO', 'PF']
 
   function playerRow(s: (typeof homeStats)[0]) {
     return [
       s.athlete.jerseyNumber?.toString() ?? '–',
-      s.athlete.name,
+      s.athlete.name + (s.isStarter ? '  ★' : ''),
+      s.athlete.position ?? '–',
+      n(s.minutesPlayed),
       n(s.points),
       `${n(s.twoPtMade)}/${n(s.twoPtAttempted)}`,
       `${n(s.threePtMade)}/${n(s.threePtAttempted)}`,
       `${n(s.freeThrowsMade)}/${n(s.freeThrowsAttempted)}`,
+      n(s.reboundsOffensive),
+      n(s.reboundsDefensive),
       n(s.reboundsTotal),
       n(s.assists),
       n(s.steals),
@@ -288,18 +313,9 @@ export default async function SumulaPage({
                   )
                 })}
                 <tr style={totRowStyle}>
-                  <td style={tdStyle(true)}>—</td>
-                  <td style={{ ...tdStyle(true, false) }}>TOTAIS</td>
-                  <td style={tdStyle(true)}>{homeTot.pts}</td>
-                  <td style={tdStyle(true)}>{homeTot.fg2m}/{homeTot.fg2a}</td>
-                  <td style={tdStyle(true)}>{homeTot.fg3m}/{homeTot.fg3a}</td>
-                  <td style={tdStyle(true)}>{homeTot.ftm}/{homeTot.fta}</td>
-                  <td style={tdStyle(true)}>{homeTot.reb}</td>
-                  <td style={tdStyle(true)}>{homeTot.ast}</td>
-                  <td style={tdStyle(true)}>{homeTot.stl}</td>
-                  <td style={tdStyle(true)}>{homeTot.blk}</td>
-                  <td style={tdStyle(true)}>{homeTot.to}</td>
-                  <td style={tdStyle(true)}>{homeTot.pf}</td>
+                  {totalsCells(homeTot).map((c, j) => (
+                    <td key={j} style={tdStyle(true, j !== 1)}>{c}</td>
+                  ))}
                 </tr>
               </tbody>
             </table>
@@ -329,21 +345,72 @@ export default async function SumulaPage({
                   )
                 })}
                 <tr style={totRowStyle}>
-                  <td style={tdStyle(true)}>—</td>
-                  <td style={{ ...tdStyle(true, false) }}>TOTAIS</td>
-                  <td style={tdStyle(true)}>{awayTot.pts}</td>
-                  <td style={tdStyle(true)}>{awayTot.fg2m}/{awayTot.fg2a}</td>
-                  <td style={tdStyle(true)}>{awayTot.fg3m}/{awayTot.fg3a}</td>
-                  <td style={tdStyle(true)}>{awayTot.ftm}/{awayTot.fta}</td>
-                  <td style={tdStyle(true)}>{awayTot.reb}</td>
-                  <td style={tdStyle(true)}>{awayTot.ast}</td>
-                  <td style={tdStyle(true)}>{awayTot.stl}</td>
-                  <td style={tdStyle(true)}>{awayTot.blk}</td>
-                  <td style={tdStyle(true)}>{awayTot.to}</td>
-                  <td style={tdStyle(true)}>{awayTot.pf}</td>
+                  {totalsCells(awayTot).map((c, j) => (
+                    <td key={j} style={tdStyle(true, j !== 1)}>{c}</td>
+                  ))}
                 </tr>
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* ── PONTOS MARCADOS (LANCE A LANCE) ── */}
+        {game.events.length > 0 && (
+          <div>
+            <div style={{ background: '#145530', color: 'white', padding: '5px 10px', fontWeight: 800, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+              Pontos Marcados — Lance a Lance ({game.events.length})
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ ...thStyle, width: 36 }}>Q</th>
+                  <th style={{ ...thStyle, width: 60 }}>Tempo</th>
+                  <th style={{ ...thStyle, width: 56 }}>Tipo</th>
+                  <th style={{ ...thStyle, width: 36 }}>Pts</th>
+                  <th style={{ ...thStyle, textAlign: 'left' }}>Atleta</th>
+                  <th style={{ ...thStyle, textAlign: 'left' }}>Equipe</th>
+                  <th style={{ ...thStyle, width: 80 }}>Placar</th>
+                </tr>
+              </thead>
+              <tbody>
+                {game.events.map((e, i) => {
+                  const typeLabel =
+                    e.eventType === 'SHOT_MADE_2' || e.eventType === 'SCORE_2' ? '2 PTS' :
+                    e.eventType === 'SHOT_MADE_3' || e.eventType === 'SCORE_3' ? '3 PTS' :
+                    e.eventType === 'FREE_THROW_MADE' || e.eventType === 'FREE_THROW' ? 'Lance Livre' :
+                    e.eventType
+                  const points =
+                    e.pointsDelta ??
+                    (e.eventType === 'SHOT_MADE_2' || e.eventType === 'SCORE_2' ? 2 :
+                     e.eventType === 'SHOT_MADE_3' || e.eventType === 'SCORE_3' ? 3 :
+                     e.eventType === 'FREE_THROW_MADE' || e.eventType === 'FREE_THROW' ? 1 : 0)
+                  const isHomeTeam = e.team?.id === game.homeTeamId
+                  return (
+                    <tr key={e.id} style={i % 2 === 1 ? { background: '#f9f9f9' } : {}}>
+                      <td style={tdStyle()}>{e.period ?? '–'}</td>
+                      <td style={tdStyle()}>{e.clockTime ?? '–'}</td>
+                      <td style={{ ...tdStyle(true), color: isHomeTeam ? '#145530' : '#b21a1a' }}>{typeLabel}</td>
+                      <td style={tdStyle(true)}>+{points}</td>
+                      <td style={tdStyle(false, false)}>
+                        {e.athlete?.jerseyNumber != null && (
+                          <span style={{ display: 'inline-block', minWidth: 20, fontWeight: 700, color: '#145530' }}>#{e.athlete.jerseyNumber}</span>
+                        )}{' '}
+                        {e.athlete?.name ?? '—'}
+                      </td>
+                      <td style={tdStyle(false, false)}>{e.team?.name ?? '—'}</td>
+                      <td style={{ ...tdStyle(true), whiteSpace: 'nowrap' }}>
+                        {e.homeScoreAfter != null && e.awayScoreAfter != null
+                          ? `${e.homeScoreAfter}–${e.awayScoreAfter}`
+                          : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+            <div style={{ fontSize: 9, color: '#888', marginTop: 4, fontStyle: 'italic' }}>
+              Eventos registrados durante o jogo via mesa eletrônica. Ordenado por período e sequência.
+            </div>
           </div>
         )}
 
