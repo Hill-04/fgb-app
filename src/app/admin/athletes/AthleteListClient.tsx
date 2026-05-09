@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useOptimistic, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { CheckCircle2, Search, User as UserIcon, X } from 'lucide-react'
 import { toggleFederationStatus, issueCard } from './actions'
@@ -19,19 +19,61 @@ type Athlete = {
   registrationRequests: { requestedCategoryLabel: string | null }[]
 }
 
+type OptimisticAction =
+  | { type: 'TOGGLE_STATUS'; id: string }
+  | { type: 'ISSUE_CARD'; id: string }
+
+function reduce(state: Athlete[], action: OptimisticAction): Athlete[] {
+  switch (action.type) {
+    case 'TOGGLE_STATUS':
+      return state.map(a =>
+        a.id === action.id
+          ? { ...a, federationStatus: a.federationStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE' }
+          : a
+      )
+    case 'ISSUE_CARD':
+      return state.map(a =>
+        a.id === action.id && a.cards.length === 0
+          ? { ...a, cards: [{ cardNumber: '...', qrToken: '...' }] }
+          : a
+      )
+  }
+}
+
 export function AthleteListClient({ athletes }: { athletes: Athlete[] }) {
   const [query, setQuery] = useState('')
+  const [optimistic, applyOptimistic] = useOptimistic<Athlete[], OptimisticAction>(athletes, reduce)
+  const [, startTransition] = useTransition()
 
   const q = query.toLowerCase().trim()
   const filtered = q
-    ? athletes.filter(a =>
+    ? optimistic.filter(a =>
         a.name.toLowerCase().includes(q) ||
         a.team?.name.toLowerCase().includes(q) ||
         a.document?.toLowerCase().includes(q) ||
         a.jerseyNumber?.toString().includes(q) ||
         a.position?.toLowerCase().includes(q)
       )
-    : athletes
+    : optimistic
+
+  function handleToggle(athlete: Athlete) {
+    const fd = new FormData()
+    fd.set('id', athlete.id)
+    fd.set('current', athlete.federationStatus)
+    startTransition(async () => {
+      applyOptimistic({ type: 'TOGGLE_STATUS', id: athlete.id })
+      await toggleFederationStatus(fd)
+    })
+  }
+
+  function handleIssueCard(athlete: Athlete) {
+    const fd = new FormData()
+    fd.set('athleteId', athlete.id)
+    startTransition(async () => {
+      applyOptimistic({ type: 'ISSUE_CARD', id: athlete.id })
+      await issueCard(fd)
+    })
+  }
 
   return (
     <div className="rounded-[28px] border border-[var(--border)] bg-white shadow-sm overflow-hidden">
@@ -57,7 +99,7 @@ export function AthleteListClient({ athletes }: { athletes: Athlete[] }) {
             )}
           </div>
           <span className="text-[10px] font-black uppercase text-[var(--gray)] shrink-0">
-            {filtered.length} de {athletes.length}
+            {filtered.length} de {optimistic.length}
           </span>
         </div>
       </div>
@@ -118,26 +160,26 @@ export function AthleteListClient({ athletes }: { athletes: Athlete[] }) {
                       <CheckCircle2 className="h-2.5 w-2.5" /> Carteira
                     </span>
                   ) : (
-                    <form action={issueCard}>
-                      <input type="hidden" name="athleteId" value={athlete.id} />
-                      <button type="submit" className="hidden sm:inline-flex h-7 items-center rounded-xl border border-[var(--border)] bg-white px-2.5 text-[9px] font-black uppercase text-[var(--gray)] hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors">
-                        Gerar carteira
-                      </button>
-                    </form>
+                    <button
+                      type="button"
+                      onClick={() => handleIssueCard(athlete)}
+                      className="hidden sm:inline-flex h-7 items-center rounded-xl border border-[var(--border)] bg-white px-2.5 text-[9px] font-black uppercase text-[var(--gray)] hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors"
+                    >
+                      Gerar carteira
+                    </button>
                   )}
 
-                  <form action={toggleFederationStatus}>
-                    <input type="hidden" name="id" value={athlete.id} />
-                    <input type="hidden" name="current" value={athlete.federationStatus} />
-                    <button type="submit"
-                      className="h-7 px-2.5 rounded-xl text-[9px] font-black uppercase transition-colors border"
-                      style={isFedActive
-                        ? { borderColor: 'rgba(180,0,0,0.3)', color: '#b44', background: 'rgba(180,0,0,0.06)' }
-                        : { borderColor: 'rgba(27,115,64,0.35)', color: 'var(--verde)', background: 'rgba(27,115,64,0.08)' }
-                      }>
-                      {isFedActive ? 'Liberar' : 'Reativar'}
-                    </button>
-                  </form>
+                  <button
+                    type="button"
+                    onClick={() => handleToggle(athlete)}
+                    className="h-7 px-2.5 rounded-xl text-[9px] font-black uppercase transition-colors border"
+                    style={isFedActive
+                      ? { borderColor: 'rgba(180,0,0,0.3)', color: '#b44', background: 'rgba(180,0,0,0.06)' }
+                      : { borderColor: 'rgba(27,115,64,0.35)', color: 'var(--verde)', background: 'rgba(27,115,64,0.08)' }
+                    }
+                  >
+                    {isFedActive ? 'Liberar' : 'Reativar'}
+                  </button>
 
                   <Link href={`/admin/athletes/${athlete.id}`}
                     className="inline-flex h-7 items-center rounded-xl border border-[var(--border)] bg-white px-2.5 text-[9px] font-black uppercase text-[var(--gray)] hover:border-[var(--verde)] hover:text-[var(--verde)] transition-colors">

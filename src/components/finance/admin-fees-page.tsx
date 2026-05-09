@@ -92,9 +92,23 @@ export default function AdminFeesPage({ initialFees }: { initialFees?: EditableF
   const handleSave = async () => {
     if (!editingFee) return
 
+    const editingKey = editingFee.key
+    const previousFees = fees
+    const optimisticUpdate: Partial<EditableFee> = {
+      label: editLabel,
+      value: editValue,
+      description: editDescription,
+      isActive: editIsActive,
+      updatedAt: new Date().toISOString(),
+    }
+
+    // Aplica optimistic immediatamente e fecha o modal
+    setFees(current => current.map(f => f.key === editingKey ? { ...f, ...optimisticUpdate } : f))
+    setEditingFee(null)
     setSubmitting(true)
+
     try {
-      const response = await fetch(`/api/admin/fees/${editingFee.key}`, {
+      const response = await fetch(`/api/admin/fees/${editingKey}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,17 +118,15 @@ export default function AdminFeesPage({ initialFees }: { initialFees?: EditableF
           isActive: editIsActive,
         }),
       })
-
       const payload = await response.json()
+      if (!response.ok) throw new Error(payload.error || 'Erro ao atualizar taxa.')
 
-      if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao atualizar taxa.')
-      }
-
-      await loadFees()
-      setEditingFee(null)
-      toast.success('Taxa atualizada com sucesso.')
+      // Reconcilia com valor canônico do servidor (trata edges como timestamps reais)
+      setFees(current => current.map(f => f.key === editingKey ? { ...f, ...payload } : f))
+      toast.success('Taxa atualizada.')
     } catch (error: any) {
+      // Rollback
+      setFees(previousFees)
       toast.error(error.message || 'Erro ao atualizar taxa.')
     } finally {
       setSubmitting(false)
@@ -122,20 +134,17 @@ export default function AdminFeesPage({ initialFees }: { initialFees?: EditableF
   }
 
   const handleDeactivate = async (fee: EditableFee) => {
+    const previousFees = fees
+    setFees(current => current.map(f => f.key === fee.key ? { ...f, isActive: false } : f))
     setSubmitting(true)
     try {
-      const response = await fetch(`/api/admin/fees/${fee.key}`, {
-        method: 'DELETE',
-      })
+      const response = await fetch(`/api/admin/fees/${fee.key}`, { method: 'DELETE' })
       const payload = await response.json()
-
-      if (!response.ok) {
-        throw new Error(payload.error || 'Erro ao desativar taxa.')
-      }
-
-      await loadFees()
+      if (!response.ok) throw new Error(payload.error || 'Erro ao desativar taxa.')
+      setFees(current => current.map(f => f.key === fee.key ? { ...f, ...payload } : f))
       toast.success('Taxa desativada.')
     } catch (error: any) {
+      setFees(previousFees)
       toast.error(error.message || 'Erro ao desativar taxa.')
     } finally {
       setSubmitting(false)

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useOptimistic, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Edit2, Trash2, CheckCircle, XCircle, Loader2 } from 'lucide-react'
@@ -25,40 +25,46 @@ type RegistrationActionsProps = {
   endDate?: Date
 }
 
-export function RegistrationActions({ 
-  championshipId, 
-  registration, 
+export function RegistrationActions({
+  championshipId,
+  registration,
   categories,
   startDate,
   endDate
 }: RegistrationActionsProps) {
-  const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const [, startTransition] = useTransition()
+  const [optimisticStatus, setOptimisticStatus] = useOptimistic<string, string>(
+    registration.status,
+    (_, next) => next,
+  )
+  const [pending, setPending] = useState(false)
 
-  const handleUpdateStatus = async (status: 'CONFIRMED' | 'REJECTED') => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/championships/${championshipId}/registrations/${registration.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status })
-      })
-
-      if (res.ok) {
+  const handleUpdateStatus = (status: 'CONFIRMED' | 'REJECTED') => {
+    startTransition(async () => {
+      setOptimisticStatus(status)
+      setPending(true)
+      try {
+        const res = await fetch(`/api/championships/${championshipId}/registrations/${registration.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status })
+        })
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          alert(`Erro: ${errorData.error ?? 'Falha ao atualizar status.'}`)
+        }
         router.refresh()
-      } else {
-        const errorData = await res.json()
-        alert(`Erro: ${errorData.error}`)
+      } catch {
+        alert('Erro inesperado')
+      } finally {
+        setPending(false)
       }
-    } catch (error) {
-      alert('Erro inesperado')
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const handleDelete = async () => {
-    setLoading(true)
+    setPending(true)
     try {
       const res = await fetch(`/api/championships/${championshipId}/registrations/${registration.id}`, {
         method: 'DELETE'
@@ -67,13 +73,13 @@ export function RegistrationActions({
       if (res.ok) {
         router.refresh()
       } else {
-        const errorData = await res.json()
-        alert(`Erro: ${errorData.error}`)
+        const errorData = await res.json().catch(() => ({}))
+        alert(`Erro: ${errorData.error ?? 'Falha ao excluir.'}`)
       }
-    } catch (error) {
+    } catch {
       alert('Erro inesperado')
     } finally {
-      setLoading(false)
+      setPending(false)
     }
   }
 
@@ -99,29 +105,29 @@ export function RegistrationActions({
   return (
     <div className="flex gap-2">
       {/* Quick Status Actions */}
-      {registration.status !== 'CONFIRMED' && (
-        <Button 
-          size="icon" 
+      {optimisticStatus !== 'CONFIRMED' && (
+        <Button
+          size="icon"
           variant="ghost"
           onClick={() => handleUpdateStatus('CONFIRMED')}
-          disabled={loading}
+          disabled={pending}
           className="text-green-500 hover:text-green-400 hover:bg-green-500/10 h-8 w-8"
           title="Aprovar"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+          {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
         </Button>
       )}
-      
-      {registration.status !== 'REJECTED' && (
-        <Button 
-          size="icon" 
+
+      {optimisticStatus !== 'REJECTED' && (
+        <Button
+          size="icon"
           variant="ghost"
           onClick={() => handleUpdateStatus('REJECTED')}
-          disabled={loading}
+          disabled={pending}
           className="text-red-500 hover:text-red-400 hover:bg-red-500/10 h-8 w-8"
           title="Rejeitar"
         >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+          {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
         </Button>
       )}
 
@@ -149,11 +155,11 @@ export function RegistrationActions({
       {/* Delete Action */}
       <AlertDialog>
       <AlertDialogTrigger render={
-        <Button 
-          size="icon" 
-          variant="ghost" 
+        <Button
+          size="icon"
+          variant="ghost"
           className="text-red-500/50 hover:text-red-500 hover:bg-red-500/10 h-8 w-8"
-          disabled={loading}
+          disabled={pending}
           title="Excluir"
         >
           <Trash2 className="w-4 h-4" />
