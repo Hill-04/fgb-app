@@ -141,6 +141,27 @@ model Championship {
   scheduleOptimizationMode String                 @default("less_travel")
   blockFormat              String                 @default("SAT_SUN")
   isSimulation             Boolean                @default(false)
+  sanctioning              String                 @default("FGB_OFFICIAL")
+  countsForRanking         Boolean                @default(true)
+  countsForBidEligibility  Boolean                @default(true)
+  sanctionNumber           String?
+  modality                 String                 @default("5x5")
+  ageRangeMin              Int?
+  ageRangeMax              Int?
+  allowedWeekdaysJson      String                 @default("[6,0]")
+  timeSlotsJson            String                 @default("[]")
+  blackoutDatesJson        String                 @default("[]")
+  minRestHoursBetweenGames Float                  @default(20)
+  maxGamesPerTeamPerWeek   Int                    @default(3)
+  homePattern              String                 @default("ALTERNATED")
+  regulationPdfUrl         String?
+  regulationVersion        Int                    @default(1)
+  regulationPublishedAt    DateTime?
+  publishedAt              DateTime?
+  registrationOpenedAt     DateTime?
+  technicalCongressDate    DateTime?
+  drawDate                 DateTime?
+  finishedAt               DateTime?
   blocks                   Block[]
   categories               ChampionshipCategory[]
   documents                Document[]
@@ -151,6 +172,10 @@ model Championship {
   officialRosters          OfficialRoster[]
   externalBlocks           ExternalCompetitionBlock[]
   registrationBlocks       FGBRegistrationBlock[]
+  tiebreakerRules          TiebreakerRule[]
+  championshipPhases       ChampionshipPhase[]
+  tournamentDocuments      TournamentDocument[]
+  statusTransitions        ChampionshipStatusTransition[]
 }
 
 model ChampionshipCategory {
@@ -158,10 +183,14 @@ model ChampionshipCategory {
   name           String
   championshipId String
   isViable       Boolean                @default(false)
+  minBirthYear   Int?
+  maxBirthYear   Int?
+  modality       String                 @default("5x5")
   championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
   games          Game[]
   registrations  RegistrationCategory[]
   standings      Standing[]
+  phaseEntries   ChampionshipPhaseCategory[]
 
   @@unique([championshipId, name])
 }
@@ -185,6 +214,10 @@ model Registration {
   gymAddress  String?
   gymCity     String?
   gymMapsLink String?
+
+  eligibilityWindowStart DateTime?
+  eligibilityWindowEnd   DateTime?
+  certNegativaUrl        String?
 
   blockedDates   BlockedDate[]
   athletePlayers AthleteCategory[]
@@ -721,6 +754,8 @@ model Athlete {
   docOtherUrl         String?
   notes               String?
   saveWithoutValidation Boolean          @default(false)
+  bidPublishedAt   DateTime?
+  bidNumber        String?
   team             Team?                @relation(fields: [teamId], references: [id])
   cards            AthleteIdCard[]
   bidEntries       AthleteBidEntry[]
@@ -894,6 +929,30 @@ model SponsorClick {
   sponsor   Sponsor  @relation(fields: [sponsorId], references: [id], onDelete: Cascade)
 
   @@index([sponsorId])
+}
+
+model Article {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  subtitle    String?
+  content     String
+  coverImage  String?
+  category    String   @default("Conhecimento")
+  tags        String?
+  author      String   @default("Redação FGB")
+  source      String?
+  sourceUrl   String?
+  isPublished Boolean  @default(true)
+  publishedAt DateTime @default(now())
+  readTime    Int      @default(5)
+  views       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, isPublished])
+  @@index([publishedAt])
+  @@index([slug])
 }
 
 model NewsPost {
@@ -1207,4 +1266,106 @@ model FGBRegistrationBlock {
 
   @@index([athleteId, championshipId])
   @@index([teamId, championshipId])
+}
+
+model TiebreakerRule {
+  id              String       @id @default(cuid())
+  championshipId  String
+  championship    Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  order           Int
+  type            String
+
+  @@index([championshipId, order])
+}
+
+model ChampionshipPhase {
+  id                 String                       @id @default(cuid())
+  championshipId     String
+  championship       Championship                 @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  name               String
+  order              Int                          @default(0)
+  formatType         String                       @default("ROUND_ROBIN")
+  formatConfigJson   String                       @default("{}")
+  tiebreakerChain    String                       @default("h2h_record,h2h_diff,h2h_for,all_diff,all_for,draw")
+  startDate          DateTime?
+  endDate            DateTime?
+  qualifiesNextCount Int?
+  isActive           Boolean                      @default(true)
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
+
+  groups             ChampionshipGroup[]
+  series             GameSeries[]
+  categories         ChampionshipPhaseCategory[]
+
+  @@index([championshipId, order])
+}
+
+model ChampionshipPhaseCategory {
+  id         String                @id @default(cuid())
+  phaseId    String
+  phase      ChampionshipPhase     @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   ChampionshipCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([phaseId, categoryId])
+}
+
+model ChampionshipGroup {
+  id        String              @id @default(cuid())
+  phaseId   String
+  phase     ChampionshipPhase   @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  name      String
+  order     Int                 @default(0)
+  createdAt DateTime            @default(now())
+
+  @@index([phaseId])
+}
+
+model GameSeries {
+  id           String              @id @default(cuid())
+  phaseId      String
+  phase        ChampionshipPhase   @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  team1Id      String
+  team2Id      String
+  bestOf       Int                 @default(1)
+  homePattern  String              @default("ALTERNATED")
+  winnerTeamId String?
+  status       String              @default("SCHEDULED")
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+
+  @@index([phaseId])
+  @@index([team1Id])
+  @@index([team2Id])
+}
+
+model TournamentDocument {
+  id             String       @id @default(cuid())
+  championshipId String
+  championship   Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  type           String
+  title          String
+  fileUrl        String
+  version        Int          @default(1)
+  publishedAt    DateTime     @default(now())
+  supersedesId   String?
+  notes          String?
+  createdAt      DateTime     @default(now())
+
+  @@index([championshipId, type])
+}
+
+model ChampionshipStatusTransition {
+  id             String       @id @default(cuid())
+  championshipId String
+  championship   Championship @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  fromStatus     String
+  toStatus       String
+  reason         String?
+  performedBy    String?
+  metadataJson   String?
+  createdAt      DateTime     @default(now())
+
+  @@index([championshipId, createdAt])
 }

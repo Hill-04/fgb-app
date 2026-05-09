@@ -1,0 +1,118 @@
+.fgb-article-body {
+  max-width: 720px;
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--fgb-ink-800);
+}
+
+.fgb-article-body p {
+  margin: 0 0 18px;
+}
+
+.fgb-article-body h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  color: var(--fgb-green-700);
+  font-size: 22px;
+  line-height: 1.2;
+  margin: 36px 0 14px;
+  padding-left: 14px;
+  border-left: 4px solid var(--fgb-green-700);
+}
+
+.fgb-article-body h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--fgb-ink-900);
+  font-size: 18px;
+  line-height: 1.3;
+  margin: 28px 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.fgb-article-body strong {
+  color: var(--fgb-ink-900);
+  font-weight: 700;
+}
+
+.fgb-article-body a {
+  color: var(--fgb-green-700);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.fgb-article-body a:hover {
+  color: var(--fgb-green-800);
+}
+
+.fgb-article-body ul,
+.fgb-article-body ol {
+  margin: 0 0 18px;
+  padding-left: 22px;
+}
+
+.fgb-article-body li {
+  margin-bottom: 8px;
+}
+
+.fgb-article-body img {
+  width: 100%;
+  border-radius: 8px;
+  margin: 18px 0;
+}
+
+.fgb-article-body figure {
+  margin: 24px 0;
+}
+
+.fgb-article-body figcaption {
+  font-size: 13px;
+  color: var(--fgb-ink-500);
+  text-align: center;
+  margin-top: 8px;
+}
+
+.fgb-article-body blockquote {
+  border-left: 4px solid var(--fgb-yellow-500);
+  background: var(--fgb-ink-50);
+  margin: 24px 0;
+  padding: 18px 22px;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fgb-ink-800);
+}
+
+.fgb-article-body blockquote p {
+  margin: 0 0 8px;
+}
+
+.fgb-article-body blockquote cite {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-style: normal;
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fgb-green-700);
+}
+
+.fgb-article-body code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 14px;
+  background: var(--fgb-ink-100);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+@media (max-width: 768px) {
+  .fgb-article-body h2 {
+    font-size: 20px;
+  }
+}

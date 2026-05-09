@@ -4,6 +4,7 @@ import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { setChampionshipTiebreakers, type TiebreakerType, FIBA_DEFAULT_CHAIN, LEGACY_KEYS_TO_TYPE } from '@/lib/championship/tiebreakers'
 
 // Generate category name from code e.g. SUB12M -> "Sub 12 Masculino"
 function codeToName(code: string): string {
@@ -49,12 +50,45 @@ export async function POST(request: Request) {
       hasBlocks,
       maxGamesPerTeamPerDay, scheduleOptimizationMode,
       regDeadline, startDate, endDate,
+      // Sprint 1: novos campos
+      sanctioning, countsForRanking, countsForBidEligibility, sanctionNumber,
+      modality, ageRangeMin, ageRangeMax,
+      allowedWeekdays, timeSlots, blackoutDates,
+      minRestHoursBetweenGames, maxGamesPerTeamPerWeek, homePattern,
+      regulationPdfUrl,
+      tiebreakerChain,
     } = body
 
     if (!name?.trim()) return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
     if (!selectedCodes || selectedCodes.length === 0) return NextResponse.json({ error: 'Selecione ao menos uma categoria' }, { status: 400 })
 
     const isValidDate = (d: any) => d && !isNaN(new Date(d).getTime())
+
+    const buildTiebreakerChain = (): TiebreakerType[] => {
+      if (Array.isArray(tiebreakerChain) && tiebreakerChain.length > 0) {
+        return tiebreakerChain.filter(Boolean) as TiebreakerType[]
+      }
+      if (Array.isArray(tiebreakers) && tiebreakers.length > 0) {
+        return tiebreakers
+          .map((k: string) => LEGACY_KEYS_TO_TYPE[k] ?? (k as TiebreakerType))
+          .filter(Boolean)
+      }
+      return FIBA_DEFAULT_CHAIN
+    }
+    const finalChain = buildTiebreakerChain()
+
+    const safeJson = (v: unknown, fallback: string): string => {
+      if (v === undefined || v === null) return fallback
+      if (typeof v === 'string') {
+        try { JSON.parse(v); return v } catch { return fallback }
+      }
+      try { return JSON.stringify(v) } catch { return fallback }
+    }
+
+    const validSanctioning = ['FGB_OFFICIAL', 'FGB_INVITATIONAL', 'REGIONAL', 'OPEN']
+    const sanctioningValue = validSanctioning.includes(sanctioning) ? sanctioning : 'FGB_OFFICIAL'
+    const validHomePatterns = ['ALTERNATED', 'FIXED_HOST', 'NEUTRAL', 'SERIES_2_2_1']
+    const homePatternValue = validHomePatterns.includes(homePattern) ? homePattern : 'ALTERNATED'
 
     const championship = await prisma.$transaction(async (tx) => {
       const c = await tx.championship.create({
@@ -66,7 +100,7 @@ export async function POST(request: Request) {
           turns: Number(turns) || 1,
           phases: phases !== undefined ? Number(phases) : 1,
           fieldControl: fieldControl || 'alternado',
-          tiebreakers: Array.isArray(tiebreakers) ? tiebreakers.join(',') : (tiebreakers || 'pontos,saldo,confronto_direto,pontos_marcados'),
+          tiebreakers: finalChain.join(','),
           hasRelegation: Boolean(hasRelegation),
           relegationDown: Number(relegationDown) || 0,
           promotionUp: Number(promotionUp) || 0,
@@ -86,10 +120,24 @@ export async function POST(request: Request) {
           startDate: isValidDate(startDate) ? new Date(startDate) : null,
           endDate: isValidDate(endDate) ? new Date(endDate) : null,
           status: 'DRAFT',
-        },
+          // Sprint 1
+          ...(sanctioningValue ? { sanctioning: sanctioningValue } as any : {}),
+          ...(countsForRanking !== undefined ? { countsForRanking: Boolean(countsForRanking) } as any : {}),
+          ...(countsForBidEligibility !== undefined ? { countsForBidEligibility: Boolean(countsForBidEligibility) } as any : {}),
+          ...(sanctionNumber ? { sanctionNumber: String(sanctionNumber) } as any : {}),
+          ...(modality ? { modality: String(modality) } as any : {}),
+          ...(ageRangeMin !== undefined && ageRangeMin !== null ? { ageRangeMin: Number(ageRangeMin) } as any : {}),
+          ...(ageRangeMax !== undefined && ageRangeMax !== null ? { ageRangeMax: Number(ageRangeMax) } as any : {}),
+          ...(allowedWeekdays !== undefined ? { allowedWeekdaysJson: safeJson(allowedWeekdays, '[6,0]') } as any : {}),
+          ...(timeSlots !== undefined ? { timeSlotsJson: safeJson(timeSlots, '[]') } as any : {}),
+          ...(blackoutDates !== undefined ? { blackoutDatesJson: safeJson(blackoutDates, '[]') } as any : {}),
+          ...(minRestHoursBetweenGames !== undefined ? { minRestHoursBetweenGames: Number(minRestHoursBetweenGames) } as any : {}),
+          ...(maxGamesPerTeamPerWeek !== undefined ? { maxGamesPerTeamPerWeek: Number(maxGamesPerTeamPerWeek) } as any : {}),
+          ...(homePatternValue ? { homePattern: homePatternValue } as any : {}),
+          ...(regulationPdfUrl ? { regulationPdfUrl: String(regulationPdfUrl) } as any : {}),
+        } as any,
       })
 
-      // Fix for SQLite: individual creates because createMany doesn't handle @default(uuid()) for PKs
       for (const code of (selectedCodes as string[])) {
         await tx.championshipCategory.create({
           data: {
@@ -104,6 +152,14 @@ export async function POST(request: Request) {
         include: { categories: true, _count: { select: { registrations: true } } },
       })
     })
+
+    if (championship?.id) {
+      try {
+        await setChampionshipTiebreakers(championship.id, finalChain)
+      } catch (e) {
+        console.warn('[POST /api/championships] tiebreaker save failed:', e)
+      }
+    }
 
     return NextResponse.json(championship, { status: 201 })
   } catch (error: any) {

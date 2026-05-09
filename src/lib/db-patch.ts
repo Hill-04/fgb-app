@@ -899,6 +899,33 @@ const schemaPatches: SchemaPatch[] = [
   },
   { kind: 'sql', name: 'FGBRegistrationBlock_athlete_championship_idx', sql: 'CREATE INDEX IF NOT EXISTS "FGBRegistrationBlock_athleteId_championshipId_idx" ON "FGBRegistrationBlock"("athleteId","championshipId")' },
   { kind: 'sql', name: 'FGBRegistrationBlock_team_championship_idx', sql: 'CREATE INDEX IF NOT EXISTS "FGBRegistrationBlock_teamId_championshipId_idx" ON "FGBRegistrationBlock"("teamId","championshipId")' },
+  {
+    kind: 'table',
+    table: 'Article',
+    sql: `CREATE TABLE IF NOT EXISTS "Article" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "slug" TEXT NOT NULL UNIQUE,
+      "title" TEXT NOT NULL,
+      "subtitle" TEXT,
+      "content" TEXT NOT NULL,
+      "coverImage" TEXT,
+      "category" TEXT NOT NULL DEFAULT 'Conhecimento',
+      "tags" TEXT,
+      "author" TEXT NOT NULL DEFAULT 'Redação FGB',
+      "source" TEXT,
+      "sourceUrl" TEXT,
+      "isPublished" BOOLEAN NOT NULL DEFAULT true,
+      "publishedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "readTime" INTEGER NOT NULL DEFAULT 5,
+      "views" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'Article_category_isPublished_idx', sql: 'CREATE INDEX IF NOT EXISTS "Article_category_isPublished_idx" ON "Article"("category","isPublished")' },
+  { kind: 'sql', name: 'Article_publishedAt_idx', sql: 'CREATE INDEX IF NOT EXISTS "Article_publishedAt_idx" ON "Article"("publishedAt")' },
+  { kind: 'sql', name: 'Article_slug_idx', sql: 'CREATE INDEX IF NOT EXISTS "Article_slug_idx" ON "Article"("slug")' },
 ]
 
 let schemaEnsured = false

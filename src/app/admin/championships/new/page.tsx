@@ -23,20 +23,36 @@ const defaultForm = () => ({
   minTeamsPerCat: '3', categories: [] as string[],
   format: 'todos_contra_todos', turns: '1', phases: '1', fieldControl: 'alternado',
   maxGamesPerTeamPerDay: '2', scheduleOptimizationMode: 'less_travel',
-  tiebreakers: ['pontos', 'saldo', 'confronto_direto', 'pontos_marcados'],
+  tiebreakerChain: ['h2h_record', 'h2h_diff', 'h2h_for', 'all_diff', 'all_for', 'draw'] as string[],
   hasRelegation: false, relegationDown: '0', promotionUp: '0',
   hasPlayoffs: false, playoffTeams: '4', playoffFormat: 'melhor_de_1', hasThirdPlace: true,
   hasBlocks: false, regDeadline: '', startDate: '', endDate: '',
+  // Sancionamento
+  sanctioning: 'FGB_OFFICIAL',
+  countsForRanking: true,
+  countsForBidEligibility: true,
+  sanctionNumber: '',
+  modality: '5x5',
+  // Calendário flexível
+  allowedWeekdays: [6, 0] as number[],
+  timeSlots: [{ start: '08:00', end: '18:00', label: 'Padrão' }] as { start: string; end: string; label?: string }[],
+  blackoutDates: [] as { date: string; endDate?: string; reason?: string }[],
+  minRestHoursBetweenGames: '20',
+  maxGamesPerTeamPerWeek: '3',
+  homePattern: 'ALTERNATED',
 })
 
 type FormState = ReturnType<typeof defaultForm>
 
 const STEPS = [
   { title: 'Identificação', desc: 'Nome, ano e sexo' },
+  { title: 'Tipo', desc: 'Sancionamento e ranking' },
   { title: 'Categorias', desc: 'Sub 8 → Sub 20' },
   { title: 'Formato', desc: 'Estrutura e turnos' },
+  { title: 'Calendário', desc: 'Dias, horários e feriados' },
+  { title: 'Regras de jogo', desc: 'Descanso e mando' },
   { title: 'Playoffs', desc: 'Fase eliminatória' },
-  { title: 'Datas', desc: 'Prazos e calendário' },
+  { title: 'Datas', desc: 'Prazos finais' },
 ]
 
 function OptionButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
@@ -76,14 +92,23 @@ export default function NewChampionshipPage() {
   const toggleCategory = (code: string) =>
     setField('categories', form.categories.includes(code) ? form.categories.filter(c => c !== code) : [...form.categories, code])
 
-  const toggleTiebreaker = (key: string) => {
-    const list = form.tiebreakers
-    setField('tiebreakers', list.includes(key) ? list.filter(t => t !== key) : [...list, key])
+  const toggleWeekday = (day: number) => {
+    const list = form.allowedWeekdays
+    setField('allowedWeekdays', list.includes(day) ? list.filter(d => d !== day) : [...list, day].sort())
+  }
+
+  const moveTiebreaker = (idx: number, dir: -1 | 1) => {
+    const list = [...form.tiebreakerChain]
+    const newIdx = idx + dir
+    if (newIdx < 0 || newIdx >= list.length) return
+    ;[list[idx], list[newIdx]] = [list[newIdx], list[idx]]
+    setField('tiebreakerChain', list)
   }
 
   const validateStep = () => {
     if (step === 0 && !form.name.trim()) { setFormError('O nome do campeonato é obrigatório.'); return false }
-    if (step === 1 && form.categories.length === 0) { setFormError('Selecione ao menos uma categoria.'); return false }
+    if (step === 2 && form.categories.length === 0) { setFormError('Selecione ao menos uma categoria.'); return false }
+    if (step === 4 && form.allowedWeekdays.length === 0) { setFormError('Selecione ao menos um dia da semana.'); return false }
     setFormError(''); return true
   }
 
@@ -108,10 +133,23 @@ export default function NewChampionshipPage() {
           relegationDown: Number(form.relegationDown),
           promotionUp: Number(form.promotionUp),
           playoffTeams: Number(form.playoffTeams),
-          tiebreakers: form.tiebreakers.join(','),
+          tiebreakerChain: form.tiebreakerChain,
+          tiebreakers: form.tiebreakerChain.join(','),
           regDeadline: form.regDeadline || new Date().toISOString(),
           startDate: form.startDate || null,
           endDate: form.endDate || null,
+          // Sprint 1
+          sanctioning: form.sanctioning,
+          countsForRanking: form.countsForRanking,
+          countsForBidEligibility: form.countsForBidEligibility,
+          sanctionNumber: form.sanctionNumber || null,
+          modality: form.modality,
+          allowedWeekdays: form.allowedWeekdays,
+          timeSlots: form.timeSlots,
+          blackoutDates: form.blackoutDates,
+          minRestHoursBetweenGames: Number(form.minRestHoursBetweenGames),
+          maxGamesPerTeamPerWeek: Number(form.maxGamesPerTeamPerWeek),
+          homePattern: form.homePattern,
         })
       })
       if (res.ok) router.push('/admin/championships')
@@ -148,6 +186,53 @@ export default function NewChampionshipPage() {
             </OptionButton>
           ))}
         </div>
+      </div>
+    </div>
+  )
+
+  const renderStepType = () => (
+    <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="space-y-3">
+        <SectionLabel>Sancionamento</SectionLabel>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { value: 'FGB_OFFICIAL', label: 'Oficial FGB', desc: 'Conta para ranking estadual e BID', badge: 'OFICIAL' },
+            { value: 'FGB_INVITATIONAL', label: 'Convidativo FGB', desc: 'Organizado pela FGB sem ranqueamento', badge: 'CONVIDATIVO' },
+            { value: 'REGIONAL', label: 'Regional', desc: 'Organizado por região afiliada', badge: 'REGIONAL' },
+            { value: 'OPEN', label: 'Aberto', desc: 'Torneio amistoso sem sanção oficial', badge: 'ABERTO' },
+          ].map((o) => (
+            <button key={o.value} type="button" onClick={() => setField('sanctioning', o.value)}
+              className={`p-4 rounded-2xl border text-left transition-all ${form.sanctioning === o.value ? 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className={`text-xs font-black uppercase tracking-widest ${form.sanctioning === o.value ? 'text-[var(--amarelo)]' : 'text-slate-300'}`}>{o.label}</span>
+                {form.sanctioning === o.value && <Check className="w-4 h-4 text-[var(--amarelo)]" />}
+              </div>
+              <p className="text-[10px] text-slate-500 font-medium leading-tight">{o.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <SectionLabel>Modalidade</SectionLabel>
+          <div className="flex gap-2">
+            {['5x5', '3x3'].map(m => (
+              <OptionButton key={m} active={form.modality === m} onClick={() => setField('modality', m)}>
+                {m}
+              </OptionButton>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>Nº de Sanção (opcional)</SectionLabel>
+          <Input value={form.sanctionNumber} onChange={e => setField('sanctionNumber', e.target.value)}
+            placeholder="Ex: FGB-2026-001"
+            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+        </div>
+      </div>
+      <div className="space-y-3">
+        <Toggle checked={form.countsForRanking} onCheckedChange={v => setField('countsForRanking', v)} label="Conta para o ranking estadual" />
+        <Toggle checked={form.countsForBidEligibility} onCheckedChange={v => setField('countsForBidEligibility', v)} label="Exige BID publicado para escalação" />
       </div>
     </div>
   )
@@ -244,6 +329,146 @@ export default function NewChampionshipPage() {
     </div>
   )
 
+  const renderStepCalendar = () => {
+    const WEEKDAYS = [
+      { d: 1, label: 'Seg' }, { d: 2, label: 'Ter' }, { d: 3, label: 'Qua' },
+      { d: 4, label: 'Qui' }, { d: 5, label: 'Sex' }, { d: 6, label: 'Sáb' }, { d: 0, label: 'Dom' },
+    ]
+    return (
+      <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+        <div className="space-y-2">
+          <SectionLabel>Dias da semana permitidos</SectionLabel>
+          <p className="text-[11px] text-slate-500 mb-2">Selecione os dias que a IA pode usar para agendar jogos.</p>
+          <div className="flex flex-wrap gap-2">
+            {WEEKDAYS.map(w => (
+              <OptionButton key={w.d} active={form.allowedWeekdays.includes(w.d)} onClick={() => toggleWeekday(w.d)}>
+                {w.label}
+              </OptionButton>
+            ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>Janelas de horário</SectionLabel>
+          <p className="text-[11px] text-slate-500 mb-2">Múltiplas janelas (ex: matutino 08-12 + noturno 19-22).</p>
+          <div className="space-y-2">
+            {form.timeSlots.map((s, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input type="time" value={s.start} onChange={e => {
+                  const list = [...form.timeSlots]; list[idx] = { ...list[idx], start: e.target.value }; setField('timeSlots', list)
+                }} className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
+                <span className="text-slate-500 text-xs">até</span>
+                <Input type="time" value={s.end} onChange={e => {
+                  const list = [...form.timeSlots]; list[idx] = { ...list[idx], end: e.target.value }; setField('timeSlots', list)
+                }} className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
+                <Input value={s.label || ''} onChange={e => {
+                  const list = [...form.timeSlots]; list[idx] = { ...list[idx], label: e.target.value }; setField('timeSlots', list)
+                }} placeholder="Rótulo"
+                className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
+                <button type="button" onClick={() => setField('timeSlots', form.timeSlots.filter((_, i) => i !== idx))}
+                  className="text-red-500 text-xs px-2">Remover</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setField('timeSlots', [...form.timeSlots, { start: '09:00', end: '12:00', label: '' }])}
+              className="text-[var(--amarelo)] text-xs uppercase tracking-widest font-bold flex items-center gap-1">
+              <Plus className="w-3 h-3" /> Adicionar janela
+            </button>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>Datas bloqueadas (feriados, recessos, ENEM)</SectionLabel>
+          <div className="space-y-2">
+            {form.blackoutDates.map((b, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input type="date" value={b.date} onChange={e => {
+                  const list = [...form.blackoutDates]; list[idx] = { ...list[idx], date: e.target.value }; setField('blackoutDates', list)
+                }} className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
+                <Input type="date" value={b.endDate || ''} onChange={e => {
+                  const list = [...form.blackoutDates]; list[idx] = { ...list[idx], endDate: e.target.value }; setField('blackoutDates', list)
+                }} placeholder="Fim (opcional)"
+                className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
+                <Input value={b.reason || ''} onChange={e => {
+                  const list = [...form.blackoutDates]; list[idx] = { ...list[idx], reason: e.target.value }; setField('blackoutDates', list)
+                }} placeholder="Motivo"
+                className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
+                <button type="button" onClick={() => setField('blackoutDates', form.blackoutDates.filter((_, i) => i !== idx))}
+                  className="text-red-500 text-xs px-2">Remover</button>
+              </div>
+            ))}
+            <button type="button" onClick={() => setField('blackoutDates', [...form.blackoutDates, { date: '', reason: '' }])}
+              className="text-[var(--amarelo)] text-xs uppercase tracking-widest font-bold flex items-center gap-1">
+              <Plus className="w-3 h-3" /> Adicionar data
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const renderStepRules = () => (
+    <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <SectionLabel>Descanso mínimo entre jogos (horas)</SectionLabel>
+          <Input type="number" min="0" max="72" value={form.minRestHoursBetweenGames}
+            onChange={e => setField('minRestHoursBetweenGames', e.target.value)}
+            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+          <p className="text-[10px] text-slate-500">Padrão FIBA: 20h adulto · 90min em festivais.</p>
+        </div>
+        <div className="space-y-2">
+          <SectionLabel>Máx jogos por equipe/semana</SectionLabel>
+          <Input type="number" min="1" max="10" value={form.maxGamesPerTeamPerWeek}
+            onChange={e => setField('maxGamesPerTeamPerWeek', e.target.value)}
+            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <SectionLabel>Padrão de mando</SectionLabel>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {[
+            { v: 'ALTERNATED', l: 'Alternado', d: 'Cada equipe manda uma vez na série' },
+            { v: 'FIXED_HOST', l: 'Sede fixa', d: 'A equipe melhor classificada manda todos os jogos' },
+            { v: 'NEUTRAL', l: 'Neutro', d: 'Todos os jogos em quadra neutra' },
+            { v: 'SERIES_2_2_1', l: '2-2-1 (best-of-5)', d: 'Padrão NBA: 2-2-1 com mando da maior cabeça' },
+          ].map(o => (
+            <button key={o.v} type="button" onClick={() => setField('homePattern', o.v)}
+              className={`p-3 rounded-xl border text-left transition-all ${form.homePattern === o.v ? 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
+              <span className={`text-xs font-black uppercase ${form.homePattern === o.v ? 'text-[var(--amarelo)]' : 'text-slate-300'}`}>{o.l}</span>
+              <p className="text-[10px] text-slate-500 mt-1">{o.d}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <SectionLabel>Critérios de desempate (FIBA — ordem importa)</SectionLabel>
+        <p className="text-[11px] text-slate-500 mb-2">Use as setas para reordenar. Aplica de cima para baixo.</p>
+        <div className="space-y-1.5">
+          {form.tiebreakerChain.map((t, idx) => {
+            const labels: Record<string, string> = {
+              h2h_record: 'Confronto direto (vitórias)',
+              h2h_diff: 'Saldo no confronto direto',
+              h2h_for: 'Pontos pró no confronto direto',
+              all_diff: 'Saldo de pontos (todos os jogos)',
+              all_for: 'Pontos pró (todos os jogos)',
+              all_against: 'Pontos contra',
+              wins: 'Número de vitórias',
+              draw: 'Sorteio',
+            }
+            return (
+              <div key={t} className="flex items-center gap-2 p-2 rounded-xl bg-white/[0.02] border border-white/5">
+                <span className="text-[10px] font-black uppercase text-slate-500 w-5">{idx + 1}</span>
+                <span className="text-xs text-slate-300 flex-1">{labels[t] ?? t}</span>
+                <button type="button" onClick={() => moveTiebreaker(idx, -1)} disabled={idx === 0}
+                  className="text-slate-400 disabled:opacity-30 px-2 text-xs">↑</button>
+                <button type="button" onClick={() => moveTiebreaker(idx, 1)} disabled={idx === form.tiebreakerChain.length - 1}
+                  className="text-slate-400 disabled:opacity-30 px-2 text-xs">↓</button>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+
   const renderStep3 = () => (
     <div className="space-y-6">
       <Toggle checked={form.hasPlayoffs} onCheckedChange={v => setField('hasPlayoffs', v)} label="Este campeonato tem fase de playoffs (Mata-Mata Final)" />
@@ -279,7 +504,8 @@ export default function NewChampionshipPage() {
     </div>
   )
 
-  const stepContent = [renderStep0, renderStep1, renderStep2, renderStep3, renderStep4]
+  // Steps: 0=Identif | 1=Tipo | 2=Categorias | 3=Formato | 4=Calendário | 5=Regras | 6=Playoffs | 7=Datas
+  const stepContent = [renderStep0, renderStepType, renderStep1, renderStep2, renderStepCalendar, renderStepRules, renderStep3, renderStep4]
 
   return (
     <div className="space-y-8 max-w-[800px] mx-auto pb-20 pt-10 px-4 animate-in fade-in duration-500">

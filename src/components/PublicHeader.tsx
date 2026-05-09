@@ -71,7 +71,7 @@ const navItems = [
       { label: 'Galeria', href: '/galeria' },
     ]
   },
-  { label: 'Notícias', href: '/noticias' },
+  { label: 'Portal', href: '/portal' },
 ]
 
 export function PublicHeader() {

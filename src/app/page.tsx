@@ -100,6 +100,16 @@ export default async function HomePage() {
     select: { id: true, name: true, logoUrl: true, websiteUrl: true },
   }).catch(() => [])
 
+  const portalArticles = await prisma.article.findMany({
+    where: { isPublished: true },
+    orderBy: { publishedAt: 'desc' },
+    take: 3,
+    select: {
+      id: true, slug: true, title: true, subtitle: true,
+      coverImage: true, category: true, readTime: true, publishedAt: true,
+    },
+  }).catch(() => [])
+
   return (
     <>
       <PublicHeader />
@@ -600,6 +610,82 @@ export default async function HomePage() {
         </section>
 
         <SponsorsStrip sponsors={sponsors} />
+
+        {portalArticles.length > 0 && (
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+            <div className="flex items-end justify-between gap-4 mb-8 pb-3 border-b border-[var(--fgb-ink-200)]">
+              <div>
+                <div className="fgb-accent fgb-accent-verde mb-3" />
+                <h2 className="fgb-heading text-[var(--fgb-ink-900)]" style={{ fontSize: 28 }}>
+                  Do Portal FGB
+                </h2>
+                <p className="fgb-label mt-1" style={{ fontSize: 11, color: 'var(--fgb-ink-500)', textTransform: 'none', letterSpacing: 0 }}>
+                  Conhecimento, história e notícias do basquete gaúcho.
+                </p>
+              </div>
+              <Link
+                href="/portal"
+                className="fgb-label whitespace-nowrap"
+                style={{ fontSize: 11, color: 'var(--fgb-green-700)' }}
+              >
+                Ver todos →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {portalArticles.map((a) => (
+                <Link
+                  key={a.id}
+                  href={`/portal/${a.slug}`}
+                  className="fgb-card overflow-hidden group flex flex-col"
+                >
+                  <div className="relative aspect-[16/9] overflow-hidden bg-[var(--fgb-ink-100)]">
+                    {a.coverImage && (
+                      <Image
+                        src={a.coverImage}
+                        alt={a.title}
+                        fill
+                        sizes="(min-width: 768px) 33vw, 100vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        unoptimized
+                      />
+                    )}
+                    <span
+                      className="fgb-label absolute top-3 left-3 px-2.5 py-1"
+                      style={{ fontSize: 9, background: 'var(--fgb-green-700)', color: '#fff' }}
+                    >
+                      {a.category}
+                    </span>
+                  </div>
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3
+                      className="fgb-heading text-[var(--fgb-ink-900)] mb-2"
+                      style={{
+                        fontSize: 17, lineHeight: 1.25,
+                        display: '-webkit-box', WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                      }}
+                    >
+                      {a.title}
+                    </h3>
+                    {a.subtitle && (
+                      <p
+                        className="text-[var(--fgb-ink-500)] mt-auto"
+                        style={{
+                          fontSize: 13, lineHeight: 1.5,
+                          display: '-webkit-box', WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                        }}
+                      >
+                        {a.subtitle}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="fgb-cta">
           <div className="fgb-cta-pattern" />
