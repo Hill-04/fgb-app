@@ -3,7 +3,34 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
-import { ChevronLeft, Check, Plus, X } from 'lucide-react'
+import { ChevronLeft, Check, Plus, X, ArrowUp, ArrowDown, MapPin, Users } from 'lucide-react'
+
+// ─── Phase types ──────────────────────────────────────────────────────────────
+type PhaseMode = 'TRADITIONAL' | 'ENCOUNTER'
+
+type CustomPhase = {
+  name: string
+  mode: PhaseMode
+  formatType: 'ROUND_ROBIN' | 'ELIMINATORIO' | 'GROUPS_ELIMINATORIO'
+  // ENCOUNTER-only
+  encounterVenue?: string // Free text: "Ginásio Tarso Dutra — Porto Alegre"
+  encounterDate?: string  // ISO date
+  encounterEndDate?: string // optional, multi-day
+  // TRADITIONAL-only
+  homePattern?: 'ALTERNATED' | 'FIXED_HOST' | 'NEUTRAL'
+  // Common
+  qualifiesNextCount?: string // string for input ease, parsed to number
+  notes?: string
+}
+
+const newPhase = (order: number): CustomPhase => ({
+  name: order === 1 ? 'Fase Classificatória' : `Fase ${order}`,
+  mode: 'TRADITIONAL',
+  formatType: 'ROUND_ROBIN',
+  homePattern: 'ALTERNATED',
+  qualifiesNextCount: '',
+  notes: '',
+})
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CATEGORY_AGES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -18,6 +45,9 @@ const defaultForm = () => ({
   name: '', year: new Date().getFullYear().toString(), sex: 'masculino',
   minTeamsPerCat: '3', categories: [] as string[],
   format: 'todos_contra_todos', turns: '1', phases: '1', fieldControl: 'alternado',
+  // Múltiplas fases (Sprint 1.B)
+  hasMultiplePhases: false,
+  customPhases: [] as CustomPhase[],
   maxGamesPerTeamPerDay: '2', scheduleOptimizationMode: 'less_travel',
   tiebreakerChain: ['h2h_record', 'h2h_diff', 'h2h_for', 'all_diff', 'all_for', 'draw'] as string[],
   hasRelegation: false, relegationDown: '0', promotionUp: '0',
@@ -44,7 +74,7 @@ const STEPS = [
   { title: 'Identificação', desc: 'Nome, ano e sexo' },
   { title: 'Tipo', desc: 'Sancionamento e ranking' },
   { title: 'Categorias', desc: 'Sub 8 → Sub 20' },
-  { title: 'Formato', desc: 'Estrutura e turnos' },
+  { title: 'Formato', desc: 'Estrutura, turnos e fases' },
   { title: 'Calendário', desc: 'Dias, horários e feriados' },
   { title: 'Regras de jogo', desc: 'Descanso e mando' },
   { title: 'Playoffs', desc: 'Fase eliminatória' },
@@ -196,6 +226,283 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
   )
 }
 
+function PhaseEditor({
+  phase,
+  index,
+  total,
+  onChange,
+  onRemove,
+  onMove,
+}: {
+  phase: CustomPhase
+  index: number
+  total: number
+  onChange: (patch: Partial<CustomPhase>) => void
+  onRemove: () => void
+  onMove: (dir: -1 | 1) => void
+}) {
+  return (
+    <div
+      className="rounded-md p-4 space-y-3"
+      style={{
+        background: '#fff',
+        border: '1px solid var(--fgb-ink-200)',
+      }}
+    >
+      {/* Phase header: order + name + actions */}
+      <div className="flex items-start gap-2">
+        <span
+          className="fgb-label shrink-0 inline-flex items-center justify-center w-7 h-7 rounded"
+          style={{
+            fontSize: 11,
+            background: 'var(--fgb-green-700)',
+            color: '#fff',
+            letterSpacing: 0,
+          }}
+        >
+          {index + 1}
+        </span>
+        <Input
+          value={phase.name}
+          onChange={e => onChange({ name: e.target.value })}
+          placeholder="Nome da fase"
+          className={inputClsCompact + ' flex-1'}
+        />
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            className="p-1.5 rounded disabled:opacity-30 transition-colors hover:bg-[var(--fgb-ink-100)]"
+            style={{ color: 'var(--fgb-ink-500)' }}
+            aria-label="Mover acima"
+          >
+            <ArrowUp className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+            className="p-1.5 rounded disabled:opacity-30 transition-colors hover:bg-[var(--fgb-ink-100)]"
+            style={{ color: 'var(--fgb-ink-500)' }}
+            aria-label="Mover abaixo"
+          >
+            <ArrowDown className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={onRemove}
+            disabled={total === 1}
+            className="p-1.5 rounded disabled:opacity-30 transition-colors hover:bg-[var(--fgb-red-50)]"
+            style={{ color: 'var(--fgb-red-500)' }}
+            aria-label="Remover fase"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Mode selector */}
+      <div>
+        <SectionLabel>Modo de Disputa</SectionLabel>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => onChange({ mode: 'TRADITIONAL' })}
+            className="text-left p-3 rounded-md transition-colors"
+            style={{
+              background: phase.mode === 'TRADITIONAL' ? 'var(--fgb-green-50)' : '#fff',
+              border: `1.5px solid ${phase.mode === 'TRADITIONAL' ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <Users
+                className="w-3.5 h-3.5"
+                style={{ color: phase.mode === 'TRADITIONAL' ? 'var(--fgb-green-700)' : 'var(--fgb-ink-500)' }}
+              />
+              <span
+                className="fgb-label"
+                style={{
+                  fontSize: 11,
+                  color: phase.mode === 'TRADITIONAL' ? 'var(--fgb-green-800)' : 'var(--fgb-ink-900)',
+                }}
+              >
+                Tradicional
+              </span>
+              {phase.mode === 'TRADITIONAL' && (
+                <Check className="w-3.5 h-3.5 ml-auto" style={{ color: 'var(--fgb-green-700)' }} />
+              )}
+            </div>
+            <p className="text-xs leading-snug" style={{ color: 'var(--fgb-ink-500)' }}>
+              Mando alternado, equipes viajam para os jogos.
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => onChange({ mode: 'ENCOUNTER' })}
+            className="text-left p-3 rounded-md transition-colors"
+            style={{
+              background: phase.mode === 'ENCOUNTER' ? 'var(--fgb-green-50)' : '#fff',
+              border: `1.5px solid ${phase.mode === 'ENCOUNTER' ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+            }}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <MapPin
+                className="w-3.5 h-3.5"
+                style={{ color: phase.mode === 'ENCOUNTER' ? 'var(--fgb-green-700)' : 'var(--fgb-ink-500)' }}
+              />
+              <span
+                className="fgb-label"
+                style={{
+                  fontSize: 11,
+                  color: phase.mode === 'ENCOUNTER' ? 'var(--fgb-green-800)' : 'var(--fgb-ink-900)',
+                }}
+              >
+                Encontro
+              </span>
+              {phase.mode === 'ENCOUNTER' && (
+                <Check className="w-3.5 h-3.5 ml-auto" style={{ color: 'var(--fgb-green-700)' }} />
+              )}
+            </div>
+            <p className="text-xs leading-snug" style={{ color: 'var(--fgb-ink-500)' }}>
+              Todas as equipes em uma sede única, em data definida.
+            </p>
+          </button>
+        </div>
+      </div>
+
+      {/* Format type */}
+      <div>
+        <SectionLabel>Tipo de fase</SectionLabel>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+          {[
+            { v: 'ROUND_ROBIN' as const, l: 'Pontos corridos' },
+            { v: 'GROUPS_ELIMINATORIO' as const, l: 'Grupos + Mata-mata' },
+            { v: 'ELIMINATORIO' as const, l: 'Mata-mata' },
+          ].map(o => {
+            const active = phase.formatType === o.v
+            return (
+              <button
+                key={o.v}
+                type="button"
+                onClick={() => onChange({ formatType: o.v })}
+                className="fgb-label py-2 px-3 transition-colors"
+                style={{
+                  fontSize: 10,
+                  background: active ? 'var(--fgb-green-700)' : '#fff',
+                  color: active ? '#fff' : 'var(--fgb-ink-700)',
+                  border: `1px solid ${active ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+                  borderRadius: 6,
+                }}
+              >
+                {o.l}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Conditional fields per mode */}
+      {phase.mode === 'ENCOUNTER' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="md:col-span-2">
+            <SectionLabel>Sede do encontro</SectionLabel>
+            <Input
+              value={phase.encounterVenue ?? ''}
+              onChange={e => onChange({ encounterVenue: e.target.value })}
+              placeholder="Ex.: Ginásio Tarso Dutra — Porto Alegre"
+              className={inputClsCompact}
+            />
+          </div>
+          <div>
+            <SectionLabel>Data do encontro</SectionLabel>
+            <Input
+              type="date"
+              value={phase.encounterDate ?? ''}
+              onChange={e => onChange({ encounterDate: e.target.value })}
+              className={inputClsCompact}
+            />
+          </div>
+          <div>
+            <SectionLabel>Data fim (opcional)</SectionLabel>
+            <Input
+              type="date"
+              value={phase.encounterEndDate ?? ''}
+              onChange={e => onChange({ encounterEndDate: e.target.value })}
+              className={inputClsCompact}
+            />
+          </div>
+        </div>
+      ) : (
+        <div>
+          <SectionLabel>Padrão de mando da fase</SectionLabel>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+            {[
+              { v: 'ALTERNATED' as const, l: 'Alternado', d: 'Cada equipe manda uma vez' },
+              { v: 'FIXED_HOST' as const, l: 'Sede fixa', d: 'Melhor classificada manda' },
+              { v: 'NEUTRAL' as const, l: 'Neutro', d: 'Quadra neutra' },
+            ].map(o => {
+              const active = (phase.homePattern ?? 'ALTERNATED') === o.v
+              return (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => onChange({ homePattern: o.v })}
+                  className="text-left p-2.5 rounded-md transition-colors"
+                  style={{
+                    background: active ? 'var(--fgb-green-50)' : '#fff',
+                    border: `1px solid ${active ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+                  }}
+                >
+                  <span
+                    className="fgb-label block"
+                    style={{
+                      fontSize: 10,
+                      color: active ? 'var(--fgb-green-800)' : 'var(--fgb-ink-900)',
+                    }}
+                  >
+                    {o.l}
+                  </span>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--fgb-ink-500)' }}>
+                    {o.d}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Qualifies next + notes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <SectionLabel>Equipes que avançam</SectionLabel>
+          <Input
+            type="number"
+            min="0"
+            value={phase.qualifiesNextCount ?? ''}
+            onChange={e => onChange({ qualifiesNextCount: e.target.value })}
+            placeholder="ex.: 4"
+            className={inputClsCompact}
+          />
+          <p className="text-xs mt-1" style={{ color: 'var(--fgb-ink-500)' }}>
+            Deixe vazio se não houver fase seguinte.
+          </p>
+        </div>
+        <div>
+          <SectionLabel>Observações</SectionLabel>
+          <Input
+            value={phase.notes ?? ''}
+            onChange={e => onChange({ notes: e.target.value })}
+            placeholder="opcional"
+            className={inputClsCompact}
+          />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function NewChampionshipPage() {
   const router = useRouter()
@@ -225,6 +532,24 @@ export default function NewChampionshipPage() {
   const validateStep = () => {
     if (step === 0 && !form.name.trim()) { setFormError('O nome do campeonato é obrigatório.'); return false }
     if (step === 2 && form.categories.length === 0) { setFormError('Selecione ao menos uma categoria.'); return false }
+    if (step === 3 && form.hasMultiplePhases) {
+      if (form.customPhases.length === 0) {
+        setFormError('Adicione ao menos uma fase ou desative o toggle de múltiplas fases.')
+        return false
+      }
+      const invalid = form.customPhases.find(p => !p.name.trim())
+      if (invalid) {
+        setFormError('Toda fase precisa de um nome.')
+        return false
+      }
+      const missingEncounter = form.customPhases.find(
+        p => p.mode === 'ENCOUNTER' && (!p.encounterDate || !p.encounterVenue?.trim()),
+      )
+      if (missingEncounter) {
+        setFormError(`Fase "${missingEncounter.name}": preencha sede e data do encontro.`)
+        return false
+      }
+    }
     if (step === 4 && form.allowedWeekdays.length === 0) { setFormError('Selecione ao menos um dia da semana.'); return false }
     setFormError(''); return true
   }
@@ -245,7 +570,7 @@ export default function NewChampionshipPage() {
           year: Number(form.year),
           minTeamsPerCat: Number(form.minTeamsPerCat),
           turns: Number(form.turns),
-          phases: Number(form.phases),
+          phases: form.hasMultiplePhases ? form.customPhases.length : Number(form.phases),
           maxGamesPerTeamPerDay: Number(form.maxGamesPerTeamPerDay),
           relegationDown: Number(form.relegationDown),
           promotionUp: Number(form.promotionUp),
@@ -266,6 +591,24 @@ export default function NewChampionshipPage() {
           minRestHoursBetweenGames: Number(form.minRestHoursBetweenGames),
           maxGamesPerTeamPerWeek: Number(form.maxGamesPerTeamPerWeek),
           homePattern: form.homePattern,
+          // Fase B: múltiplas fases customizadas
+          hasMultiplePhases: form.hasMultiplePhases,
+          customPhases: form.hasMultiplePhases
+            ? form.customPhases.map((p, i) => ({
+                name: p.name.trim(),
+                order: i,
+                mode: p.mode,
+                formatType: p.formatType,
+                encounterVenue: p.encounterVenue?.trim() || null,
+                encounterDate: p.encounterDate || null,
+                encounterEndDate: p.encounterEndDate || null,
+                homePattern: p.homePattern || null,
+                qualifiesNextCount: p.qualifiesNextCount && p.qualifiesNextCount.trim() !== ''
+                  ? Number(p.qualifiesNextCount)
+                  : null,
+                notes: p.notes?.trim() || null,
+              }))
+            : [],
         })
       })
       if (res.ok) router.push('/admin/championships')
@@ -425,29 +768,46 @@ export default function NewChampionshipPage() {
     )
   }
 
-  const renderStep2 = () => (
-    <div className="space-y-6">
-      <div>
-        <SectionLabel>Formato da Competição</SectionLabel>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[
-            { value: 'todos_contra_todos', label: 'Pontos Corridos', desc: 'As equipes jogam entre si e a classificação é definida pela tabela geral.' },
-            { value: 'eliminatorio', label: 'Mata-Mata', desc: 'Séries eliminatórias desde o início. Quem perde está fora.' },
-            { value: 'grupos_eliminatorio', label: 'Grupos + Mata-Mata', desc: 'Fase inicial em grupos seguida por eliminatórias.' },
-            { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguida de mata-mata final.' },
-          ].map(o => (
-            <OptionCard
-              key={o.value}
-              active={form.format === o.value}
-              onClick={() => setField('format', o.value)}
-              label={o.label}
-              desc={o.desc}
-            />
-          ))}
-        </div>
-      </div>
+  const renderStep2 = () => {
+    const updatePhase = (idx: number, patch: Partial<CustomPhase>) => {
+      const list = [...form.customPhases]
+      list[idx] = { ...list[idx], ...patch }
+      setField('customPhases', list)
+    }
+    const addPhase = () =>
+      setField('customPhases', [...form.customPhases, newPhase(form.customPhases.length + 1)])
+    const removePhase = (idx: number) =>
+      setField('customPhases', form.customPhases.filter((_, i) => i !== idx))
+    const movePhase = (idx: number, dir: -1 | 1) => {
+      const list = [...form.customPhases]
+      const j = idx + dir
+      if (j < 0 || j >= list.length) return
+      ;[list[idx], list[j]] = [list[j], list[idx]]
+      setField('customPhases', list)
+    }
 
-      <div className="grid grid-cols-2 gap-4">
+    return (
+      <div className="space-y-6">
+        <div>
+          <SectionLabel>Formato da Competição</SectionLabel>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { value: 'todos_contra_todos', label: 'Pontos Corridos', desc: 'As equipes jogam entre si e a classificação é definida pela tabela geral.' },
+              { value: 'eliminatorio', label: 'Mata-Mata', desc: 'Séries eliminatórias desde o início. Quem perde está fora.' },
+              { value: 'grupos_eliminatorio', label: 'Grupos + Mata-Mata', desc: 'Fase inicial em grupos seguida por eliminatórias.' },
+              { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguida de mata-mata final.' },
+            ].map(o => (
+              <OptionCard
+                key={o.value}
+                active={form.format === o.value}
+                onClick={() => setField('format', o.value)}
+                label={o.label}
+                desc={o.desc}
+              />
+            ))}
+          </div>
+        </div>
+
         <div>
           <SectionLabel>Turnos</SectionLabel>
           <Input
@@ -456,39 +816,84 @@ export default function NewChampionshipPage() {
             value={form.turns}
             onChange={e => setField('turns', e.target.value)}
             className={inputClsCompact}
+            style={{ maxWidth: 200 }}
           />
+          <p className="text-xs mt-1.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Quantas vezes cada equipe enfrenta as demais (turno e returno = 2).
+          </p>
         </div>
+
+        {/* Múltiplas fases — opt-in */}
+        <div
+          className="rounded-lg p-4 space-y-4"
+          style={{
+            background: form.hasMultiplePhases ? 'var(--fgb-green-50)' : 'var(--fgb-ink-50)',
+            border: `1px solid ${form.hasMultiplePhases ? 'var(--fgb-green-200)' : 'var(--fgb-ink-200)'}`,
+          }}
+        >
+          <Toggle
+            checked={form.hasMultiplePhases}
+            onCheckedChange={v => {
+              setField('hasMultiplePhases', v)
+              if (v && form.customPhases.length === 0) {
+                setField('customPhases', [newPhase(1)])
+              }
+            }}
+            label="Esta competição tem múltiplas fases?"
+            description="Permite configurar fases independentes (ex.: classificatória → semifinal → final), cada uma com modo de disputa próprio."
+          />
+
+          {form.hasMultiplePhases && (
+            <div className="space-y-3 pt-2 border-t border-[var(--fgb-ink-200)]">
+              {form.customPhases.map((p, idx) => (
+                <PhaseEditor
+                  key={idx}
+                  phase={p}
+                  index={idx}
+                  total={form.customPhases.length}
+                  onChange={patch => updatePhase(idx, patch)}
+                  onRemove={() => removePhase(idx)}
+                  onMove={dir => movePhase(idx, dir)}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={addPhase}
+                className="fgb-label inline-flex items-center gap-1.5 mt-1 transition-colors"
+                style={{ fontSize: 11, color: 'var(--fgb-green-700)' }}
+              >
+                <Plus className="w-3 h-3" /> Adicionar fase
+              </button>
+            </div>
+          )}
+
+          {!form.hasMultiplePhases && (
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--fgb-ink-500)' }}>
+              Modo simples: uma única fase usando o formato selecionado acima.
+              Para configurações como "classificatória + playoffs" ou
+              "encontros regionais", ative o toggle.
+            </p>
+          )}
+        </div>
+
         <div>
-          <SectionLabel>Fases</SectionLabel>
+          <SectionLabel>Máx. jogos por equipe/categoria no dia</SectionLabel>
           <Input
             type="number"
             min="1"
-            value={form.phases}
-            onChange={e => setField('phases', e.target.value)}
+            max="6"
+            value={form.maxGamesPerTeamPerDay}
+            onChange={e => setField('maxGamesPerTeamPerDay', e.target.value)}
             className={inputClsCompact}
+            style={{ maxWidth: 200 }}
           />
+          <p className="text-xs mt-1.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Em dias de encontro, considere aumentar para 2 ou 3.
+          </p>
         </div>
       </div>
-
-      <InfoCard title="Como a fase funciona">
-        Em formatos de todos contra todos, cada fase repete o ciclo completo da
-        categoria. Ex.: 3 fases = cada equipe reencontra as demais 3 vezes,
-        com espaçamento equilibrado entre as etapas.
-      </InfoCard>
-
-      <div>
-        <SectionLabel>Máx. jogos por equipe/categoria no dia</SectionLabel>
-        <Input
-          type="number"
-          min="1"
-          max="6"
-          value={form.maxGamesPerTeamPerDay}
-          onChange={e => setField('maxGamesPerTeamPerDay', e.target.value)}
-          className={inputClsCompact}
-        />
-      </div>
-    </div>
-  )
+    )
+  }
 
   const renderStepCalendar = () => {
     const WEEKDAYS = [

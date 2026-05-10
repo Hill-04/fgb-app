@@ -57,6 +57,8 @@ export async function POST(request: Request) {
       minRestHoursBetweenGames, maxGamesPerTeamPerWeek, homePattern,
       regulationPdfUrl,
       tiebreakerChain,
+      // Fase B: multiplas fases customizadas
+      hasMultiplePhases, customPhases,
     } = body
 
     if (!name?.trim()) return NextResponse.json({ error: 'Nome é obrigatório' }, { status: 400 })
@@ -145,6 +147,58 @@ export async function POST(request: Request) {
             championshipId: c.id,
           },
         })
+      }
+
+      // Fase B: múltiplas fases customizadas (modo Tradicional / Encontro)
+      if (hasMultiplePhases && Array.isArray(customPhases) && customPhases.length > 0) {
+        for (const cp of customPhases) {
+          if (!cp || typeof cp !== 'object') continue
+          const phaseName = String(cp.name || '').trim()
+          if (!phaseName) continue
+
+          const validFormatTypes = ['ROUND_ROBIN', 'ELIMINATORIO', 'GROUPS_ELIMINATORIO']
+          const formatType = validFormatTypes.includes(cp.formatType) ? cp.formatType : 'ROUND_ROBIN'
+
+          const mode = cp.mode === 'ENCOUNTER' ? 'ENCOUNTER' : 'TRADITIONAL'
+          const formatConfigJson = JSON.stringify({
+            mode,
+            ...(mode === 'ENCOUNTER'
+              ? {
+                  encounterVenue: cp.encounterVenue || null,
+                  encounterDate: cp.encounterDate || null,
+                  encounterEndDate: cp.encounterEndDate || null,
+                }
+              : {
+                  homePattern: cp.homePattern || 'ALTERNATED',
+                }),
+            ...(cp.notes ? { notes: cp.notes } : {}),
+          })
+
+          const startDate = mode === 'ENCOUNTER' && isValidDate(cp.encounterDate)
+            ? new Date(cp.encounterDate)
+            : null
+          const endDate = mode === 'ENCOUNTER' && isValidDate(cp.encounterEndDate)
+            ? new Date(cp.encounterEndDate)
+            : (startDate || null)
+
+          await (tx as any).championshipPhase.create({
+            data: {
+              championshipId: c.id,
+              name: phaseName,
+              order: typeof cp.order === 'number' ? cp.order : 0,
+              formatType,
+              formatConfigJson,
+              tiebreakerChain: finalChain.join(','),
+              startDate,
+              endDate,
+              qualifiesNextCount:
+                cp.qualifiesNextCount !== null && cp.qualifiesNextCount !== undefined
+                  ? Number(cp.qualifiesNextCount)
+                  : null,
+              isActive: true,
+            },
+          })
+        }
       }
 
       return tx.championship.findUnique({
