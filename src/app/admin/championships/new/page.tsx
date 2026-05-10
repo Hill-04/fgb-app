@@ -2,12 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
-import { ChevronLeft, ChevronRight, Check, Plus } from 'lucide-react'
+import { ChevronLeft, Check, Plus, X } from 'lucide-react'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CATEGORY_AGES = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
@@ -55,31 +51,152 @@ const STEPS = [
   { title: 'Datas', desc: 'Prazos finais' },
 ]
 
-function OptionButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+const inputCls =
+  'w-full px-3 py-2.5 border border-[var(--fgb-ink-200)] rounded-md bg-white text-[var(--fgb-ink-900)] text-sm focus:outline-none focus:border-[var(--fgb-green-700)] focus:ring-1 focus:ring-[var(--fgb-green-700)] transition-colors'
+
+const inputClsCompact =
+  'w-full px-3 py-2 border border-[var(--fgb-ink-200)] rounded-md bg-white text-[var(--fgb-ink-900)] text-sm focus:outline-none focus:border-[var(--fgb-green-700)] focus:ring-1 focus:ring-[var(--fgb-green-700)] transition-colors'
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <button type="button" onClick={onClick}
-      className={`px-4 py-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${active ? 'bg-[var(--amarelo)]/15 border-[var(--amarelo)]/50 text-[var(--amarelo)]' : 'bg-white/[0.02] border-white/10 text-slate-400 hover:border-white/20 hover:text-slate-200'}`}>
+    <p
+      className="fgb-label mb-2"
+      style={{ fontSize: 10, color: 'var(--fgb-ink-500)', letterSpacing: '0.16em' }}
+    >
+      {children}
+    </p>
+  )
+}
+
+function OptionPill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="fgb-label px-4 py-2.5 transition-colors"
+      style={{
+        fontSize: 11,
+        background: active ? 'var(--fgb-green-700)' : '#fff',
+        color: active ? '#fff' : 'var(--fgb-ink-700)',
+        border: `1px solid ${active ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+        borderRadius: 6,
+      }}
+    >
       {children}
     </button>
   )
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-3">{children}</p>
+function OptionCard({
+  active,
+  onClick,
+  label,
+  desc,
+}: {
+  active: boolean
+  onClick: () => void
+  label: string
+  desc: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-left transition-colors p-4 rounded-lg"
+      style={{
+        background: active ? 'var(--fgb-green-50)' : '#fff',
+        border: `1.5px solid ${active ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+      }}
+    >
+      <div className="flex items-center justify-between mb-1.5">
+        <span
+          className="fgb-label"
+          style={{
+            fontSize: 12,
+            color: active ? 'var(--fgb-green-800)' : 'var(--fgb-ink-900)',
+            letterSpacing: '0.08em',
+          }}
+        >
+          {label}
+        </span>
+        {active && <Check className="w-4 h-4" style={{ color: 'var(--fgb-green-700)' }} />}
+      </div>
+      <p className="text-xs leading-snug" style={{ color: 'var(--fgb-ink-500)' }}>
+        {desc}
+      </p>
+    </button>
+  )
 }
 
-function Toggle({ checked, onCheckedChange, label }: { checked: boolean; onCheckedChange: (v: boolean) => void; label: string }) {
+function Toggle({
+  checked,
+  onCheckedChange,
+  label,
+  description,
+}: {
+  checked: boolean
+  onCheckedChange: (v: boolean) => void
+  label: string
+  description?: string
+}) {
   return (
-    <label className="flex items-center gap-3 cursor-pointer select-none">
-      <button type="button" onClick={() => onCheckedChange(!checked)}
-        className={`relative w-10 h-5 rounded-full border transition-all ${checked ? 'bg-[var(--amarelo)] border-[var(--amarelo)]' : 'bg-white/5 border-white/10'}`}>
-        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+    <label className="flex items-start gap-3 cursor-pointer select-none">
+      <button
+        type="button"
+        onClick={() => onCheckedChange(!checked)}
+        className="relative w-10 h-5 rounded-full transition-colors mt-0.5 shrink-0"
+        style={{
+          background: checked ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)',
+        }}
+      >
+        <span
+          className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform shadow"
+          style={{ transform: checked ? 'translateX(20px)' : 'translateX(0)' }}
+        />
       </button>
-      <span className="text-sm text-slate-300 font-medium">{label}</span>
+      <div className="flex-1">
+        <span className="text-sm font-medium" style={{ color: 'var(--fgb-ink-900)' }}>
+          {label}
+        </span>
+        {description && (
+          <p className="text-xs mt-0.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            {description}
+          </p>
+        )}
+      </div>
     </label>
   )
 }
 
+function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div
+      className="rounded-lg p-4"
+      style={{ background: 'var(--fgb-ink-50)', border: '1px solid var(--fgb-ink-200)' }}
+    >
+      <p
+        className="fgb-label mb-1.5"
+        style={{ fontSize: 10, color: 'var(--fgb-green-700)', letterSpacing: '0.18em' }}
+      >
+        {title}
+      </p>
+      <p className="text-sm leading-relaxed" style={{ color: 'var(--fgb-ink-700)' }}>
+        {children}
+      </p>
+    </div>
+  )
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 export default function NewChampionshipPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
@@ -138,7 +255,6 @@ export default function NewChampionshipPage() {
           regDeadline: form.regDeadline || new Date().toISOString(),
           startDate: form.startDate || null,
           endDate: form.endDate || null,
-          // Sprint 1
           sanctioning: form.sanctioning,
           countsForRanking: form.countsForRanking,
           countsForBidEligibility: form.countsForBidEligibility,
@@ -157,33 +273,46 @@ export default function NewChampionshipPage() {
     } catch { setFormError('Erro de conexão') } finally { setSubmitLoading(false) }
   }
 
+  // ─── Step renderers ───────────────────────────────────────────────────────────
   const renderStep0 = () => (
     <div className="space-y-6">
-      <div className="space-y-2">
+      <div>
         <SectionLabel>Nome da Competição</SectionLabel>
-        <Input value={form.name} onChange={e => setField('name', e.target.value)}
+        <Input
+          value={form.name}
+          onChange={e => setField('name', e.target.value)}
           placeholder="Ex: Estadual 2026 Masculino"
-          className="bg-white/[0.03] border-white/10 h-13 rounded-xl focus:border-[var(--amarelo)] text-white text-base" />
+          className={inputCls}
+        />
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Ano da Temporada</SectionLabel>
-          <Input type="number" value={form.year} onChange={e => setField('year', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
+          <Input
+            type="number"
+            value={form.year}
+            onChange={e => setField('year', e.target.value)}
+            className={inputClsCompact}
+          />
         </div>
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Mín. Equipes/Categoria</SectionLabel>
-          <Input type="number" min="1" value={form.minTeamsPerCat} onChange={e => setField('minTeamsPerCat', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-12 rounded-xl text-white" />
+          <Input
+            type="number"
+            min="1"
+            value={form.minTeamsPerCat}
+            onChange={e => setField('minTeamsPerCat', e.target.value)}
+            className={inputClsCompact}
+          />
         </div>
       </div>
-      <div className="space-y-3">
+      <div>
         <SectionLabel>Sexo da Competição</SectionLabel>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           {SEXES.map(s => (
-            <OptionButton key={s} active={form.sex === s} onClick={() => setField('sex', s)}>
+            <OptionPill key={s} active={form.sex === s} onClick={() => setField('sex', s)}>
               {s.charAt(0).toUpperCase() + s.slice(1)}
-            </OptionButton>
+            </OptionPill>
           ))}
         </div>
       </div>
@@ -191,48 +320,60 @@ export default function NewChampionshipPage() {
   )
 
   const renderStepType = () => (
-    <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
-      <div className="space-y-3">
+    <div className="space-y-6">
+      <div>
         <SectionLabel>Sancionamento</SectionLabel>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
-            { value: 'FGB_OFFICIAL', label: 'Oficial FGB', desc: 'Conta para ranking estadual e BID', badge: 'OFICIAL' },
-            { value: 'FGB_INVITATIONAL', label: 'Convidativo FGB', desc: 'Organizado pela FGB sem ranqueamento', badge: 'CONVIDATIVO' },
-            { value: 'REGIONAL', label: 'Regional', desc: 'Organizado por região afiliada', badge: 'REGIONAL' },
-            { value: 'OPEN', label: 'Aberto', desc: 'Torneio amistoso sem sanção oficial', badge: 'ABERTO' },
-          ].map((o) => (
-            <button key={o.value} type="button" onClick={() => setField('sanctioning', o.value)}
-              className={`p-4 rounded-2xl border text-left transition-all ${form.sanctioning === o.value ? 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-black uppercase tracking-widest ${form.sanctioning === o.value ? 'text-[var(--amarelo)]' : 'text-slate-300'}`}>{o.label}</span>
-                {form.sanctioning === o.value && <Check className="w-4 h-4 text-[var(--amarelo)]" />}
-              </div>
-              <p className="text-[10px] text-slate-500 font-medium leading-tight">{o.desc}</p>
-            </button>
+            { value: 'FGB_OFFICIAL', label: 'Oficial FGB', desc: 'Conta para ranking estadual e BID' },
+            { value: 'FGB_INVITATIONAL', label: 'Convidativo FGB', desc: 'Organizado pela FGB sem ranqueamento' },
+            { value: 'REGIONAL', label: 'Regional', desc: 'Organizado por região afiliada' },
+            { value: 'OPEN', label: 'Aberto', desc: 'Torneio amistoso sem sanção oficial' },
+          ].map(o => (
+            <OptionCard
+              key={o.value}
+              active={form.sanctioning === o.value}
+              onClick={() => setField('sanctioning', o.value)}
+              label={o.label}
+              desc={o.desc}
+            />
           ))}
         </div>
       </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Modalidade</SectionLabel>
           <div className="flex gap-2">
             {['5x5', '3x3'].map(m => (
-              <OptionButton key={m} active={form.modality === m} onClick={() => setField('modality', m)}>
+              <OptionPill key={m} active={form.modality === m} onClick={() => setField('modality', m)}>
                 {m}
-              </OptionButton>
+              </OptionPill>
             ))}
           </div>
         </div>
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Nº de Sanção (opcional)</SectionLabel>
-          <Input value={form.sanctionNumber} onChange={e => setField('sanctionNumber', e.target.value)}
+          <Input
+            value={form.sanctionNumber}
+            onChange={e => setField('sanctionNumber', e.target.value)}
             placeholder="Ex: FGB-2026-001"
-            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+            className={inputClsCompact}
+          />
         </div>
       </div>
-      <div className="space-y-3">
-        <Toggle checked={form.countsForRanking} onCheckedChange={v => setField('countsForRanking', v)} label="Conta para o ranking estadual" />
-        <Toggle checked={form.countsForBidEligibility} onCheckedChange={v => setField('countsForBidEligibility', v)} label="Exige BID publicado para escalação" />
+
+      <div className="space-y-3 pt-2 border-t border-[var(--fgb-ink-200)]">
+        <Toggle
+          checked={form.countsForRanking}
+          onCheckedChange={v => setField('countsForRanking', v)}
+          label="Conta para o ranking estadual"
+        />
+        <Toggle
+          checked={form.countsForBidEligibility}
+          onCheckedChange={v => setField('countsForBidEligibility', v)}
+          label="Exige BID publicado para escalação"
+        />
       </div>
     </div>
   )
@@ -247,14 +388,28 @@ export default function NewChampionshipPage() {
     const CatGrid = ({ cats, label }: { cats: typeof masc; label: string }) => (
       <div>
         <SectionLabel>{label}</SectionLabel>
-        <div className="grid grid-cols-4 md:grid-cols-5 gap-2">
+        <div className="grid grid-cols-4 md:grid-cols-7 gap-2">
           {cats.map(cat => {
             const active = form.categories.includes(cat.code)
             return (
-              <button type="button" key={cat.code} onClick={() => toggleCategory(cat.code)}
-                className={`flex flex-col items-center gap-1 p-3 rounded-xl border text-center transition-all ${active ? 'bg-[var(--amarelo)]/15 border-[var(--amarelo)]/50 text-[var(--amarelo)]' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/15'}`}>
+              <button
+                type="button"
+                key={cat.code}
+                onClick={() => toggleCategory(cat.code)}
+                className="flex flex-col items-center justify-center gap-1 py-3 rounded-md transition-colors"
+                style={{
+                  background: active ? 'var(--fgb-green-700)' : '#fff',
+                  border: `1.5px solid ${active ? 'var(--fgb-green-700)' : 'var(--fgb-ink-200)'}`,
+                  color: active ? '#fff' : 'var(--fgb-ink-700)',
+                }}
+              >
                 {active && <Check className="w-3 h-3" />}
-                <span className="text-[10px] font-black tracking-tight">{cat.label}</span>
+                <span
+                  className="fgb-label"
+                  style={{ fontSize: 10, letterSpacing: '0.04em' }}
+                >
+                  {cat.label}
+                </span>
               </button>
             )
           })}
@@ -263,7 +418,7 @@ export default function NewChampionshipPage() {
     )
 
     return (
-      <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-1">
+      <div className="space-y-6">
         {showMasc && <CatGrid cats={masc} label="Masculino" />}
         {showFem && <CatGrid cats={fem} label="Feminino" />}
       </div>
@@ -271,60 +426,66 @@ export default function NewChampionshipPage() {
   }
 
   const renderStep2 = () => (
-    <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-      <div className="space-y-4">
+    <div className="space-y-6">
+      <div>
         <SectionLabel>Formato da Competição</SectionLabel>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
             { value: 'todos_contra_todos', label: 'Pontos Corridos', desc: 'As equipes jogam entre si e a classificação é definida pela tabela geral.' },
             { value: 'eliminatorio', label: 'Mata-Mata', desc: 'Séries eliminatórias desde o início. Quem perde está fora.' },
             { value: 'grupos_eliminatorio', label: 'Grupos + Mata-Mata', desc: 'Fase inicial em grupos seguida por eliminatórias.' },
-            { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguidos por mata-mata final.' },
+            { value: 'misto', label: 'Pontos + Playoffs', desc: 'Fase regular de pontos seguida de mata-mata final.' },
           ].map(o => (
-            <button key={o.value} type="button" onClick={() => setField('format', o.value)}
-              className={`p-4 rounded-2xl border text-left transition-all ${form.format === o.value ? 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className={`text-xs font-black uppercase tracking-widest ${form.format === o.value ? 'text-[var(--amarelo)]' : 'text-slate-300'}`}>{o.label}</span>
-                {form.format === o.value && <Check className="w-4 h-4 text-[var(--amarelo)]" />}
-              </div>
-              <p className="text-[10px] text-slate-500 font-medium leading-tight">{o.desc}</p>
-            </button>
+            <OptionCard
+              key={o.value}
+              active={form.format === o.value}
+              onClick={() => setField('format', o.value)}
+              label={o.label}
+              desc={o.desc}
+            />
           ))}
         </div>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Turnos</SectionLabel>
-          <Input type="number" min="1" value={form.turns} onChange={e => setField('turns', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+          <Input
+            type="number"
+            min="1"
+            value={form.turns}
+            onChange={e => setField('turns', e.target.value)}
+            className={inputClsCompact}
+          />
         </div>
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Fases</SectionLabel>
-          <Input type="number" min="1" value={form.phases} onChange={e => setField('phases', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+          <Input
+            type="number"
+            min="1"
+            value={form.phases}
+            onChange={e => setField('phases', e.target.value)}
+            className={inputClsCompact}
+          />
         </div>
       </div>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Como a fase funciona</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-300">
-          Em formatos de todos contra todos, cada fase repete o ciclo completo da categoria. Ex.: 3 fases = cada equipe reencontra as demais 3 vezes, com espaçamento equilibrado entre as etapas.
-        </p>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <SectionLabel>Máx. jogos por equipe/categoria no dia</SectionLabel>
-          <Input type="number" min="1" max="6" value={form.maxGamesPerTeamPerDay} onChange={e => setField('maxGamesPerTeamPerDay', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
-        </div>
-        <div className="space-y-2">
-          <SectionLabel>Estratégia da IA</SectionLabel>
-          <div className="flex h-11 items-center rounded-xl border border-white/10 bg-white/[0.03] px-4 text-sm font-bold text-white">
-            Menos viagens
-          </div>
-        </div>
-      </div>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Como a IA vai montar a fase regular</p>
-        <p className="mt-2 text-sm leading-relaxed text-slate-300">
-          A IA vai priorizar menos deslocamentos, concentrando o máximo de jogos viáveis em cada viagem e deixando a sexta como último recurso.
-        </p>
+
+      <InfoCard title="Como a fase funciona">
+        Em formatos de todos contra todos, cada fase repete o ciclo completo da
+        categoria. Ex.: 3 fases = cada equipe reencontra as demais 3 vezes,
+        com espaçamento equilibrado entre as etapas.
+      </InfoCard>
+
+      <div>
+        <SectionLabel>Máx. jogos por equipe/categoria no dia</SectionLabel>
+        <Input
+          type="number"
+          min="1"
+          max="6"
+          value={form.maxGamesPerTeamPerDay}
+          onChange={e => setField('maxGamesPerTeamPerDay', e.target.value)}
+          className={inputClsCompact}
+        />
       </div>
     </div>
   )
@@ -335,67 +496,127 @@ export default function NewChampionshipPage() {
       { d: 4, label: 'Qui' }, { d: 5, label: 'Sex' }, { d: 6, label: 'Sáb' }, { d: 0, label: 'Dom' },
     ]
     return (
-      <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
-        <div className="space-y-2">
+      <div className="space-y-6">
+        <div>
           <SectionLabel>Dias da semana permitidos</SectionLabel>
-          <p className="text-[11px] text-slate-500 mb-2">Selecione os dias que a IA pode usar para agendar jogos.</p>
+          <p className="text-xs mb-2.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Selecione os dias em que a competição pode ter jogos.
+          </p>
           <div className="flex flex-wrap gap-2">
             {WEEKDAYS.map(w => (
-              <OptionButton key={w.d} active={form.allowedWeekdays.includes(w.d)} onClick={() => toggleWeekday(w.d)}>
+              <OptionPill
+                key={w.d}
+                active={form.allowedWeekdays.includes(w.d)}
+                onClick={() => toggleWeekday(w.d)}
+              >
                 {w.label}
-              </OptionButton>
+              </OptionPill>
             ))}
           </div>
         </div>
-        <div className="space-y-2">
+
+        <div>
           <SectionLabel>Janelas de horário</SectionLabel>
-          <p className="text-[11px] text-slate-500 mb-2">Múltiplas janelas (ex: matutino 08-12 + noturno 19-22).</p>
+          <p className="text-xs mb-2.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Múltiplas janelas (ex.: matutino 08–12 + noturno 19–22).
+          </p>
           <div className="space-y-2">
             {form.timeSlots.map((s, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <Input type="time" value={s.start} onChange={e => {
-                  const list = [...form.timeSlots]; list[idx] = { ...list[idx], start: e.target.value }; setField('timeSlots', list)
-                }} className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
-                <span className="text-slate-500 text-xs">até</span>
-                <Input type="time" value={s.end} onChange={e => {
-                  const list = [...form.timeSlots]; list[idx] = { ...list[idx], end: e.target.value }; setField('timeSlots', list)
-                }} className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
-                <Input value={s.label || ''} onChange={e => {
-                  const list = [...form.timeSlots]; list[idx] = { ...list[idx], label: e.target.value }; setField('timeSlots', list)
-                }} placeholder="Rótulo"
-                className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
-                <button type="button" onClick={() => setField('timeSlots', form.timeSlots.filter((_, i) => i !== idx))}
-                  className="text-red-500 text-xs px-2">Remover</button>
+                <Input
+                  type="time"
+                  value={s.start}
+                  onChange={e => {
+                    const list = [...form.timeSlots]; list[idx] = { ...list[idx], start: e.target.value }; setField('timeSlots', list)
+                  }}
+                  className={inputClsCompact + ' flex-1'}
+                />
+                <span className="text-xs" style={{ color: 'var(--fgb-ink-500)' }}>até</span>
+                <Input
+                  type="time"
+                  value={s.end}
+                  onChange={e => {
+                    const list = [...form.timeSlots]; list[idx] = { ...list[idx], end: e.target.value }; setField('timeSlots', list)
+                  }}
+                  className={inputClsCompact + ' flex-1'}
+                />
+                <Input
+                  value={s.label || ''}
+                  onChange={e => {
+                    const list = [...form.timeSlots]; list[idx] = { ...list[idx], label: e.target.value }; setField('timeSlots', list)
+                  }}
+                  placeholder="Rótulo"
+                  className={inputClsCompact + ' flex-1'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setField('timeSlots', form.timeSlots.filter((_, i) => i !== idx))}
+                  className="p-2 rounded transition-colors hover:bg-[var(--fgb-red-50)]"
+                  style={{ color: 'var(--fgb-red-500)' }}
+                  aria-label="Remover janela"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             ))}
-            <button type="button" onClick={() => setField('timeSlots', [...form.timeSlots, { start: '09:00', end: '12:00', label: '' }])}
-              className="text-[var(--amarelo)] text-xs uppercase tracking-widest font-bold flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setField('timeSlots', [...form.timeSlots, { start: '09:00', end: '12:00', label: '' }])}
+              className="fgb-label inline-flex items-center gap-1.5 mt-1"
+              style={{ fontSize: 11, color: 'var(--fgb-green-700)' }}
+            >
               <Plus className="w-3 h-3" /> Adicionar janela
             </button>
           </div>
         </div>
-        <div className="space-y-2">
+
+        <div>
           <SectionLabel>Datas bloqueadas (feriados, recessos, ENEM)</SectionLabel>
           <div className="space-y-2">
             {form.blackoutDates.map((b, idx) => (
               <div key={idx} className="flex items-center gap-2">
-                <Input type="date" value={b.date} onChange={e => {
-                  const list = [...form.blackoutDates]; list[idx] = { ...list[idx], date: e.target.value }; setField('blackoutDates', list)
-                }} className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
-                <Input type="date" value={b.endDate || ''} onChange={e => {
-                  const list = [...form.blackoutDates]; list[idx] = { ...list[idx], endDate: e.target.value }; setField('blackoutDates', list)
-                }} placeholder="Fim (opcional)"
-                className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
-                <Input value={b.reason || ''} onChange={e => {
-                  const list = [...form.blackoutDates]; list[idx] = { ...list[idx], reason: e.target.value }; setField('blackoutDates', list)
-                }} placeholder="Motivo"
-                className="bg-white/[0.03] border-white/10 h-10 rounded-xl text-white flex-1" />
-                <button type="button" onClick={() => setField('blackoutDates', form.blackoutDates.filter((_, i) => i !== idx))}
-                  className="text-red-500 text-xs px-2">Remover</button>
+                <Input
+                  type="date"
+                  value={b.date}
+                  onChange={e => {
+                    const list = [...form.blackoutDates]; list[idx] = { ...list[idx], date: e.target.value }; setField('blackoutDates', list)
+                  }}
+                  className={inputClsCompact + ' flex-1'}
+                />
+                <Input
+                  type="date"
+                  value={b.endDate || ''}
+                  onChange={e => {
+                    const list = [...form.blackoutDates]; list[idx] = { ...list[idx], endDate: e.target.value }; setField('blackoutDates', list)
+                  }}
+                  placeholder="Fim (opcional)"
+                  className={inputClsCompact + ' flex-1'}
+                />
+                <Input
+                  value={b.reason || ''}
+                  onChange={e => {
+                    const list = [...form.blackoutDates]; list[idx] = { ...list[idx], reason: e.target.value }; setField('blackoutDates', list)
+                  }}
+                  placeholder="Motivo"
+                  className={inputClsCompact + ' flex-1'}
+                />
+                <button
+                  type="button"
+                  onClick={() => setField('blackoutDates', form.blackoutDates.filter((_, i) => i !== idx))}
+                  className="p-2 rounded transition-colors hover:bg-[var(--fgb-red-50)]"
+                  style={{ color: 'var(--fgb-red-500)' }}
+                  aria-label="Remover data"
+                >
+                  <X className="w-4 h-4" />
+                </button>
               </div>
             ))}
-            <button type="button" onClick={() => setField('blackoutDates', [...form.blackoutDates, { date: '', reason: '' }])}
-              className="text-[var(--amarelo)] text-xs uppercase tracking-widest font-bold flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => setField('blackoutDates', [...form.blackoutDates, { date: '', reason: '' }])}
+              className="fgb-label inline-flex items-center gap-1.5 mt-1"
+              style={{ fontSize: 11, color: 'var(--fgb-green-700)' }}
+            >
               <Plus className="w-3 h-3" /> Adicionar data
             </button>
           </div>
@@ -405,23 +626,36 @@ export default function NewChampionshipPage() {
   }
 
   const renderStepRules = () => (
-    <div className="space-y-6 max-h-[55vh] overflow-y-auto pr-2 custom-scrollbar">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Descanso mínimo entre jogos (horas)</SectionLabel>
-          <Input type="number" min="0" max="72" value={form.minRestHoursBetweenGames}
+          <Input
+            type="number"
+            min="0"
+            max="72"
+            value={form.minRestHoursBetweenGames}
             onChange={e => setField('minRestHoursBetweenGames', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
-          <p className="text-[10px] text-slate-500">Padrão FIBA: 20h adulto · 90min em festivais.</p>
+            className={inputClsCompact}
+          />
+          <p className="text-xs mt-1.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Padrão FIBA: 20h adulto · 90min em festivais.
+          </p>
         </div>
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Máx jogos por equipe/semana</SectionLabel>
-          <Input type="number" min="1" max="10" value={form.maxGamesPerTeamPerWeek}
+          <Input
+            type="number"
+            min="1"
+            max="10"
+            value={form.maxGamesPerTeamPerWeek}
             onChange={e => setField('maxGamesPerTeamPerWeek', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+            className={inputClsCompact}
+          />
         </div>
       </div>
-      <div className="space-y-2">
+
+      <div>
         <SectionLabel>Padrão de mando</SectionLabel>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {[
@@ -430,17 +664,22 @@ export default function NewChampionshipPage() {
             { v: 'NEUTRAL', l: 'Neutro', d: 'Todos os jogos em quadra neutra' },
             { v: 'SERIES_2_2_1', l: '2-2-1 (best-of-5)', d: 'Padrão NBA: 2-2-1 com mando da maior cabeça' },
           ].map(o => (
-            <button key={o.v} type="button" onClick={() => setField('homePattern', o.v)}
-              className={`p-3 rounded-xl border text-left transition-all ${form.homePattern === o.v ? 'bg-[var(--amarelo)]/10 border-[var(--amarelo)]/50' : 'bg-white/[0.02] border-white/5 hover:border-white/10'}`}>
-              <span className={`text-xs font-black uppercase ${form.homePattern === o.v ? 'text-[var(--amarelo)]' : 'text-slate-300'}`}>{o.l}</span>
-              <p className="text-[10px] text-slate-500 mt-1">{o.d}</p>
-            </button>
+            <OptionCard
+              key={o.v}
+              active={form.homePattern === o.v}
+              onClick={() => setField('homePattern', o.v)}
+              label={o.l}
+              desc={o.d}
+            />
           ))}
         </div>
       </div>
-      <div className="space-y-2">
+
+      <div>
         <SectionLabel>Critérios de desempate (FIBA — ordem importa)</SectionLabel>
-        <p className="text-[11px] text-slate-500 mb-2">Use as setas para reordenar. Aplica de cima para baixo.</p>
+        <p className="text-xs mb-2.5" style={{ color: 'var(--fgb-ink-500)' }}>
+          Use as setas para reordenar. Aplica de cima para baixo.
+        </p>
         <div className="space-y-1.5">
           {form.tiebreakerChain.map((t, idx) => {
             const labels: Record<string, string> = {
@@ -454,13 +693,38 @@ export default function NewChampionshipPage() {
               draw: 'Sorteio',
             }
             return (
-              <div key={t} className="flex items-center gap-2 p-2 rounded-xl bg-white/[0.02] border border-white/5">
-                <span className="text-[10px] font-black uppercase text-slate-500 w-5">{idx + 1}</span>
-                <span className="text-xs text-slate-300 flex-1">{labels[t] ?? t}</span>
-                <button type="button" onClick={() => moveTiebreaker(idx, -1)} disabled={idx === 0}
-                  className="text-slate-400 disabled:opacity-30 px-2 text-xs">↑</button>
-                <button type="button" onClick={() => moveTiebreaker(idx, 1)} disabled={idx === form.tiebreakerChain.length - 1}
-                  className="text-slate-400 disabled:opacity-30 px-2 text-xs">↓</button>
+              <div
+                key={t}
+                className="flex items-center gap-2 p-2.5 rounded-md"
+                style={{ background: '#fff', border: '1px solid var(--fgb-ink-200)' }}
+              >
+                <span
+                  className="fgb-label w-6 text-center"
+                  style={{ fontSize: 11, color: 'var(--fgb-green-700)' }}
+                >
+                  {idx + 1}
+                </span>
+                <span className="text-sm flex-1" style={{ color: 'var(--fgb-ink-800)' }}>
+                  {labels[t] ?? t}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => moveTiebreaker(idx, -1)}
+                  disabled={idx === 0}
+                  className="px-2 disabled:opacity-30"
+                  style={{ color: 'var(--fgb-ink-500)' }}
+                >
+                  ↑
+                </button>
+                <button
+                  type="button"
+                  onClick={() => moveTiebreaker(idx, 1)}
+                  disabled={idx === form.tiebreakerChain.length - 1}
+                  className="px-2 disabled:opacity-30"
+                  style={{ color: 'var(--fgb-ink-500)' }}
+                >
+                  ↓
+                </button>
               </div>
             )
           })}
@@ -471,17 +735,35 @@ export default function NewChampionshipPage() {
 
   const renderStep3 = () => (
     <div className="space-y-6">
-      <Toggle checked={form.hasPlayoffs} onCheckedChange={v => setField('hasPlayoffs', v)} label="Este campeonato tem fase de playoffs (Mata-Mata Final)" />
+      <Toggle
+        checked={form.hasPlayoffs}
+        onCheckedChange={v => setField('hasPlayoffs', v)}
+        label="Este campeonato tem fase de playoffs"
+        description="Mata-mata final após a fase regular."
+      />
       {form.hasPlayoffs && (
-        <div className="grid grid-cols-2 gap-4 mt-3">
-          <div><SectionLabel>Equipes Top</SectionLabel>
-          <Input type="number" value={form.playoffTeams} onChange={e => setField('playoffTeams', e.target.value)} className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" /></div>
-          <div><SectionLabel>Formato</SectionLabel>
-          <select value={form.playoffFormat} onChange={e => setField('playoffFormat', e.target.value)} className="w-full bg-[#121212] border-white/10 h-11 rounded-xl text-white px-3">
-            <option value="melhor_de_1">Melhor de 1</option>
-            <option value="melhor_de_3">Melhor de 3</option>
-            <option value="melhor_de_5">Melhor de 5</option>
-          </select></div>
+        <div className="grid grid-cols-2 gap-4 mt-2">
+          <div>
+            <SectionLabel>Equipes Top</SectionLabel>
+            <Input
+              type="number"
+              value={form.playoffTeams}
+              onChange={e => setField('playoffTeams', e.target.value)}
+              className={inputClsCompact}
+            />
+          </div>
+          <div>
+            <SectionLabel>Formato</SectionLabel>
+            <select
+              value={form.playoffFormat}
+              onChange={e => setField('playoffFormat', e.target.value)}
+              className={inputClsCompact}
+            >
+              <option value="melhor_de_1">Melhor de 1</option>
+              <option value="melhor_de_3">Melhor de 3</option>
+              <option value="melhor_de_5">Melhor de 5</option>
+            </select>
+          </div>
         </div>
       )}
     </div>
@@ -490,15 +772,23 @@ export default function NewChampionshipPage() {
   const renderStep4 = () => (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Início</SectionLabel>
-          <Input type="date" value={form.startDate} onChange={e => setField('startDate', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+          <Input
+            type="date"
+            value={form.startDate}
+            onChange={e => setField('startDate', e.target.value)}
+            className={inputClsCompact}
+          />
         </div>
-        <div className="space-y-2">
+        <div>
           <SectionLabel>Inscrições até</SectionLabel>
-          <Input type="date" value={form.regDeadline} onChange={e => setField('regDeadline', e.target.value)}
-            className="bg-white/[0.03] border-white/10 h-11 rounded-xl text-white" />
+          <Input
+            type="date"
+            value={form.regDeadline}
+            onChange={e => setField('regDeadline', e.target.value)}
+            className={inputClsCompact}
+          />
         </div>
       </div>
     </div>
@@ -508,47 +798,153 @@ export default function NewChampionshipPage() {
   const stepContent = [renderStep0, renderStepType, renderStep1, renderStep2, renderStepCalendar, renderStepRules, renderStep3, renderStep4]
 
   return (
-    <div className="space-y-8 max-w-[800px] mx-auto pb-20 pt-10 px-4 animate-in fade-in duration-500">
-      <header className="flex items-center gap-4 mb-10">
-        <Button variant="ghost" onClick={() => router.back()} className="rounded-xl border border-white/5 hover:bg-white/5 text-slate-400">
+    <div className="space-y-6 max-w-[920px] mx-auto pb-12 pt-6 px-4">
+      {/* Header */}
+      <header className="flex items-center gap-4">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          className="p-2 rounded-md transition-colors"
+          style={{
+            background: '#fff',
+            border: '1px solid var(--fgb-ink-200)',
+            color: 'var(--fgb-ink-600)',
+          }}
+          aria-label="Voltar"
+        >
           <ChevronLeft className="w-5 h-5" />
-        </Button>
+        </button>
         <div>
-          <h1 className="text-3xl font-display font-black text-white uppercase tracking-tight leading-none">Novo Campeonato</h1>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-2">Configuração da nova competição</p>
+          <h1 className="fgb-display" style={{ fontSize: 28, color: 'var(--fgb-ink-900)' }}>
+            Novo Campeonato
+          </h1>
+          <p
+            className="fgb-label mt-1"
+            style={{ fontSize: 10, color: 'var(--fgb-ink-500)', letterSpacing: '0.18em' }}
+          >
+            Configuração da nova competição
+          </p>
         </div>
       </header>
 
-      <Card className="bg-[#0A0A0A] border-white/10 rounded-[32px] overflow-hidden shadow-2xl">
-        <div className="flex border-b border-white/5">
-          {STEPS.map((s, i) => (
-            <div key={i} className={`flex-1 py-4 text-center border-b-2 transition-all ${i === step ? 'border-[var(--amarelo)] bg-[var(--amarelo)]/5' : i < step ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-transparent'}`}>
-              <p className={`text-[8px] font-black uppercase tracking-widest ${i === step ? 'text-[var(--amarelo)]' : i < step ? 'text-emerald-400' : 'text-slate-600'}`}>{s.title}</p>
-            </div>
-          ))}
+      {/* Card principal */}
+      <div
+        className="rounded-lg overflow-hidden"
+        style={{
+          background: '#fff',
+          border: '1px solid var(--fgb-ink-200)',
+          boxShadow: 'var(--shadow-md)',
+        }}
+      >
+        {/* Stepper */}
+        <div
+          className="flex border-b overflow-x-auto"
+          style={{ borderColor: 'var(--fgb-ink-200)' }}
+        >
+          {STEPS.map((s, i) => {
+            const isActive = i === step
+            const isDone = i < step
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => i < step && setStep(i)}
+                disabled={i > step}
+                className="flex-1 min-w-[110px] py-3 px-2 transition-colors text-center"
+                style={{
+                  borderBottom: `3px solid ${
+                    isActive ? 'var(--fgb-green-700)' : isDone ? 'var(--fgb-yellow-500)' : 'transparent'
+                  }`,
+                  background: isActive ? 'var(--fgb-green-50)' : 'transparent',
+                  cursor: i > step ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <p
+                  className="fgb-label"
+                  style={{
+                    fontSize: 9,
+                    color: isActive
+                      ? 'var(--fgb-green-700)'
+                      : isDone
+                      ? 'var(--fgb-ink-700)'
+                      : 'var(--fgb-ink-400)',
+                    letterSpacing: '0.16em',
+                  }}
+                >
+                  {s.title}
+                </p>
+              </button>
+            )
+          })}
         </div>
 
-        <CardHeader className="px-10 pt-10 pb-4">
-          <CardTitle className="text-2xl font-display font-black uppercase tracking-tight text-white">{STEPS[step].title}</CardTitle>
-          <CardDescription className="text-slate-500 font-bold uppercase tracking-widest text-[10px]">{STEPS[step].desc}</CardDescription>
-        </CardHeader>
+        {/* Tricolor stripe */}
+        <div className="fgb-tricolor" style={{ height: 3 }} />
 
-        <CardContent className="px-10 pb-10">
+        {/* Content */}
+        <div className="px-6 sm:px-10 pt-8 pb-4">
+          <h2 className="fgb-heading" style={{ fontSize: 22, color: 'var(--fgb-ink-900)' }}>
+            {STEPS[step].title}
+          </h2>
+          <p
+            className="fgb-label mt-1"
+            style={{ fontSize: 10, color: 'var(--fgb-ink-500)', letterSpacing: '0.16em' }}
+          >
+            {STEPS[step].desc}
+          </p>
+        </div>
+
+        <div className="px-6 sm:px-10 pb-8">
           {stepContent[step]()}
-          {formError && <p className="mt-6 text-red-500 text-xs font-bold uppercase tracking-widest bg-red-500/10 p-4 rounded-2xl border border-red-500/20">{formError}</p>}
-        </CardContent>
+          {formError && (
+            <div
+              className="mt-6 p-4 rounded-md"
+              style={{
+                background: 'var(--fgb-red-50)',
+                border: '1px solid var(--fgb-red-200)',
+                color: 'var(--fgb-red-700)',
+              }}
+            >
+              <p className="fgb-label" style={{ fontSize: 11, letterSpacing: '0.1em' }}>
+                {formError}
+              </p>
+            </div>
+          )}
+        </div>
 
-        <footer className="px-10 py-6 border-t border-white/5 bg-[#0D0D0D]">
-          <div className="flex gap-4">
-            <Button disabled={step === 0} variant="ghost" onClick={prevStep} className="flex-1 h-14 font-black uppercase tracking-widest text-slate-500 hover:text-white rounded-2xl">
-              Voltar
-            </Button>
-            <Button onClick={step < STEPS.length - 1 ? nextStep : handleSubmit} disabled={submitLoading} className="flex-1 bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-white font-black uppercase tracking-widest h-14 rounded-2xl shadow-lg shadow-orange-600/20">
-              {submitLoading ? 'Salvando...' : step < STEPS.length - 1 ? 'Próximo' : 'Criar Campeonato'}
-            </Button>
-          </div>
+        {/* Footer */}
+        <footer
+          className="px-6 sm:px-10 py-5 flex items-center justify-between gap-4"
+          style={{ background: 'var(--fgb-ink-50)', borderTop: '1px solid var(--fgb-ink-200)' }}
+        >
+          <button
+            type="button"
+            disabled={step === 0}
+            onClick={prevStep}
+            className="fgb-label disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            style={{
+              fontSize: 11,
+              color: 'var(--fgb-ink-600)',
+              padding: '10px 16px',
+            }}
+          >
+            ← Voltar
+          </button>
+          <button
+            type="button"
+            onClick={step < STEPS.length - 1 ? nextStep : handleSubmit}
+            disabled={submitLoading}
+            className="fgb-btn-primary"
+            style={{ minWidth: 200 }}
+          >
+            {submitLoading
+              ? 'Salvando…'
+              : step < STEPS.length - 1
+              ? 'Próximo →'
+              : 'Criar Campeonato'}
+          </button>
         </footer>
-      </Card>
+      </div>
     </div>
   )
 }
