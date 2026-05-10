@@ -15,7 +15,15 @@ const STATUS_FILTERS = [
   { label: 'Encerrado', value: 'FINISHED' },
 ]
 
-type SearchParams = Promise<{ status?: string; year?: string }>
+const SANCTIONING_FILTERS = [
+  { label: 'Todos',       value: '' },
+  { label: 'Oficiais FGB', value: 'FGB_OFFICIAL' },
+  { label: 'Convidativos', value: 'FGB_INVITATIONAL' },
+  { label: 'Regionais',   value: 'REGIONAL' },
+  { label: 'Abertos',     value: 'OPEN' },
+]
+
+type SearchParams = Promise<{ status?: string; year?: string; sanctioning?: string }>
 
 export default async function AdminChampionshipsPage({
   searchParams,
@@ -25,13 +33,15 @@ export default async function AdminChampionshipsPage({
   const sp = await searchParams
   const filterStatus = sp.status ?? ''
   const filterYear = sp.year ? parseInt(sp.year, 10) : undefined
+  const filterSanctioning = sp.sanctioning ?? ''
 
   try {
     const whereBase = {
       status: { not: 'ARCHIVED' as const },
       ...(filterStatus ? { status: filterStatus } : {}),
       ...(filterYear ? { year: filterYear } : {}),
-    }
+      ...(filterSanctioning ? { sanctioning: filterSanctioning } : {}),
+    } as any
 
     const [activeChampionships, archivedChampionships, allYears] = await Promise.all([
       prisma.championship.findMany({
@@ -46,7 +56,7 @@ export default async function AdminChampionshipsPage({
             },
           },
         },
-      }),
+      }) as any,
       prisma.championship.findMany({
         where: { status: 'ARCHIVED' },
         orderBy: { createdAt: 'desc' },
@@ -59,7 +69,7 @@ export default async function AdminChampionshipsPage({
             },
           },
         },
-      }),
+      }) as any,
       prisma.championship.findMany({
         where: { status: { not: 'ARCHIVED' } },
         select: { year: true },
@@ -70,10 +80,16 @@ export default async function AdminChampionshipsPage({
 
     const uniqueYears = allYears.map((c) => c.year)
 
-    const buildHref = (newStatus?: string, newYear?: number) => {
+    const buildHref = (
+      opts: { status?: string; year?: number; sanctioning?: string } = {},
+    ) => {
       const params = new URLSearchParams()
-      if (newStatus) params.set('status', newStatus)
-      if (newYear) params.set('year', String(newYear))
+      const status = opts.status !== undefined ? opts.status : filterStatus
+      const year = opts.year !== undefined ? opts.year : filterYear
+      const sanctioning = opts.sanctioning !== undefined ? opts.sanctioning : filterSanctioning
+      if (status) params.set('status', status)
+      if (year) params.set('year', String(year))
+      if (sanctioning) params.set('sanctioning', sanctioning)
       const qs = params.toString()
       return `/admin/championships${qs ? `?${qs}` : ''}`
     }
@@ -102,14 +118,37 @@ export default async function AdminChampionshipsPage({
 
         {/* ── Filtros ── */}
         <div className="flex flex-col gap-3">
-          {/* Filtro por status */}
-          <div className="flex flex-wrap gap-2">
-            {STATUS_FILTERS.map((f) => {
-              const isActive = filterStatus === f.value
-              const href = buildHref(f.value || undefined, filterYear)
+          {/* Filtro por sancionamento (tipo) */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: 2 }}>TIPO</span>
+            {SANCTIONING_FILTERS.map((f) => {
+              const isActive = filterSanctioning === f.value
+              const href = buildHref({ sanctioning: f.value })
               return (
                 <Link
-                  key={f.value}
+                  key={f.value || 'all-sanctioning'}
+                  href={href}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
+                    isActive
+                      ? 'bg-[var(--fgb-green-700)] text-white border-[var(--fgb-green-700)]'
+                      : 'bg-white text-[var(--gray)] border-[var(--border)] hover:border-[var(--fgb-green-700)] hover:text-[var(--fgb-green-700)]'
+                  }`}
+                >
+                  {f.label}
+                </Link>
+              )
+            })}
+          </div>
+
+          {/* Filtro por status */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: 2 }}>STATUS</span>
+            {STATUS_FILTERS.map((f) => {
+              const isActive = filterStatus === f.value
+              const href = buildHref({ status: f.value })
+              return (
+                <Link
+                  key={f.value || 'all-status'}
                   href={href}
                   className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest transition-all ${
                     isActive
@@ -128,7 +167,7 @@ export default async function AdminChampionshipsPage({
             <div className="flex flex-wrap gap-2 items-center">
               <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 9, letterSpacing: 2 }}>ANO</span>
               <Link
-                href={buildHref(filterStatus || undefined, undefined)}
+                href={buildHref({ year: undefined })}
                 className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-all ${
                   !filterYear
                     ? 'bg-[var(--black)] text-white border-[var(--black)]'
@@ -140,7 +179,7 @@ export default async function AdminChampionshipsPage({
               {uniqueYears.map((y) => (
                 <Link
                   key={y}
-                  href={buildHref(filterStatus || undefined, y)}
+                  href={buildHref({ year: y })}
                   className={`inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest transition-all ${
                     filterYear === y
                       ? 'bg-[var(--black)] text-white border-[var(--black)]'
@@ -166,7 +205,7 @@ export default async function AdminChampionshipsPage({
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-            {activeChampionships.map((c) => (
+            {activeChampionships.map((c: any) => (
               <ChampionshipCard
                 key={c.id}
                 id={c.id}
@@ -177,6 +216,7 @@ export default async function AdminChampionshipsPage({
                 teamCount={c._count.registrations}
                 gameCount={c._count.games}
                 href={`/admin/championships/${c.id}`}
+                sanctioning={c.sanctioning}
               />
             ))}
 
@@ -209,7 +249,7 @@ export default async function AdminChampionshipsPage({
               <span className="h-px bg-[var(--border)] flex-1" />
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 opacity-50 hover:opacity-100 transition-opacity duration-700">
-              {archivedChampionships.map((c) => (
+              {archivedChampionships.map((c: any) => (
                 <ChampionshipCard
                   key={c.id}
                   id={c.id}
@@ -220,6 +260,7 @@ export default async function AdminChampionshipsPage({
                   teamCount={c._count.registrations}
                   href={`/admin/championships/${c.id}`}
                   buttonLabel="Ver Arquivo"
+                  sanctioning={c.sanctioning}
                 />
               ))}
             </div>

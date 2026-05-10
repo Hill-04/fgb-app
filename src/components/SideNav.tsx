@@ -25,7 +25,6 @@ const adminNavGroups = [
       { href: '/admin/dashboard',     label: 'Dashboard',    icon: LayoutDashboard },
       { href: '/admin/championships', label: 'Campeonatos',  icon: Trophy },
       { href: '/admin/calendario',    label: 'Calendario',   icon: CalendarDays },
-      { href: '/admin/external-competitions', label: 'Comp. Externas', icon: AlertTriangle },
       { href: '/admin/registration-blocks',   label: 'Bloqueios',      icon: Lock },
     ],
   },
@@ -37,6 +36,7 @@ const adminNavGroups = [
       { href: '/admin/referees',      label: 'Árbitros',      icon: Shield },
       { href: '/admin/gyms',          label: 'Ginásios',      icon: Building2 },
       { href: '/admin/teams',         label: 'Times',         icon: Users },
+      { href: '/admin/external-competitions', label: 'Conflitos Externos', icon: AlertTriangle },
     ],
   },
   {

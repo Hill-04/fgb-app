@@ -24,11 +24,12 @@ export default async function AdminExternalCompetitionsPage() {
         <div>
           <h1 className="fgb-display text-[28px] text-[var(--black)] flex items-center gap-2">
             <AlertTriangle className="text-[var(--red)]" size={26} />
-            Competições Externas
+            Conflitos Externos
           </h1>
           <p className="fgb-label text-[var(--gray)] mt-2 max-w-2xl" style={{ textTransform: 'none', letterSpacing: 0 }}>
-            Competições de terceiros que impactam a elegibilidade das atletas nos campeonatos da FGB.
-            Configure quais campeonatos FGB são bloqueados ao declarar participação aqui.
+            Registro de competições de outras federações/entidades que geram bloqueios de elegibilidade
+            nos campeonatos da FGB. Para campeonatos que vão usar a plataforma FGB, crie diretamente
+            em <Link href="/admin/championships" className="underline" style={{ color: 'var(--fgb-green-700)' }}>Campeonatos</Link>.
           </p>
         </div>
         <Link
@@ -36,7 +37,7 @@ export default async function AdminExternalCompetitionsPage() {
           className="fgb-btn-primary flex items-center gap-2"
         >
           <Plus size={16} />
-          Nova Competição Externa
+          Novo Conflito
         </Link>
       </div>
 

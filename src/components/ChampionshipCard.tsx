@@ -16,6 +16,14 @@ type ChampionshipCardProps = {
   gameCount?: number
   href: string
   buttonLabel?: string
+  sanctioning?: string | null
+}
+
+const sanctioningBadgeMap: Record<string, { label: string; bg: string; color: string; border: string }> = {
+  FGB_OFFICIAL:     { label: 'OFICIAL FGB', bg: 'var(--fgb-green-700)', color: '#fff', border: 'var(--fgb-green-700)' },
+  FGB_INVITATIONAL: { label: 'CONVIDATIVO', bg: 'var(--fgb-yellow-500)', color: 'var(--fgb-ink-900)', border: 'var(--fgb-yellow-500)' },
+  REGIONAL:         { label: 'REGIONAL',    bg: 'var(--fgb-navy-100)', color: 'var(--fgb-navy-800)', border: 'var(--fgb-navy-300)' },
+  OPEN:             { label: 'ABERTO',      bg: 'var(--fgb-ink-100)', color: 'var(--fgb-ink-700)', border: 'var(--fgb-ink-300)' },
 }
 
 const statusBadge: Record<string, string> = {
@@ -60,10 +68,12 @@ export function ChampionshipCard({
   gameCount,
   href,
   buttonLabel,
+  sanctioning,
 }: ChampionshipCardProps) {
   const currentStep = statusStepMap[status] ?? 1
   const actionLabel = buttonLabel ?? actionLabelMap[status] ?? 'Ver Painel'
   const showPulse = status === 'REGISTRATION_OPEN' || status === 'ONGOING' || status === 'ACTIVE'
+  const sanctioningBadge = sanctioning ? sanctioningBadgeMap[sanctioning] : undefined
 
   return (
     <Link
@@ -88,15 +98,29 @@ export function ChampionshipCard({
             </div>
           </div>
 
-          <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${statusBadge[status] || statusBadge.DRAFT}`}>
-            {showPulse && (
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--verde)] opacity-70"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--verde)]"></span>
+          <div className="flex flex-col items-end gap-1.5">
+            {sanctioningBadge && (
+              <span
+                className="inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-[0.16em] border"
+                style={{
+                  background: sanctioningBadge.bg,
+                  color: sanctioningBadge.color,
+                  borderColor: sanctioningBadge.border,
+                }}
+              >
+                {sanctioningBadge.label}
               </span>
             )}
-            {status === 'DRAFT' ? 'Em configuração' : formatChampionshipStatus(status)}
-          </span>
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] ${statusBadge[status] || statusBadge.DRAFT}`}>
+              {showPulse && (
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--verde)] opacity-70"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--verde)]"></span>
+                </span>
+              )}
+              {status === 'DRAFT' ? 'Em configuração' : formatChampionshipStatus(status)}
+            </span>
+          </div>
         </div>
 
         <div className="mb-5">
