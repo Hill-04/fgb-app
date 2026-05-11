@@ -15,10 +15,10 @@ type Props = {
 }
 
 const SITUATION_CONFIG: Record<string, { label: string; bg: string; dot: string }> = {
-  ACTIVE:      { label: 'ATIVO',      bg: 'bg-green-500/20 text-green-100',  dot: 'bg-green-400' },
-  PENDING:     { label: 'PENDENTE',   bg: 'bg-yellow-400/20 text-yellow-100', dot: 'bg-yellow-400' },
-  INACTIVE:    { label: 'INATIVO',    bg: 'bg-gray-400/20 text-gray-300',    dot: 'bg-gray-400' },
-  TRANSFERRED: { label: 'TRANSFERIDO',bg: 'bg-blue-400/20 text-blue-100',    dot: 'bg-blue-400' },
+  ACTIVE:      { label: 'ATIVO',      bg: 'bg-fgb-green-500/20 text-fgb-green-100',   dot: 'bg-fgb-green-400' },
+  PENDING:     { label: 'PENDENTE',   bg: 'bg-fgb-yellow-500/20 text-fgb-yellow-100', dot: 'bg-fgb-yellow-400' },
+  INACTIVE:    { label: 'INATIVO',    bg: 'bg-fgb-ink-400/20 text-fgb-ink-200',       dot: 'bg-fgb-ink-300' },
+  TRANSFERRED: { label: 'TRANSFERIDO',bg: 'bg-fgb-navy-500/20 text-fgb-navy-100',     dot: 'bg-fgb-navy-400' },
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -39,7 +39,7 @@ export default function CarteirinhaCard({
   return (
     <div
       className="relative overflow-hidden rounded-2xl shadow-lg"
-      style={{ width: '100%', aspectRatio: '85.6/54', background: 'linear-gradient(135deg, #0d3d20 0%, #145530 60%, #1a6b3d 100%)' }}
+      style={{ width: '100%', aspectRatio: '85.6/54', background: 'linear-gradient(135deg, var(--fgb-green-900) 0%, var(--fgb-green-800) 60%, var(--fgb-green-700) 100%)' }}
     >
       {/* Grid decorativo */}
       <div className="pointer-events-none absolute inset-0 opacity-10"
@@ -60,14 +60,14 @@ export default function CarteirinhaCard({
             )}
           </div>
           {registrationNumber && (
-            <span className="text-[8px] font-black text-[#F5C200] leading-none">#{registrationNumber}</span>
+            <span className="text-[8px] font-black text-fgb-yellow-400 leading-none">#{registrationNumber}</span>
           )}
         </div>
 
         {/* Coluna central — info */}
         <div className="flex flex-1 flex-col justify-between py-0.5 min-w-0">
           <div>
-            <p className="text-[6px] font-black uppercase tracking-[0.25em] text-[#F5C200] leading-none">
+            <p className="text-[6px] font-black uppercase tracking-[0.25em] text-fgb-yellow-400 leading-none">
               Federação Gaúcha de Basquete
             </p>
             <p className="text-[5px] font-bold uppercase tracking-[0.15em] text-white/50 mt-0.5">{TYPE_LABEL[type]}</p>
@@ -79,7 +79,7 @@ export default function CarteirinhaCard({
               <p className="text-[7px] text-white/70 truncate mt-0.5">{teamName}</p>
             )}
             {(categoryName || role) && (
-              <span className="mt-1 inline-flex items-center rounded-full bg-[#F5C200]/20 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-wide text-[#F5C200]">
+              <span className="mt-1 inline-flex items-center rounded-full bg-fgb-yellow-400/20 px-1.5 py-0.5 text-[6px] font-black uppercase tracking-wide text-fgb-yellow-400">
                 {categoryName || role}
               </span>
             )}

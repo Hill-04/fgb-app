@@ -107,7 +107,7 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
   return (
     <div
       style={{
-        background: 'var(--fgb-green-800)',
+        background: 'var(--fgb-green-900)',
         width: width ?? 220,
         flexShrink: 0,
         display: 'flex',

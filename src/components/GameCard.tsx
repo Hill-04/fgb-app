@@ -1,4 +1,3 @@
-import { Badge } from "./Badge"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -30,68 +29,115 @@ export function GameCard({
   status,
   blockName,
   phase,
-  className
+  className,
 }: GameCardProps) {
   const hasScore = homeScore !== null && homeScore !== undefined && awayScore !== null && awayScore !== undefined
 
   return (
-    <div className={cn("card-fgb p-4 space-y-3", className)}>
+    <div className={cn("fgb-card p-4 space-y-3", className)}>
       <div className="flex items-center justify-between">
-        <Badge variant="orange" size="sm">{category}</Badge>
-        <span className="text-xs text-[var(--gray)]">Fase {phase}</span>
+        <span className="fgb-badge fgb-badge-yellow">{category}</span>
+        <span className="fgb-label" style={{ color: "var(--fgb-ink-500)" }}>
+          Fase {phase}
+        </span>
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-[var(--black)]">{homeTeam}</span>
-          {hasScore && <span className="text-2xl font-bold text-[var(--black)]">{homeScore}</span>}
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-semibold truncate" style={{ color: "var(--fgb-ink-900)" }}>
+            {homeTeam}
+          </span>
+          {hasScore && (
+            <span
+              className="tabular-nums"
+              style={{ fontFamily: "var(--font-anton)", fontSize: 28, lineHeight: 1, color: "var(--fgb-ink-900)" }}
+            >
+              {homeScore}
+            </span>
+          )}
         </div>
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-[var(--black)]">{awayTeam}</span>
-          {hasScore && <span className="text-2xl font-bold text-[var(--black)]">{awayScore}</span>}
+        <div className="flex items-center justify-between gap-3">
+          <span className="font-semibold truncate" style={{ color: "var(--fgb-ink-900)" }}>
+            {awayTeam}
+          </span>
+          {hasScore && (
+            <span
+              className="tabular-nums"
+              style={{ fontFamily: "var(--font-anton)", fontSize: 28, lineHeight: 1, color: "var(--fgb-ink-900)" }}
+            >
+              {awayScore}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="pt-3 border-t border-[var(--border)] space-y-1">
+      <div className="pt-3 space-y-1" style={{ borderTop: "1px solid var(--fgb-ink-200)" }}>
         <div className="flex items-center justify-between text-xs">
-          <span className="text-[var(--gray-d)]">
+          <span style={{ color: "var(--fgb-ink-600)" }}>
             {format(dateTime, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
           </span>
-          {blockName && (
-            <Badge variant="default" size="sm">{blockName}</Badge>
-          )}
+          {blockName && <span className="fgb-badge fgb-badge-outline">{blockName}</span>}
         </div>
-        <div className="text-xs text-[var(--gray)]">
-          {location} - {city}
+        <div className="text-xs" style={{ color: "var(--fgb-ink-500)" }}>
+          {location} — {city}
         </div>
       </div>
 
-      {/* Custom Status Display */}
-      {!hasScore && (
-        <div className="pt-1">
-          {status === "ONGOING" && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-live">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--amarelo)]"></span>
-              Em Andamento
-            </span>
-          )}
-          {status === "SCHEDULED" && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-scheduled">
-              Agendado
-            </span>
-          )}
-          {status === "FINISHED" && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase font-bold status-finished">
-              Finalizado
-            </span>
-          )}
-          {(status === "CANCELLED" || status === "POSTPONED") && (
-            <Badge variant={status === "CANCELLED" ? "error" : "warning"} size="sm">
-              {status === "CANCELLED" ? "Cancelado" : "Adiado"}
-            </Badge>
-          )}
-        </div>
-      )}
+      {!hasScore && <GameStatusBadge status={status} />}
     </div>
   )
+}
+
+function GameStatusBadge({ status }: { status: string }) {
+  if (status === "ONGOING") {
+    return (
+      <div className="pt-1">
+        <span
+          className="fgb-label inline-flex items-center gap-1.5 px-2.5 py-1"
+          style={{
+            background: "var(--fgb-red-500)",
+            color: "#fff",
+            animation: "fgb-pulse 1.4s ease-in-out infinite",
+          }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#fff" }} />
+          Ao Vivo
+        </span>
+      </div>
+    )
+  }
+
+  if (status === "SCHEDULED") {
+    return (
+      <div className="pt-1">
+        <span className="fgb-badge fgb-badge-outline">Agendado</span>
+      </div>
+    )
+  }
+
+  if (status === "FINISHED") {
+    return (
+      <div className="pt-1">
+        <span className="fgb-badge fgb-badge-verde">Finalizado</span>
+      </div>
+    )
+  }
+
+  if (status === "CANCELLED") {
+    return (
+      <div className="pt-1">
+        <span className="fgb-badge fgb-badge-red">Cancelado</span>
+      </div>
+    )
+  }
+
+  if (status === "POSTPONED") {
+    return (
+      <div className="pt-1">
+        <span className="fgb-badge fgb-badge-yellow">Adiado</span>
+      </div>
+    )
+  }
+
+  return null
 }

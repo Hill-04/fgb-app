@@ -8,69 +8,69 @@
    ──────────────────────────────────────────────────────────── */
 :root {
   /* ── FGB GREEN (cor dominante / brand primary) ────────── */
-  --fgb-green-50:  #E6F4EB;
-  --fgb-green-100: #C9E6D3;
-  --fgb-green-200: #97CDA8;
-  --fgb-green-300: #61B07F;
-  --fgb-green-400: #2D9456;
-  --fgb-green-500: #178848;
-  --fgb-green-600: #137940;
+  --fgb-green-50:  #EEF8F2;
+  --fgb-green-100: #DCF1E3;
+  --fgb-green-200: #B8E5C8;
+  --fgb-green-300: #7AD49C;
+  --fgb-green-400: #3FBD6E;
+  --fgb-green-500: #22A050;
+  --fgb-green-600: #1A7A3E;
   --fgb-green-700: #106B33;  /* ★ brand */
   --fgb-green-800: #0C5C2D;  /* ★ brand dark */
-  --fgb-green-900: #084E26;
-  --fgb-green-950: #06391C;
+  --fgb-green-900: #083C1E;
+  --fgb-green-950: #062817;
 
   /* ── FGB NAVY (superfícies esportivas / scoreboards) ──── */
-  --fgb-navy-50:  #E8ECF2;
-  --fgb-navy-100: #C7D0DD;
-  --fgb-navy-200: #9AAABF;
-  --fgb-navy-300: #6E83A0;
-  --fgb-navy-400: #4A6181;
-  --fgb-navy-500: #2F4669;
-  --fgb-navy-600: #233853;
-  --fgb-navy-700: #1A2C42;
-  --fgb-navy-800: #122033;
-  --fgb-navy-900: #0B1726;
-  --fgb-navy-950: #060E18;
+  --fgb-navy-50:  #EFF4FA;
+  --fgb-navy-100: #DCE7F2;
+  --fgb-navy-200: #B5CDE8;
+  --fgb-navy-300: #85ACDB;
+  --fgb-navy-400: #5C8AC0;
+  --fgb-navy-500: #3D6BA0;
+  --fgb-navy-600: #2A4F7F;
+  --fgb-navy-700: #1E3A5F;
+  --fgb-navy-800: #142844;
+  --fgb-navy-900: #0E1B33;
+  --fgb-navy-950: #070F1C;
 
   /* ── FGB YELLOW (CTA destacado) ──────────────────────── */
-  --fgb-yellow-50:  #FFF8E0;
-  --fgb-yellow-100: #FEEDB0;
-  --fgb-yellow-200: #FDDF7A;
-  --fgb-yellow-300: #FDD143;
-  --fgb-yellow-400: #F2BD17;
+  --fgb-yellow-50:  #FFFAE6;
+  --fgb-yellow-100: #FFF3CC;
+  --fgb-yellow-200: #FFE699;
+  --fgb-yellow-300: #FFD54F;
+  --fgb-yellow-400: #FFC107;
   --fgb-yellow-500: #E5AB00;  /* ★ brand */
-  --fgb-yellow-600: #C29200;
-  --fgb-yellow-700: #9A7400;
-  --fgb-yellow-800: #6F5400;
-  --fgb-yellow-900: #4A3700;
-  --fgb-yellow-950: #2A2000;
+  --fgb-yellow-600: #B58800;
+  --fgb-yellow-700: #896600;
+  --fgb-yellow-800: #5C4400;
+  --fgb-yellow-900: #3D2C00;
+  --fgb-yellow-950: #1F1700;
 
   /* ── FGB RED (live/alerta — uso restrito) ─────────────── */
-  --fgb-red-50:  #FCE8E8;
-  --fgb-red-100: #F8C2C2;
-  --fgb-red-200: #F08C8C;
-  --fgb-red-300: #E55757;
-  --fgb-red-400: #DC3535;
+  --fgb-red-50:  #FEEAEA;
+  --fgb-red-100: #FCD1D1;
+  --fgb-red-200: #F8A8A8;
+  --fgb-red-300: #F07474;
+  --fgb-red-400: #E84747;
   --fgb-red-500: #D72020;  /* ★ brand */
-  --fgb-red-600: #B71717;
-  --fgb-red-700: #921212;
-  --fgb-red-800: #6E0E0E;
-  --fgb-red-900: #4A0909;
-  --fgb-red-950: #2C0606;
+  --fgb-red-600: #B21717;
+  --fgb-red-700: #891111;
+  --fgb-red-800: #5C0A0A;
+  --fgb-red-900: #3D0707;
+  --fgb-red-950: #1F0303;
 
   /* ── INK (neutros — substituem preto puro) ────────────── */
-  --fgb-ink-50:  #F8F9FA;
-  --fgb-ink-100: #ECEEF1;
-  --fgb-ink-200: #DCE0E5;
-  --fgb-ink-300: #B7BDC6;
-  --fgb-ink-400: #8A92A0;
-  --fgb-ink-500: #5E6675;
-  --fgb-ink-600: #3F4754;
-  --fgb-ink-700: #2A3140;
-  --fgb-ink-800: #1A1F2B;
-  --fgb-ink-900: #0E121B;
-  --fgb-ink-950: #060812;
+  --fgb-ink-50:  #F2F5F4;
+  --fgb-ink-100: #E2E7E5;
+  --fgb-ink-200: #C8CFCC;
+  --fgb-ink-300: #A4ADAA;
+  --fgb-ink-400: #7E8884;
+  --fgb-ink-500: #5C6661;
+  --fgb-ink-600: #3F4744;
+  --fgb-ink-700: #2B312E;
+  --fgb-ink-800: #1F2422;
+  --fgb-ink-900: #15191A;
+  --fgb-ink-950: #0A0E0C;
 
   /* ── GRADIENTES OFICIAIS ──────────────────────────────── */
   --fgb-gradient-tricolor: linear-gradient(
@@ -90,6 +90,27 @@
     var(--fgb-navy-800) 0%,
     var(--fgb-navy-950) 100%
   );
+  --fgb-gradient-energy: linear-gradient(
+    135deg,
+    var(--fgb-green-800) 0%,
+    var(--fgb-red-700) 100%
+  );
+  --fgb-gradient-victory: linear-gradient(
+    135deg,
+    var(--fgb-green-700) 0%,
+    var(--fgb-yellow-500) 100%
+  );
+  --fgb-gradient-flame: linear-gradient(
+    135deg,
+    var(--fgb-yellow-500) 0%,
+    var(--fgb-red-600) 100%
+  );
+  --fgb-gradient-text-gold: linear-gradient(
+    135deg,
+    #FFD54F 0%,
+    #E5AB00 50%,
+    #FFC107 100%
+  );
 
   /* ── MOTION ───────────────────────────────────────────── */
   --fgb-ease: cubic-bezier(0.4, 0, 0.2, 1);
@@ -100,6 +121,14 @@
 
   /* ── ESPAÇAMENTO BRAND (CTA cut-corner) ───────────────── */
   --fgb-cut: 12px;
+
+  /* ── ESPAÇAMENTO (escala 4px) ─────────────────────────── */
+  --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px;  --s-6: 24px;  --s-8: 32px;  --s-10: 40px;
+  --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+
+  /* ── RAIO (cantos cortados preferidos em CTAs!) ───────── */
+  --r-sm: 4px; --r-md: 8px; --r-lg: 12px; --r-full: 9999px;
 
   /* ────────────────────────────────────────────────────────
      SHADCN HSL TOKENS (compat — agora alinhados ao FGB green)
@@ -253,6 +282,7 @@
   --font-anton: var(--font-anton);
   --font-accent: var(--font-accent);
   --font-stencil: var(--font-stencil);
+  --font-mono: var(--font-mono);
 }
 
 /* ── RESET ────────────────────────────────────────────────── */
@@ -271,7 +301,7 @@ a, button {
 
 /* ── TIPOGRAFIA ─────────────────────────────────────────── */
 .fgb-display {
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.01em;
@@ -621,7 +651,7 @@ a, button {
 
 /* ── SCORE TABLE ────────────────────────────────────────── */
 .fgb-score-num {
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-size: 22px;
   font-weight: 900;
   color: var(--orange);
@@ -665,7 +695,7 @@ a, button {
 }
 .fgb-stats-strip-item:last-child { border-right: none; }
 .fgb-stats-num {
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-size: 42px;
   font-weight: 900;
   color: var(--black);
@@ -777,7 +807,7 @@ a, button {
 }
 .fgb-cta-inner { position: relative; z-index: 2; }
 .fgb-cta-h {
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-size: clamp(28px,4vw,52px);
   font-weight: 900;
   text-transform: uppercase;
@@ -834,7 +864,7 @@ a, button {
 }
 .fgb-section-header-dark { border-bottom-color: rgba(255,255,255,0.1); }
 .fgb-section-title {
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-size: 26px;
   font-weight: 800;
   text-transform: uppercase;
@@ -938,7 +968,7 @@ a, button {
   position: relative;
 }
 .fgb-page-header-title {
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-size: clamp(32px, 5vw, 60px);
   font-weight: 900;
   text-transform: uppercase;
@@ -968,7 +998,7 @@ a, button {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-family: var(--font-display);
+  font-family: var(--font-anton);
   font-size: 14vw;
   font-weight: 900;
   color: rgba(255,255,255,0.05);

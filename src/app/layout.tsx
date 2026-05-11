@@ -5,6 +5,7 @@ import {
   Anton,
   Big_Shoulders,
   Big_Shoulders_Stencil,
+  JetBrains_Mono,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -36,6 +37,12 @@ const bigShouldersStencil = Big_Shoulders_Stencil({
   variable: "--font-stencil",
   subsets: ["latin"],
   weight: ["700", "800", "900"],
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export const metadata: Metadata = {
@@ -73,7 +80,7 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${dmSans.variable} ${barlowCondensed.variable} ${anton.variable} ${bigShoulders.variable} ${bigShouldersStencil.variable} antialiased`} suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${barlowCondensed.variable} ${anton.variable} ${bigShoulders.variable} ${bigShouldersStencil.variable} ${jetBrainsMono.variable} antialiased`} suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>
