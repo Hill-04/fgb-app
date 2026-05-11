@@ -1082,6 +1082,49 @@ const schemaPatches: SchemaPatch[] = [
     critical: true,
   },
   { kind: 'sql', name: 'ChampionshipStatusTransition_championship_createdAt_idx', sql: 'CREATE INDEX IF NOT EXISTS "ChampionshipStatusTransition_championshipId_createdAt_idx" ON "ChampionshipStatusTransition"("championshipId","createdAt")' },
+
+  // === FASE 1 (2026-05-11) — Lifecycle state machine + atleta verificado FGB + cadeia de correcao + versionamento de sumula ===
+  // Documentado em docs/fase-1-migration-plan.md
+  { kind: 'column', table: 'Game', column: 'lifecycleState', sql: "ALTER TABLE Game ADD COLUMN lifecycleState TEXT NOT NULL DEFAULT 'SCHEDULED';", critical: true },
+  { kind: 'column', table: 'Game', column: 'lifecycleVersion', sql: 'ALTER TABLE Game ADD COLUMN lifecycleVersion INTEGER NOT NULL DEFAULT 0;', critical: true },
+  { kind: 'sql', name: 'Game_lifecycleState_idx', sql: 'CREATE INDEX IF NOT EXISTS "Game_lifecycleState_idx" ON "Game"("lifecycleState")' },
+
+  { kind: 'column', table: 'Athlete', column: 'verifiedFgb', sql: 'ALTER TABLE Athlete ADD COLUMN verifiedFgb INTEGER NOT NULL DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'Athlete', column: 'verifiedFgbAt', sql: 'ALTER TABLE Athlete ADD COLUMN verifiedFgbAt DATETIME;', critical: true },
+  { kind: 'column', table: 'Athlete', column: 'verifiedFgbBy', sql: 'ALTER TABLE Athlete ADD COLUMN verifiedFgbBy TEXT;', critical: true },
+  { kind: 'sql', name: 'Athlete_verifiedFgb_idx', sql: 'CREATE INDEX IF NOT EXISTS "Athlete_verifiedFgb_idx" ON "Athlete"("verifiedFgb")' },
+
+  { kind: 'column', table: 'GameEvent', column: 'correctsEventId', sql: 'ALTER TABLE GameEvent ADD COLUMN correctsEventId TEXT;', critical: true },
+  { kind: 'column', table: 'GameEvent', column: 'supersededByEventId', sql: 'ALTER TABLE GameEvent ADD COLUMN supersededByEventId TEXT;', critical: true },
+  { kind: 'sql', name: 'GameEvent_correctsEventId_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameEvent_correctsEventId_idx" ON "GameEvent"("correctsEventId")' },
+  { kind: 'sql', name: 'GameEvent_supersededByEventId_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameEvent_supersededByEventId_idx" ON "GameEvent"("supersededByEventId")' },
+
+  { kind: 'column', table: 'GameOfficialReport', column: 'currentVersion', sql: 'ALTER TABLE GameOfficialReport ADD COLUMN currentVersion INTEGER NOT NULL DEFAULT 1;', critical: true },
+
+  {
+    kind: 'table',
+    table: 'GameOfficialReportVersion',
+    sql: `CREATE TABLE IF NOT EXISTS "GameOfficialReportVersion" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "reportId" TEXT NOT NULL,
+      "version" INTEGER NOT NULL,
+      "finalHomeScore" INTEGER NOT NULL DEFAULT 0,
+      "finalAwayScore" INTEGER NOT NULL DEFAULT 0,
+      "overtimeCount" INTEGER NOT NULL DEFAULT 0,
+      "officialPdfUrl" TEXT,
+      "boxScoreJson" TEXT,
+      "playByPlayJson" TEXT,
+      "signedOffByUserId" TEXT,
+      "finalizedAt" DATETIME,
+      "reason" TEXT,
+      "createdByUserId" TEXT,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("reportId") REFERENCES "GameOfficialReport"("id") ON DELETE CASCADE ON UPDATE CASCADE
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'GameOfficialReportVersion_reportId_version_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "GameOfficialReportVersion_reportId_version_key" ON "GameOfficialReportVersion"("reportId","version")' },
+  { kind: 'sql', name: 'GameOfficialReportVersion_reportId_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameOfficialReportVersion_reportId_idx" ON "GameOfficialReportVersion"("reportId")' },
 ]
 
 let schemaEnsured = false

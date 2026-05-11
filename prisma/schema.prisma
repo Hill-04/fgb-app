@@ -416,6 +416,8 @@ model Game {
   period                     String?
   status                     String               @default("SCHEDULED")
   liveStatus                 String               @default("SCHEDULED")
+  lifecycleState             String               @default("SCHEDULED")
+  lifecycleVersion           Int                  @default(0)
   currentPeriod              Int                  @default(0)
   clockDisplay               String?
   homeTimeoutsUsed           Int                  @default(0)
@@ -454,6 +456,7 @@ model Game {
   @@index([championshipId, dateTime])
   @@index([categoryId, status])
   @@index([dateTime])
+  @@index([lifecycleState])
 }
 
 model GameLiveSession {
@@ -552,14 +555,20 @@ model GameEvent {
   revertedAt         DateTime?
   revertedByUserId   String?
   correctionReason   String?
+  correctsEventId     String?
+  supersededByEventId String?
   game               Game            @relation(fields: [gameId], references: [id], onDelete: Cascade)
   liveSession        GameLiveSession @relation(fields: [liveSessionId], references: [id], onDelete: Cascade)
   team               Team?           @relation(fields: [teamId], references: [id], onDelete: SetNull)
   athlete            Athlete?        @relation("GameEventAthlete", fields: [athleteId], references: [id], onDelete: SetNull)
   secondaryAthlete   Athlete?        @relation("GameEventSecondaryAthlete", fields: [secondaryAthleteId], references: [id], onDelete: SetNull)
+  correctsEvent      GameEvent?      @relation("GameEventCorrection", fields: [correctsEventId], references: [id], onDelete: SetNull)
+  correctedByEvents  GameEvent[]     @relation("GameEventCorrection")
 
   @@index([gameId, sequenceNumber])
   @@index([liveSessionId])
+  @@index([correctsEventId])
+  @@index([supersededByEventId])
 }
 
 model GamePlayerStatLine {
@@ -657,7 +666,30 @@ model GameOfficialReport {
   signedOffByUserId String?
   finalizedAt       DateTime?
   createdAt         DateTime  @default(now())
+  currentVersion    Int       @default(1)
   game              Game      @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  versions          GameOfficialReportVersion[]
+}
+
+model GameOfficialReportVersion {
+  id                String    @id @default(uuid())
+  reportId          String
+  version           Int
+  finalHomeScore    Int       @default(0)
+  finalAwayScore    Int       @default(0)
+  overtimeCount     Int       @default(0)
+  officialPdfUrl    String?
+  boxScoreJson      String?
+  playByPlayJson    String?
+  signedOffByUserId String?
+  finalizedAt       DateTime?
+  reason            String?
+  createdByUserId   String?
+  createdAt         DateTime  @default(now())
+  report            GameOfficialReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+
+  @@unique([reportId, version])
+  @@index([reportId])
 }
 
 model GameAuditLog {
@@ -746,6 +778,9 @@ model Athlete {
   situation           String             @default("PENDING")
   activatedAt         DateTime?
   activatedBy         String?
+  verifiedFgb         Boolean            @default(false)
+  verifiedFgbAt       DateTime?
+  verifiedFgbBy       String?
   // Documentos digitais
   docCPFUrl           String?
   docRGFrontUrl       String?
@@ -770,6 +805,7 @@ model Athlete {
   @@index([document])
   @@index([cpf])
   @@index([situation])
+  @@index([verifiedFgb])
 }
 
 model AthleteIdCard {
