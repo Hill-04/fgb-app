@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       hasPlayoffs, playoffTeams, playoffFormat, hasThirdPlace,
       hasBlocks,
       maxGamesPerTeamPerDay, scheduleOptimizationMode,
-      regDeadline, startDate, endDate,
+      regDeadline, registrationOpenedAt, startDate, endDate,
       // Sprint 1: novos campos
       sanctioning, countsForRanking, countsForBidEligibility, sanctionNumber,
       modality, ageRangeMin, ageRangeMax,
@@ -121,6 +121,9 @@ export async function POST(request: Request) {
           regDeadline: isValidDate(regDeadline) ? new Date(regDeadline) : new Date(),
           startDate: isValidDate(startDate) ? new Date(startDate) : null,
           endDate: isValidDate(endDate) ? new Date(endDate) : null,
+          ...(isValidDate(registrationOpenedAt)
+            ? { registrationOpenedAt: new Date(registrationOpenedAt) } as any
+            : {}),
           status: 'DRAFT',
           // Sprint 1
           ...(sanctioningValue ? { sanctioning: sanctioningValue } as any : {}),

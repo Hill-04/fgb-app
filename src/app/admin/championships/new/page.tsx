@@ -52,7 +52,12 @@ const defaultForm = () => ({
   tiebreakerChain: ['h2h_record', 'h2h_diff', 'h2h_for', 'all_diff', 'all_for', 'draw'] as string[],
   hasRelegation: false, relegationDown: '0', promotionUp: '0',
   hasPlayoffs: false, playoffTeams: '4', playoffFormat: 'melhor_de_1', hasThirdPlace: true,
-  hasBlocks: false, regDeadline: '', startDate: '', endDate: '',
+  hasBlocks: false,
+  // Datas
+  registrationOpenedAt: '', // inicio das inscricoes
+  regDeadline: '',          // fim das inscricoes
+  startDate: '',            // inicio do campeonato
+  endDate: '',              // fim do campeonato
   // Sancionamento
   sanctioning: 'FGB_OFFICIAL',
   countsForRanking: true,
@@ -551,6 +556,21 @@ export default function NewChampionshipPage() {
       }
     }
     if (step === 4 && form.allowedWeekdays.length === 0) { setFormError('Selecione ao menos um dia da semana.'); return false }
+    if (step === 7) {
+      const regOpen = form.registrationOpenedAt ? new Date(form.registrationOpenedAt) : null
+      const regEnd = form.regDeadline ? new Date(form.regDeadline) : null
+      const start = form.startDate ? new Date(form.startDate) : null
+      const end = form.endDate ? new Date(form.endDate) : null
+      if (regOpen && regEnd && regOpen > regEnd) {
+        setFormError('Abertura das inscrições deve ser antes do encerramento.'); return false
+      }
+      if (start && end && start > end) {
+        setFormError('Início do campeonato deve ser antes do fim.'); return false
+      }
+      if (regEnd && start && regEnd > start) {
+        setFormError('Encerramento das inscrições deve ser antes do início do campeonato.'); return false
+      }
+    }
     setFormError(''); return true
   }
 
@@ -578,6 +598,7 @@ export default function NewChampionshipPage() {
           tiebreakerChain: form.tiebreakerChain,
           tiebreakers: form.tiebreakerChain.join(','),
           regDeadline: form.regDeadline || new Date().toISOString(),
+          registrationOpenedAt: form.registrationOpenedAt || null,
           startDate: form.startDate || null,
           endDate: form.endDate || null,
           sanctioning: form.sanctioning,
@@ -1176,24 +1197,79 @@ export default function NewChampionshipPage() {
 
   const renderStep4 = () => (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Janela de inscrições */}
+      <div
+        className="rounded-lg p-4 space-y-4"
+        style={{ background: 'var(--fgb-ink-50)', border: '1px solid var(--fgb-ink-200)' }}
+      >
         <div>
-          <SectionLabel>Início</SectionLabel>
-          <Input
-            type="date"
-            value={form.startDate}
-            onChange={e => setField('startDate', e.target.value)}
-            className={inputClsCompact}
-          />
+          <p
+            className="fgb-label"
+            style={{ fontSize: 11, color: 'var(--fgb-green-700)', letterSpacing: '0.18em' }}
+          >
+            Janela de Inscrições
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Período em que as equipes podem se inscrever na competição.
+          </p>
         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <SectionLabel>Abertura das inscrições</SectionLabel>
+            <Input
+              type="date"
+              value={form.registrationOpenedAt}
+              onChange={e => setField('registrationOpenedAt', e.target.value)}
+              className={inputClsCompact}
+            />
+          </div>
+          <div>
+            <SectionLabel>Encerramento das inscrições</SectionLabel>
+            <Input
+              type="date"
+              value={form.regDeadline}
+              onChange={e => setField('regDeadline', e.target.value)}
+              className={inputClsCompact}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Realização do campeonato */}
+      <div
+        className="rounded-lg p-4 space-y-4"
+        style={{ background: 'var(--fgb-green-50)', border: '1px solid var(--fgb-green-200)' }}
+      >
         <div>
-          <SectionLabel>Inscrições até</SectionLabel>
-          <Input
-            type="date"
-            value={form.regDeadline}
-            onChange={e => setField('regDeadline', e.target.value)}
-            className={inputClsCompact}
-          />
+          <p
+            className="fgb-label"
+            style={{ fontSize: 11, color: 'var(--fgb-green-700)', letterSpacing: '0.18em' }}
+          >
+            Realização do Campeonato
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--fgb-ink-500)' }}>
+            Período em que os jogos acontecem.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <SectionLabel>Início do campeonato</SectionLabel>
+            <Input
+              type="date"
+              value={form.startDate}
+              onChange={e => setField('startDate', e.target.value)}
+              className={inputClsCompact}
+            />
+          </div>
+          <div>
+            <SectionLabel>Fim do campeonato</SectionLabel>
+            <Input
+              type="date"
+              value={form.endDate}
+              onChange={e => setField('endDate', e.target.value)}
+              className={inputClsCompact}
+            />
+          </div>
         </div>
       </div>
     </div>
