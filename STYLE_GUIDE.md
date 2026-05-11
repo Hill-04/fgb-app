@@ -71,6 +71,16 @@ Variantes: `.fgb-btn-secondary` (outline branco), `.fgb-btn-outline`, `.fgb-btn-
 Use o componente `<PublicHeader />` (`src/components/PublicHeader.tsx`).
 Estrutura: utility bar verde-800 → stripe tricolor → main bar verde com logo, nav, CTA "Entrar" e ticker vermelho.
 
+### Hero de página — quando usar qual
+
+| Classe | Quando usar | Exemplos |
+|---|---|---|
+| `.fgb-page-header` | **Padrão** para páginas de conteúdo institucional/listagem. Fundo verde + grid pattern de fundo + título centralizado + subtítulo. | `/campeonatos`, `/calendario`, `/noticias`, `/portal`, `/galeria`, `/selecao-gaucha`, `/fgb/historia`, `/fgb/fundacao`, `/competicoes`, `/patrocinadores`, `/videos` |
+| `.fgb-page-header-premium` | Páginas-âncora de **prestígio** ou **produto**, onde o título precisa pesar mais. Inclui texto massivo de fundo (`.bg-text`) + Anton clamp(40–60px). | `/jogos`, `/fgb/diretoria` |
+| Hero customizado dark | Páginas de **produto/showcase** (tema dark híbrido). Verde-950 background + stripe tricolor inferior + grid pattern + eyebrow amarelo. | `/atletas` |
+
+**Regra prática:** se a página é uma listagem informativa, use `.fgb-page-header`. Se é uma página flagship (jogos ao vivo, diretoria executiva), use `.fgb-page-header-premium`. Se é página de produto/atletas/competição em destaque, considere hero dark custom.
+
 ### Sidebar admin
 Use `<SideNav role="ADMIN" />` (`src/components/SideNav.tsx`).
 Verde-800 + stripe tricolor + item ativo amarelo com border-left 3px.
@@ -132,6 +142,37 @@ Fundo vermelho FGB, animação 32s linear infinite. Badges internas: `.fgb-badge
 - Sempre com fallback visual e `alt`
 
 ---
+
+## Motion
+
+Componentes em `src/components/motion/` — todos honram `prefers-reduced-motion` (passthrough sem animação quando o usuário tem motion reduzido).
+
+- `<ScrollReveal>` — fade + slide quando elemento entra no viewport. Props: `direction` (up/down/left/right), `delay`, `duration`, `distance`.
+- `<StaggerGrid>` — cascata de filhos. Props: `stagger` (default 0.08s), `direction`, `distance`. Wraps grid children automaticamente em `motion.div`.
+- `<CountUp>` — anima número 0→target quando entra no viewport. Props: `value`, `duration`, `prefix`/`suffix`, `decimals`, `format` (formatter custom).
+- `template.tsx` (em `src/app/`) — page transition fade global entre rotas no App Router. Re-monta a cada navegação.
+
+**Quando aplicar:**
+- `ScrollReveal` para CTAs, blocos de texto, cards isolados que rolam pra dentro do viewport
+- `StaggerGrid` para qualquer grid de cards (listagens, galleries, sponsors, championships)
+- `CountUp` para qualquer estatística numérica (contagens de equipes/jogos/atletas)
+
+**Quando NÃO aplicar:**
+- Animação em texto de body (lê pior em movimento)
+- Em fluxos de form (distração)
+- Em elementos críticos de carregamento inicial above-the-fold (já está visível, animar atrasa visualmente)
+
+## Componentes utilitários
+
+- `<FgbImage>` (`src/components/FgbImage.tsx`) — imagem com fallback elegante. Variantes `cover`/`avatar`/`logo`, 4 tints brand, fallback com gradiente + stripe tricolor + ícone Lucide ou iniciais Anton.
+- `<AthleteCard>` (`src/components/AthleteCard.tsx`) — card promocional de atleta com número estêncil gigante de fundo.
+- `<Scoreboard>` (`src/components/Scoreboard.tsx`) — scoreboard com 3 estados (LIVE/SCHEDULED/FINISHED), breakdown por quarto opcional.
+
+## Limitações conhecidas (pendências para próximas fases)
+
+- **Patrocinadores tiers (Master/Gold/Apoio):** modelo `Sponsor` atualmente não tem campo `tier`. Visual hierarchy real exige schema change. Página hoje mostra todos igual.
+- **Filtros em `/atletas` e `/calendario`:** versões públicas não têm filtros (por time/categoria/região). Filtros completos vivem na área restrita.
+- **`/galeria` sem lightbox/masonry:** layout uniforme. Lightbox interativo é trabalho futuro.
 
 ## Fonte de verdade externa
 

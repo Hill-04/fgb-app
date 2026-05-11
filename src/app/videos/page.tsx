@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import { prisma } from '@/lib/db'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
+import { StaggerGrid } from '@/components/motion/StaggerGrid'
+import { Play, Video } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Videos — FGB',
@@ -33,35 +35,75 @@ export default async function VideosPage() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         {videos.length === 0 ? (
-          <div className="fgb-card p-8 text-center">
+          <div className="fgb-card p-12 text-center">
+            <Video size={48} className="mx-auto mb-4" style={{ color: 'var(--fgb-ink-400)', strokeWidth: 1.5 }} aria-hidden />
             <p className="fgb-label" style={{ color: 'var(--gray)' }}>Nenhum video publicado ainda.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-5" stagger={0.07}>
             {videos.map((video) => (
-              <article key={video.id} className="fgb-card overflow-hidden">
-                <div className="relative h-40 bg-[var(--gray-l)]">
-                  {video.coverUrl ? (
-                    <Image src={video.coverUrl} alt={video.title} fill className="object-cover" unoptimized />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--red)]/20 to-[var(--yellow)]/20" />
-                  )}
+              <a
+                key={video.id}
+                href={`/videos/${video.slug}`}
+                className="fgb-card overflow-hidden group block"
+              >
+                <div className="relative aspect-video overflow-hidden">
+                  <FgbImage
+                    variant="cover"
+                    src={video.coverUrl}
+                    tint="red"
+                    icon={Video}
+                    alt={video.title}
+                  />
+                  {/* gradient overlay para legibilidade do botao */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent transition-opacity group-hover:opacity-70" />
+                  {/* play button overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div
+                      className="flex items-center justify-center rounded-full transition-all duration-300 group-hover:scale-110"
+                      style={{
+                        width: 64,
+                        height: 64,
+                        background: 'rgba(229,171,0,0.92)',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+                      }}
+                    >
+                      <Play
+                        size={26}
+                        fill="var(--fgb-ink-900)"
+                        style={{ color: 'var(--fgb-ink-900)', marginLeft: 3 }}
+                        aria-hidden
+                      />
+                    </div>
+                  </div>
                 </div>
                 <div className="p-5">
                   <div className="fgb-label text-[var(--gray)] mb-2">
-                    {video.publishedAt ? new Date(video.publishedAt).toLocaleDateString('pt-BR') : 'Em breve'}
+                    {video.publishedAt
+                      ? new Date(video.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                      : 'Em breve'}
                   </div>
-                  <h3 className="fgb-display text-[16px] text-[var(--black)] mb-2">{video.title}</h3>
-                  <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
-                    {video.description || 'Assista aos melhores momentos do basquete gaucho.'}
-                  </p>
-                  <a href={`/videos/${video.slug}`} className="fgb-label mt-3 inline-flex" style={{ color: 'var(--red)' }}>
+                  <h3 className="fgb-display text-[16px] text-[var(--black)] mb-2 line-clamp-2 group-hover:text-[var(--verde)] transition-colors">
+                    {video.title}
+                  </h3>
+                  {video.description && (
+                    <p
+                      className="fgb-label text-[var(--gray)] line-clamp-2"
+                      style={{ textTransform: 'none', letterSpacing: 0 }}
+                    >
+                      {video.description}
+                    </p>
+                  )}
+                  <span
+                    className="fgb-label mt-3 inline-flex items-center gap-1"
+                    style={{ color: 'var(--red)' }}
+                  >
                     Assistir video →
-                  </a>
+                  </span>
                 </div>
-              </article>
+              </a>
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </main>
 

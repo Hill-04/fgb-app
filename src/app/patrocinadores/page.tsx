@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
-import Image from 'next/image'
 import { prisma } from '@/lib/db'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
+import { StaggerGrid } from '@/components/motion/StaggerGrid'
+import { Handshake, ExternalLink } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Patrocinadores — FGB',
@@ -26,37 +28,59 @@ export default async function PatrocinadoresPage() {
           <div className="fgb-page-header-eyebrow">Parceiros</div>
           <h1 className="fgb-page-header-title">Patrocinadores Oficiais</h1>
           <p className="fgb-page-header-sub mx-auto">
-            Marcas que fortalecem o basquete gaucho e apoiam a evolucao do esporte no RS.
+            Marcas que fortalecem o basquete gaucho e apoiam a evolucao do esporte no Rio Grande do Sul.
           </p>
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-14">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
         {sponsors.length === 0 ? (
-          <div className="fgb-card p-8 text-center">
+          <div className="fgb-card p-12 text-center">
+            <Handshake size={48} className="mx-auto mb-4" style={{ color: 'var(--fgb-ink-400)', strokeWidth: 1.5 }} aria-hidden />
             <p className="fgb-label" style={{ color: 'var(--gray)' }}>Nenhum patrocinador cadastrado.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-            {sponsors.map((sponsor) => (
-              <a
-                key={sponsor.id}
-                href={sponsor.websiteUrl || '#'}
-                className="fgb-card p-5 flex flex-col items-center text-center hover:shadow-md transition-shadow"
-                target={sponsor.websiteUrl ? '_blank' : undefined}
-                rel={sponsor.websiteUrl ? 'noopener noreferrer' : undefined}
-              >
-                <div className="relative w-full h-14 mb-3">
-                  {sponsor.logoUrl ? (
-                    <Image src={sponsor.logoUrl} alt={sponsor.name} fill className="object-contain" unoptimized />
-                  ) : (
-                    <div className="fgb-label text-[var(--gray)]">{sponsor.name}</div>
-                  )}
-                </div>
-                <div className="fgb-display text-[14px] text-[var(--black)]">{sponsor.name}</div>
-              </a>
-            ))}
-          </div>
+          <StaggerGrid
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5"
+            stagger={0.05}
+          >
+            {sponsors.map((sponsor) => {
+              const isExternal = Boolean(sponsor.websiteUrl)
+              return (
+                <a
+                  key={sponsor.id}
+                  href={sponsor.websiteUrl || '#'}
+                  className="fgb-card overflow-hidden group flex flex-col"
+                  target={isExternal ? '_blank' : undefined}
+                  rel={isExternal ? 'noopener noreferrer' : undefined}
+                >
+                  <div className="aspect-[4/3] relative" style={{ background: 'var(--fgb-ink-50)' }}>
+                    <FgbImage
+                      variant="logo"
+                      src={sponsor.logoUrl}
+                      initials={sponsor.name.slice(0, 2)}
+                      alt={sponsor.name}
+                      tint="green"
+                      className="transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4 flex items-center justify-between gap-2 border-t" style={{ borderColor: 'var(--border)' }}>
+                    <div className="fgb-display text-[14px] truncate" style={{ color: 'var(--fgb-ink-900)' }}>
+                      {sponsor.name}
+                    </div>
+                    {isExternal && (
+                      <ExternalLink
+                        size={14}
+                        className="flex-shrink-0 transition-colors group-hover:text-[var(--verde)]"
+                        style={{ color: 'var(--fgb-ink-400)' }}
+                        aria-hidden
+                      />
+                    )}
+                  </div>
+                </a>
+              )
+            })}
+          </StaggerGrid>
         )}
       </main>
 

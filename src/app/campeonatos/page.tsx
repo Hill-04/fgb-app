@@ -107,7 +107,106 @@ export default async function CampeonatosPage() {
     )
   }
 
-  function Section({ title, items, colorClass, emptyMsg, accentClass }: any) {
+  function FeaturedChampionshipCard({ c }: { c: any }) {
+    const SexIcon = getSexIcon(c.sex)
+    return (
+      <Link
+        href={`/campeonatos/${c.id}`}
+        className="fgb-card block overflow-hidden mb-5 admin-card-verde"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-0 items-stretch">
+          {/* IMAGEM */}
+          <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[280px]">
+            <FgbImage
+              variant="cover"
+              tint={getSexTint(c.sex)}
+              icon={Volleyball}
+              alt={c.name}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent md:bg-gradient-to-t md:from-black/55 md:via-black/15 md:to-transparent" />
+            <span
+              className="absolute top-4 left-4 fgb-badge"
+              style={{
+                background: 'var(--fgb-yellow-500)',
+                color: 'var(--fgb-ink-900)',
+                fontWeight: 800,
+                letterSpacing: '0.18em',
+              }}
+            >
+              Em destaque
+            </span>
+          </div>
+
+          {/* CONTENT */}
+          <div className="p-7 md:p-10 flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-4">
+              <span className={`fgb-badge ${getStatusBadge(c.status)}`}>
+                {getStatusLabel(c.status)}
+              </span>
+              <div className="inline-flex items-center gap-1.5 fgb-label" style={{ color: 'var(--fgb-ink-500)' }}>
+                <SexIcon size={12} aria-hidden />
+                <span>{c.sex === 'feminino' ? 'Feminino' : c.sex === 'masculino' ? 'Masculino' : 'Misto'}</span>
+              </div>
+            </div>
+            <h3
+              className="mb-3"
+              style={{
+                fontFamily: 'var(--font-anton)',
+                fontSize: 'clamp(28px, 3vw, 38px)',
+                lineHeight: 1.05,
+                textTransform: 'uppercase',
+                color: 'var(--fgb-ink-900)',
+              }}
+            >
+              {c.name}
+            </h3>
+            {c.categories.length > 0 && (
+              <p className="fgb-label mb-5" style={{ color: 'var(--fgb-ink-500)' }}>
+                {c.categories.slice(0, 6).map((cat: any) => cat.name).join(' · ')}
+              </p>
+            )}
+            <div className="flex items-center gap-5 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+              <div>
+                <div
+                  className="tabular-nums"
+                  style={{
+                    fontFamily: 'var(--font-anton)',
+                    fontSize: 28,
+                    lineHeight: 1,
+                    color: 'var(--fgb-green-700)',
+                  }}
+                >
+                  <CountUp value={c._count.registrations} />
+                </div>
+                <div className="fgb-label mt-1" style={{ color: 'var(--gray)' }}>equipes</div>
+              </div>
+              <div className="w-px h-10" style={{ background: 'var(--border)' }} />
+              <div>
+                <div
+                  className="tabular-nums"
+                  style={{
+                    fontFamily: 'var(--font-anton)',
+                    fontSize: 28,
+                    lineHeight: 1,
+                    color: 'var(--fgb-green-700)',
+                  }}
+                >
+                  <CountUp value={c._count.games} />
+                </div>
+                <div className="fgb-label mt-1" style={{ color: 'var(--gray)' }}>jogos</div>
+              </div>
+              <div className="flex-1 text-right">
+                <span className="fgb-label" style={{ color: 'var(--verde)' }}>Ver campeonato →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    )
+  }
+
+  function Section({ title, items, colorClass, emptyMsg, accentClass, featured }: any) {
+    const [first, ...rest] = items
     return (
       <section className="mb-14">
         <div className="fgb-section-header">
@@ -122,6 +221,17 @@ export default async function CampeonatosPage() {
           <div className="text-center py-12 bg-[var(--gray-l)] border border-[var(--border)] rounded">
             <p className="fgb-label text-[var(--gray)]">{emptyMsg}</p>
           </div>
+        ) : featured ? (
+          <>
+            <FeaturedChampionshipCard c={first} />
+            {rest.length > 0 && (
+              <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" stagger={0.08}>
+                {rest.map((c: any) => (
+                  <ChampionshipCard key={c.id} c={c} />
+                ))}
+              </StaggerGrid>
+            )}
+          </>
         ) : (
           <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" stagger={0.08}>
             {items.map((c: any) => (
@@ -156,6 +266,7 @@ export default async function CampeonatosPage() {
           accentClass="fgb-accent-orange"
           items={ongoing}
           emptyMsg="Nenhum campeonato em andamento no momento."
+          featured
         />
 
         <Section
