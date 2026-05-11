@@ -154,6 +154,12 @@ model Championship {
   minRestHoursBetweenGames Float                  @default(20)
   maxGamesPerTeamPerWeek   Int                    @default(3)
   homePattern              String                 @default("ALTERNATED")
+  maxCategoriesPerDay      Int                    @default(2)
+  minAgeGapBetweenGames    Int                    @default(3)
+  lunchBreakMinutes        Int                    @default(120)
+  afternoonStartTime       String                 @default("13:00")
+  fridayEnabled            Boolean                @default(false)
+  sharedGymHandlingMode    String                 @default("SEQUENTIAL")
   regulationPdfUrl         String?
   regulationVersion        Int                    @default(1)
   regulationPublishedAt    DateTime?
