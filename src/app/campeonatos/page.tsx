@@ -4,9 +4,10 @@ import { prisma } from '@/lib/db'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { FgbImage } from '@/components/FgbImage'
+import { FgbRibbon } from '@/components/FgbRibbon'
 import { CountUp } from '@/components/motion/CountUp'
 import { StaggerGrid } from '@/components/motion/StaggerGrid'
-import { Mars, Venus, Users, Volleyball } from 'lucide-react'
+import { Mars, Venus, Users, Volleyball, Star } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -124,17 +125,9 @@ export default async function CampeonatosPage() {
               alt={c.name}
             />
             <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-black/10 to-transparent md:bg-gradient-to-t md:from-black/55 md:via-black/15 md:to-transparent" />
-            <span
-              className="absolute top-4 left-4 fgb-badge"
-              style={{
-                background: 'var(--fgb-yellow-500)',
-                color: 'var(--fgb-ink-900)',
-                fontWeight: 800,
-                letterSpacing: '0.18em',
-              }}
-            >
-              Em destaque
-            </span>
+            <div className="absolute top-4 left-4">
+              <FgbRibbon variant="amarelo" icon={Star}>Em destaque</FgbRibbon>
+            </div>
           </div>
 
           {/* CONTENT */}

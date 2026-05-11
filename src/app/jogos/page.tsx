@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { FgbImage } from '@/components/FgbImage'
+import { FgbRibbon } from '@/components/FgbRibbon'
+import { Radio } from 'lucide-react'
 import { getActiveSeason } from '@/lib/queries/seasons'
 import { getGamesBySeasonId } from '@/lib/queries/games'
 import { prisma } from '@/lib/db'
@@ -133,6 +135,11 @@ function LiveGameCard({ game }: { game: any }) {
     <Link href={`/live/${game.id}`} className="block">
       <div className="fgb-card bg-[#111111] text-white p-6 hover:-translate-y-1 transition-transform border border-white/10 cursor-pointer relative overflow-hidden group">
         <div className="absolute inset-x-0 top-0 h-1 fgb-stripe" />
+        <div className="absolute top-4 left-4 z-10">
+          <FgbRibbon variant="vermelho" icon={Radio} pulse>
+            {statusLabel}
+          </FgbRibbon>
+        </div>
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="text-xs font-semibold text-white/55 md:w-40 flex-shrink-0 uppercase tracking-[0.2em]">
             <div className="text-[var(--yellow)]">{statusLabel}</div>

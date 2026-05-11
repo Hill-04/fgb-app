@@ -6,7 +6,8 @@ import { formatChampionshipStatus } from '@/lib/utils'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { FgbImage } from '@/components/FgbImage'
-import { AlertTriangle, Volleyball } from 'lucide-react'
+import { FgbRibbon } from '@/components/FgbRibbon'
+import { AlertTriangle, Volleyball, BadgeCheck } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Competicoes — FGB',
@@ -60,12 +61,9 @@ export default async function CompeticoesPage() {
           style={{ background: 'rgba(20,85,48,0.04)', border: '2px solid rgba(20,85,48,0.15)' }}
         >
           <div className="text-center mb-8">
-            <span
-              className="inline-block fgb-badge mb-3"
-              style={{ background: 'var(--fgb-yellow-400)', color: 'var(--fgb-ink-900)', fontWeight: 800, fontSize: 12 }}
-            >
-              COMPETIÇÃO OFICIAL FGB
-            </span>
+            <div className="inline-block mb-3">
+              <FgbRibbon variant="amarelo" icon={BadgeCheck}>Competição Oficial FGB</FgbRibbon>
+            </div>
             <h2 className="fgb-display text-[28px] text-[var(--verde)]">
               Federação Gaúcha de Basquete
             </h2>
