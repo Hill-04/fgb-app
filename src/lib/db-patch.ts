@@ -1125,6 +1125,18 @@ const schemaPatches: SchemaPatch[] = [
   },
   { kind: 'sql', name: 'GameOfficialReportVersion_reportId_version_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "GameOfficialReportVersion_reportId_version_key" ON "GameOfficialReportVersion"("reportId","version")' },
   { kind: 'sql', name: 'GameOfficialReportVersion_reportId_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameOfficialReportVersion_reportId_idx" ON "GameOfficialReportVersion"("reportId")' },
+
+  // === FASE 6.B (2026-05-11) — Registration lifecycle + audit fields ===
+  // Documentado em docs/fase-6-registrations-audit.md
+  { kind: 'column', table: 'Registration', column: 'lifecycleState', sql: "ALTER TABLE Registration ADD COLUMN lifecycleState TEXT NOT NULL DEFAULT 'SUBMITTED';", critical: true },
+  { kind: 'column', table: 'Registration', column: 'lifecycleVersion', sql: 'ALTER TABLE Registration ADD COLUMN lifecycleVersion INTEGER NOT NULL DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'Registration', column: 'submittedAt', sql: 'ALTER TABLE Registration ADD COLUMN submittedAt DATETIME;', critical: true },
+  { kind: 'column', table: 'Registration', column: 'confirmedAt', sql: 'ALTER TABLE Registration ADD COLUMN confirmedAt DATETIME;', critical: true },
+  { kind: 'column', table: 'Registration', column: 'confirmedByUserId', sql: 'ALTER TABLE Registration ADD COLUMN confirmedByUserId TEXT;', critical: true },
+  { kind: 'column', table: 'Registration', column: 'rejectedAt', sql: 'ALTER TABLE Registration ADD COLUMN rejectedAt DATETIME;', critical: true },
+  { kind: 'column', table: 'Registration', column: 'rejectedByUserId', sql: 'ALTER TABLE Registration ADD COLUMN rejectedByUserId TEXT;', critical: true },
+  { kind: 'column', table: 'Registration', column: 'rejectionReason', sql: 'ALTER TABLE Registration ADD COLUMN rejectionReason TEXT;', critical: true },
+  { kind: 'sql', name: 'Registration_lifecycleState_idx', sql: 'CREATE INDEX IF NOT EXISTS "Registration_lifecycleState_idx" ON "Registration"("lifecycleState")' },
 ]
 
 let schemaEnsured = false

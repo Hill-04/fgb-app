@@ -200,9 +200,17 @@ model Registration {
   championshipId String
   teamId         String
   status         String   @default("PENDING")
+  lifecycleState String   @default("SUBMITTED")
+  lifecycleVersion Int    @default(0)
   observations   String?
   registeredAt   DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  submittedAt    DateTime?
+  confirmedAt    DateTime?
+  confirmedByUserId String?
+  rejectedAt     DateTime?
+  rejectedByUserId String?
+  rejectionReason String?
   coachName      String?
   coachPhone     String?
   coachEmail     String?
@@ -230,6 +238,7 @@ model Registration {
   @@unique([championshipId, teamId])
   @@index([championshipId, status])
   @@index([teamId])
+  @@index([lifecycleState])
 }
 
 model FeeConfig {

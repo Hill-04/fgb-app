@@ -7,6 +7,13 @@ import { FileText, Loader2, Pencil, Plus, Receipt, Shield, Trash2 } from 'lucide
 
 import { formatCurrencyBRL } from '@/lib/fees'
 import { formatCurrencyCentsBRL } from '@/lib/finance'
+import {
+  RegistrationLifecycleActions,
+} from '@/components/admin/RegistrationLifecycleActions'
+import {
+  deriveLifecycleFromLegacy,
+  type RegistrationLifecycleState,
+} from '@/lib/registration-lifecycle'
 
 type Category = { id: string; name: string }
 type Team = { id: string; name: string }
@@ -30,7 +37,8 @@ type Registration = {
   id: string
   team: { id: string; name: string }
   categories: Category[]
-  status: 'PENDING' | 'CONFIRMED'
+  status: 'PENDING' | 'CONFIRMED' | 'REJECTED'
+  lifecycleState?: RegistrationLifecycleState | null
   observations?: string | null
   coachName?: string | null
   coachPhone?: string | null
@@ -423,15 +431,14 @@ export default function RegistrationsPage() {
                     </Link>
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-widest shadow-sm ${
-                        registration.status === 'CONFIRMED'
-                          ? 'border-green-200 bg-green-50 text-green-700'
-                          : 'border-orange-200 bg-orange-50 text-orange-600'
-                      }`}
-                    >
-                      {registration.status === 'CONFIRMED' ? 'Confirmado' : 'Pendente'}
-                    </span>
+                    <RegistrationLifecycleActions
+                      registrationId={registration.id}
+                      championshipId={id}
+                      currentState={
+                        registration.lifecycleState ??
+                        deriveLifecycleFromLegacy({ status: registration.status })
+                      }
+                    />
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-2">

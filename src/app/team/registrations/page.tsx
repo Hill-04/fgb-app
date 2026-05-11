@@ -3,8 +3,13 @@ import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
-import { ClipboardList, Trophy, CheckCircle2, Clock, XCircle, ChevronRight, Tag, Wallet } from 'lucide-react'
+import { ClipboardList, Trophy, CheckCircle2, Clock, XCircle, ChevronRight, Tag, Wallet, Send, RotateCcw, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { formatCurrencyBRL, summarizeRegistrationFees } from '@/lib/fees'
+import {
+  deriveLifecycleFromLegacy,
+  getStateLabel,
+  type RegistrationLifecycleState,
+} from '@/lib/registration-lifecycle'
 
 const STATUS_CONFIG = {
   CONFIRMED: {
@@ -198,6 +203,9 @@ export default async function TeamRegistrationsPage() {
                           {reg.championship.endDate && ` → ${new Date(reg.championship.endDate).toLocaleDateString('pt-BR')}`}
                         </p>
                       )}
+
+                      {/* Fase 6.E — Timeline de lifecycle */}
+                      <RegistrationTimeline reg={reg as any} />
                     </div>
                   </div>
 
@@ -213,6 +221,181 @@ export default async function TeamRegistrationsPage() {
               </div>
             )
           })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────── Timeline de lifecycle (Fase 6.E) ───────────────
+
+function RegistrationTimeline({
+  reg,
+}: {
+  reg: {
+    status: string
+    lifecycleState?: string | null
+    registeredAt: Date
+    submittedAt?: Date | null
+    confirmedAt?: Date | null
+    rejectedAt?: Date | null
+    rejectionReason?: string | null
+  }
+}) {
+  const state = (reg.lifecycleState as RegistrationLifecycleState | undefined)
+    ?? deriveLifecycleFromLegacy({ status: reg.status })
+
+  const fmt = (d?: Date | null) =>
+    d ? new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : null
+
+  const submittedDate = fmt(reg.submittedAt) ?? fmt(reg.registeredAt)
+  const confirmedDate = fmt(reg.confirmedAt)
+  const rejectedDate = fmt(reg.rejectedAt)
+
+  // Steps a renderizar
+  type Step = {
+    icon: any
+    label: string
+    detail?: string | null
+    tone: 'done' | 'current' | 'future' | 'error'
+  }
+
+  const steps: Step[] = [
+    {
+      icon: Send,
+      label: 'Submetida',
+      detail: submittedDate,
+      tone: 'done',
+    },
+  ]
+
+  if (state === 'UNDER_REVIEW') {
+    steps.push({ icon: RotateCcw, label: 'Em análise', tone: 'current' })
+  }
+
+  if (state === 'CONFIRMED') {
+    steps.push({
+      icon: CheckCircle2,
+      label: 'Confirmada',
+      detail: confirmedDate,
+      tone: 'done',
+    })
+  }
+
+  if (state === 'REJECTED') {
+    steps.push({
+      icon: XCircle,
+      label: 'Recusada',
+      detail: rejectedDate,
+      tone: 'error',
+    })
+  }
+
+  if (state === 'CANCELLED') {
+    steps.push({
+      icon: AlertTriangle,
+      label: 'Cancelada',
+      detail: rejectedDate,
+      tone: 'error',
+    })
+  }
+
+  // Se está em SUBMITTED (sem decisão), adiciona próximo step pendente
+  if (state === 'SUBMITTED') {
+    steps.push({ icon: ShieldCheck, label: 'Aguardando análise', tone: 'current' })
+  }
+
+  return (
+    <div className="mt-3 pt-3 border-t border-[var(--border)]">
+      <div className="flex items-center gap-3 flex-wrap">
+        {steps.map((step, i) => {
+          const Icon = step.icon
+          const tone = step.tone
+          const color =
+            tone === 'done'
+              ? 'var(--fgb-green-700)'
+              : tone === 'current'
+                ? 'var(--fgb-yellow-700)'
+                : tone === 'error'
+                  ? 'var(--fgb-red-600)'
+                  : 'var(--fgb-ink-400)'
+
+          return (
+            <div key={i} className="inline-flex items-center gap-2">
+              <span
+                className="inline-flex items-center justify-center"
+                style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: '50%',
+                  background: tone === 'future' ? 'transparent' : `${color}20`,
+                  border: `1.5px solid ${color}`,
+                  color,
+                }}
+              >
+                <Icon size={11} aria-hidden />
+              </span>
+              <div className="leading-tight">
+                <p
+                  className="fgb-label"
+                  style={{ fontSize: 9, color, letterSpacing: '0.16em', lineHeight: 1 }}
+                >
+                  {step.label}
+                </p>
+                {step.detail && (
+                  <p
+                    className="fgb-label"
+                    style={{
+                      fontSize: 8,
+                      color: 'var(--fgb-ink-400)',
+                      textTransform: 'none',
+                      letterSpacing: 0,
+                      fontFamily: 'var(--font-mono)',
+                      marginTop: 1,
+                    }}
+                  >
+                    {step.detail}
+                  </p>
+                )}
+              </div>
+              {i < steps.length - 1 && (
+                <span
+                  className="inline-block"
+                  style={{
+                    width: 16,
+                    height: 1,
+                    background: 'var(--fgb-ink-200)',
+                  }}
+                  aria-hidden
+                />
+              )}
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Motivo de recusa (se aplicável) */}
+      {state === 'REJECTED' && reg.rejectionReason && (
+        <div
+          className="mt-3 p-3 rounded-md flex items-start gap-2"
+          style={{ background: 'var(--fgb-red-50)', border: '1px solid var(--fgb-red-200)' }}
+        >
+          <AlertTriangle
+            size={14}
+            style={{ color: 'var(--fgb-red-700)', flexShrink: 0, marginTop: 2 }}
+            aria-hidden
+          />
+          <div className="min-w-0">
+            <p
+              className="fgb-label"
+              style={{ fontSize: 9, color: 'var(--fgb-red-700)', letterSpacing: '0.18em' }}
+            >
+              Motivo da recusa
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'var(--fgb-ink-900)', lineHeight: 1.5 }}>
+              {reg.rejectionReason}
+            </p>
+          </div>
         </div>
       )}
     </div>
