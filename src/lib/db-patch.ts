@@ -1137,6 +1137,53 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'column', table: 'Registration', column: 'rejectedByUserId', sql: 'ALTER TABLE Registration ADD COLUMN rejectedByUserId TEXT;', critical: true },
   { kind: 'column', table: 'Registration', column: 'rejectionReason', sql: 'ALTER TABLE Registration ADD COLUMN rejectionReason TEXT;', critical: true },
   { kind: 'sql', name: 'Registration_lifecycleState_idx', sql: 'CREATE INDEX IF NOT EXISTS "Registration_lifecycleState_idx" ON "Registration"("lifecycleState")' },
+
+  // === FASE 5.E (2026-05-11) — Hard immutability via SQLite triggers ===
+  // Documentado em docs/fase-5e-immutability-triggers.md
+  //
+  // Estrategia "semantic": bloqueia UPDATE de campos de dados quando
+  // lifecycleState IN ('CONFIRMED','PUBLISHED') E o estado nao esta saindo
+  // do imutavel. Transicoes legitimas (CONFIRMED->UNDER_REVIEW via
+  // requestReview, CONFIRMED->PUBLISHED via publishGame) passam pois
+  // NEW.lifecycleState != OLD.lifecycleState.
+  //
+  // Defesa em profundidade: a state machine app-level ja garante isso, mas
+  // o trigger protege contra UPDATEs ad-hoc (script, console SQL, bug futuro).
+  {
+    kind: 'sql',
+    name: 'Game_immutable_data_update_trigger',
+    sql: `CREATE TRIGGER IF NOT EXISTS "Game_immutable_data_update"
+      BEFORE UPDATE ON "Game"
+      FOR EACH ROW
+      WHEN OLD.lifecycleState IN ('CONFIRMED', 'PUBLISHED')
+        AND NEW.lifecycleState = OLD.lifecycleState
+        AND (
+          COALESCE(NEW.homeScore, -1)         != COALESCE(OLD.homeScore, -1)
+          OR COALESCE(NEW.awayScore, -1)      != COALESCE(OLD.awayScore, -1)
+          OR COALESCE(NEW.homeTeamId, '')     != COALESCE(OLD.homeTeamId, '')
+          OR COALESCE(NEW.awayTeamId, '')     != COALESCE(OLD.awayTeamId, '')
+          OR COALESCE(NEW.dateTime, '')       != COALESCE(OLD.dateTime, '')
+          OR COALESCE(NEW.phase, -1)          != COALESCE(OLD.phase, -1)
+          OR COALESCE(NEW.round, -1)          != COALESCE(OLD.round, -1)
+          OR COALESCE(NEW.categoryId, '')     != COALESCE(OLD.categoryId, '')
+          OR COALESCE(NEW.championshipId, '') != COALESCE(OLD.championshipId, '')
+          OR COALESCE(NEW.status, '')         != COALESCE(OLD.status, '')
+        )
+      BEGIN
+        SELECT RAISE(ABORT, 'Game CONFIRMED/PUBLISHED imutavel: solicite UNDER_REVIEW antes de modificar dados');
+      END;`,
+  },
+  {
+    kind: 'sql',
+    name: 'Game_immutable_delete_trigger',
+    sql: `CREATE TRIGGER IF NOT EXISTS "Game_immutable_delete"
+      BEFORE DELETE ON "Game"
+      FOR EACH ROW
+      WHEN OLD.lifecycleState IN ('CONFIRMED', 'PUBLISHED')
+      BEGIN
+        SELECT RAISE(ABORT, 'Game CONFIRMED/PUBLISHED nao pode ser deletado');
+      END;`,
+  },
 ]
 
 let schemaEnsured = false
