@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { generateChampionshipSchedule } from '@/lib/scheduling/roundRobin'
 import { optimizeSchedule } from '@/lib/scheduling/aiOptimizer'
 import { ensureDatabaseSchema } from '@/lib/db-patch'
+import { preValidateChampionship } from '@/lib/scheduling/pre-validate'
 
 export async function POST(request: Request) {
   try {
@@ -23,7 +24,23 @@ export async function POST(request: Request) {
       )
     }
 
-    // 1. Gerar calendário base com round-robin (sempre funciona)
+    // 1. Pre-validacao: bloqueia configs inviaveis (capacityPercent > 100, sem dias, etc).
+    const validation = await preValidateChampionship(championshipId)
+    if (!validation.isValid) {
+      return NextResponse.json({
+        success: false,
+        error: 'Configuracao inviavel para gerar calendario',
+        validation: {
+          isValid: false,
+          capacityPercent: validation.capacityPercent,
+          totalSlotsAvailable: validation.totalSlotsAvailable,
+          totalSlotsNeeded: validation.totalSlotsNeeded,
+          conflicts: validation.conflicts,
+        },
+      }, { status: 400 })
+    }
+
+    // 2. Gerar calendário base com round-robin (sempre funciona)
     const schedule = await generateChampionshipSchedule(championshipId)
 
     if (!schedule.success || schedule.totalGames === 0) {
@@ -33,7 +50,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // 2. Tentar otimizar com IA (fallback automático entre provedores)
+    // 3. Tentar otimizar com IA (fallback automático entre provedores)
     const championship = await prisma.championship.findUnique({
       where: { id: championshipId },
       select: { 
@@ -86,6 +103,13 @@ export async function POST(request: Request) {
         provider: aiResult.provider,
         suggestion: aiResult.suggestion,
         error: aiResult.error
+      },
+      validation: {
+        isValid: true,
+        capacityPercent: validation.capacityPercent,
+        totalSlotsAvailable: validation.totalSlotsAvailable,
+        totalSlotsNeeded: validation.totalSlotsNeeded,
+        warnings: validation.conflicts.filter(c => c.severity !== 'ERROR'),
       }
     })
 
