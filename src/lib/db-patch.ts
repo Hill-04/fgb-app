@@ -1184,6 +1184,33 @@ const schemaPatches: SchemaPatch[] = [
         SELECT RAISE(ABORT, 'Game CONFIRMED/PUBLISHED nao pode ser deletado');
       END;`,
   },
+
+  // === PM-01 (2026-05-11) — FIBA helpers + historical lock + audit log ===
+  // Documentado em Downloads/files (4)/01-PM-FIBA-HELPERS.md
+  { kind: 'column', table: 'User', column: 'isFederationSuperAdmin', sql: 'ALTER TABLE "User" ADD COLUMN "isFederationSuperAdmin" INTEGER NOT NULL DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'Game', column: 'isHistoricallyLocked', sql: 'ALTER TABLE "Game" ADD COLUMN "isHistoricallyLocked" INTEGER NOT NULL DEFAULT 0;', critical: true },
+  { kind: 'column', table: 'Game', column: 'lockedAt', sql: 'ALTER TABLE "Game" ADD COLUMN "lockedAt" DATETIME;', critical: true },
+  { kind: 'column', table: 'Game', column: 'lockedByUserId', sql: 'ALTER TABLE "Game" ADD COLUMN "lockedByUserId" TEXT;', critical: true },
+  { kind: 'column', table: 'Game', column: 'lockReason', sql: 'ALTER TABLE "Game" ADD COLUMN "lockReason" TEXT;', critical: true },
+  {
+    kind: 'table',
+    table: 'HistoricalDataAuditLog',
+    sql: `CREATE TABLE IF NOT EXISTS "HistoricalDataAuditLog" (
+      "id" TEXT NOT NULL PRIMARY KEY,
+      "entityType" TEXT NOT NULL,
+      "entityId" TEXT NOT NULL,
+      "fieldChanged" TEXT,
+      "oldValue" TEXT,
+      "newValue" TEXT,
+      "reason" TEXT NOT NULL,
+      "performedByUserId" TEXT NOT NULL,
+      "performedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'HistoricalDataAuditLog_entity_idx', sql: 'CREATE INDEX IF NOT EXISTS "HistoricalDataAuditLog_entityType_entityId_idx" ON "HistoricalDataAuditLog"("entityType","entityId")' },
+  { kind: 'sql', name: 'HistoricalDataAuditLog_performedBy_idx', sql: 'CREATE INDEX IF NOT EXISTS "HistoricalDataAuditLog_performedByUserId_idx" ON "HistoricalDataAuditLog"("performedByUserId")' },
+  { kind: 'sql', name: 'HistoricalDataAuditLog_performedAt_idx', sql: 'CREATE INDEX IF NOT EXISTS "HistoricalDataAuditLog_performedAt_idx" ON "HistoricalDataAuditLog"("performedAt")' },
 ]
 
 let schemaEnsured = false
