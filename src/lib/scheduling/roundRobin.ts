@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { buildBlockedMap, isDateBlockedForTeam, type TeamBlockedRange } from '@/lib/scheduling/availability'
+import { getSchedulingConfig } from '@/lib/championship/scheduling-config'
 
 // PM-02: as 8 constantes hardcoded antigas foram movidas para
 // src/lib/championship/scheduling-config.ts (campos do Championship).
@@ -104,14 +105,23 @@ type ConflictResolved = {
 }
 
 type SchedulingConfig = {
+  // ─── janela do dia (timezone-aware) ───
   dayStartTime: string
   regularDayEndTime: string
   extendedDayEndTime: string
   slotDurationMinutes: number
-  minRestSlotsPerTeam: number
+
+  // ─── limites por equipe ───
+  minRestSlotsPerTeam: number       // legacy — sera substituido por minRestHoursBetweenGames em 3.C
   maxGamesPerTeamPerDay: number
-  optimizationMode: string
-  blockFormat: string
+
+  // ─── modo de operacao ───
+  optimizationMode: string          // 3.B: agora vem de Championship.scheduleOptimizationMode (nao mais hardcoded)
+  blockFormat: string               // legacy — sera substituido por allowedWeekdays em 3.C
+
+  // ─── PM-02 (3.B) — configs explicitas vindas do Championship ───
+  maxCategoriesPerDay: number
+  minAgeGapBetweenGames: number
 }
 
 function parseAgeGroup(name: string) {
@@ -191,7 +201,7 @@ function createVenueName(fieldControl: string, homeTeamName: string) {
   return `Ginásio ${homeTeamName}`
 }
 
-function buildCategoryGroups(categories: CategoryInfo[]) {
+function buildCategoryGroups(categories: CategoryInfo[], minAgeGap: number = DEFAULT_MIN_AGE_GAP) {
   const sorted = [...categories].sort((a, b) => a.ageGroup - b.ageGroup)
   const groups: CategoryInfo[][] = []
   const usedIds = new Set<string>()
@@ -204,7 +214,7 @@ function buildCategoryGroups(categories: CategoryInfo[]) {
     }
 
     const candidate = sorted[index + half]
-    if (candidate && !usedIds.has(candidate.id) && Math.abs(candidate.ageGroup - first.ageGroup) >= DEFAULT_MIN_AGE_GAP) {
+    if (candidate && !usedIds.has(candidate.id) && Math.abs(candidate.ageGroup - first.ageGroup) >= minAgeGap) {
       groups.push([first, candidate])
       usedIds.add(first.id)
       usedIds.add(candidate.id)
@@ -638,16 +648,24 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const playoffTeams = championship.playoffTeams || 4
   const minTeamsPerCat = championship.minTeamsPerCat || 2
   const maxCourts = Math.max(1, championship.numberOfCourts || 1)
-  const gameDuration = championship.slotDurationMinutes || DEFAULT_SLOT_DURATION_MIN
+  // PM-02 (3.B): config oficial vinda do Championship (nao mais hardcoded).
+  // Tudo que estava como literal/fallback aqui agora vem de getSchedulingConfig().
+  const officialConfig = getSchedulingConfig(championship)
+  const gameDuration = officialConfig.slotDurationMinutes || DEFAULT_SLOT_DURATION_MIN
   const schedulingConfig: SchedulingConfig = {
-    dayStartTime: championship.dayStartTime || '08:00',
-    regularDayEndTime: championship.regularDayEndTime || '19:00',
-    extendedDayEndTime: championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
+    dayStartTime: officialConfig.dayStartTime,
+    regularDayEndTime: officialConfig.regularDayEndTime,
+    extendedDayEndTime: officialConfig.extendedDayEndTime,
     slotDurationMinutes: gameDuration,
+    // legacy minRestSlotsPerTeam — preservado ate 3.C migrar pra minRestHoursBetweenGames
     minRestSlotsPerTeam: Math.max(0, championship.minRestSlotsPerTeam || 0),
-    maxGamesPerTeamPerDay: Math.max(1, championship.maxGamesPerTeamPerDay || 2),
-    optimizationMode: 'less_travel',
+    maxGamesPerTeamPerDay: officialConfig.maxGamesPerTeamPerDay,
+    // 3.B: nao mais hardcoded — vem do Championship.scheduleOptimizationMode
+    optimizationMode: officialConfig.scheduleOptimizationMode,
+    // legacy blockFormat — preservado ate 3.C migrar pra allowedWeekdays
     blockFormat: championship.blockFormat || 'SAT_SUN',
+    maxCategoriesPerDay: officialConfig.maxCategoriesPerDay,
+    minAgeGapBetweenGames: officialConfig.minAgeGapBetweenGames,
   }
   const minTeamRestMinutes = schedulingConfig.minRestSlotsPerTeam * gameDuration
 
@@ -706,7 +724,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     throw new Error('Nenhuma categoria com equipes suficientes para gerar calendário')
   }
 
-  const groups = buildCategoryGroups(categories)
+  const groups = buildCategoryGroups(categories, schedulingConfig.minAgeGapBetweenGames)
   const blockedMap = buildBlockedMap(
     categories.flatMap((category) =>
       category.registrations.map((registration) => ({
@@ -848,7 +866,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const awayGamesCount =
             teamGamesPerDay.get(getDailyTeamCountKey(bundle.awayTeamId, bundle.categoryId, dateKey)) || 0
 
-          if (categoriesInDay.size >= DEFAULT_MAX_CATS_PER_DAY && !categoriesInDay.has(bundle.categoryId)) {
+          if (categoriesInDay.size >= schedulingConfig.maxCategoriesPerDay && !categoriesInDay.has(bundle.categoryId)) {
             continue
           }
 
