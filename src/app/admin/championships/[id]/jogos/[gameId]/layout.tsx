@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db'
 import { GameStepNav } from './GameStepNav'
-import { deriveLifecycleFromLegacy } from '@/lib/game-lifecycle'
+import { deriveLifecycleFromLegacy, type GameLifecycleState } from '@/lib/game-lifecycle'
 
 export default async function ChampionshipGameLayout({
   children,
@@ -23,8 +23,8 @@ export default async function ChampionshipGameLayout({
     },
   })
 
-  const lifecycleState = game
-    ? (game.lifecycleState ??
+  const lifecycleState: GameLifecycleState | undefined = game
+    ? ((game.lifecycleState as GameLifecycleState | null) ??
         deriveLifecycleFromLegacy({
           status: game.status,
           liveStatus: game.liveStatus,

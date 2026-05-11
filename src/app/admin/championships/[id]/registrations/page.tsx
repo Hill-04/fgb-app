@@ -185,7 +185,7 @@ export default function RegistrationsPage() {
     setEditingReg(registration)
     setFormTeamId(registration.team.id)
     setFormCategoryIds(registration.categories.map((category) => category.id))
-    setFormStatus(registration.status)
+    setFormStatus(registration.status === 'CONFIRMED' ? 'CONFIRMED' : 'PENDING')
     setObservations(registration.observations || '')
     setCoachName(registration.coachName || '')
     setCoachPhone(registration.coachPhone || '')
