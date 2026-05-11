@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { ChevronLeft, Check, Plus, X, ArrowUp, ArrowDown, MapPin, Users } from 'lucide-react'
+import { WizardPreviewPanel } from '@/components/admin/WizardPreviewPanel'
 
 // ─── Phase types ──────────────────────────────────────────────────────────────
 type PhaseMode = 'TRADITIONAL' | 'ENCOUNTER'
@@ -1377,6 +1378,7 @@ export default function NewChampionshipPage() {
 
         <div className="px-6 sm:px-10 pb-8">
           {stepContent[step]()}
+          <WizardPreviewPanel form={form} />
           {formError && (
             <div
               className="mt-6 p-4 rounded-md"
