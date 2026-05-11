@@ -6,6 +6,7 @@ import { generateChampionshipSchedule } from '@/lib/scheduling/roundRobin'
 import { optimizeSchedule } from '@/lib/scheduling/aiOptimizer'
 import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { preValidateChampionship } from '@/lib/scheduling/pre-validate'
+import { getSchedulingConfig } from '@/lib/championship/scheduling-config'
 
 export async function POST(request: Request) {
   try {
@@ -50,34 +51,97 @@ export async function POST(request: Request) {
       )
     }
 
-    // 3. Tentar otimizar com IA (fallback automático entre provedores)
+    // 3. Tentar otimizar com IA (Gemini 2.5 Flash JSON mode)
     const championship = await prisma.championship.findUnique({
       where: { id: championshipId },
-      select: { 
-        name: true, 
-        startDate: true, 
-        endDate: true, 
-        turns: true, 
-        format: true, 
-        hasPlayoffs: true 
+      select: {
+        name: true,
+        startDate: true,
+        endDate: true,
+        turns: true,
+        format: true,
+        hasPlayoffs: true,
+        allowedWeekdaysJson: true,
+        timeSlotsJson: true,
+        blackoutDatesJson: true,
+        minRestHoursBetweenGames: true,
+        maxGamesPerTeamPerWeek: true,
+        homePattern: true,
+        scheduleOptimizationMode: true,
+        dayStartTime: true,
+        regularDayEndTime: true,
+        extendedDayEndTime: true,
+        slotDurationMinutes: true,
+        numberOfCourts: true,
+        blockFormat: true,
+        maxGamesPerTeamPerDay: true,
+        maxCategoriesPerDay: true,
+        minAgeGapBetweenGames: true,
+        lunchBreakMinutes: true,
+        afternoonStartTime: true,
+        fridayEnabled: true,
+        sharedGymHandlingMode: true,
       }
     })
 
-    const aiResult = await optimizeSchedule({
-      name: championship?.name || '',
-      categories: schedule.categories.map(c => ({
-        name: c.name,
-        teams: c.teams,
-        games: c.gamesCount
-      })),
-      totalGames: schedule.totalGames,
-      startDate: championship?.startDate?.toLocaleDateString('pt-BR') || 'A definir',
-      endDate: championship?.endDate?.toLocaleDateString('pt-BR') || undefined,
-      turns: championship?.turns || 1,
-      format: championship?.format || undefined,
-      hasPlayoffs: championship?.hasPlayoffs || false,
-      totalBlockedDates: schedule.totalBlockedDates || 0
-    })
+    const schedulingConfig = championship
+      ? getSchedulingConfig(championship)
+      : null
+
+    const generatedSchedule = schedule.games.map((g, idx) => ({
+      gameId: `g${idx}`,
+      categoryName: g.categoryName,
+      homeTeamName: g.homeTeamName,
+      awayTeamName: g.awayTeamName,
+      date: g.date,
+      time: g.time,
+      round: g.round,
+    }))
+
+    const aiResult = schedulingConfig && championship?.startDate && championship?.endDate
+      ? await optimizeSchedule({
+          championship: {
+            name: championship.name || '',
+            startDate: championship.startDate.toISOString().slice(0, 10),
+            endDate: championship.endDate.toISOString().slice(0, 10),
+            format: championship.format || 'todos_contra_todos',
+            turns: championship.turns || 1,
+            hasPlayoffs: championship.hasPlayoffs || false,
+          },
+          config: {
+            allowedWeekdays: schedulingConfig.allowedWeekdays,
+            timeSlots: schedulingConfig.timeSlots.map(s => ({ start: s.start, end: s.end })),
+            blackoutDates: schedulingConfig.blackoutDates.map(b => ({ date: b.date, reason: b.reason })),
+            minRestHoursBetweenGames: schedulingConfig.minRestHoursBetweenGames,
+            maxGamesPerTeamPerWeek: schedulingConfig.maxGamesPerTeamPerWeek,
+            homePattern: schedulingConfig.homePattern,
+            optimizationMode: schedulingConfig.scheduleOptimizationMode,
+          },
+          generatedSchedule,
+          capacityPercent: validation.capacityPercent,
+        })
+      : {
+          optimized: false,
+          provider: 'none' as const,
+          moves: [],
+          warnings: [],
+          insights: [],
+          error: 'Championship sem datas — pulando IA',
+        }
+
+    // 4. Aplicar moves da IA no schedule retornado
+    if (aiResult.optimized && aiResult.moves.length > 0) {
+      for (const move of aiResult.moves) {
+        const idx = parseInt(move.gameId.replace(/^g/, ''), 10)
+        if (!Number.isFinite(idx) || idx < 0 || idx >= schedule.games.length) continue
+        const game = schedule.games[idx]
+        game.date = move.newDate
+        game.time = move.newTime
+        game.dateTime = `${move.newDate}T${move.newTime}:00`
+        game.wasRescheduled = true
+        game.rescheduleReason = `IA: ${move.reason}`
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -101,7 +165,9 @@ export async function POST(request: Request) {
       aiOptimization: {
         available: aiResult.optimized,
         provider: aiResult.provider,
-        suggestion: aiResult.suggestion,
+        moves: aiResult.moves,
+        warnings: aiResult.warnings,
+        insights: aiResult.insights,
         error: aiResult.error
       },
       validation: {
