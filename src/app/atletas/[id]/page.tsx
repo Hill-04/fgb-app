@@ -4,8 +4,10 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { VerifiedBadge } from '@/components/VerifiedBadge'
 import { getAthleteStats } from '@/lib/queries/stats'
 import { getActiveSeason } from '@/lib/queries/seasons'
+import { prisma } from '@/lib/db'
 
 type Props = { params: { id: string } }
 
@@ -42,6 +44,15 @@ export default async function AthleteProfilePage({ params }: Props) {
   const athlete: any = statData
   if (!athlete) notFound()
 
+  // Fase 3 — fetch verifiedFgb separadamente (stat query nao inclui)
+  const athleteMeta = await prisma.athlete
+    .findUnique({
+      where: { id: params.id },
+      select: { verifiedFgb: true, verifiedFgbAt: true },
+    })
+    .catch(() => null)
+  const isVerified = Boolean(athleteMeta?.verifiedFgb)
+
   return (
     <div className="bg-slate-50 min-h-screen">
       <PublicHeader />
@@ -69,8 +80,11 @@ export default async function AthleteProfilePage({ params }: Props) {
              <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 mb-4">
                 <span className="fgb-badge-verde bg-white/10 text-white border-none">{athlete.team_name}</span>
                 <span className="fgb-badge-verde bg-[var(--yellow)] text-black border-none px-3">{athlete.position ?? 'ATLETA'}</span>
+                {isVerified && (
+                  <VerifiedBadge verified variant="pill" size="md" tone="solid" />
+                )}
              </div>
-             
+
              <h1 className="fgb-display text-5xl md:text-7xl mb-2">{athlete.athlete_name}</h1>
              {athlete.nickname && (
                 <div className="text-xl text-white/60 font-body mb-8 italic">"{athlete.nickname}"</div>

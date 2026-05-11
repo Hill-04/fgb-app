@@ -100,6 +100,7 @@ export default async function AtletasPage() {
                 }
                 photoUrl={a.photoUrl ?? undefined}
                 href={`/atletas/${a.id}`}
+                verified={a.verifiedFgb}
               />
             ))}
           </StaggerGrid>

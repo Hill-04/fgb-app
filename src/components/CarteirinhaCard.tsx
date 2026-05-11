@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import { VerifiedBadge } from '@/components/VerifiedBadge'
 
 type Props = {
   type: 'athlete' | 'coach' | 'referee'
@@ -12,6 +13,7 @@ type Props = {
   season: number
   athleteId?: string
   showQR?: boolean
+  verified?: boolean | null
 }
 
 const SITUATION_CONFIG: Record<string, { label: string; bg: string; dot: string }> = {
@@ -29,7 +31,7 @@ const TYPE_LABEL: Record<string, string> = {
 
 export default function CarteirinhaCard({
   type, name, registrationNumber, photoUrl, teamName, categoryName,
-  role, situation, season, athleteId, showQR = true,
+  role, situation, season, athleteId, showQR = true, verified,
 }: Props) {
   const sit = SITUATION_CONFIG[situation] || SITUATION_CONFIG.PENDING
   const qrUrl = athleteId
@@ -74,7 +76,12 @@ export default function CarteirinhaCard({
           </div>
 
           <div className="min-w-0">
-            <p className="text-[10px] font-black uppercase text-white leading-tight truncate" title={name}>{name}</p>
+            <div className="flex items-center gap-1 min-w-0">
+              <p className="text-[10px] font-black uppercase text-white leading-tight truncate flex-1" title={name}>{name}</p>
+              {verified && (
+                <VerifiedBadge verified variant="icon" size="sm" tone="solid" className="shrink-0" />
+              )}
+            </div>
             {teamName && (
               <p className="text-[7px] text-white/70 truncate mt-0.5">{teamName}</p>
             )}

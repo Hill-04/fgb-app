@@ -85,6 +85,7 @@ export default function CarteirinhasClient({ athletes, teams }: { athletes: Athl
               photoUrl={a.photoUrl}
               teamName={a.team?.name}
               situation={a.situation}
+              verified={(a as any).verifiedFgb ?? false}
               season={2026}
               athleteId={a.id}
             />

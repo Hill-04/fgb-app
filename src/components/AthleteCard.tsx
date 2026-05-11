@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { VerifiedBadge } from "@/components/VerifiedBadge"
 
 type AthleteCardProps = {
   name: string
@@ -9,6 +10,7 @@ type AthleteCardProps = {
   photoUrl?: string | null
   href?: string
   className?: string
+  verified?: boolean | null
 }
 
 export function AthleteCard({
@@ -19,6 +21,7 @@ export function AthleteCard({
   photoUrl,
   href,
   className,
+  verified,
 }: AthleteCardProps) {
   const content = (
     <article
@@ -49,6 +52,12 @@ export function AthleteCard({
         className="absolute top-0 left-0 bottom-0"
         style={{ width: 4, background: "var(--fgb-gradient-tricolor)" }}
       />
+
+      {verified && (
+        <div className="absolute top-3 right-3 z-10">
+          <VerifiedBadge verified variant="icon" size="md" tone="solid" />
+        </div>
+      )}
 
       {photoUrl ? (
         <img

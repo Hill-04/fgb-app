@@ -91,6 +91,7 @@ export default async function PublicCarteirinhaPage({ params }: { params: Promis
             teamName={athlete.team?.name}
             categoryName={athlete.registrationRequests[0]?.requestedCategoryLabel || ''}
             situation={athlete.situation}
+            verified={(athlete as any).verifiedFgb ?? false}
             season={2026}
             athleteId={athlete.id}
             showQR={true}
