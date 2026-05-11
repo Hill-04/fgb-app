@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { LiveGameService } from '@/modules/live-game/services/live-game-service'
+import { closeGame } from '@/lib/game-close-service'
 
 async function requireAdmin() {
   const session = await getServerSession(authOptions)
@@ -47,9 +48,28 @@ export async function POST(
     const { id } = await params
     const body = await request.json()
     const action = String(body.action || '')
-    const data = await LiveGameService.handleReviewAction(id, action as any, (session.user as any).id)
+    const userId = (session.user as any).id
+    const data = await LiveGameService.handleReviewAction(id, action as any, userId)
 
-    return NextResponse.json(data)
+    // ─── Fase 4.B Bridge: rotear finalize-official tambem pelo closeGame Fase 5 ───
+    // Cria GameOfficialReportVersion + valida paridade + recalc Standings + gera PDF
+    // (idempotente — se ja em CONFIRMED/PUBLISHED, retorna ok:false sem efeito)
+    let fase5Result: any = null
+    if (action === 'finalize-official') {
+      try {
+        fase5Result = await closeGame({
+          gameId: id,
+          actorUserId: userId,
+          allowParityErrors: true, // legacy path ja finalizou — nao bloqueia
+          reason: 'Encerramento via review/finalize-official (Fase 4.B bridge)',
+        })
+      } catch (err: any) {
+        console.error('[LIVE][Review POST][Fase5 bridge]', err)
+        fase5Result = { ok: false, error: err?.message ?? 'erro' }
+      }
+    }
+
+    return NextResponse.json({ ...data, fase5: fase5Result })
   } catch (error: any) {
     console.error('[LIVE][Review POST]', error)
     return NextResponse.json({ error: error.message || 'Erro ao fechar oficialmente o jogo' }, { status: 500 })
