@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db'
 import { GameStepNav } from './GameStepNav'
+import { deriveLifecycleFromLegacy } from '@/lib/game-lifecycle'
 
 export default async function ChampionshipGameLayout({
   children,
@@ -15,8 +16,21 @@ export default async function ChampionshipGameLayout({
     select: {
       homeTeam: { select: { name: true } },
       awayTeam: { select: { name: true } },
+      lifecycleState: true,
+      status: true,
+      liveStatus: true,
+      isLivePublished: true,
     },
   })
+
+  const lifecycleState = game
+    ? (game.lifecycleState ??
+        deriveLifecycleFromLegacy({
+          status: game.status,
+          liveStatus: game.liveStatus,
+          isLivePublished: game.isLivePublished,
+        }))
+    : undefined
 
   return (
     <div>
@@ -26,6 +40,7 @@ export default async function ChampionshipGameLayout({
           gameId={gameId}
           homeTeamName={game.homeTeam.name}
           awayTeamName={game.awayTeam.name}
+          lifecycleState={lifecycleState}
         />
       )}
       {children}

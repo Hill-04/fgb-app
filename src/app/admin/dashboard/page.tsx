@@ -15,6 +15,10 @@ import {
   UserCheck,
   Building2,
   DollarSign,
+  Send,
+  RotateCcw,
+  Radio,
+  FileCheck,
 } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
@@ -80,6 +84,38 @@ export default async function FederationDashboardPage() {
         championship: { status: { not: 'ARCHIVED' } },
       },
     })
+
+    // Fase 7 — KPIs por lifecycleState (Fases 1 e 6)
+    const [
+      regSubmitted,
+      regUnderReview,
+      regRecentRejected,
+      gameLive,
+      gameUnderReview,
+      gameRecentConfirmed,
+    ] = await Promise.all([
+      prisma.registration.count({
+        where: { lifecycleState: 'SUBMITTED', championship: { status: { not: 'ARCHIVED' } } },
+      }).catch(() => 0),
+      prisma.registration.count({
+        where: { lifecycleState: 'UNDER_REVIEW', championship: { status: { not: 'ARCHIVED' } } },
+      }).catch(() => 0),
+      prisma.registration.count({
+        where: {
+          lifecycleState: 'REJECTED',
+          rejectedAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        },
+      }).catch(() => 0),
+      prisma.game.count({
+        where: { lifecycleState: 'LIVE' },
+      }).catch(() => 0),
+      prisma.game.count({
+        where: { lifecycleState: 'UNDER_REVIEW' },
+      }).catch(() => 0),
+      prisma.game.count({
+        where: { lifecycleState: 'CONFIRMED' },
+      }).catch(() => 0),
+    ])
 
     const closingSoon = await prisma.championship.findMany({
       where: {
@@ -192,6 +228,68 @@ export default async function FederationDashboardPage() {
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
+          </div>
+        </section>
+
+        {/* FASE 7 — Lifecycle FGB (state machine das Fases 1 e 6) */}
+        <section>
+          <div className="mb-3 flex items-baseline gap-3">
+            <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>
+              Lifecycle FGB
+            </p>
+            <p className="text-xs text-[var(--gray)]">
+              estado atual do ciclo de vida de jogos e inscrições
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+            <LifecycleKpi
+              label="Inscrições novas"
+              count={regSubmitted}
+              tone={regSubmitted > 0 ? 'warning' : 'ok'}
+              icon={<Send className="h-4 w-4" />}
+              href="/admin/registrations"
+              subtitle="SUBMITTED · aguardando admin"
+            />
+            <LifecycleKpi
+              label="Em análise"
+              count={regUnderReview}
+              tone={regUnderReview > 0 ? 'warning' : 'ok'}
+              icon={<RotateCcw className="h-4 w-4" />}
+              href="/admin/registrations"
+              subtitle="UNDER_REVIEW · em revisão FGB"
+            />
+            <LifecycleKpi
+              label="Recusadas (7d)"
+              count={regRecentRejected}
+              tone={regRecentRejected > 0 ? 'error' : 'neutral'}
+              icon={<AlertTriangle className="h-4 w-4" />}
+              href="/admin/registrations"
+              subtitle="REJECTED · últimos 7 dias"
+            />
+            <LifecycleKpi
+              label="Jogos ao vivo"
+              count={gameLive}
+              tone={gameLive > 0 ? 'live' : 'neutral'}
+              icon={<Radio className="h-4 w-4" />}
+              href="/admin/championships"
+              subtitle="LIVE · em andamento agora"
+            />
+            <LifecycleKpi
+              label="Súmulas em revisão"
+              count={gameUnderReview}
+              tone={gameUnderReview > 0 ? 'warning' : 'ok'}
+              icon={<FileCheck className="h-4 w-4" />}
+              href="/admin/championships"
+              subtitle="UNDER_REVIEW · correção solicitada"
+            />
+            <LifecycleKpi
+              label="Confirmadas"
+              count={gameRecentConfirmed}
+              tone="ok"
+              icon={<CheckCircle2 className="h-4 w-4" />}
+              href="/admin/championships"
+              subtitle="CONFIRMED · prontas para publicar"
+            />
           </div>
         </section>
 
@@ -416,4 +514,83 @@ export default async function FederationDashboardPage() {
       </div>
     )
   }
+}
+
+// ─────────────── Lifecycle KPI card (Fase 7) ───────────────
+
+function LifecycleKpi({
+  label,
+  count,
+  subtitle,
+  icon,
+  href,
+  tone,
+}: {
+  label: string
+  count: number
+  subtitle: string
+  icon: React.ReactNode
+  href: string
+  tone: 'ok' | 'warning' | 'error' | 'live' | 'neutral'
+}) {
+  const accent =
+    tone === 'ok' ? 'var(--fgb-green-700)' :
+    tone === 'warning' ? 'var(--fgb-yellow-700)' :
+    tone === 'error' ? 'var(--fgb-red-600)' :
+    tone === 'live' ? 'var(--fgb-red-500)' :
+    'var(--fgb-ink-500)'
+
+  const bgIcon =
+    tone === 'ok' ? 'var(--fgb-green-50)' :
+    tone === 'warning' ? 'var(--fgb-yellow-50)' :
+    tone === 'error' ? 'var(--fgb-red-50)' :
+    tone === 'live' ? 'var(--fgb-red-50)' :
+    'var(--fgb-ink-50)'
+
+  return (
+    <Link
+      href={href}
+      className="group relative overflow-hidden rounded-2xl border bg-white p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+      style={{ borderColor: 'var(--fgb-ink-200)' }}
+    >
+      <div className="mb-3 flex items-center justify-between">
+        <span
+          className="inline-flex h-8 w-8 items-center justify-center rounded-lg"
+          style={{ background: bgIcon, color: accent }}
+        >
+          {icon}
+        </span>
+        {tone === 'live' && count > 0 && (
+          <span
+            className="inline-flex h-2 w-2 rounded-full"
+            style={{ background: 'var(--fgb-red-500)', animation: 'fgb-pulse 1.4s ease-in-out infinite' }}
+            aria-hidden
+          />
+        )}
+      </div>
+      <div
+        className="tabular-nums"
+        style={{
+          fontFamily: 'var(--font-anton)',
+          fontSize: 28,
+          lineHeight: 1,
+          color: accent,
+        }}
+      >
+        {count}
+      </div>
+      <p
+        className="fgb-label mt-2"
+        style={{ fontSize: 9, color: 'var(--fgb-ink-700)', letterSpacing: '0.16em' }}
+      >
+        {label}
+      </p>
+      <p
+        className="mt-1 text-xs"
+        style={{ color: 'var(--fgb-ink-400)', lineHeight: 1.4 }}
+      >
+        {subtitle}
+      </p>
+    </Link>
+  )
 }
