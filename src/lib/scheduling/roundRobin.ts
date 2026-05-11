@@ -1,14 +1,13 @@
 import { prisma } from '@/lib/db'
 import { buildBlockedMap, isDateBlockedForTeam, type TeamBlockedRange } from '@/lib/scheduling/availability'
 
-const GAME_DURATION_MIN = 75
-const DAY_START_HOUR = 11
-const DAY_END_HOUR = 21
-const LAST_GAME_START_UTC = 19
-const LUNCH_BREAK_MIN = 120
-const AFTERNOON_START_UTC = 17
-const MAX_CATS_PER_DAY = 2
-const MIN_AGE_GAP = 3
+// PM-02: as 8 constantes hardcoded antigas foram movidas para
+// src/lib/championship/scheduling-config.ts (campos do Championship).
+// As que sobrevivem como fallback final ainda vivem aqui para nao
+// reintroduzir magic numbers em multiplos lugares:
+const DEFAULT_SLOT_DURATION_MIN = 75   // GAME_DURATION_MIN antigo
+const DEFAULT_MAX_CATS_PER_DAY = 2     // MAX_CATS_PER_DAY antigo
+const DEFAULT_MIN_AGE_GAP = 3          // MIN_AGE_GAP antigo
 
 type TeamInfo = {
   id: string
@@ -205,7 +204,7 @@ function buildCategoryGroups(categories: CategoryInfo[]) {
     }
 
     const candidate = sorted[index + half]
-    if (candidate && !usedIds.has(candidate.id) && Math.abs(candidate.ageGroup - first.ageGroup) >= MIN_AGE_GAP) {
+    if (candidate && !usedIds.has(candidate.id) && Math.abs(candidate.ageGroup - first.ageGroup) >= DEFAULT_MIN_AGE_GAP) {
       groups.push([first, candidate])
       usedIds.add(first.id)
       usedIds.add(candidate.id)
@@ -502,51 +501,6 @@ function getDailyTeamCountKey(teamId: string, categoryId: string, dateKey: strin
   return `${teamId}:${categoryId}:${dateKey}`
 }
 
-function buildDaySlots(day: Date, gameDuration: number) {
-  const slots: Array<{ start: Date; period: string }> = []
-  const morningEnd = addMinutes(createUtcDate(day, AFTERNOON_START_UTC, 0), -LUNCH_BREAK_MIN)
-  let cursor = createUtcDate(day, DAY_START_HOUR, 0)
-
-  while (addMinutes(cursor, gameDuration) <= morningEnd) {
-    slots.push({ start: cursor, period: 'manhã' })
-    cursor = addMinutes(cursor, gameDuration)
-  }
-
-  const dayEnd = createUtcDate(day, DAY_END_HOUR, 0)
-  cursor = createUtcDate(day, AFTERNOON_START_UTC, 0)
-
-  while (
-    cursor <= createUtcDate(day, LAST_GAME_START_UTC, 0) &&
-    addMinutes(cursor, gameDuration) <= dayEnd
-  ) {
-    slots.push({ start: cursor, period: 'tarde' })
-    cursor = addMinutes(cursor, gameDuration)
-  }
-
-  return slots
-}
-
-function candidateSingleSlots(day: Date, gameDuration: number) {
-  return buildDaySlots(day, gameDuration)
-}
-
-function candidateTurnPairs(day: Date, gameDuration: number) {
-  const slots = buildDaySlots(day, gameDuration)
-  const morning = slots.filter((slot) => slot.period === 'manhã')
-  const afternoon = slots.filter((slot) => slot.period === 'tarde')
-  const count = Math.min(morning.length, afternoon.length)
-
-  return Array.from({ length: count }).map((_, index) => ({
-    ida: morning[index],
-    volta: afternoon[index],
-  }))
-}
-
-function withinAllowedWindow(start: Date) {
-  const hour = start.getUTCHours() + start.getUTCMinutes() / 60
-  return hour >= DAY_START_HOUR && hour <= DAY_END_HOUR && hour <= LAST_GAME_START_UTC + 0.25
-}
-
 function getConfiguredDayEndTime(day: Date, config: SchedulingConfig) {
   return day.getUTCDay() === 6 ? config.extendedDayEndTime : config.regularDayEndTime
 }
@@ -684,7 +638,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const playoffTeams = championship.playoffTeams || 4
   const minTeamsPerCat = championship.minTeamsPerCat || 2
   const maxCourts = Math.max(1, championship.numberOfCourts || 1)
-  const gameDuration = championship.slotDurationMinutes || GAME_DURATION_MIN
+  const gameDuration = championship.slotDurationMinutes || DEFAULT_SLOT_DURATION_MIN
   const schedulingConfig: SchedulingConfig = {
     dayStartTime: championship.dayStartTime || '08:00',
     regularDayEndTime: championship.regularDayEndTime || '19:00',
@@ -894,7 +848,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const awayGamesCount =
             teamGamesPerDay.get(getDailyTeamCountKey(bundle.awayTeamId, bundle.categoryId, dateKey)) || 0
 
-          if (categoriesInDay.size >= MAX_CATS_PER_DAY && !categoriesInDay.has(bundle.categoryId)) {
+          if (categoriesInDay.size >= DEFAULT_MAX_CATS_PER_DAY && !categoriesInDay.has(bundle.categoryId)) {
             continue
           }
 
