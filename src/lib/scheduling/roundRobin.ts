@@ -6,6 +6,7 @@ import {
   isDateInBlackout,
   type WeekdayNumber,
   type BlackoutDate,
+  type HomePattern,
 } from '@/lib/championship/scheduling-config'
 
 // PM-02: as 8 constantes hardcoded antigas foram movidas para
@@ -132,6 +133,9 @@ type SchedulingConfig = {
   // ─── PM-02 (3.B) — configs explicitas vindas do Championship ───
   maxCategoriesPerDay: number
   minAgeGapBetweenGames: number
+
+  // ─── PM-02 (3.D) — padrao de mando ───
+  homePattern: HomePattern
 }
 
 function parseAgeGroup(name: string) {
@@ -203,12 +207,46 @@ function getLocalHour(time: string) {
   return parseClockTime(time).hour
 }
 
-function createVenueName(fieldControl: string, homeTeamName: string) {
-  if (fieldControl === 'fixo' || fieldControl === 'neutro') {
+// 3.D: createVenueName agora honra homePattern. NEUTRAL sempre joga em sede.
+function createVenueName(homePattern: HomePattern, fieldControl: string, homeTeamName: string) {
+  if (homePattern === 'NEUTRAL' || fieldControl === 'fixo' || fieldControl === 'neutro') {
     return 'Sede central'
   }
 
   return `Ginásio ${homeTeamName}`
+}
+
+// 3.D: aplica o pattern de mando configurado no Championship.
+// Retorna quem manda no jogo a partir do par "ida" (bundle.home/away).
+//
+//   ALTERNATED:   1o turno home original, 2o turno troca (legacy default)
+//   FIXED_HOST:   home original sempre manda (nao troca em isReturn)
+//   NEUTRAL:      home/away mantem para fins de estatistica; venue forcado em sede
+//   SERIES_2_2_1: best-of-5; rounds 1,2 = home original; 3,4 = troca; 5 = home original
+function applyHomePattern(
+  bundle: MatchBundle,
+  isReturn: boolean,
+  homePattern: HomePattern,
+): { homeId: string; awayId: string; homeName: 'first' | 'second' } {
+  switch (homePattern) {
+    case 'FIXED_HOST':
+      return { homeId: bundle.homeTeamId, awayId: bundle.awayTeamId, homeName: 'first' }
+
+    case 'SERIES_2_2_1': {
+      const layout = [0, 0, 1, 1, 0]
+      const pos = layout[bundle.round - 1] ?? 0
+      return pos === 0
+        ? { homeId: bundle.homeTeamId, awayId: bundle.awayTeamId, homeName: 'first' }
+        : { homeId: bundle.awayTeamId, awayId: bundle.homeTeamId, homeName: 'second' }
+    }
+
+    case 'NEUTRAL':
+    case 'ALTERNATED':
+    default:
+      return isReturn
+        ? { homeId: bundle.awayTeamId, awayId: bundle.homeTeamId, homeName: 'second' }
+        : { homeId: bundle.homeTeamId, awayId: bundle.awayTeamId, homeName: 'first' }
+  }
 }
 
 function buildCategoryGroups(categories: CategoryInfo[], minAgeGap: number = DEFAULT_MIN_AGE_GAP) {
@@ -507,16 +545,29 @@ function getPhaseDays(weekendStart: Date, config: SchedulingConfig): Date[] {
   return days
 }
 
-// 3.C: orderPhaseDays agora deriva o cenario "fri+sat+sun" de
-// config.allowedWeekdays (5=sex, 6=sab, 0=dom) em vez de blockFormat.
-// 3.D vai ampliar pra cobrir os 3 modos (less_travel/less_idle_time/balanced).
+// 3.D: orderPhaseDays cobre os 3 modos oficiais de Championship:
+//   - less_idle_time: cronologico puro, preenche slots o mais cedo possivel
+//   - balanced:       distribui dias usando intercalacao first-half/second-half
+//   - less_travel:    cenario sex+sab+dom prioriza sab>dom>sex (default historico)
+// O modo legacy 'compact' (que era usado antigamente) e tratado como
+// 'less_idle_time'.
 function orderPhaseDays(phaseDays: Date[], optimizationMode: string, config: SchedulingConfig) {
-  if (optimizationMode === 'compact') {
-    return phaseDays
+  if (phaseDays.length <= 1) return phaseDays
+
+  if (optimizationMode === 'compact' || optimizationMode === 'less_idle_time') {
+    return [...phaseDays].sort((a, b) => a.getTime() - b.getTime())
   }
 
+  if (optimizationMode === 'balanced') {
+    return distributeEvenly(phaseDays)
+  }
+
+  // less_travel (default)
   const allows = new Set(config.allowedWeekdays)
-  const isFriSatSun = allows.has(5 as WeekdayNumber) && allows.has(6 as WeekdayNumber) && allows.has(0 as WeekdayNumber)
+  const isFriSatSun =
+    allows.has(5 as WeekdayNumber) &&
+    allows.has(6 as WeekdayNumber) &&
+    allows.has(0 as WeekdayNumber)
   if (!isFriSatSun) {
     return phaseDays
   }
@@ -524,12 +575,23 @@ function orderPhaseDays(phaseDays: Date[], optimizationMode: string, config: Sch
   const saturday = phaseDays.find((day) => day.getUTCDay() === 6)
   const sunday = phaseDays.find((day) => day.getUTCDay() === 0)
   const friday = phaseDays.find((day) => day.getUTCDay() === 5)
+  return [saturday, sunday, friday].filter(Boolean) as Date[]
+}
 
-  if (optimizationMode === 'less_travel') {
-    return [saturday, sunday, friday].filter(Boolean) as Date[]
+// 3.D: heuristica simples de distribuicao "balanced" — intercala primeira
+// metade dos dias com a segunda metade, gerando espalhamento aproximadamente
+// uniforme dentro da janela disponivel.
+function distributeEvenly(days: Date[]): Date[] {
+  const sorted = [...days].sort((a, b) => a.getTime() - b.getTime())
+  const half = Math.ceil(sorted.length / 2)
+  const front = sorted.slice(0, half)
+  const back = sorted.slice(half)
+  const out: Date[] = []
+  for (let i = 0; i < half; i += 1) {
+    if (front[i]) out.push(front[i])
+    if (back[i]) out.push(back[i])
   }
-
-  return [saturday, friday, sunday].filter(Boolean) as Date[]
+  return out
 }
 
 function getDailyTeamCountKey(teamId: string, categoryId: string, dateKey: string) {
@@ -618,16 +680,21 @@ function createGameOutput(
   homeTeamName: string,
   awayTeamName: string,
   fieldControl: string,
+  homePattern: HomePattern,
   wasRescheduled: boolean,
   rescheduleReason?: string,
   blockedByTeamId?: string,
   court?: string
 ): ScheduledGame {
-  const actualHomeTeamName = isReturn ? awayTeamName : homeTeamName
-  const actualAwayTeamName = isReturn ? homeTeamName : awayTeamName
-  const actualHomeTeamId = isReturn ? bundle.awayTeamId : bundle.homeTeamId
-  const actualAwayTeamId = isReturn ? bundle.homeTeamId : bundle.awayTeamId
-  const venue = createVenueName(fieldControl, actualHomeTeamName)
+  // 3.D: applyHomePattern decide quem manda baseado no padrao configurado.
+  // bundle.homeTeamId = primeiro team do par. homeName='first' significa que
+  // o primeiro time do par manda; 'second' significa que o segundo manda.
+  const assignment = applyHomePattern(bundle, isReturn, homePattern)
+  const actualHomeTeamId = assignment.homeId
+  const actualAwayTeamId = assignment.awayId
+  const actualHomeTeamName = assignment.homeName === 'first' ? homeTeamName : awayTeamName
+  const actualAwayTeamName = assignment.homeName === 'first' ? awayTeamName : homeTeamName
+  const venue = createVenueName(homePattern, fieldControl, actualHomeTeamName)
 
   return {
     categoryId: bundle.categoryId,
@@ -704,6 +771,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     blackoutDates: officialConfig.blackoutDates,
     maxCategoriesPerDay: officialConfig.maxCategoriesPerDay,
     minAgeGapBetweenGames: officialConfig.minAgeGapBetweenGames,
+    homePattern: officialConfig.homePattern,
   }
   // 3.C: minRestHoursBetweenGames substitui o calculo antigo
   // (minRestSlotsPerTeam * gameDuration). Conversao h -> min.
@@ -1018,6 +1086,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     homeTeamName,
                     awayTeamName,
                     fieldControl,
+                    schedulingConfig.homePattern,
                     wasRescheduled,
                     rescheduleReason,
                     encounteredBlockedTeamId,
@@ -1031,6 +1100,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     homeTeamName,
                     awayTeamName,
                     fieldControl,
+                    schedulingConfig.homePattern,
                     wasRescheduled,
                     rescheduleReason,
                     encounteredBlockedTeamId,
@@ -1103,6 +1173,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     homeTeamName,
                     awayTeamName,
                     fieldControl,
+                    schedulingConfig.homePattern,
                     wasRescheduled,
                     rescheduleReason,
                     encounteredBlockedTeamId,
