@@ -5,6 +5,8 @@ import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
+import { AlertTriangle, Volleyball } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Competicoes — FGB',
@@ -60,7 +62,7 @@ export default async function CompeticoesPage() {
           <div className="text-center mb-8">
             <span
               className="inline-block fgb-badge mb-3"
-              style={{ background: '#F5C200', color: '#000', fontWeight: 800, fontSize: 12 }}
+              style={{ background: 'var(--fgb-yellow-400)', color: 'var(--fgb-ink-900)', fontWeight: 800, fontSize: 12 }}
             >
               COMPETIÇÃO OFICIAL FGB
             </span>
@@ -82,9 +84,19 @@ export default async function CompeticoesPage() {
                 <Link
                   key={c.id}
                   href={`/campeonatos/${c.id}`}
-                  className="fgb-card p-5"
+                  className="fgb-card overflow-hidden"
                   style={{ borderLeft: '4px solid var(--verde)' }}
                 >
+                  <div className="aspect-[16/9] relative">
+                    <FgbImage
+                      variant="cover"
+                      tint="green"
+                      icon={Volleyball}
+                      alt={c.name}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                  </div>
+                  <div className="p-5">
                   <div className="flex items-center justify-between mb-3">
                     <span className="fgb-badge fgb-badge-outline">{formatChampionshipStatus(c.status)}</span>
                     <span className="fgb-label" style={{ color: 'var(--gray)' }}>{c.year}</span>
@@ -107,6 +119,7 @@ export default async function CompeticoesPage() {
                     <span className="fgb-label" style={{ color: 'var(--gray)' }}>{c._count.registrations} equipes</span>
                     <span className="fgb-label" style={{ color: 'var(--verde)' }}>{c._count.games} jogos</span>
                   </div>
+                  </div>
                 </Link>
               ))}
             </div>
@@ -116,9 +129,9 @@ export default async function CompeticoesPage() {
         {/* DIVIDER */}
         <div
           className="rounded-lg p-5 flex items-start gap-3"
-          style={{ background: 'rgba(245,194,0,0.1)', borderLeft: '5px solid #F5C200' }}
+          style={{ background: 'rgba(229,171,0,0.10)', borderLeft: '5px solid var(--fgb-yellow-500)' }}
         >
-          <div className="text-2xl flex-shrink-0">⚠️</div>
+          <AlertTriangle size={28} className="flex-shrink-0" style={{ color: 'var(--fgb-yellow-600)', strokeWidth: 2 }} aria-hidden />
           <div>
             <h3 className="fgb-display text-[16px] text-[var(--black)] mb-1">
               EXCLUSIVIDADE DE INSCRIÇÃO
@@ -162,9 +175,10 @@ export default async function CompeticoesPage() {
                       {fmtDate(e.startDate)} → {fmtDate(e.endDate)}
                     </p>
                     {e.blocks.length > 0 && (
-                      <p className="text-xs mt-2" style={{ color: 'var(--red)' }}>
-                        ⚠️ Impede participação em:{' '}
-                        {e.blocks.map((b) => b.championship.name).join(', ')}
+                      <p className="text-xs mt-2 flex items-center gap-1.5" style={{ color: 'var(--red)' }}>
+                        <AlertTriangle size={12} aria-hidden />
+                        <span>Impede participação em:{' '}
+                          {e.blocks.map((b) => b.championship.name).join(', ')}</span>
                       </p>
                     )}
                   </div>

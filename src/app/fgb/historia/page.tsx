@@ -1,36 +1,59 @@
 import type { Metadata } from 'next'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
+import { StaggerGrid } from '@/components/motion/StaggerGrid'
+import { ScrollReveal } from '@/components/motion/ScrollReveal'
+import { Flag, Trophy, ScrollText, TrendingUp } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'História da Federação — FGB',
   description: 'A jornada do basquete gaúcho, desde as raízes em 1914 até a consolidação de uma das federações mais tradicionais do Brasil.',
 }
 
-const marcos = [
-  { 
-    ano: '1914', 
-    titulo: 'As Raízes', 
-    desc: 'O basquete chega ao RS via ACM, com Frank Long introduzindo o esporte em Porto Alegre.', 
-    badge: 'fgb-badge-verde' 
+type Marco = {
+  ano: string
+  titulo: string
+  desc: string
+  badge: string
+  icon: LucideIcon
+  tint: 'green' | 'yellow' | 'red' | 'navy'
+  photoUrl?: string
+}
+
+const marcos: Marco[] = [
+  {
+    ano: '1914',
+    titulo: 'As Raízes',
+    desc: 'O basquete chega ao RS via ACM, com Frank Long introduzindo o esporte em Porto Alegre.',
+    badge: 'fgb-badge-verde',
+    icon: Flag,
+    tint: 'green',
   },
-  { 
-    ano: '1934 – 1935', 
-    titulo: 'O Bi-Campeonato Nacional', 
-    desc: 'O Rio Grande do Sul conquista o Brasil duas vezes seguidas, superando as potências do centro do país.', 
-    badge: 'fgb-badge-yellow' 
+  {
+    ano: '1934 – 1935',
+    titulo: 'O Bi-Campeonato Nacional',
+    desc: 'O Rio Grande do Sul conquista o Brasil duas vezes seguidas, superando as potências do centro do país.',
+    badge: 'fgb-badge-yellow',
+    icon: Trophy,
+    tint: 'yellow',
   },
-  { 
-    ano: '18 Abr 1952', 
-    titulo: 'Fundação da FGB', 
-    desc: '22 clubes se reúnem para fundar a Federação Gaúcha de Basketball, buscando autonomia técnica.', 
-    badge: 'fgb-badge-red' 
+  {
+    ano: '18 Abr 1952',
+    titulo: 'Fundação da FGB',
+    desc: '22 clubes se reúnem para fundar a Federação Gaúcha de Basketball, buscando autonomia técnica.',
+    badge: 'fgb-badge-red',
+    icon: ScrollText,
+    tint: 'red',
   },
-  { 
-    ano: '1970 – 1980', 
-    titulo: 'Expansão e Consolidação', 
-    desc: 'O basquete interiorano ganha força com clubes icônicos surgindo em diversas regiões do estado.', 
-    badge: 'fgb-badge-outline' 
+  {
+    ano: '1970 – 1980',
+    titulo: 'Expansão e Consolidação',
+    desc: 'O basquete interiorano ganha força com clubes icônicos surgindo em diversas regiões do estado.',
+    badge: 'fgb-badge-outline',
+    icon: TrendingUp,
+    tint: 'navy',
   },
 ]
 
@@ -81,32 +104,45 @@ export default function HistoriaPage() {
             </div>
           </div>
           
-          <div className="space-y-4">
+          <StaggerGrid className="space-y-4" stagger={0.12}>
             {marcos.map((marco, i) => (
-              <div key={i} className="fgb-card p-6 border-l-4" style={{ borderLeftColor: i % 2 === 0 ? 'var(--verde)' : 'var(--yellow)' }}>
-                <div className="flex items-center gap-2 mb-2">
-                   <span className={`fgb-badge ${marco.badge}`}>{marco.ano}</span>
+              <div key={i} className="fgb-card p-6 border-l-4 flex items-start gap-5" style={{ borderLeftColor: i % 2 === 0 ? 'var(--verde)' : 'var(--yellow)' }}>
+                <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden shadow-sm">
+                  <FgbImage
+                    variant="avatar"
+                    src={marco.photoUrl}
+                    icon={marco.icon}
+                    tint={marco.tint}
+                    alt={`${marco.titulo} — ${marco.ano}`}
+                  />
                 </div>
-                <h3 className="fgb-display text-lg text-[var(--black)] mb-2">{marco.titulo}</h3>
-                <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
-                  {marco.desc}
-                </p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`fgb-badge ${marco.badge}`}>{marco.ano}</span>
+                  </div>
+                  <h3 className="fgb-display text-lg text-[var(--black)] mb-2">{marco.titulo}</h3>
+                  <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
+                    {marco.desc}
+                  </p>
+                </div>
               </div>
             ))}
-          </div>
+          </StaggerGrid>
         </section>
 
         {/* CTA */}
-        <div className="fgb-section-yellow rounded-xl p-8 text-center border border-[var(--border)] shadow-sm">
-           <div className="text-4xl mb-4">📜</div>
-           <h2 className="fgb-display text-[22px] text-[var(--black)] mb-2">Fundação da FGB</h2>
-           <p className="fgb-label text-[var(--gray)] max-w-md mx-auto mb-6" style={{ textTransform: 'none', letterSpacing: 0 }}>
-             Saiba mais detalhes sobre a mítica assembleia de 1952 que oficializou a federação.
-           </p>
-           <a href="/fgb/fundacao" className="fgb-btn-primary">
-             Ver Página da Fundação →
-           </a>
-        </div>
+        <ScrollReveal>
+          <div className="fgb-section-yellow rounded-xl p-8 text-center border border-[var(--border)] shadow-sm">
+            <ScrollText className="mx-auto mb-4" size={40} style={{ color: 'var(--fgb-green-700)' }} aria-hidden />
+            <h2 className="fgb-display text-[22px] text-[var(--black)] mb-2">Fundação da FGB</h2>
+            <p className="fgb-label text-[var(--gray)] max-w-md mx-auto mb-6" style={{ textTransform: 'none', letterSpacing: 0 }}>
+              Saiba mais detalhes sobre a mítica assembleia de 1952 que oficializou a federação.
+            </p>
+            <a href="/fgb/fundacao" className="fgb-btn-primary">
+              Ver Página da Fundação →
+            </a>
+          </div>
+        </ScrollReveal>
       </main>
 
       <PublicFooter />

@@ -93,6 +93,13 @@ export default async function HomePage() {
     select: { id: true, name: true, logoUrl: true },
   }).catch(() => [])
 
+  const recentNotes = await prisma.newsPost.findMany({
+    where: { status: 'PUBLISHED' },
+    orderBy: { publishedAt: 'desc' },
+    take: 3,
+    select: { id: true, title: true, slug: true, category: true, publishedAt: true, excerpt: true },
+  }).catch(() => [])
+
   const sponsors = await prisma.sponsor.findMany({
     where: { isActive: true },
     orderBy: { createdAt: 'desc' },
@@ -520,39 +527,41 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="fgb-section fgb-section-alt" style={{ borderTop: '1px solid var(--border)' }}>
-          <div className="max-w-7xl mx-auto">
-            <div className="fgb-section-header">
-              <div>
-                <div className="fgb-accent fgb-accent-red" />
-                <h2 className="fgb-section-title">
-                  Atualizações <span className="red">Oficiais</span>
-                </h2>
-              </div>
-              <a href="https://basquetegaucho.com.br/notas-oficiais/" target="_blank" rel="noopener noreferrer" className="fgb-section-link">
-                Ver no site oficial →
-              </a>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-              {[
-                { title: 'Nota Oficial de Pesar', type: 'Notas Oficiais', date: '2025' },
-                { title: 'Classificação Final — Estadual de Base 2025', type: 'Informativos', date: '2025' },
-                { title: 'Boletim Sul Brasileiro de Clubes 2025', type: 'Notas Oficiais', date: '2025' },
-              ].map((item) => (
-                <div key={item.title} className="fgb-card p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="fgb-badge fgb-badge-outline">{item.type}</span>
-                    <span className="fgb-label" style={{ color: 'var(--gray)' }}>{item.date}</span>
-                  </div>
-                  <h3 className="fgb-display text-[16px] text-[var(--black)] mb-2">{item.title}</h3>
-                  <p className="fgb-label" style={{ color: 'var(--gray)', textTransform: 'none', letterSpacing: 0 }}>
-                    Comunicado oficial publicado pela FGB.
-                  </p>
+        {recentNotes.length > 0 && (
+          <section className="fgb-section fgb-section-alt" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="max-w-7xl mx-auto">
+              <div className="fgb-section-header">
+                <div>
+                  <div className="fgb-accent fgb-accent-red" />
+                  <h2 className="fgb-section-title">
+                    Atualizações <span className="red">Oficiais</span>
+                  </h2>
                 </div>
-              ))}
+                <Link href="/noticias" className="fgb-section-link">
+                  Ver todas →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {recentNotes.map((item) => (
+                  <Link key={item.id} href={`/noticias/${item.slug}`} className="fgb-card p-5 block">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="fgb-badge fgb-badge-outline">{item.category || 'Notícias'}</span>
+                      <span className="fgb-label" style={{ color: 'var(--gray)' }}>
+                        {item.publishedAt ? new Date(item.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
+                      </span>
+                    </div>
+                    <h3 className="fgb-display text-[16px] text-[var(--black)] mb-2 line-clamp-2">{item.title}</h3>
+                    {item.excerpt && (
+                      <p className="fgb-label line-clamp-2" style={{ color: 'var(--gray)', textTransform: 'none', letterSpacing: 0 }}>
+                        {item.excerpt}
+                      </p>
+                    )}
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         <section className="fgb-section">
           <div className="max-w-7xl mx-auto">

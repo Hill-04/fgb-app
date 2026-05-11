@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
 import { getActiveSeason } from '@/lib/queries/seasons'
 import { getGamesBySeasonId } from '@/lib/queries/games'
 import { prisma } from '@/lib/db'
@@ -37,8 +38,8 @@ export default async function JogosPage() {
       venue: true,
       dateTime: true,
       championship: { select: { name: true } },
-      homeTeam: { select: { name: true } },
-      awayTeam: { select: { name: true } },
+      homeTeam: { select: { name: true, logoUrl: true } },
+      awayTeam: { select: { name: true, logoUrl: true } },
     },
     orderBy: [{ liveStatus: 'asc' }, { dateTime: 'asc' }],
     take: 12,
@@ -146,14 +147,17 @@ function LiveGameCard({ game }: { game: any }) {
           </div>
 
           <div className="flex items-center gap-4 flex-1 justify-center">
-            <div className="text-right flex-1">
-              <h3 className="fgb-display text-lg md:text-2xl">{game.homeTeam?.name}</h3>
+            <div className="flex items-center gap-3 flex-1 justify-end">
+              <h3 className="fgb-display text-lg md:text-2xl text-right">{game.homeTeam?.name}</h3>
+              <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded overflow-hidden bg-white/5">
+                <FgbImage variant="logo" src={game.homeTeam?.logoUrl} initials={game.homeTeam?.name?.slice(0,2)} alt={game.homeTeam?.name ?? 'Time da casa'} tint="green" />
+              </div>
             </div>
 
             <div className="flex flex-col items-center gap-1 bg-white/8 px-5 py-3 rounded-2xl min-w-32 border border-white/10">
-              <div className="flex items-center gap-3 text-3xl md:text-4xl font-bold">
+              <div className="flex items-center gap-3 tabular-nums" style={{ fontFamily: 'var(--font-anton)', fontSize: '2rem', lineHeight: 1 }}>
                 <span>{game.homeScore ?? 0}</span>
-                <span className="text-white/25 text-xl">x</span>
+                <span className="text-white/25 text-xl">×</span>
                 <span>{game.awayScore ?? 0}</span>
               </div>
               <span className="text-[10px] uppercase tracking-[0.2em] text-white/45">
@@ -161,7 +165,10 @@ function LiveGameCard({ game }: { game: any }) {
               </span>
             </div>
 
-            <div className="text-left flex-1">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-10 h-10 md:w-12 md:h-12 flex-shrink-0 rounded overflow-hidden bg-white/5">
+                <FgbImage variant="logo" src={game.awayTeam?.logoUrl} initials={game.awayTeam?.name?.slice(0,2)} alt={game.awayTeam?.name ?? 'Time visitante'} tint="navy" />
+              </div>
               <h3 className="fgb-display text-lg md:text-2xl">{game.awayTeam?.name}</h3>
             </div>
           </div>
@@ -193,23 +200,29 @@ function GameCard({ game }: { game: any }) {
           </div>
 
           <div className="flex items-center gap-4 flex-1 justify-center">
-            <div className="text-right flex-1">
-              <h3 className="fgb-display text-lg md:text-xl">{game.home_team?.name}</h3>
+            <div className="flex items-center gap-3 flex-1 justify-end">
+              <h3 className="fgb-display text-lg md:text-xl text-right">{game.home_team?.name}</h3>
+              <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded overflow-hidden" style={{ background: 'var(--fgb-green-50)' }}>
+                <FgbImage variant="logo" src={game.home_team?.logoUrl ?? game.home_team?.logo_url} initials={game.home_team?.name?.slice(0,2)} alt={game.home_team?.name ?? 'Time da casa'} tint="green" />
+              </div>
             </div>
-            
-            <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl text-2xl relative font-bold min-w-24 justify-center whitespace-nowrap">
-               {(game.home_score !== null) ? (
+
+            <div className="flex items-center gap-3 px-4 py-2 rounded-xl relative min-w-24 justify-center whitespace-nowrap tabular-nums" style={{ background: 'var(--fgb-ink-50)', fontFamily: 'var(--font-anton)', fontSize: '1.75rem', lineHeight: 1 }}>
+               {(game.home_score !== null && game.home_score !== undefined) ? (
                  <>
-                   <span className={game.home_score > game.away_score ? "text-green-700" : ""}>{game.home_score}</span>
-                   <span className="text-slate-300 text-sm">×</span>
-                   <span className={game.away_score > game.home_score ? "text-green-700" : ""}>{game.away_score}</span>
+                   <span style={{ color: game.home_score > game.away_score ? 'var(--fgb-green-700)' : 'var(--fgb-ink-700)' }}>{game.home_score}</span>
+                   <span className="text-base" style={{ color: 'var(--fgb-ink-300)' }}>×</span>
+                   <span style={{ color: game.away_score > game.home_score ? 'var(--fgb-green-700)' : 'var(--fgb-ink-700)' }}>{game.away_score}</span>
                  </>
                ) : (
-                 <span className="text-slate-400 text-base py-1 uppercase tracking-widest font-mono">VS</span>
+                 <span className="text-base uppercase tracking-widest" style={{ color: 'var(--fgb-ink-400)', fontFamily: 'var(--font-mono)' }}>VS</span>
                )}
             </div>
 
-            <div className="text-left flex-1">
+            <div className="flex items-center gap-3 flex-1">
+              <div className="w-9 h-9 md:w-10 md:h-10 flex-shrink-0 rounded overflow-hidden" style={{ background: 'var(--fgb-green-50)' }}>
+                <FgbImage variant="logo" src={game.away_team?.logoUrl ?? game.away_team?.logo_url} initials={game.away_team?.name?.slice(0,2)} alt={game.away_team?.name ?? 'Time visitante'} tint="navy" />
+              </div>
               <h3 className="fgb-display text-lg md:text-xl">{game.away_team?.name}</h3>
             </div>
           </div>

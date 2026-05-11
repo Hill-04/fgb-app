@@ -1,13 +1,22 @@
 import type { Metadata } from 'next'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
+import { Landmark } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Diretoria Executiva — FGB',
   description: 'Liderança e compromisso com a evolução do basketball gaúcho. Conheça a diretoria da FGB para a gestão 2024–2028.',
 }
 
-const diretores = [
+type Diretor = {
+  name: string
+  cargo: string
+  sigla: string
+  photoUrl?: string
+}
+
+const diretores: Diretor[] = [
   { name: 'Antônio Krebs Jr.', cargo: 'Presidente', sigla: 'AK' },
   { name: 'Mauro Dreher', cargo: 'Vice-Presidente', sigla: 'MD' },
   { name: 'Lizete Calloni', cargo: 'Secretária', sigla: 'LC' },
@@ -62,8 +71,14 @@ export default function DiretoriaPage() {
               </div>
             </div>
             <div className="relative fgb-fade-up" style={{ animationDelay: '0.3s' }}>
-               <div className="aspect-square bg-[var(--verde)] rounded-3xl overflow-hidden shadow-2xl relative">
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+               <div className="aspect-square rounded-3xl overflow-hidden shadow-2xl relative">
+                  <FgbImage
+                    variant="cover"
+                    tint="green"
+                    icon={Landmark}
+                    alt="Assembleia oficial da FGB — gestão 2024–2028"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
                   <div className="absolute inset-x-8 bottom-8">
                      <div className="fgb-label text-[var(--yellow)] mb-1">Assembleia Oficial</div>
                      <div className="fgb-display text-white text-xl">Gestão Eleita por Unanimidade</div>
@@ -86,8 +101,14 @@ export default function DiretoriaPage() {
                 className="fgb-card-3xl fgb-fade-up" 
                 style={{ animationDelay: `${0.1 * (i + 4)}s` }}
               >
-                <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-white shadow-sm overflow-hidden text-2xl font-bold text-slate-400">
-                  {d.sigla}
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                  <FgbImage
+                    variant="avatar"
+                    src={d.photoUrl}
+                    initials={d.sigla}
+                    alt={d.name}
+                    tint="green"
+                  />
                 </div>
                 <div className="text-center">
                   <span className="fgb-badge-verde mb-2 inline-block">{d.cargo}</span>

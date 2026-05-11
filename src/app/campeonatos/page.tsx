@@ -3,6 +3,11 @@ import Link from 'next/link'
 import { prisma } from '@/lib/db'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
+import { FgbImage } from '@/components/FgbImage'
+import { CountUp } from '@/components/motion/CountUp'
+import { StaggerGrid } from '@/components/motion/StaggerGrid'
+import { Mars, Venus, Users, Volleyball } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Campeonatos — FGB',
@@ -27,10 +32,16 @@ function getStatusBadge(status: string) {
   return 'fgb-badge-outline'
 }
 
-function getSexIcon(sex: string) {
-  if (sex === 'feminino') return '♀'
-  if (sex === 'masculino') return '♂'
-  return '⚥'
+function getSexIcon(sex: string): LucideIcon {
+  if (sex === 'feminino') return Venus
+  if (sex === 'masculino') return Mars
+  return Users
+}
+
+function getSexTint(sex: string): 'green' | 'yellow' | 'navy' {
+  if (sex === 'feminino') return 'yellow'
+  if (sex === 'masculino') return 'green'
+  return 'navy'
 }
 
 export default async function CampeonatosPage() {
@@ -52,35 +63,45 @@ export default async function CampeonatosPage() {
 
   function ChampionshipCard({ c }: { c: typeof allChampionships[0] }) {
     const isFinished = c.status === 'FINISHED'
+    const SexIcon = getSexIcon(c.sex)
     return (
       <Link
         href={`/campeonatos/${c.id}`}
-        className={`fgb-card block p-6 ${isFinished ? '' : 'admin-card-verde'}`}
+        className={`fgb-card block overflow-hidden ${isFinished ? '' : 'admin-card-verde'}`}
       >
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{getSexIcon(c.sex)}</span>
-            <span className="text-2xl">🏀</span>
+        <div className="aspect-[16/9] relative">
+          <FgbImage
+            variant="cover"
+            tint={getSexTint(c.sex)}
+            icon={Volleyball}
+            alt={c.name}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-full" style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(8px)' }}>
+            <SexIcon size={14} style={{ color: 'var(--fgb-yellow-400)', strokeWidth: 2 }} aria-hidden />
+            <span className="fgb-label text-white" style={{ fontSize: 9 }}>{c.sex === 'feminino' ? 'Feminino' : c.sex === 'masculino' ? 'Masculino' : 'Misto'}</span>
           </div>
-          <span className={`fgb-badge ${getStatusBadge(c.status)}`}>
+          <span className={`fgb-badge ${getStatusBadge(c.status)} absolute top-3 right-3`}>
             {getStatusLabel(c.status)}
           </span>
         </div>
-        <h3 className="fgb-display mb-2 text-[18px] text-[var(--black)] transition-colors line-clamp-2">
-          {c.name}
-        </h3>
-        <p className="fgb-label text-[var(--gray)] mb-4">
-          {c.categories.length > 0
-            ? c.categories.map((cat) => cat.name).join(' · ')
-            : 'Categorias a definir'}
-        </p>
-        <div className="flex items-center justify-between pt-4" style={{ borderTop: '0.5px solid var(--border)' }}>
-          <div className="flex items-center gap-3 fgb-label text-[var(--gray)]">
-            <span>{c._count.registrations} equipes</span>
-            <span>·</span>
-            <span>{c._count.games} jogos</span>
+        <div className="p-6">
+          <h3 className="fgb-display mb-2 text-[18px] text-[var(--black)] transition-colors line-clamp-2">
+            {c.name}
+          </h3>
+          <p className="fgb-label text-[var(--gray)] mb-4">
+            {c.categories.length > 0
+              ? c.categories.map((cat) => cat.name).join(' · ')
+              : 'Categorias a definir'}
+          </p>
+          <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="flex items-center gap-3 fgb-label text-[var(--gray)]">
+              <CountUp value={c._count.registrations} suffix=" equipes" />
+              <span>·</span>
+              <CountUp value={c._count.games} suffix=" jogos" />
+            </div>
+            <span className="fgb-label text-[var(--verde)]">Ver →</span>
           </div>
-          <span className="fgb-label text-[var(--verde)]">Ver →</span>
         </div>
       </Link>
     )
@@ -102,11 +123,11 @@ export default async function CampeonatosPage() {
             <p className="fgb-label text-[var(--gray)]">{emptyMsg}</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" stagger={0.08}>
             {items.map((c: any) => (
               <ChampionshipCard key={c.id} c={c} />
             ))}
-          </div>
+          </StaggerGrid>
         )}
       </section>
     )
