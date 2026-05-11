@@ -1,4 +1,4 @@
-import { History, FileCheck, RotateCcw, Send, ShieldCheck, AlertTriangle, X as XIcon } from "lucide-react"
+import { History, FileCheck, RotateCcw, Send, ShieldCheck, AlertTriangle, X as XIcon, FileDown } from "lucide-react"
 
 type Version = {
   version: number
@@ -8,6 +8,7 @@ type Version = {
   reason: string | null
   createdAt: Date
   createdByUserId: string | null
+  officialPdfUrl?: string | null
 }
 
 type AuditEntry = {
@@ -180,27 +181,49 @@ export function VersionHistoryPanel({ versions, audit }: Props) {
                         {v.reason}
                       </p>
                     )}
-                    <p
-                      className="fgb-label mt-2"
-                      style={{
-                        fontSize: 9,
-                        color: "var(--fgb-ink-400)",
-                        textTransform: "none",
-                        letterSpacing: 0,
-                        fontFamily: "var(--font-mono)",
-                      }}
-                    >
-                      {v.finalizedAt
-                        ? new Date(v.finalizedAt).toLocaleString("pt-BR", {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })
-                        : "—"}
-                      {v.createdByUserId ? ` · ${v.createdByUserId}` : ""}
-                    </p>
+                    <div className="flex items-center justify-between gap-2 mt-2 flex-wrap">
+                      <p
+                        className="fgb-label"
+                        style={{
+                          fontSize: 9,
+                          color: "var(--fgb-ink-400)",
+                          textTransform: "none",
+                          letterSpacing: 0,
+                          fontFamily: "var(--font-mono)",
+                        }}
+                      >
+                        {v.finalizedAt
+                          ? new Date(v.finalizedAt).toLocaleString("pt-BR", {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                        {v.createdByUserId ? ` · ${v.createdByUserId}` : ""}
+                      </p>
+                      {v.officialPdfUrl && (
+                        <a
+                          href={v.officialPdfUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="fgb-label inline-flex items-center gap-1 transition-colors"
+                          style={{
+                            fontSize: 9,
+                            color: "var(--fgb-green-700)",
+                            letterSpacing: "0.16em",
+                            padding: "3px 8px",
+                            border: "1px solid var(--fgb-green-200)",
+                            borderRadius: 4,
+                            background: "#fff",
+                          }}
+                        >
+                          <FileDown size={10} aria-hidden />
+                          PDF
+                        </a>
+                      )}
+                    </div>
                   </div>
                 </li>
               ))}

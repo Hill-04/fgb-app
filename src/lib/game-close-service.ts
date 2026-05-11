@@ -23,6 +23,7 @@
 
 import { prisma } from '@/lib/db'
 import { recalculateStandings } from '@/lib/standings'
+import { generateAndUploadSumulaPdf } from '@/lib/game-pdf'
 import {
   assertCanTransition,
   type GameLifecycleState,
@@ -225,7 +226,17 @@ export async function closeGame(input: CloseGameInput): Promise<CloseGameResult>
       },
     })
 
-    return { reportId: report.id, version: newVersion }
+    // Recupera id da version criada para usar na geracao do PDF (depois da tx)
+    const createdVersion = await tx.gameOfficialReportVersion.findUnique({
+      where: { reportId_version: { reportId: report.id, version: newVersion } },
+      select: { id: true },
+    })
+
+    return {
+      reportId: report.id,
+      version: newVersion,
+      reportVersionId: createdVersion?.id ?? null,
+    }
   })
 
   // 5. Standings — fora da transacao (read+aggregate, idempotente)
@@ -236,6 +247,26 @@ export async function closeGame(input: CloseGameInput): Promise<CloseGameResult>
     // nao propaga — Standing nao-recalculado e recuperavel via re-run manual
   }
 
+  // 6. PDF da sumula — best-effort, nao bloqueia close
+  const warnings: string[] = parity.ok ? [] : ['Fechado com erros de paridade (forced via allowParityErrors).']
+
+  if (txResult.reportVersionId) {
+    try {
+      const pdfResult = await generateAndUploadSumulaPdf({
+        gameId,
+        version: txResult.version,
+        reportVersionId: txResult.reportVersionId,
+      })
+      if (!pdfResult.ok) {
+        console.error(`[closeGame] PDF falhou para ${gameId} v${txResult.version}:`, pdfResult.error)
+        warnings.push(`PDF da sumula nao foi gerado: ${pdfResult.error}. Pode ser gerado manualmente depois.`)
+      }
+    } catch (err: any) {
+      console.error(`[closeGame] PDF falhou (excecao) para ${gameId}:`, err)
+      warnings.push(`PDF da sumula nao foi gerado: ${err?.message ?? 'erro'}. Pode ser gerado manualmente depois.`)
+    }
+  }
+
   return {
     ok: true,
     gameId,
@@ -244,7 +275,7 @@ export async function closeGame(input: CloseGameInput): Promise<CloseGameResult>
     versionCreated: txResult.version,
     reportId: txResult.reportId,
     parityErrors: parity.ok ? [] : parity.errors,
-    warnings: parity.ok ? [] : ['Fechado com erros de paridade (forced via allowParityErrors).'],
+    warnings,
   }
 }
 
@@ -382,6 +413,7 @@ export async function readGameLifecycle(gameId: string) {
         reason: true,
         createdAt: true,
         createdByUserId: true,
+        officialPdfUrl: true,
       },
     }),
     prisma.gameAuditLog.findMany({
