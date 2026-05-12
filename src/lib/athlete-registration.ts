@@ -115,6 +115,40 @@ type RequestDraftInput = {
   email?: string | null
   requestedCategoryLabel?: string | null
   cbbRegistrationNumber?: string | null
+  // PM-06.N: dados pessoais
+  sex?: string | null
+  nationality?: string | null
+  maritalStatus?: string | null
+  education?: string | null
+  // PM-06.N: documentos
+  rg?: string | null
+  rgOrgan?: string | null
+  rgDate?: string | Date | null
+  cpf?: string | null
+  // PM-06.N: endereço
+  cep?: string | null
+  state?: string | null
+  city?: string | null
+  address?: string | null
+  addressNum?: string | null
+  addressComp?: string | null
+  // PM-06.N: filiação
+  fatherName?: string | null
+  parentContactPhone?: string | null
+  parentContactRole?: 'MOTHER' | 'FATHER' | string | null
+  // PM-06.N: esportivo
+  height?: number | string | null
+  weight?: number | string | null
+  position?: string | null
+  jerseyNumber?: number | string | null
+  // PM-06.N: uploads
+  photoUrl?: string | null
+  docCPFFrontUrl?: string | null
+  docCPFBackUrl?: string | null
+  docRGFrontUrl?: string | null
+  docRGBackUrl?: string | null
+  docBirthCertUrl?: string | null
+  docOtherUrl?: string | null
 }
 
 function normalizeDraftInput(input: RequestDraftInput) {
@@ -135,6 +169,28 @@ function normalizeDraftInput(input: RequestDraftInput) {
     throw new AthleteRegistrationError('Informe o documento do atleta.', 400)
   }
 
+  // PM-06.N: parsers tolerantes para campos opcionais (inválido → null)
+  const optStr = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
+  const optDate = (v: unknown) => {
+    if (!v) return null
+    const d = new Date(v as any)
+    return Number.isNaN(d.getTime()) ? null : d
+  }
+  const optFloat = (v: unknown) => {
+    if (v === null || v === undefined || v === '') return null
+    const n = typeof v === 'number' ? v : parseFloat(String(v).replace(',', '.'))
+    return Number.isNaN(n) ? null : n
+  }
+  const optInt = (v: unknown) => {
+    if (v === null || v === undefined || v === '') return null
+    const n = typeof v === 'number' ? Math.trunc(v) : parseInt(String(v), 10)
+    return Number.isNaN(n) ? null : n
+  }
+  const optParentRole = (v: unknown) => {
+    const s = optStr(v)?.toUpperCase()
+    return s === 'MOTHER' || s === 'FATHER' ? s : null
+  }
+
   return {
     fullName,
     birthDate,
@@ -145,6 +201,40 @@ function normalizeDraftInput(input: RequestDraftInput) {
     email: input.email?.trim() || null,
     requestedCategoryLabel: input.requestedCategoryLabel?.trim() || null,
     cbbRegistrationNumber: input.cbbRegistrationNumber?.trim() || null,
+    // PM-06.N: dados pessoais
+    sex: optStr(input.sex),
+    nationality: optStr(input.nationality),
+    maritalStatus: optStr(input.maritalStatus),
+    education: optStr(input.education),
+    // PM-06.N: documentos
+    rg: optStr(input.rg),
+    rgOrgan: optStr(input.rgOrgan),
+    rgDate: optDate(input.rgDate),
+    cpf: optStr(input.cpf),
+    // PM-06.N: endereço
+    cep: optStr(input.cep),
+    state: optStr(input.state),
+    city: optStr(input.city),
+    address: optStr(input.address),
+    addressNum: optStr(input.addressNum),
+    addressComp: optStr(input.addressComp),
+    // PM-06.N: filiação
+    fatherName: optStr(input.fatherName),
+    parentContactPhone: optStr(input.parentContactPhone),
+    parentContactRole: optParentRole(input.parentContactRole),
+    // PM-06.N: esportivo
+    height: optFloat(input.height),
+    weight: optFloat(input.weight),
+    position: optStr(input.position),
+    jerseyNumber: optInt(input.jerseyNumber),
+    // PM-06.N: uploads
+    photoUrl: optStr(input.photoUrl),
+    docCPFFrontUrl: optStr(input.docCPFFrontUrl),
+    docCPFBackUrl: optStr(input.docCPFBackUrl),
+    docRGFrontUrl: optStr(input.docRGFrontUrl),
+    docRGBackUrl: optStr(input.docRGBackUrl),
+    docBirthCertUrl: optStr(input.docBirthCertUrl),
+    docOtherUrl: optStr(input.docOtherUrl),
   }
 }
 
