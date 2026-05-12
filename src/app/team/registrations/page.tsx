@@ -92,7 +92,7 @@ export default async function TeamRegistrationsPage() {
         description="Acompanhe o status de todas as inscrições da sua equipe."
         icon={<ClipboardList className="w-4 h-4" />}
         actions={
-          <Link href="/team/championships" className="fgb-btn-primary h-11 px-6 text-sm">
+          <Link href="/team/campeonatos?tab=fgb" className="fgb-btn-primary h-11 px-6 text-sm">
             + Nova Inscrição
           </Link>
         }
@@ -119,7 +119,7 @@ export default async function TeamRegistrationsPage() {
           <p className="fgb-label text-[var(--gray)] mb-6" style={{ textTransform: 'none', letterSpacing: 0 }}>
             Sua equipe ainda não se inscreveu em nenhum campeonato.
           </p>
-          <Link href="/team/championships" className="fgb-btn-primary h-11 px-8">
+          <Link href="/team/campeonatos?tab=fgb" className="fgb-btn-primary h-11 px-8">
             Ver Campeonatos Disponíveis
           </Link>
         </div>

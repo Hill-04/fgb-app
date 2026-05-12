@@ -161,7 +161,7 @@ export default async function TeamDashboardPage() {
                <ChevronRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform" />
              </Link>
              <Link
-               href="/team/championships"
+               href="/team/campeonatos?tab=fgb"
                className="fgb-btn-primary h-11 px-6 text-xs flex items-center justify-center hover:scale-105 active:scale-95"
              >
                Novas Inscrições
@@ -219,7 +219,7 @@ export default async function TeamDashboardPage() {
                   return (
                     <Link
                       key={championship.id}
-                      href={isRegistered ? `/campeonatos/${championship.id}` : `/team/championships/${championship.id}/register`}
+                      href={isRegistered ? `/campeonatos/${championship.id}` : `/team/campeonatos/${championship.id}/register`}
                       className={cn(
                         "fgb-card bg-white p-6 rounded-[2rem] flex flex-col justify-between hover:shadow-lg transition-all duration-500 group relative overflow-hidden",
                         isRegistered ? "border-green-200" : "border-[var(--border)] hover:border-fgb-yellow-300"
