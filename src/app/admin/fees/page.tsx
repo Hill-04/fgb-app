@@ -14,8 +14,8 @@ const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
   PENDING:     { label: 'Pendente',   cls: 'bg-yellow-100 text-yellow-700' },
   PAID:        { label: 'Pago',       cls: 'bg-green-100 text-green-700' },
   OVERDUE:     { label: 'Vencido',    cls: 'bg-red-100 text-red-700' },
-  EXEMPT:      { label: 'Isento',     cls: 'bg-gray-100 text-gray-500' },
-  NEGOTIATING: { label: 'Negociando', cls: 'bg-blue-100 text-blue-700' },
+  EXEMPT:      { label: 'Isento',     cls: 'bg-fgb-ink-100 text-fgb-ink-500' },
+  NEGOTIATING: { label: 'Negociando', cls: 'bg-fgb-navy-100 text-fgb-navy-700' },
 }
 
 const FEE_TYPES = ['REGISTRATION', 'ANNUAL', 'ATHLETE', 'REFEREE', 'PENALTY', 'OTHER']

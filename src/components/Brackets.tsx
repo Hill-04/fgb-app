@@ -52,7 +52,7 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
             </div>
             <span className={cn(
               "text-[11px] font-black uppercase tracking-tight truncate",
-              isHomeWinner ? "text-[var(--black)]" : isScheduled ? "text-slate-400" : "text-[var(--gray)]"
+              isHomeWinner ? "text-[var(--black)]" : isScheduled ? "text-fgb-ink-400" : "text-[var(--gray)]"
             )}>
               {game.homeTeam.name}
             </span>
@@ -85,7 +85,7 @@ function MatchItem({ game, isFinal }: { game: Game, isFinal?: boolean }) {
             </div>
             <span className={cn(
               "text-[11px] font-black uppercase tracking-tight truncate",
-              isAwayWinner ? "text-[var(--black)]" : isScheduled ? "text-slate-400" : "text-[var(--gray)]"
+              isAwayWinner ? "text-[var(--black)]" : isScheduled ? "text-fgb-ink-400" : "text-[var(--gray)]"
             )}>
               {game.awayTeam.name}
             </span>

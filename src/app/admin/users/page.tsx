@@ -201,7 +201,7 @@ export default function UsersManagementPage() {
                   <tr key={user.id} className="hover:bg-[var(--gray-l)] transition-colors group">
                     <td className="px-8 py-6">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${user.isAdmin ? 'bg-orange-500/10 text-orange-500' : 'bg-slate-100 text-[var(--gray)]'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${user.isAdmin ? 'bg-fgb-yellow-500/10 text-fgb-yellow-500' : 'bg-fgb-ink-100 text-[var(--gray)]'}`}>
                           {user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
@@ -242,7 +242,7 @@ export default function UsersManagementPage() {
                             title={user.isAdmin ? "Revogar Admin" : "Tornar Admin"}
                             className="hover:bg-[var(--gray-l)]"
                           >
-                            <Shield className={`w-4 h-4 ${user.isAdmin ? 'text-[var(--red)]' : 'text-orange-400'}`} />
+                            <Shield className={`w-4 h-4 ${user.isAdmin ? 'text-[var(--red)]' : 'text-fgb-yellow-400'}`} />
                           </Button>
                         )}
                         <Button variant="ghost" size="icon" onClick={() => openEditDialog(user)} className="text-[var(--gray)] hover:text-[var(--black)] hover:bg-[var(--gray-l)]">
@@ -306,7 +306,7 @@ export default function UsersManagementPage() {
                           <div className="text-xs text-[var(--gray)] font-sans">Acesso total ao painel da federação</div>
                         </div>
                       </div>
-                      <div className={`w-10 h-6 rounded-full relative transition-colors ${formIsAdmin ? 'bg-[var(--red)]' : 'bg-slate-300'}`}>
+                      <div className={`w-10 h-6 rounded-full relative transition-colors ${formIsAdmin ? 'bg-[var(--red)]' : 'bg-fgb-ink-300'}`}>
                         <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formIsAdmin ? 'left-5' : 'left-1'}`} />
                       </div>
                     </div>

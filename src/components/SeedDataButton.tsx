@@ -45,7 +45,7 @@ export function SeedDataButton() {
           status === 'success'
             ? 'bg-[var(--verde-light)] border-green-200 text-[var(--verde)] cursor-default'
             : status === 'loading'
-            ? 'bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed'
+            ? 'bg-fgb-ink-100 border-fgb-ink-200 text-fgb-ink-400 cursor-not-allowed'
             : 'bg-[#E8F4FF] border-[#B3D9FF] text-[#0066CC] hover:bg-[#0066CC] hover:text-white hover:border-[#0066CC]'
         }`}
       >
@@ -70,7 +70,7 @@ export function SeedDataButton() {
               <li>• {result.stats.athletes} atletas importados</li>
               <li>• {result.stats.coaches} treinadores importados</li>
               {result.stats.errors?.length > 0 && (
-                <li className="text-amber-600">• {result.stats.errors.length} avisos (ver console)</li>
+                <li className="text-fgb-yellow-600">• {result.stats.errors.length} avisos (ver console)</li>
               )}
             </ul>
           )}

@@ -42,11 +42,11 @@ function ControlButton({
 }) {
   const toneClass =
     tone === 'start'
-      ? 'border-[#145530]/40 bg-[#145530]/18 text-emerald-100'
+      ? 'border-[#145530]/40 bg-[#145530]/18 text-fgb-green-100'
       : tone === 'warn'
-        ? 'border-[#F5C200]/35 bg-[#F5C200]/12 text-[#F5C200]'
+        ? 'border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/12 text-[var(--fgb-yellow-500)]'
         : tone === 'danger'
-          ? 'border-[#CC1016]/35 bg-[#CC1016]/14 text-[#FFB4B7]'
+          ? 'border-[var(--fgb-red-500)]/35 bg-[var(--fgb-red-500)]/14 text-[#FFB4B7]'
           : 'border-white/10 bg-white/[0.05] text-white/80'
 
   return (
@@ -58,7 +58,7 @@ function ControlButton({
       className={[
         'flex min-h-[52px] flex-col items-start justify-between rounded-[18px] border px-3 py-2 text-left transition duration-150',
         toneClass,
-        active ? 'ring-2 ring-[#F5C200] ring-offset-0 shadow-[0_0_0_1px_rgba(245,194,0,0.28)]' : '',
+        active ? 'ring-2 ring-[var(--fgb-yellow-500)] ring-offset-0 shadow-[0_0_0_1px_rgba(245,194,0,0.28)]' : '',
         disabled ? 'cursor-not-allowed opacity-35' : 'hover:bg-white/[0.1]',
       ].join(' ')}
     >
@@ -102,7 +102,7 @@ export function LiveFibaControls({
     return (
       <footer className="rounded-[22px] border border-white/10 bg-[#070a10]/95 p-2 text-white shadow-[0_24px_70px_rgba(0,0,0,0.42)] backdrop-blur-xl">
         <div className="mb-1.5 flex items-center justify-between gap-2 px-1">
-          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#F5C200]">Controles fixos</p>
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--fgb-yellow-500)]">Controles fixos</p>
           <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/62">
             P{tableModel.currentPeriod} / {tableModel.liveStatus}
           </span>
@@ -175,13 +175,13 @@ export function LiveFibaControls({
             <div className="grid min-h-[52px] gap-1 rounded-[18px] border border-white/10 bg-white/[0.05] px-3 py-2">
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11px] font-black uppercase tracking-[0.08em] text-white">Shot clock</span>
-                <span className="text-[24px] font-black leading-none text-[#F5C200]">{Math.max(shotClock, 0)}</span>
+                <span className="text-[24px] font-black leading-none text-[var(--fgb-yellow-500)]">{Math.max(shotClock, 0)}</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
                   type="button"
                   onClick={() => onShotClockReset(24)}
-                  className="rounded-xl border border-[#F5C200]/35 bg-[#F5C200]/12 px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#F5C200] transition hover:bg-[#F5C200]/18"
+                  className="rounded-xl border border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/12 px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--fgb-yellow-500)] transition hover:bg-[var(--fgb-yellow-500)]/18"
                 >
                   24s
                 </button>
@@ -200,7 +200,7 @@ export function LiveFibaControls({
             <div className="grid gap-1 rounded-[18px] border border-white/10 bg-white/[0.04] px-3 py-2">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[9px] font-black uppercase tracking-[0.16em] text-white/38">Estado operacional</p>
-                <p className={['text-[9px] font-black uppercase tracking-[0.14em]', isSyncing ? 'text-[#F5C200]' : 'text-emerald-100'].join(' ')}>
+                <p className={['text-[9px] font-black uppercase tracking-[0.14em]', isSyncing ? 'text-[var(--fgb-yellow-500)]' : 'text-fgb-green-100'].join(' ')}>
                   {isSyncing ? `Sync ${pendingCount}` : 'Mesa estavel'}
                 </p>
               </div>
@@ -210,7 +210,7 @@ export function LiveFibaControls({
               <p className="truncate text-[10px] font-semibold text-white/68">
                 Proxima acao: {controlAvailability.startOrResume.label}
               </p>
-              <p className={['truncate text-[10px] font-black uppercase tracking-[0.12em]', selectedModeActive ? 'text-[#F5C200]' : 'text-white/62'].join(' ')}>
+              <p className={['truncate text-[10px] font-black uppercase tracking-[0.12em]', selectedModeActive ? 'text-[var(--fgb-yellow-500)]' : 'text-white/62'].join(' ')}>
                 {selectedPlayerLabel || 'Selecione um jogador para operar'}
               </p>
               {error ? <p className="text-[10px] font-semibold text-[#FFB4B7]">{error}</p> : null}
@@ -236,7 +236,7 @@ export function LiveFibaControls({
   return (
     <footer className="rounded-[24px] border border-white/10 bg-[#070a10]/95 p-2 text-white shadow-[0_30px_90px_rgba(0,0,0,0.46)] backdrop-blur-xl">
       <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2 px-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#F5C200]">Controles fixos</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--fgb-yellow-500)]">Controles fixos</p>
         <span className="rounded-full border border-white/10 bg-white/[0.05] px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-white/62">
           P{tableModel.currentPeriod} / {tableModel.liveStatus}
         </span>
@@ -309,13 +309,13 @@ export function LiveFibaControls({
           <div className="grid min-h-[52px] gap-1 rounded-[18px] border border-white/10 bg-white/[0.05] px-3 py-2">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[12px] font-black uppercase tracking-[0.08em] text-white">Shot clock</span>
-              <span className="text-[28px] font-black leading-none text-[#F5C200]">{Math.max(shotClock, 0)}</span>
+              <span className="text-[28px] font-black leading-none text-[var(--fgb-yellow-500)]">{Math.max(shotClock, 0)}</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
                 type="button"
                 onClick={() => onShotClockReset(24)}
-                className="rounded-xl border border-[#F5C200]/35 bg-[#F5C200]/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-[#F5C200] transition hover:bg-[#F5C200]/18"
+                className="rounded-xl border border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-[var(--fgb-yellow-500)] transition hover:bg-[var(--fgb-yellow-500)]/18"
               >
                 24s
               </button>
@@ -334,7 +334,7 @@ export function LiveFibaControls({
           <div className="grid gap-1 rounded-[20px] border border-white/10 bg-white/[0.04] px-3 py-2">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/38">Estado operacional</p>
-              <p className={['text-[9px] font-black uppercase tracking-[0.14em]', isSyncing ? 'text-[#F5C200]' : 'text-emerald-100'].join(' ')}>
+              <p className={['text-[9px] font-black uppercase tracking-[0.14em]', isSyncing ? 'text-[var(--fgb-yellow-500)]' : 'text-fgb-green-100'].join(' ')}>
                 {isSyncing ? `Sincronizando ${pendingCount}` : 'Mesa estavel'}
               </p>
             </div>
@@ -347,7 +347,7 @@ export function LiveFibaControls({
             <div
               className={[
                 'rounded-2xl border px-3 py-2 transition',
-                selectedModeActive ? 'border-[#F5C200]/35 bg-[#F5C200]/10' : 'border-white/10 bg-black/20',
+                selectedModeActive ? 'border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/10' : 'border-white/10 bg-black/20',
               ].join(' ')}
             >
               <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/38">Jogador ativo</p>

@@ -40,7 +40,7 @@ function getSourceClass(item: InvoiceItem) {
   if (item.sourceType === 'REGISTRATION_FEE' || item.registrationFeeId) return 'border-green-200 bg-green-50 text-green-700'
   if (item.sourceType === 'DISCOUNT') return 'border-yellow-200 bg-yellow-50 text-yellow-800'
   if (item.sourceType === 'ADJUSTMENT') return 'border-red-200 bg-red-50 text-red-700'
-  return 'border-slate-200 bg-slate-50 text-slate-700'
+  return 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700'
 }
 
 export function AdminInvoiceItemsManager({

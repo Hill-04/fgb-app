@@ -15,9 +15,9 @@ const STATUS_LABEL: Record<string, string> = {
 }
 
 const STATUS_COLOR: Record<string, string> = {
-  SCHEDULED: 'bg-gray-100 text-gray-600',
+  SCHEDULED: 'bg-fgb-ink-100 text-fgb-ink-600',
   LIVE:      'bg-green-100 text-green-700',
-  FINISHED:  'bg-blue-100 text-blue-700',
+  FINISHED:  'bg-fgb-navy-100 text-fgb-navy-700',
   CANCELLED: 'bg-red-100 text-red-600',
   POSTPONED: 'bg-yellow-100 text-yellow-700',
 }
@@ -78,11 +78,11 @@ export default async function ChampionshipGameHubPage({
           <span className="fgb-label text-[var(--gray)]">
             {game.championship.name} {game.championship.year} · {game.category.name}
           </span>
-          <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${STATUS_COLOR[game.status] ?? 'bg-gray-100 text-gray-600'}`}>
+          <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${STATUS_COLOR[game.status] ?? 'bg-fgb-ink-100 text-fgb-ink-600'}`}>
             {STATUS_LABEL[game.status] ?? game.status}
           </span>
           {game.isHistoricallyLocked && (
-            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-fgb-yellow-100 text-fgb-yellow-800">
               Travada
             </span>
           )}

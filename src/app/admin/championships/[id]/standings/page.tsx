@@ -112,7 +112,7 @@ export default async function AdminStandingsPage({
               {/* Section Header */}
               <div className="bg-[var(--gray-l)] px-8 py-6 border-b border-[var(--border)] flex justify-between items-center">
                  <div className="flex items-center gap-4">
-                    <div className="w-1.5 h-8 bg-orange-600 rounded-full" />
+                    <div className="w-1.5 h-8 bg-fgb-yellow-600 rounded-full" />
                     <div>
                       <h3 className="fgb-display text-xl text-[var(--black)] leading-none">{catGroup.name}</h3>
                       <p className="fgb-label text-[var(--gray)] mt-1.5" style={{ fontSize: 10, letterSpacing: 2 }}>Campeonato Estadual</p>
@@ -181,16 +181,16 @@ export default async function AdminStandingsPage({
                           <th className="px-4 py-5 text-center">PF</th>
                           <th className="px-4 py-5 text-center">PC</th>
                           <th className="px-4 py-5 text-center">SC</th>
-                          <th className="px-10 py-5 text-center bg-gray-50 text-[var(--black)] border-l border-[var(--border)]">PTS</th>
+                          <th className="px-10 py-5 text-center bg-fgb-ink-50 text-[var(--black)] border-l border-[var(--border)]">PTS</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
                         {catGroup.standings.map((row: any, index: number) => {
                           const isTop3 = index < 3
                           const medalColors = [
-                            "text-amber-500 bg-amber-50 border-amber-200", // Gold
-                            "text-slate-500 bg-slate-50 border-slate-200", // Silver
-                            "text-amber-700 bg-orange-50 border-orange-200"  // Bronze
+                            "text-fgb-yellow-500 bg-fgb-yellow-50 border-fgb-yellow-200", // Gold
+                            "text-fgb-ink-500 bg-fgb-ink-50 border-fgb-ink-200", // Silver
+                            "text-fgb-yellow-700 bg-fgb-yellow-50 border-fgb-yellow-200"  // Bronze
                           ]
                           
                           return (
@@ -214,7 +214,7 @@ export default async function AdminStandingsPage({
                                     )}
                                   </div>
                                   <div>
-                                    <p className="text-sm font-black text-[var(--black)] group-hover:text-orange-600 transition-colors uppercase tracking-tight">{row.team.name}</p>
+                                    <p className="text-sm font-black text-[var(--black)] group-hover:text-fgb-yellow-600 transition-colors uppercase tracking-tight">{row.team.name}</p>
                                     <div className="flex items-center gap-1.5 mt-1">
                                       <div className="w-1 h-1 rounded-full bg-[var(--verde)]" />
                                       <span className="text-[9px] font-bold text-[var(--gray)] uppercase tracking-widest">Inscrito</span>
@@ -229,12 +229,12 @@ export default async function AdminStandingsPage({
                               <td className="px-4 py-5 text-center text-[11px] font-bold text-[var(--gray)] tabular-nums">{row.pointsAg}</td>
                               <td className="px-4 py-5 text-center text-[11px] font-black italic tabular-nums">
                                 <span className={cn(
-                                  row.pointsFor - row.pointsAg > 0 ? "text-blue-600" : row.pointsFor - row.pointsAg < 0 ? "text-orange-600" : "text-[var(--gray)]"
+                                  row.pointsFor - row.pointsAg > 0 ? "text-fgb-navy-600" : row.pointsFor - row.pointsAg < 0 ? "text-fgb-yellow-600" : "text-[var(--gray)]"
                                 )}>
                                   {(row.pointsFor - row.pointsAg) > 0 ? `+${row.pointsFor - row.pointsAg}` : row.pointsFor - row.pointsAg}
                                 </span>
                               </td>
-                              <td className="px-10 py-5 text-center bg-gray-50 border-l border-[var(--border)]">
+                              <td className="px-10 py-5 text-center bg-fgb-ink-50 border-l border-[var(--border)]">
                                 <span className="text-2xl font-black text-[var(--black)] leading-none tracking-tighter">{row.points}</span>
                               </td>
                             </tr>
@@ -248,7 +248,7 @@ export default async function AdminStandingsPage({
                   {catGroup.games.length > 0 && (
                     <div className="p-8 border-t border-[var(--border)] bg-[var(--gray-l)]">
                       <div className="mb-8 flex items-center gap-3">
-                         <Medal className="w-5 h-5 text-orange-600" />
+                         <Medal className="w-5 h-5 text-fgb-yellow-600" />
                          <div>
                            <h4 className="text-sm font-black text-[var(--black)] uppercase tracking-wider">Playoffs & Chaves</h4>
                            <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest">Fase Eliminatória Direta</p>

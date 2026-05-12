@@ -246,7 +246,7 @@ export function ManualRegistrationModal({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger render={
         (trigger as React.ReactElement) || (
-          <Button className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-bold rounded-xl h-12 px-6 shadow-lg shadow-orange-600/20 transition-all hover:scale-105 active:scale-95">
+          <Button className="bg-[var(--fgb-yellow-500)] hover:bg-[var(--fgb-yellow-700)] text-white font-bold rounded-xl h-12 px-6 shadow-lg shadow-fgb-yellow-600/20 transition-all hover:scale-105 active:scale-95">
             <Plus className="w-5 h-5 mr-2" />
             Inscrição Manual
           </Button>
@@ -257,7 +257,7 @@ export function ManualRegistrationModal({
           <DialogTitle className="text-2xl font-display font-black uppercase tracking-tight">
             {isEditing ? 'Editar Inscrição' : 'Registro Manual'}
           </DialogTitle>
-          <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest mt-1">
+          <p className="text-fgb-ink-500 text-[10px] uppercase font-black tracking-widest mt-1">
             {isEditing ? 'Alterar dados da inscrição da equipe' : 'Inscrever equipe já cadastrada no sistema'}
           </p>
         </DialogHeader>
@@ -266,27 +266,27 @@ export function ManualRegistrationModal({
           {/* Step 1: Select Team (Only if not editing) */}
           {!isEditing && (
             <div className="space-y-4">
-              <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[8px] text-white">1</span>
+              <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-fgb-ink-500 flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-fgb-ink-800 flex items-center justify-center text-[8px] text-white">1</span>
                 Selecionar Equipe
               </Label>
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-fgb-ink-500" />
                 <Input 
                   placeholder="Buscar equipe por nome ou cidade..."
                   value={search}
                   onChange={e => setSearch(e.target.value)}
-                  className="bg-white/5 border-white/10 pl-11 h-12 rounded-xl focus:border-[#FF6B00] transition-all"
+                  className="bg-white/5 border-white/10 pl-11 h-12 rounded-xl focus:border-[var(--fgb-yellow-500)] transition-all"
                 />
               </div>
               
               <div className="max-h-[180px] overflow-y-auto pr-2 space-y-2 custom-scrollbar">
                 {loadingTeams ? (
                   <div className="flex items-center justify-center p-8">
-                    <Loader2 className="w-6 h-6 text-[#FF6B00] animate-spin" />
+                    <Loader2 className="w-6 h-6 text-[var(--fgb-yellow-500)] animate-spin" />
                   </div>
                 ) : filteredTeams.length === 0 ? (
-                  <div className="p-8 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-2xl text-slate-500 text-xs font-medium">
+                  <div className="p-8 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-2xl text-fgb-ink-500 text-xs font-medium">
                     Nenhuma equipe encontrada
                   </div>
                 ) : (
@@ -294,7 +294,7 @@ export function ManualRegistrationModal({
                     <div 
                       key={team.id}
                       onClick={() => setSelectedTeamId(team.id)}
-                      className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${selectedTeamId === team.id ? 'bg-[#FF6B00]/10 border-[#FF6B00]/50 text-[#FF6B00]' : 'bg-white/[0.02] border-white/5 hover:border-white/15 text-slate-400'}`}
+                      className={`p-4 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${selectedTeamId === team.id ? 'bg-[var(--fgb-yellow-500)]/10 border-[var(--fgb-yellow-500)]/50 text-[var(--fgb-yellow-500)]' : 'bg-white/[0.02] border-white/5 hover:border-white/15 text-fgb-ink-400'}`}
                     >
                       <div>
                         <div className="font-bold text-sm uppercase tracking-tight">{team.name}</div>
@@ -313,8 +313,8 @@ export function ManualRegistrationModal({
             <div className="space-y-10">
               {/* Step 2: Select Categories */}
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-slate-800 flex items-center justify-center text-[8px] text-white">{isEditing ? '1' : '2'}</span>
+                <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-fgb-ink-500 flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-fgb-ink-800 flex items-center justify-center text-[8px] text-white">{isEditing ? '1' : '2'}</span>
                   Categorias
                 </Label>
                 <div className="grid grid-cols-1 gap-2">
@@ -322,12 +322,12 @@ export function ManualRegistrationModal({
                     <div 
                       key={cat.id}
                       onClick={() => toggleCategory(cat.name)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${selectedCategories.includes(cat.name) ? 'bg-[#FF6B00]/10 border-[#FF6B00]/40 text-[#FF6B00]' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/10'}`}
+                      className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${selectedCategories.includes(cat.name) ? 'bg-[var(--fgb-yellow-500)]/10 border-[var(--fgb-yellow-500)]/40 text-[var(--fgb-yellow-500)]' : 'bg-white/[0.02] border-white/5 text-fgb-ink-400 hover:border-white/10'}`}
                     >
                       <Checkbox 
                         checked={selectedCategories.includes(cat.name)} 
                         onCheckedChange={() => {}} 
-                        className="border-white/20 data-[state=checked]:bg-[#FF6B00]" 
+                        className="border-white/20 data-[state=checked]:bg-[var(--fgb-yellow-500)]" 
                       />
                       <span className="text-[10px] font-black uppercase tracking-tighter">{cat.name}</span>
                     </div>
@@ -338,16 +338,16 @@ export function ManualRegistrationModal({
               {/* Gym Hosting Section */}
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 flex items-center gap-2">
-                    <MapPin className="w-3 h-3 text-[#FF6B00]" />
+                  <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-fgb-ink-500 flex items-center gap-2">
+                    <MapPin className="w-3 h-3 text-[var(--fgb-yellow-500)]" />
                     Sede / Ginásio
                   </Label>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Pode sediar?</span>
+                    <span className="text-[10px] font-bold text-fgb-ink-500 uppercase tracking-widest">Pode sediar?</span>
                     <Switch 
                       checked={canHost} 
                       onCheckedChange={setCanHost} 
-                      className="data-[state=checked]:bg-[#FF6B00]"
+                      className="data-[state=checked]:bg-[var(--fgb-yellow-500)]"
                     />
                   </div>
                 </div>
@@ -389,8 +389,8 @@ export function ManualRegistrationModal({
             <div className="space-y-10">
               {/* Blocked Dates Section */}
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 flex items-center gap-2">
-                  <Calendar className="w-3 h-3 text-[#FF6B00]" />
+                <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-fgb-ink-500 flex items-center gap-2">
+                  <Calendar className="w-3 h-3 text-[var(--fgb-yellow-500)]" />
                   Datas Bloqueadas
                 </Label>
                 
@@ -405,7 +405,7 @@ export function ManualRegistrationModal({
                         <div 
                           key={idx}
                           onClick={() => !(satHoliday || sunHoliday) && toggleWeekend(weekend.sat, weekend.sun)}
-                          className={`p-3 rounded-xl border transition-all flex items-center justify-between ${blocked ? 'bg-red-500/10 border-red-500/40 text-red-500' : (satHoliday || sunHoliday) ? 'bg-slate-800/50 border-white/5 text-slate-500 cursor-not-allowed opacity-50' : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/10 cursor-pointer'}`}
+                          className={`p-3 rounded-xl border transition-all flex items-center justify-between ${blocked ? 'bg-red-500/10 border-red-500/40 text-red-500' : (satHoliday || sunHoliday) ? 'bg-fgb-ink-800/50 border-white/5 text-fgb-ink-500 cursor-not-allowed opacity-50' : 'bg-white/[0.02] border-white/5 text-fgb-ink-400 hover:border-white/10 cursor-pointer'}`}
                         >
                           <div className="space-y-1">
                             <div className="text-[10px] font-bold uppercase">
@@ -427,23 +427,23 @@ export function ManualRegistrationModal({
                   </div>
                 ) : (
                   <div className="p-6 text-center bg-white/[0.02] border border-dashed border-white/10 rounded-xl">
-                    <Info className="w-4 h-4 text-slate-600 mx-auto mb-2" />
-                    <p className="text-[10px] text-slate-500 uppercase tracking-tight">Defina as datas do campeonato para selecionar bloqueios</p>
+                    <Info className="w-4 h-4 text-fgb-ink-600 mx-auto mb-2" />
+                    <p className="text-[10px] text-fgb-ink-500 uppercase tracking-tight">Defina as datas do campeonato para selecionar bloqueios</p>
                   </div>
                 )}
               </div>
 
               {/* Observations Section */}
               <div className="space-y-4">
-                <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-slate-500 flex items-center gap-2">
-                  <MessageSquare className="w-3 h-3 text-[#FF6B00]" />
+                <Label className="text-[10px] font-black uppercase tracking-[0.1em] text-fgb-ink-500 flex items-center gap-2">
+                  <MessageSquare className="w-3 h-3 text-[var(--fgb-yellow-500)]" />
                   Observações
                 </Label>
                 <Textarea 
                   placeholder="Informações adicionais sobre esta inscrição..."
                   value={observations}
                   onChange={e => setObservations(e.target.value)}
-                  className="bg-white/5 border-white/10 rounded-xl text-xs min-h-[100px] resize-none focus:border-[#FF6B00] transition-all"
+                  className="bg-white/5 border-white/10 rounded-xl text-xs min-h-[100px] resize-none focus:border-[var(--fgb-yellow-500)] transition-all"
                 />
               </div>
             </div>
@@ -460,14 +460,14 @@ export function ManualRegistrationModal({
           <Button 
             variant="ghost" 
             onClick={() => setOpen(false)}
-            className="rounded-xl h-11 px-6 font-bold text-slate-400 hover:text-white"
+            className="rounded-xl h-11 px-6 font-bold text-fgb-ink-400 hover:text-white"
           >
             Cancelar
           </Button>
           <Button 
             onClick={handleRegister}
             disabled={submitLoading || !selectedTeamId || selectedCategories.length === 0}
-            className="bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-11 px-8 rounded-xl shadow-lg shadow-orange-600/20 disabled:opacity-50"
+            className="bg-[var(--fgb-yellow-500)] hover:bg-[var(--fgb-yellow-700)] text-white font-black uppercase tracking-widest h-11 px-8 rounded-xl shadow-lg shadow-fgb-yellow-600/20 disabled:opacity-50"
           >
             {submitLoading ? (
               <Loader2 className="w-4 h-4 animate-spin" />

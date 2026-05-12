@@ -55,7 +55,7 @@ export default async function RefereesPage() {
                   <td className="hidden md:table-cell px-4 py-3 text-[var(--gray)]">{r.city || '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-                      r.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      r.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-fgb-ink-100 text-fgb-ink-500'
                     }`}>
                       {r.status === 'ACTIVE' ? 'Ativo' : 'Inativo'}
                     </span>

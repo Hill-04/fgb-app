@@ -69,8 +69,8 @@ export default async function teamStandingsPage({
       {/* Header */}
       <div className="animate-fade-in border-b border-[var(--border)] pb-8">
         <div className="flex items-center gap-3 mb-3">
-           <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-orange-600" />
+           <div className="w-8 h-8 rounded-lg bg-fgb-yellow-100 flex items-center justify-center">
+              <TrendingUp className="w-4 h-4 text-fgb-yellow-600" />
            </div>
            <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Rankings de Competição</span>
         </div>
@@ -84,8 +84,8 @@ export default async function teamStandingsPage({
       </div>
 
       {registrations.length === 0 ? (
-        <div className="bg-gray-50 border border-[var(--border)] rounded-3xl p-20 text-center animate-fade-up shadow-inner">
-           <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-6" />
+        <div className="bg-fgb-ink-50 border border-[var(--border)] rounded-3xl p-20 text-center animate-fade-up shadow-inner">
+           <Trophy className="w-16 h-16 text-fgb-ink-400 mx-auto mb-6" />
            <h3 className="text-xl font-bold text-[var(--black)] mb-2 uppercase italic tracking-tight">Sem classificações disponíveis</h3>
            <p className="text-[var(--gray)] max-w-xs mx-auto font-medium">Sua equipe precisa estar confirmada em um campeonato para visualizar o ranqueamento.</p>
         </div>
@@ -106,9 +106,9 @@ export default async function teamStandingsPage({
                   const standings = cat.standings
                   return (
                     <div key={cat.id} className="fgb-card bg-white border border-[var(--border)] rounded-3xl overflow-hidden shadow-sm">
-                      <div className="bg-gray-50 px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+                      <div className="bg-fgb-ink-50 px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <Users className="w-4 h-4 text-orange-500" />
+                          <Users className="w-4 h-4 text-fgb-yellow-500" />
                           <h3 className="text-sm font-black text-[var(--black)] uppercase tracking-wider">{cat.name}</h3>
                         </div>
                         <span className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest">{standings.length} Equipes</span>
@@ -127,16 +127,16 @@ export default async function teamStandingsPage({
                                 <th className="px-4 py-4 text-center">SP</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-100 bg-white">
+                            <tbody className="divide-y divide-fgb-ink-100 bg-white">
                               {standings.map((s: any, i: number) => (
-                                <tr key={s.id} className={`text-xs transition-all ${s.team.id === teamId ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
+                                <tr key={s.id} className={`text-xs transition-all ${s.team.id === teamId ? 'bg-fgb-yellow-50' : 'hover:bg-fgb-ink-50'}`}>
                                   <td className="px-6 py-4">
-                                    <span className={`text-sm font-black ${i === 0 ? 'text-[var(--amarelo)] drop-shadow-sm' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-orange-800' : 'text-[var(--gray)]'}`}>
+                                    <span className={`text-sm font-black ${i === 0 ? 'text-[var(--amarelo)] drop-shadow-sm' : i === 1 ? 'text-fgb-ink-400' : i === 2 ? 'text-fgb-yellow-800' : 'text-[var(--gray)]'}`}>
                                       {i + 1}°
                                     </span>
                                   </td>
                                   <td className="px-4 py-4">
-                                    <span className={`font-bold uppercase tracking-tight ${s.team.id === teamId ? 'text-orange-700' : 'text-gray-800'}`}>
+                                    <span className={`font-bold uppercase tracking-tight ${s.team.id === teamId ? 'text-fgb-yellow-700' : 'text-fgb-ink-800'}`}>
                                       {s.team.name} {s.team.id === teamId && <span className="text-[9px] ml-1 opacity-80">(Sua equipe)</span>}
                                     </span>
                                   </td>
@@ -156,7 +156,7 @@ export default async function teamStandingsPage({
                       {reg.championship.hasPlayoffs && cat.games.length > 0 && (
                         <div className="border-t border-[var(--border)] mt-8 pt-8 bg-white">
                           <div className="px-6 mb-6">
-                            <h4 className="text-[10px] font-black text-orange-600 uppercase tracking-[0.2em] mb-1">Playoffs</h4>
+                            <h4 className="text-[10px] font-black text-fgb-yellow-600 uppercase tracking-[0.2em] mb-1">Playoffs</h4>
                             <p className="text-[var(--black)] text-lg font-display font-black uppercase tracking-tight italic">Chaveamento Final</p>
                           </div>
                           <Brackets games={cat.games as any} />

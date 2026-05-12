@@ -28,13 +28,13 @@ function toneClasses(tone: LiveTableEvent['tone']) {
   switch (tone) {
     case 'score':
       return {
-        wrapper: 'border-[#F5C200]/30 bg-[#F5C200]/10',
-        chip: 'bg-[#F5C200]/18 text-[#F5C200]',
+        wrapper: 'border-[var(--fgb-yellow-500)]/30 bg-[var(--fgb-yellow-500)]/10',
+        chip: 'bg-[var(--fgb-yellow-500)]/18 text-[var(--fgb-yellow-500)]',
       }
     case 'foul':
       return {
-        wrapper: 'border-[#CC1016]/25 bg-[#CC1016]/10',
-        chip: 'bg-[#CC1016]/16 text-[#FFB4B7]',
+        wrapper: 'border-[var(--fgb-red-500)]/25 bg-[var(--fgb-red-500)]/10',
+        chip: 'bg-[var(--fgb-red-500)]/16 text-[#FFB4B7]',
       }
     case 'turnover':
       return {
@@ -44,7 +44,7 @@ function toneClasses(tone: LiveTableEvent['tone']) {
     case 'control':
       return {
         wrapper: 'border-[#145530]/28 bg-[#145530]/10',
-        chip: 'bg-[#145530]/18 text-emerald-100',
+        chip: 'bg-[#145530]/18 text-fgb-green-100',
       }
     default:
       return {
@@ -72,7 +72,7 @@ export function LiveFibaEventLog({ events, recentInteractionId = '' }: LiveFibaE
   return (
     <section className="grid min-h-0 grid-rows-[auto_1fr] overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0e14] text-white shadow-[0_24px_72px_rgba(0,0,0,0.34)]">
       <header className="border-b border-white/10 bg-[linear-gradient(90deg,rgba(245,194,0,0.14),rgba(255,255,255,0.02))] px-4 py-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#F5C200]">Live feed</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[var(--fgb-yellow-500)]">Live feed</p>
         <h2 className="mt-1 text-xl font-black uppercase tracking-[0.04em]">Event log</h2>
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-white/38">Ultimo evento no topo / leitura operacional compacta</p>
       </header>
@@ -96,7 +96,7 @@ export function LiveFibaEventLog({ events, recentInteractionId = '' }: LiveFibaE
                   className={[
                     'grid grid-cols-[72px_minmax(0,1fr)_auto] items-center gap-3 rounded-[20px] border px-3 py-3 transition duration-150',
                     tone.wrapper,
-                    event.isOptimistic ? 'ring-1 ring-[#F5C200]/25' : '',
+                    event.isOptimistic ? 'ring-1 ring-[var(--fgb-yellow-500)]/25' : '',
                     highlightedId === event.id ? 'ring-2 ring-white/18 shadow-[0_0_0_1px_rgba(255,255,255,0.08)]' : '',
                     index === 0 ? 'shadow-[0_14px_32px_rgba(0,0,0,0.25)]' : '',
                   ].join(' ')}
@@ -114,7 +114,7 @@ export function LiveFibaEventLog({ events, recentInteractionId = '' }: LiveFibaE
                         {event.actionLabel}
                       </span>
                       {event.isOptimistic ? (
-                        <span className="rounded-full bg-[#F5C200] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-black">
+                        <span className="rounded-full bg-[var(--fgb-yellow-500)] px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-black">
                           Pending
                         </span>
                       ) : null}

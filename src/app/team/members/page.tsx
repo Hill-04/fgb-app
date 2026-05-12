@@ -48,7 +48,7 @@ const APPROVAL_ROLE_OPTIONS = [
 const STATUS_CONFIG = {
   PENDING: {
     label: 'Aguardando',
-    className: 'bg-orange-50 text-orange-600 border-orange-200',
+    className: 'bg-fgb-yellow-50 text-fgb-yellow-600 border-fgb-yellow-200',
     icon: Clock,
   },
   ACTIVE: {
@@ -63,7 +63,7 @@ const STATUS_CONFIG = {
   },
   CANCELLED: {
     label: 'Cancelado',
-    className: 'bg-gray-50 text-gray-500 border-gray-200',
+    className: 'bg-fgb-ink-50 text-fgb-ink-500 border-fgb-ink-200',
     icon: XCircle,
   },
 }
@@ -189,7 +189,7 @@ export default function TeamMembersPage() {
             <div>
               <div className="text-xs font-black text-[var(--black)] uppercase tracking-wide">{active.length} ativos</div>
               {pending.length > 0 && (
-                <div className="text-[10px] font-bold text-orange-500">{pending.length} pendente{pending.length > 1 ? 's' : ''}</div>
+                <div className="text-[10px] font-bold text-fgb-yellow-500">{pending.length} pendente{pending.length > 1 ? 's' : ''}</div>
               )}
             </div>
           </div>
@@ -221,18 +221,18 @@ export default function TeamMembersPage() {
           {canManage && pending.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-6 bg-orange-500 rounded-full" />
+                <div className="w-2 h-6 bg-fgb-yellow-500 rounded-full" />
                 <h2 className="text-base font-black text-[var(--black)] uppercase tracking-tight italic">
                   Solicitacoes Pendentes ({pending.length})
                 </h2>
               </div>
               <div className="space-y-3">
                 {pending.map((member) => (
-                  <div key={member.id} className="bg-white border border-orange-200 rounded-2xl p-5 shadow-sm space-y-4">
+                  <div key={member.id} className="bg-white border border-fgb-yellow-200 rounded-2xl p-5 shadow-sm space-y-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-11 h-11 rounded-xl bg-orange-50 border border-orange-100 flex items-center justify-center shrink-0">
-                          <span className="text-orange-600 font-black text-sm uppercase">
+                        <div className="w-11 h-11 rounded-xl bg-fgb-yellow-50 border border-fgb-yellow-100 flex items-center justify-center shrink-0">
+                          <span className="text-fgb-yellow-600 font-black text-sm uppercase">
                             {member.user.name.charAt(0)}
                           </span>
                         </div>
@@ -256,7 +256,7 @@ export default function TeamMembersPage() {
                               [member.id]: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-2 bg-gray-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-orange-500 text-sm"
+                          className="w-full px-3 py-2 bg-fgb-ink-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-fgb-yellow-500 text-sm"
                         >
                           {APPROVAL_ROLE_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -351,7 +351,7 @@ export default function TeamMembersPage() {
           {others.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-6 bg-gray-300 rounded-full" />
+                <div className="w-2 h-6 bg-fgb-ink-300 rounded-full" />
                 <h2 className="text-base font-black text-[var(--gray)] uppercase tracking-tight italic">
                   Historico ({others.length})
                 </h2>

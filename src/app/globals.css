@@ -175,10 +175,10 @@
   --yellow-dark: var(--fgb-yellow-600);
   --yellow-light:var(--fgb-yellow-50);
 
-  /* Laranja FGB (mantido como cor auxiliar — não-brand v7) */
-  --orange:      #FF6B00;
-  --orange-dark: #E65500;
-  --orange-light:#FFF0E6;
+  /* Laranja FGB (DEPRECATED v7 — repointado para tokens yellow oficiais via PM-06.C) */
+  --orange:      var(--fgb-yellow-500);
+  --orange-dark: var(--fgb-yellow-700);
+  --orange-light:var(--fgb-yellow-50);
 
   /* Neutros (alinhados à escala ink) */
   --black:    var(--fgb-ink-900);

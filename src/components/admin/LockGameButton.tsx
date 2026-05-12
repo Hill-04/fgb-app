@@ -49,7 +49,7 @@ export function LockGameButton({ gameId, isLocked, canLock, canUnlock }: Props) 
         className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium ${
           isLocked
             ? 'bg-red-100 text-red-700 hover:bg-red-200'
-            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+            : 'bg-fgb-ink-100 text-fgb-ink-700 hover:bg-fgb-ink-200'
         }`}
       >
         {isLocked ? <Unlock size={16} /> : <Lock size={16} />}
@@ -65,22 +65,22 @@ export function LockGameButton({ gameId, isLocked, canLock, canUnlock }: Props) 
             className="w-full max-w-md rounded-xl bg-white p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="mb-2 text-lg font-bold text-slate-900">
+            <h3 className="mb-2 text-lg font-bold text-fgb-ink-900">
               {isLocked ? 'Destravar jogo' : 'Travar jogo definitivamente'}
             </h3>
-            <p className="mb-4 text-sm text-slate-600">
+            <p className="mb-4 text-sm text-fgb-ink-600">
               {isLocked
                 ? 'Ao destravar, o jogo volta a permitir modificações com motivo registrado.'
                 : 'Ao travar, o jogo se torna imutável. Apenas super-admins podem alterar dados após esse ponto, e cada modificação será auditada.'}
             </p>
-            <label className="mb-2 block text-sm font-medium text-slate-700">
+            <label className="mb-2 block text-sm font-medium text-fgb-ink-700">
               Motivo (obrigatório, mín. 5 caracteres):
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
-              className="mb-4 w-full rounded-lg border border-slate-300 p-2 text-sm"
+              className="mb-4 w-full rounded-lg border border-fgb-ink-300 p-2 text-sm"
               placeholder={
                 isLocked
                   ? 'Ex: Correção de erro detectado pós-publicação'
@@ -91,7 +91,7 @@ export function LockGameButton({ gameId, isLocked, canLock, canUnlock }: Props) 
               <button
                 onClick={() => setShowModal(false)}
                 disabled={isPending}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-lg border border-fgb-ink-300 px-4 py-2 text-sm text-fgb-ink-700 hover:bg-fgb-ink-50 disabled:opacity-50"
               >
                 Cancelar
               </button>

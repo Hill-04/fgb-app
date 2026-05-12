@@ -164,7 +164,7 @@ export default async function SumulaPage({
         <div className="flex gap-3">
           <button
             onClick={() => window.print()}
-            className="px-4 py-1.5 bg-white text-[#145530] rounded text-xs font-bold hover:bg-gray-100"
+            className="px-4 py-1.5 bg-white text-[#145530] rounded text-xs font-bold hover:bg-fgb-ink-100"
           >
             Imprimir / Salvar PDF
           </button>

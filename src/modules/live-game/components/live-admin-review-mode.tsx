@@ -21,7 +21,7 @@ export function LiveAdminReviewMode({ data, submitting, handlers }: LiveAdminRev
             <div key={warning} className="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">{warning}</div>
           ))}
           {(data.review?.issues || []).length === 0 && (data.review?.warnings || []).length === 0 && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">Partida pronta para fechamento oficial.</div>
+            <div className="rounded-2xl border border-fgb-green-200 bg-fgb-green-50 px-4 py-3 text-sm text-fgb-green-700">Partida pronta para fechamento oficial.</div>
           )}
         </div>
         <button onClick={handlers.doReviewAction} disabled={submitting || !data.review?.readyToFinalize} className="mt-5 rounded-xl bg-[var(--black)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-white disabled:opacity-50">Fechar oficialmente</button>

@@ -73,7 +73,7 @@ export function DeleteChampionship({ championshipId, championshipName }: DeleteC
         size="sm" 
         onClick={handleArchive}
         disabled={loading}
-        className="h-9 px-3 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition-all border border-white/5"
+        className="h-9 px-3 rounded-xl hover:bg-white/10 text-fgb-ink-400 hover:text-white transition-all border border-white/5"
       >
         <Archive className="w-4 h-4 mr-2" />
         {loading ? 'Processando...' : 'Arquivar'}
@@ -84,7 +84,7 @@ export function DeleteChampionship({ championshipId, championshipName }: DeleteC
         size="sm" 
         onClick={handleDelete}
         disabled={loading}
-        className="h-9 px-3 rounded-xl hover:bg-red-500/10 text-slate-500 hover:text-red-500 transition-all border border-white/5"
+        className="h-9 px-3 rounded-xl hover:bg-red-500/10 text-fgb-ink-500 hover:text-red-500 transition-all border border-white/5"
       >
         <Trash2 className="w-4 h-4 mr-2" />
         {loading ? 'Excluindo...' : 'Excluir'}

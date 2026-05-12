@@ -16,13 +16,13 @@ export function PredictivePromptModal({ suggestion, onSelect, onDismiss }: Props
   if (!suggestion) return null
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-amber-400 bg-white p-4 shadow-2xl">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-fgb-yellow-400 bg-white p-4 shadow-2xl">
       <div className="mx-auto max-w-3xl">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm font-semibold uppercase tracking-wide text-slate-600">
+          <span className="text-sm font-semibold uppercase tracking-wide text-fgb-ink-600">
             {suggestion.prompt}
           </span>
-          <button onClick={onDismiss} className="text-xs text-slate-400 hover:text-slate-700">
+          <button onClick={onDismiss} className="text-xs text-fgb-ink-400 hover:text-fgb-ink-700">
             Esc para pular
           </button>
         </div>
@@ -31,11 +31,11 @@ export function PredictivePromptModal({ suggestion, onSelect, onDismiss }: Props
             <button
               key={opt.id}
               onClick={() => onSelect(opt.id)}
-              className="rounded-lg border border-slate-200 bg-white px-4 py-3 text-left hover:border-fgb-green-700 hover:bg-fgb-green-50"
+              className="rounded-lg border border-fgb-ink-200 bg-white px-4 py-3 text-left hover:border-fgb-green-700 hover:bg-fgb-green-50"
             >
-              <div className="text-sm font-medium text-slate-800">{opt.label}</div>
+              <div className="text-sm font-medium text-fgb-ink-800">{opt.label}</div>
               {opt.keyboard && (
-                <div className="mt-1 text-xs text-slate-400">tecla: {opt.keyboard}</div>
+                <div className="mt-1 text-xs text-fgb-ink-400">tecla: {opt.keyboard}</div>
               )}
             </button>
           ))}

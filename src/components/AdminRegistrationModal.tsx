@@ -17,7 +17,7 @@ export function AdminRegistrationModal() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="w-full bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-white font-bold py-3.5 rounded-xl shadow-md transition-all text-sm group flex items-center justify-center gap-2">
+      <DialogTrigger className="fgb-btn-primary w-full flex items-center justify-center gap-2 py-3.5 text-sm group">
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
         Nova Inscrição (Manual)
       </DialogTrigger>

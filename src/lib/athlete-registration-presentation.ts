@@ -2,12 +2,12 @@ export const ATHLETE_REQUEST_STATUS_META: Record<
   string,
   { label: string; className: string }
 > = {
-  DRAFT: { label: 'Rascunho', className: 'border-slate-200 bg-slate-50 text-slate-700' },
-  SUBMITTED: { label: 'Enviada', className: 'border-blue-200 bg-blue-50 text-blue-700' },
+  DRAFT: { label: 'Rascunho', className: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700' },
+  SUBMITTED: { label: 'Enviada', className: 'border-fgb-navy-200 bg-fgb-navy-50 text-fgb-navy-700' },
   UNDER_REVIEW: { label: 'Em análise', className: 'border-yellow-200 bg-yellow-50 text-yellow-700' },
   CBB_CHECK_PENDING: {
     label: 'CBB pendente',
-    className: 'border-orange-200 bg-orange-50 text-orange-700',
+    className: 'border-fgb-yellow-200 bg-fgb-yellow-50 text-fgb-yellow-700',
   },
   CBB_CHECKED: { label: 'CBB conferida', className: 'border-green-200 bg-green-50 text-green-700' },
   APPROVED: {
@@ -18,14 +18,14 @@ export const ATHLETE_REQUEST_STATUS_META: Record<
     label: 'Rejeitada',
     className: 'border-[var(--red)]/20 bg-[var(--red)]/10 text-[var(--red)]',
   },
-  CANCELLED: { label: 'Cancelada', className: 'border-slate-200 bg-slate-50 text-slate-500' },
+  CANCELLED: { label: 'Cancelada', className: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-500' },
 }
 
 export const ATHLETE_CBB_STATUS_META: Record<
   string,
   { label: string; className: string }
 > = {
-  PENDING: { label: 'Pendente', className: 'border-orange-200 bg-orange-50 text-orange-700' },
+  PENDING: { label: 'Pendente', className: 'border-fgb-yellow-200 bg-fgb-yellow-50 text-fgb-yellow-700' },
   CHECKED: { label: 'Conferida', className: 'border-green-200 bg-green-50 text-green-700' },
 }
 
@@ -34,7 +34,7 @@ export const ATHLETE_FEDERATION_STATUS_META: Record<
   { label: string; className: string }
 > = {
   ACTIVE: { label: 'Ativo', className: 'border-[var(--verde)]/20 bg-[var(--verde)]/10 text-[var(--verde)]' },
-  INACTIVE: { label: 'Inativo', className: 'border-slate-200 bg-slate-50 text-slate-700' },
+  INACTIVE: { label: 'Inativo', className: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700' },
   SUSPENDED: { label: 'Suspenso', className: 'border-[var(--red)]/20 bg-[var(--red)]/10 text-[var(--red)]' },
   TRANSFERRED_OUT: {
     label: 'Transferido',
@@ -59,19 +59,19 @@ export const ATHLETE_AUDIT_ACTION_META: Record<
 > = {
   REQUEST_CREATED: {
     label: 'Solicitação criada',
-    tone: 'border-slate-200 bg-slate-50 text-slate-700',
+    tone: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700',
   },
   REQUEST_UPDATED: {
     label: 'Rascunho atualizado',
-    tone: 'border-blue-200 bg-blue-50 text-blue-700',
+    tone: 'border-fgb-navy-200 bg-fgb-navy-50 text-fgb-navy-700',
   },
   REQUEST_SUBMITTED: {
     label: 'Solicitação enviada',
-    tone: 'border-blue-200 bg-blue-50 text-blue-700',
+    tone: 'border-fgb-navy-200 bg-fgb-navy-50 text-fgb-navy-700',
   },
   REQUEST_CANCELLED: {
     label: 'Solicitação cancelada',
-    tone: 'border-slate-200 bg-slate-50 text-slate-700',
+    tone: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700',
   },
   CBB_CHECK_UPDATED: {
     label: 'Conferência CBB',
@@ -116,7 +116,7 @@ export function getAthleteAuditActionMeta(action: string) {
   return (
     ATHLETE_AUDIT_ACTION_META[action] || {
       label: action,
-      tone: 'border-slate-200 bg-slate-50 text-slate-700',
+      tone: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700',
     }
   )
 }

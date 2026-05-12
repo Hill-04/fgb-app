@@ -3,9 +3,9 @@ import type { LiveGameTableModel } from './live-game-table-adapter'
 // FGB Identity
 const FGB = {
   verde:    '#1B7340',
-  vermelho: '#CC1016',
-  amarelo:  '#F5C200',
-  homeAccent: '#F5C200',
+  vermelho: '#D72020',
+  amarelo:  '#E5AB00',
+  homeAccent: '#E5AB00',
   awayAccent: '#FFFFFF',
 }
 

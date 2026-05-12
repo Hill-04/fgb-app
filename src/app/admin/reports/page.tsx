@@ -34,8 +34,8 @@ export default async function AdminReportsPage() {
     ])
 
     const kpis = [
-      { label: 'Total de Equipes', value: teamCount, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-      { label: 'Campeonatos', value: championshipCount, icon: Trophy, color: 'text-[var(--amarelo)]', bg: 'bg-orange-500/10' },
+      { label: 'Total de Equipes', value: teamCount, icon: Users, color: 'text-fgb-navy-400', bg: 'bg-fgb-navy-500/10' },
+      { label: 'Campeonatos', value: championshipCount, icon: Trophy, color: 'text-[var(--amarelo)]', bg: 'bg-fgb-yellow-500/10' },
       { label: 'Jogos Realizados', value: gameCount, icon: MapPin, color: 'text-purple-400', bg: 'bg-purple-500/10' },
       { label: 'Atletas Estimados', value: activePlayers, icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10' },
     ]
@@ -82,7 +82,7 @@ export default async function AdminReportsPage() {
                         <span className="fgb-label text-[var(--gray)]" style={{ fontSize: 12 }}>{cat.name}</span>
                         <div className="flex items-center gap-3">
                           <div className="fgb-display text-[var(--black)]">{cat._count.registrations}</div>
-                          <div className="w-24 h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div className="w-24 h-2 bg-fgb-ink-200 rounded-full overflow-hidden">
                             <div
                               className="h-full bg-[var(--verde)]"
                               style={{ width: `${Math.min((cat._count.registrations / 10) * 100, 100)}%` }}
@@ -95,7 +95,7 @@ export default async function AdminReportsPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <Trophy className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <Trophy className="w-12 h-12 text-fgb-ink-300 mx-auto mb-4" />
                   <p className="text-[var(--gray)] italic text-sm font-sans">Nenhum dado de campeonato disponivel.</p>
                   <p className="fgb-label text-[var(--gray)] mt-2" style={{ textTransform: 'none', letterSpacing: 0 }}>Crie um campeonato em Admin / Campeonatos</p>
                 </div>
@@ -170,14 +170,14 @@ export default async function AdminReportsPage() {
 
             <div className="fgb-card p-8 bg-[var(--gray-l)]">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                  <PieChart className="w-5 h-5 text-blue-500" />
+                <div className="w-10 h-10 rounded-2xl bg-fgb-navy-50 border border-fgb-navy-100 flex items-center justify-center">
+                  <PieChart className="w-5 h-5 text-fgb-navy-500" />
                 </div>
                 <h3 className="fgb-display text-lg text-[var(--black)]">Status de Sedes</h3>
               </div>
               <div className="space-y-6">
                 {[
-                  { label: 'Sedes Confirmadas', value: 8, total: 10, color: 'bg-blue-500' },
+                  { label: 'Sedes Confirmadas', value: 8, total: 10, color: 'bg-fgb-navy-500' },
                   { label: 'Relatorios Medicos', value: 4, total: 10, color: 'bg-[var(--red)]' },
                   { label: 'Taxas de Inscricao', value: 10, total: 10, color: 'bg-[var(--verde)]' },
                 ].map((item, i) => (
@@ -186,7 +186,7 @@ export default async function AdminReportsPage() {
                       <span>{item.label}</span>
                       <span className="text-[var(--black)]">{Math.round((item.value / item.total) * 100)}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-fgb-ink-200 rounded-full overflow-hidden">
                       <div className={`h-full ${item.color}`} style={{ width: `${(item.value / item.total) * 100}%` }} />
                     </div>
                   </div>
@@ -213,7 +213,7 @@ export default async function AdminReportsPage() {
           ))}
         </div>
         <div className="fgb-card p-16 text-center bg-[var(--gray-l)]">
-          <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+          <FileText className="w-12 h-12 text-fgb-ink-300 mx-auto mb-4" />
           <p className="fgb-label text-[var(--gray)]" style={{ textTransform: 'none', letterSpacing: 0 }}>
             Dados de relatorios serao exibidos assim que houver campeonatos e jogos registrados.
           </p>

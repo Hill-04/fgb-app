@@ -99,11 +99,11 @@ export default function CreateTeamPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-[var(--black)] font-sans">
+    <div className="min-h-screen bg-fgb-ink-50 text-[var(--black)] font-sans">
       {/* Header */}
       <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[var(--border)] bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center rounded-lg shadow-sm">
+          <div className="w-9 h-9 bg-gradient-to-br from-fgb-yellow-500 to-fgb-yellow-600 flex items-center justify-center rounded-lg shadow-sm">
             <span className="font-display font-black text-white text-xs tracking-wider">FGB</span>
           </div>
           <div className="leading-none">
@@ -159,7 +159,7 @@ export default function CreateTeamPage() {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Ex: Caxias Basquete"
-                  className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                  className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                 />
               </div>
 
@@ -175,8 +175,8 @@ export default function CreateTeamPage() {
                       onClick={() => setFormData({ ...formData, sex: s })}
                       className={`py-2.5 rounded-xl border text-sm font-bold uppercase tracking-wide transition-all ${
                         formData.sex === s
-                          ? 'bg-orange-500 border-orange-500 text-white shadow-sm'
-                          : 'border-[var(--border)] text-[var(--gray)] hover:border-orange-300 bg-gray-50'
+                          ? 'bg-fgb-yellow-500 border-fgb-yellow-500 text-white shadow-sm'
+                          : 'border-[var(--border)] text-[var(--gray)] hover:border-fgb-yellow-300 bg-fgb-ink-50'
                       }`}
                     >
                       {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -196,7 +196,7 @@ export default function CreateTeamPage() {
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Ex: Porto Alegre"
-                    className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                    className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                   />
                 </div>
                 <div>
@@ -207,7 +207,7 @@ export default function CreateTeamPage() {
                     required
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-orange-500 text-sm"
+                    className="w-full px-3 py-2 bg-fgb-ink-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-fgb-yellow-500 text-sm"
                   >
                     {STATES.map(st => (
                       <option key={st} value={st}>{st}</option>
@@ -226,7 +226,7 @@ export default function CreateTeamPage() {
                   value={formData.responsible}
                   onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
                   placeholder="Nome completo do responsável"
-                  className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                  className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                 />
               </div>
 
@@ -240,7 +240,7 @@ export default function CreateTeamPage() {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="(51) 9 9999-9999"
-                  className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                  className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                 />
               </div>
 
@@ -253,7 +253,7 @@ export default function CreateTeamPage() {
                   value={formData.logoUrl}
                   onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
                   placeholder="https://exemplo.com/logo.png"
-                  className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                  className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                 />
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function CreateTeamPage() {
                   type="checkbox"
                   checked={formData.hasGym}
                   onChange={(e) => setFormData({ ...formData, hasGym: e.target.checked })}
-                  className="w-4 h-4 accent-orange-500 rounded"
+                  className="w-4 h-4 accent-fgb-yellow-500 rounded"
                 />
                 <span className="text-xs font-bold text-[var(--gray)] uppercase tracking-wide">Possui ginásio</span>
               </label>
@@ -287,7 +287,7 @@ export default function CreateTeamPage() {
                     value={formData.gym.name}
                     onChange={(e) => setFormData({ ...formData, gym: { ...formData.gym, name: e.target.value } })}
                     placeholder="Ex: Ginásio Municipal"
-                    className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                    className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                   />
                 </div>
 
@@ -299,7 +299,7 @@ export default function CreateTeamPage() {
                     value={formData.gym.address}
                     onChange={(e) => setFormData({ ...formData, gym: { ...formData.gym, address: e.target.value } })}
                     placeholder="Rua, número, bairro"
-                    className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                    className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                   />
                 </div>
 
@@ -312,7 +312,7 @@ export default function CreateTeamPage() {
                       value={formData.gym.city}
                       onChange={(e) => setFormData({ ...formData, gym: { ...formData.gym, city: e.target.value } })}
                       placeholder="Ex: Caxias do Sul"
-                      className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                      className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                     />
                   </div>
                   <div>
@@ -324,7 +324,7 @@ export default function CreateTeamPage() {
                       value={formData.gym.capacity}
                       onChange={(e) => setFormData({ ...formData, gym: { ...formData.gym, capacity: e.target.value } })}
                       placeholder="500"
-                      className="bg-gray-50 border-[var(--border)] focus-visible:ring-orange-500 rounded-xl"
+                      className="bg-fgb-ink-50 border-[var(--border)] focus-visible:ring-fgb-yellow-500 rounded-xl"
                     />
                   </div>
                 </div>
@@ -335,7 +335,7 @@ export default function CreateTeamPage() {
                     required
                     value={formData.gym.availability}
                     onChange={(e) => setFormData({ ...formData, gym: { ...formData.gym, availability: e.target.value } })}
-                    className="w-full px-3 py-2 bg-gray-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-orange-500 text-sm"
+                    className="w-full px-3 py-2 bg-fgb-ink-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-fgb-yellow-500 text-sm"
                   >
                     <option value="sabado_domingo">Sábado e Domingo</option>
                     <option value="sabado">Apenas Sábado</option>
@@ -348,7 +348,7 @@ export default function CreateTeamPage() {
                     type="checkbox"
                     checked={formData.gym.canHost}
                     onChange={(e) => setFormData({ ...formData, gym: { ...formData.gym, canHost: e.target.checked } })}
-                    className="w-4 h-4 accent-orange-500 rounded"
+                    className="w-4 h-4 accent-fgb-yellow-500 rounded"
                   />
                   <span className="text-xs font-medium text-[var(--gray)]">Disponível para sediar jogos do campeonato</span>
                 </label>
@@ -362,14 +362,14 @@ export default function CreateTeamPage() {
               type="button"
               variant="outline"
               onClick={() => router.push('/team/onboarding')}
-              className="flex-1 border-[var(--border)] text-[var(--gray)] hover:bg-gray-100 font-black uppercase tracking-widest h-12 rounded-xl"
+              className="flex-1 border-[var(--border)] text-[var(--gray)] hover:bg-fgb-ink-100 font-black uppercase tracking-widest h-12 rounded-xl"
               disabled={loading}
             >
               Voltar
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black uppercase tracking-widest h-12 rounded-xl shadow-md"
+              className="flex-1 bg-gradient-to-r from-fgb-yellow-500 to-fgb-yellow-600 hover:from-fgb-yellow-600 hover:to-fgb-yellow-700 text-white font-black uppercase tracking-widest h-12 rounded-xl shadow-md"
               disabled={loading}
             >
               {loading ? 'Criando...' : 'Criar Equipe'}

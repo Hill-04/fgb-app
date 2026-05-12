@@ -77,7 +77,7 @@ export default async function PublicCarteirinhaPage({ params }: { params: Promis
             <p className={`text-sm font-black uppercase ${isActive ? 'text-green-700' : 'text-yellow-700'}`}>
               {isActive ? 'Atleta Ativo — Temporada 2026' : `Situação: ${athlete.situation}`}
             </p>
-            <p className="text-xs text-gray-500">Verificado em {new Date().toLocaleDateString('pt-BR')}</p>
+            <p className="text-xs text-fgb-ink-500">Verificado em {new Date().toLocaleDateString('pt-BR')}</p>
           </div>
         </div>
 
@@ -99,8 +99,8 @@ export default async function PublicCarteirinhaPage({ params }: { params: Promis
         </div>
 
         {/* Dados do atleta */}
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-          <h2 className="mb-4 text-[10px] font-black uppercase tracking-widest text-gray-500">Dados Cadastrais</h2>
+        <div className="rounded-2xl border border-fgb-ink-200 bg-white p-5 shadow-sm">
+          <h2 className="mb-4 text-[10px] font-black uppercase tracking-widest text-fgb-ink-500">Dados Cadastrais</h2>
           <dl className="space-y-2 text-sm">
             {[
               { label: 'Nome completo', value: athlete.name },
@@ -111,15 +111,15 @@ export default async function PublicCarteirinhaPage({ params }: { params: Promis
               { label: 'Nº de registro', value: athlete.registrationNumber ? `#${athlete.registrationNumber}` : '—' },
               { label: 'Válida até', value: '31/12/2026' },
             ].map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between gap-4 border-b border-gray-50 pb-2">
-                <dt className="text-[10px] font-black uppercase tracking-wider text-gray-400">{label}</dt>
-                <dd className="font-semibold text-gray-800 text-right">{value}</dd>
+              <div key={label} className="flex items-center justify-between gap-4 border-b border-fgb-ink-50 pb-2">
+                <dt className="text-[10px] font-black uppercase tracking-wider text-fgb-ink-400">{label}</dt>
+                <dd className="font-semibold text-fgb-ink-800 text-right">{value}</dd>
               </div>
             ))}
           </dl>
         </div>
 
-        <p className="no-print text-center text-[10px] text-gray-400">
+        <p className="no-print text-center text-[10px] text-fgb-ink-400">
           Federação Gaúcha de Basquete · fgb-app.vercel.app
         </p>
       </div>

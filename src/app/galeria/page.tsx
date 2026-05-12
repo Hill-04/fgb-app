@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Trophy } from 'lucide-react'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 
@@ -63,7 +64,7 @@ export default function GaleriaPage() {
           <div className="fgb-cta">
             <div className="fgb-cta-pattern" />
             <div className="fgb-cta-inner text-center">
-              <div className="text-5xl mb-4">🏆</div>
+              <div className="mb-4 flex justify-center"><Trophy className="w-12 h-12 text-[var(--fgb-yellow-500)]" /></div>
               <div className="fgb-accent fgb-accent-yellow mx-auto mb-4" />
               <h2 className="fgb-cta-h text-[32px]">Galeria dos Campeoes</h2>
               <p className="fgb-cta-sub max-w-md mx-auto mb-6">

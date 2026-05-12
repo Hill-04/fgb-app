@@ -88,7 +88,7 @@ export default async function TeamCompetitionsPage() {
       >
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <span className="fgb-badge" style={{ background: '#F5C200', color: '#000', fontWeight: 800 }}>
+            <span className="fgb-badge" style={{ background: '#E5AB00', color: '#000', fontWeight: 800 }}>
               OFICIAL FGB
             </span>
             <h2 className="fgb-display text-[22px] text-[var(--verde)] mt-2 flex items-center gap-2">
@@ -169,7 +169,7 @@ export default async function TeamCompetitionsPage() {
       {/* DIVIDER de exclusividade */}
       <div
         className="rounded-lg p-5 flex items-start gap-3"
-        style={{ background: 'rgba(245,194,0,0.1)', borderLeft: '5px solid #F5C200' }}
+        style={{ background: 'rgba(245,194,0,0.1)', borderLeft: '5px solid #E5AB00' }}
       >
         <AlertTriangle size={28} style={{ color: '#CC7A00' }} className="flex-shrink-0" />
         <div>

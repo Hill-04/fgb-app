@@ -168,7 +168,7 @@ export function RegistrationActions({
         <AlertDialogContent className="bg-[#0A0A0A] border-white/10 text-white">
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Inscrição?</AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
+            <AlertDialogDescription className="text-fgb-ink-400">
               Esta ação não pode ser desfeita. A equipe será removida deste campeonato.
             </AlertDialogDescription>
           </AlertDialogHeader>

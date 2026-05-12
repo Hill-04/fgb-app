@@ -185,7 +185,7 @@ export function FeeCalculator({
                   onClick={() => setAffiliationType('NEW_CLUB')}
                   className={`rounded-2xl border px-4 py-4 text-left transition-all ${
                     affiliationType === 'NEW_CLUB'
-                      ? 'border-orange-200 bg-orange-50 text-orange-700'
+                      ? 'border-fgb-yellow-200 bg-fgb-yellow-50 text-fgb-yellow-700'
                       : 'border-[var(--border)] bg-white text-[var(--gray)]'
                   }`}
                 >

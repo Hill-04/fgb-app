@@ -28,15 +28,15 @@ function getBlockedReason(player: LiveTablePlayer) {
 
 function PlayerBadge({ player }: { player: LiveTablePlayer }) {
   if (player.disqualified) {
-    return <span className="rounded-full border border-[#CC1016]/45 bg-[#CC1016]/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFB4B7]">DQ</span>
+    return <span className="rounded-full border border-[var(--fgb-red-500)]/45 bg-[var(--fgb-red-500)]/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFB4B7]">DQ</span>
   }
 
   if (player.fouls >= 5) {
-    return <span className="rounded-full border border-[#F5C200]/45 bg-[#F5C200]/12 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#F5C200]">5 fouls</span>
+    return <span className="rounded-full border border-[var(--fgb-yellow-500)]/45 bg-[var(--fgb-yellow-500)]/12 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fgb-yellow-500)]">5 fouls</span>
   }
 
   if (player.isOnCourt) {
-    return <span className="rounded-full border border-[#145530]/45 bg-[#145530]/18 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-emerald-100">Court</span>
+    return <span className="rounded-full border border-[#145530]/45 bg-[#145530]/18 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-fgb-green-100">Court</span>
   }
 
   if (!player.isAvailable) {
@@ -61,9 +61,9 @@ function ActionButton({
 }) {
   const toneClass =
     action.tone === 'score'
-      ? 'border-[#F5C200]/40 bg-[#F5C200]/14 text-[#F5C200]'
+      ? 'border-[var(--fgb-yellow-500)]/40 bg-[var(--fgb-yellow-500)]/14 text-[var(--fgb-yellow-500)]'
       : action.tone === 'alert'
-        ? 'border-[#CC1016]/35 bg-[#CC1016]/12 text-[#FFB4B7]'
+        ? 'border-[var(--fgb-red-500)]/35 bg-[var(--fgb-red-500)]/12 text-[#FFB4B7]'
         : 'border-white/10 bg-white/[0.05] text-white/75'
 
   return (
@@ -75,7 +75,7 @@ function ActionButton({
       className={[
         'min-h-[42px] min-w-0 rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition',
         toneClass,
-        active ? 'scale-[0.98] ring-2 ring-[#F5C200] ring-offset-0' : '',
+        active ? 'scale-[0.98] ring-2 ring-[var(--fgb-yellow-500)] ring-offset-0' : '',
         disabled ? 'cursor-not-allowed opacity-35' : 'hover:bg-white/[0.1]',
       ].join(' ')}
     >
@@ -112,10 +112,10 @@ const PlayerActionCard = memo(function PlayerActionCard({
       className={[
         'grid h-full grid-cols-[52px_minmax(0,1fr)] gap-2 rounded-[20px] border p-2.5 transition',
         selected
-          ? 'border-[#F5C200]/55 bg-[#F5C200]/12 shadow-[0_0_0_1px_rgba(245,194,0,0.24)]'
+          ? 'border-[var(--fgb-yellow-500)]/55 bg-[var(--fgb-yellow-500)]/12 shadow-[0_0_0_1px_rgba(245,194,0,0.24)]'
           : 'border-white/10 bg-black/20',
-        scorePulse ? 'ring-2 ring-[#F5C200]/55' : '',
-        foulPulse ? 'ring-2 ring-[#CC1016]/55 bg-[#CC1016]/10' : '',
+        scorePulse ? 'ring-2 ring-[var(--fgb-yellow-500)]/55' : '',
+        foulPulse ? 'ring-2 ring-[var(--fgb-red-500)]/55 bg-[var(--fgb-red-500)]/10' : '',
       ].join(' ')}
       onClick={() => onSelectAthlete?.(player.athleteId)}
     >
@@ -124,7 +124,7 @@ const PlayerActionCard = memo(function PlayerActionCard({
         <span
           className={[
             'h-2.5 w-2.5 rounded-full',
-            player.disqualified ? 'bg-[#CC1016]' : player.isOnCourt ? 'bg-[#F5C200]' : 'bg-white/20',
+            player.disqualified ? 'bg-[var(--fgb-red-500)]' : player.isOnCourt ? 'bg-[var(--fgb-yellow-500)]' : 'bg-white/20',
           ].join(' ')}
         />
       </div>
@@ -141,7 +141,7 @@ const PlayerActionCard = memo(function PlayerActionCard({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-white/72">
-          <span className="rounded-full bg-white/[0.06] px-2 py-1 text-[#F5C200]">PTS {player.points}</span>
+          <span className="rounded-full bg-white/[0.06] px-2 py-1 text-[var(--fgb-yellow-500)]">PTS {player.points}</span>
           <span className="rounded-full bg-white/[0.06] px-2 py-1">REB {player.rebounds}</span>
           <span className="rounded-full bg-white/[0.06] px-2 py-1">AST {player.assists}</span>
           <span className="rounded-full bg-white/[0.06] px-2 py-1 text-[#FFB4B7]">FL {player.fouls}</span>
@@ -200,7 +200,7 @@ const PlayerActionCard = memo(function PlayerActionCard({
           {blockedReason ? (
             <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-[#FFB4B7]">{blockedReason}</p>
           ) : selected ? (
-            <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-[#F5C200]">Jogador ativo para clique rapido e teclado.</p>
+            <p className="truncate text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fgb-yellow-500)]">Jogador ativo para clique rapido e teclado.</p>
           ) : null}
         </div>
       </div>
@@ -266,7 +266,7 @@ export function LiveFibaTeamPanel({
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">Bonus</p>
-              <p className="mt-1 text-lg font-black text-[#F5C200]">{team.inBonus ? 'ON' : 'OFF'}</p>
+              <p className="mt-1 text-lg font-black text-[var(--fgb-yellow-500)]">{team.inBonus ? 'ON' : 'OFF'}</p>
             </div>
             <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2">
               <p className="text-[9px] font-black uppercase tracking-[0.18em] text-white/35">TO</p>

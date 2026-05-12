@@ -428,7 +428,7 @@ export default async function FederationDashboardPage() {
 
             <div className="space-y-3">
               {[
-                { label: 'Rascunho', count: statusCounts.DRAFT || 0, color: 'bg-slate-300' },
+                { label: 'Rascunho', count: statusCounts.DRAFT || 0, color: 'bg-fgb-ink-300' },
                 { label: 'Inscricoes abertas', count: statusCounts.REGISTRATION_OPEN || 0, color: 'bg-[var(--yellow)]' },
                 { label: 'Organizacao', count: statusCounts.ORGANIZING || 0, color: 'bg-[var(--orange)]' },
                 { label: 'Em andamento', count: activeNow, color: 'bg-[var(--verde)]' },

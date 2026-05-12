@@ -48,7 +48,7 @@ export default async function GymsPage() {
                   <td className="hidden md:table-cell px-4 py-3 text-[var(--gray)]">{g.team?.name || '—'}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${
-                      g.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      g.isActive ? 'bg-green-100 text-green-700' : 'bg-fgb-ink-100 text-fgb-ink-500'
                     }`}>
                       {g.isActive ? 'Sim' : 'Não'}
                     </span>

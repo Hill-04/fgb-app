@@ -15,7 +15,7 @@ export function StandingsSelector({
     <div className="flex items-center gap-4">
       <div className="flex-1 max-w-xs relative">
         <select
-          className="w-full bg-white border-[var(--border)] border h-11 rounded-xl px-4 text-xs text-[var(--black)] focus:outline-none focus:ring-2 focus:ring-orange-500 transition-all font-bold appearance-none shadow-sm"
+          className="w-full bg-white border-[var(--border)] border h-11 rounded-xl px-4 text-xs text-[var(--black)] focus:outline-none focus:ring-2 focus:ring-fgb-yellow-500 transition-all font-bold appearance-none shadow-sm"
           defaultValue={categoryId ?? ''}
           onChange={(e) => {
             const val = e.target.value

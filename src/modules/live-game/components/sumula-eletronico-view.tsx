@@ -355,7 +355,7 @@ export function SumulaEletronicoView({ data }: { data: SumulaData }) {
               </div>
             )}
             <div className={`mt-2 inline-flex rounded-full px-3 py-1 text-[9px] font-black uppercase tracking-widest ${
-              game.liveStatus === 'FINAL_OFFICIAL' ? 'bg-emerald-500/20 text-emerald-400'
+              game.liveStatus === 'FINAL_OFFICIAL' ? 'bg-fgb-green-500/20 text-fgb-green-400'
               : game.liveStatus === 'LIVE' ? 'bg-red-500/20 text-red-400'
               : 'bg-white/10 text-white/40'
             }`}>

@@ -143,7 +143,7 @@ export default function RegistrationsPage() {
   const registrationStatus = useMemo(() => {
     const now = new Date()
     if (!championship?.regDeadline) {
-      return { label: 'Prazo nao definido', className: 'text-orange-600 bg-orange-50 border-orange-200' }
+      return { label: 'Prazo nao definido', className: 'text-fgb-yellow-600 bg-fgb-yellow-50 border-fgb-yellow-200' }
     }
 
     return new Date(championship.regDeadline) > now
@@ -349,7 +349,7 @@ export default function RegistrationsPage() {
           </span>
           <button
             onClick={openNew}
-            className="flex h-11 items-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[#E66000]"
+            className="fgb-btn-primary flex h-11 items-center gap-2 px-5"
           >
             <Plus className="h-4 w-4" />
             Adicionar Inscricao
@@ -375,8 +375,8 @@ export default function RegistrationsPage() {
                 <tr key={registration.id} className="border-b border-[var(--border)] transition-colors hover:bg-[var(--gray-l)]">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-100 bg-orange-50">
-                        <Shield className="h-4 w-4 text-orange-600" />
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full border border-fgb-yellow-100 bg-fgb-yellow-50">
+                        <Shield className="h-4 w-4 text-fgb-yellow-600" />
                       </div>
                       <div>
                         <p className="text-sm font-black uppercase text-[var(--black)]">{registration.team.name}</p>
@@ -407,10 +407,10 @@ export default function RegistrationsPage() {
                   <td className="px-6 py-4">
                     <Link
                       href={`/admin/championships/${id}/registrations/${registration.id}/fees`}
-                      className="inline-flex flex-col gap-1 rounded-2xl border border-[var(--border)] bg-white px-3 py-2 text-left shadow-sm transition-all hover:border-orange-200 hover:bg-orange-50"
+                      className="inline-flex flex-col gap-1 rounded-2xl border border-[var(--border)] bg-white px-3 py-2 text-left shadow-sm transition-all hover:border-fgb-yellow-200 hover:bg-fgb-yellow-50"
                     >
                       <span className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-[var(--gray)]">
-                        <Receipt className="h-3 w-3 text-orange-600" />
+                        <Receipt className="h-3 w-3 text-fgb-yellow-600" />
                         Total {formatCurrencyBRL(registration.feeSummary?.total || 0)}
                       </span>
                       <span className="text-[9px] font-bold text-red-600">
@@ -444,7 +444,7 @@ export default function RegistrationsPage() {
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => openEdit(registration)}
-                        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-orange-50 hover:text-orange-600"
+                        className="flex h-9 w-9 items-center justify-center rounded-xl text-[var(--gray)] transition-all hover:bg-fgb-yellow-50 hover:text-fgb-yellow-600"
                       >
                         <Pencil className="h-4 w-4" />
                       </button>
@@ -529,7 +529,7 @@ export default function RegistrationsPage() {
                           formStatus === status
                             ? status === 'CONFIRMED'
                               ? 'border-green-200 bg-green-50 text-green-700'
-                              : 'border-orange-200 bg-orange-50 text-orange-600'
+                              : 'border-fgb-yellow-200 bg-fgb-yellow-50 text-fgb-yellow-600'
                             : 'border-[var(--border)] bg-white text-[var(--gray)]'
                         }`}
                       >
@@ -646,7 +646,7 @@ export default function RegistrationsPage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--gray)]">Atletas em Multiplas Categorias</p>
                     <h4 className="mt-1 text-lg font-black text-[var(--black)]">Adicionar atleta multi-categoria</h4>
                   </div>
-                  <button type="button" onClick={handleAddAthlete} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--amarelo)] px-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                  <button type="button" onClick={handleAddAthlete} className="fgb-btn-primary flex h-11 items-center justify-center gap-2 px-4">
                     <Plus className="h-4 w-4" />
                     Adicionar Atleta
                   </button>

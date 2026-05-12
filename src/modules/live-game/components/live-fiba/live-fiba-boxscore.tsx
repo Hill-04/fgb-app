@@ -28,7 +28,7 @@ function BoxRows({
     <div
       className={[
         'rounded-[22px] border p-3',
-        side === 'home' ? 'border-[#145530]/35 bg-[#145530]/12' : 'border-[#CC1016]/35 bg-[#CC1016]/12',
+        side === 'home' ? 'border-[#145530]/35 bg-[#145530]/12' : 'border-[var(--fgb-red-500)]/35 bg-[var(--fgb-red-500)]/12',
       ].join(' ')}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -51,7 +51,7 @@ function BoxRows({
             </div>
             <div className="text-center">
               <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/35">PTS</p>
-              <p className="text-sm font-black text-[#F5C200]">{row.points}</p>
+              <p className="text-sm font-black text-[var(--fgb-yellow-500)]">{row.points}</p>
             </div>
             <div className="text-center">
               <p className="text-[9px] font-black uppercase tracking-[0.14em] text-white/35">REB</p>
@@ -79,7 +79,7 @@ export function LiveFibaBoxscore({ tableModel }: LiveFibaBoxscoreProps) {
   return (
     <section className="overflow-hidden rounded-[28px] border border-white/10 bg-[#0a0e14] text-white shadow-[0_24px_72px_rgba(0,0,0,0.34)]">
       <header className="border-b border-white/10 bg-[linear-gradient(90deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02))] px-4 py-3">
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[#F5C200]">Boxscore</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-[var(--fgb-yellow-500)]">Boxscore</p>
         <p className="mt-1 text-[11px] font-bold uppercase tracking-[0.14em] text-white/42">Leitura rapida dos principais impact players</p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-2">

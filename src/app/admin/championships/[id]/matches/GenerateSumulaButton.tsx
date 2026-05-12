@@ -195,7 +195,7 @@ export function GenerateSumulaButton({ gameId, gameLabel }: GenerateSumulaButton
     <button
       onClick={handleGenerate}
       disabled={loading}
-      className="flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-slate-300 bg-white/[0.04] border border-white/[0.08] hover:border-white/20 h-8 px-3 rounded-lg transition-all disabled:opacity-50"
+      className="flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-fgb-ink-300 bg-white/[0.04] border border-white/[0.08] hover:border-white/20 h-8 px-3 rounded-lg transition-all disabled:opacity-50"
       title="Gerar Súmula PDF"
     >
       {loading ? (

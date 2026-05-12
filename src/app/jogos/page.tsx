@@ -110,7 +110,7 @@ export default async function JogosPage() {
         )}
 
         {games.length === 0 && (
-          <div className="text-center py-20 text-slate-500">
+          <div className="text-center py-20 text-fgb-ink-500">
             Nenhum jogo cadastrado para esta temporada.
           </div>
         )}
@@ -197,12 +197,12 @@ function GameCard({ game }: { game: any }) {
 
   return (
     <Link href={`/jogos/${game.id}`} className="block">
-      <div className="fgb-card bg-white p-6 hover:-translate-y-1 transition-transform border border-slate-200 cursor-pointer relative overflow-hidden group">
+      <div className="fgb-card bg-white p-6 hover:-translate-y-1 transition-transform border border-fgb-ink-200 cursor-pointer relative overflow-hidden group">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           
-          <div className="text-sm font-semibold text-slate-500 md:w-32 flex-shrink-0">
+          <div className="text-sm font-semibold text-fgb-ink-500 md:w-32 flex-shrink-0">
             <div>{date.toLocaleDateString('pt-BR')}</div>
-            <div className="text-slate-400">{date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
+            <div className="text-fgb-ink-400">{date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</div>
             {game.venue && <div className="text-xs uppercase mt-2 font-normal truncate opacity-60 tracking-wider font-mono">{game.venue}</div>}
           </div>
 
@@ -240,7 +240,7 @@ function GameCard({ game }: { game: any }) {
                    Súmula →
                 </span>
              ) : (
-                <span className="fgb-badge-verde opacity-50 bg-slate-200 text-slate-600">
+                <span className="fgb-badge-verde opacity-50 bg-fgb-ink-200 text-fgb-ink-600">
                    Aguardando
                 </span>
              )}

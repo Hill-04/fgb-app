@@ -23,9 +23,9 @@ export function Badge({
     info: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
     orange: "bg-[var(--amarelo)]/10 text-[var(--amarelo)] border-[var(--amarelo)]/20",
     blue: "bg-[#3B82F6]/10 text-[#60A5FA] border-[#3B82F6]/20",
-    purple: "bg-[#8B5CF6]/10 text-[#A78BFA] border-[#8B5CF6]/20",
+    purple: "bg-[var(--fgb-navy-500)]/10 text-[var(--fgb-navy-300)] border-[var(--fgb-navy-500)]/20",
     pink: "bg-[#EC4899]/10 text-[#F472B6] border-[#EC4899]/20",
-    outline: "bg-transparent border-white/20 text-slate-400",
+    outline: "bg-transparent border-white/20 text-fgb-ink-400",
   }
 
   const sizeStyles = {
@@ -34,16 +34,16 @@ export function Badge({
   }
 
   const dotColor = {
-    default: "bg-slate-400 shadow-sm flex-shrink-0",
+    default: "bg-fgb-ink-400 shadow-sm flex-shrink-0",
     success: "bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.4)] flex-shrink-0",
     warning: "bg-yellow-500 shadow-[0_0_5px_rgba(234,179,8,0.4)] flex-shrink-0",
     error: "bg-red-500 shadow-[0_0_5px_rgba(239,68,68,0.4)] flex-shrink-0",
-    info: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
-    orange: "bg-orange-500 shadow-[0_0_5px_rgba(249,115,22,0.4)] flex-shrink-0",
-    blue: "bg-blue-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
+    info: "bg-fgb-navy-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
+    orange: "bg-fgb-yellow-500 shadow-[0_0_5px_rgba(249,115,22,0.4)] flex-shrink-0",
+    blue: "bg-fgb-navy-400 shadow-[0_0_5px_rgba(96,165,250,0.4)] flex-shrink-0",
     purple: "bg-purple-400 shadow-[0_0_5px_rgba(168,85,247,0.4)] flex-shrink-0",
     pink: "bg-pink-400 shadow-[0_0_5px_rgba(236,72,153,0.4)] flex-shrink-0",
-    outline: "bg-slate-400 flex-shrink-0",
+    outline: "bg-fgb-ink-400 flex-shrink-0",
   }
 
   return (

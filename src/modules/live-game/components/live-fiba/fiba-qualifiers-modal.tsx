@@ -64,8 +64,8 @@ export function FibaQualifiersModal({ isOpen, eventType, onConfirm, onSkip }: Pr
   return (
     <div className="fixed bottom-4 right-4 z-50 w-80 rounded-xl border-2 border-fgb-green-700 bg-white p-4 shadow-2xl">
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-800">Qualificadores (opcional)</h3>
-        <span className="text-xs text-slate-400">{countdown}s</span>
+        <h3 className="text-sm font-semibold text-fgb-ink-800">Qualificadores (opcional)</h3>
+        <span className="text-xs text-fgb-ink-400">{countdown}s</span>
       </div>
       <div className="mb-3 flex flex-wrap gap-1.5">
         {availableQualifiers.map(q => (
@@ -80,7 +80,7 @@ export function FibaQualifiersModal({ isOpen, eventType, onConfirm, onSkip }: Pr
             className={`rounded-md px-2 py-1 text-xs font-medium ${
               selected.has(q)
                 ? 'bg-fgb-green-700 text-white'
-                : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                : 'bg-fgb-ink-100 text-fgb-ink-700 hover:bg-fgb-ink-200'
             }`}
           >
             {QUALIFIER_LABELS[q] ?? q}
@@ -90,7 +90,7 @@ export function FibaQualifiersModal({ isOpen, eventType, onConfirm, onSkip }: Pr
       <div className="flex gap-2">
         <button
           onClick={onSkip}
-          className="flex-1 rounded-md border border-slate-300 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+          className="flex-1 rounded-md border border-fgb-ink-300 px-3 py-1.5 text-sm text-fgb-ink-700 hover:bg-fgb-ink-50"
         >
           Pular
         </button>

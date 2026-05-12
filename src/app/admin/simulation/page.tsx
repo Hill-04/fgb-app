@@ -245,8 +245,8 @@ export default function SimulationPage() {
             {/* Panel 1: Basics */}
             <section className="bg-white rounded-[40px] border border-[var(--border)] shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
               <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-admin)]/50 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-                  <Shield className="w-5 h-5 text-blue-600" />
+                <div className="w-10 h-10 rounded-xl bg-fgb-navy-500/10 flex items-center justify-center border border-fgb-navy-500/20">
+                  <Shield className="w-5 h-5 text-fgb-navy-600" />
                 </div>
                 <h2 className="fgb-display text-xl text-[var(--black)]">Parâmetros do Cenário</h2>
               </div>
@@ -310,8 +310,8 @@ export default function SimulationPage() {
             <section className="bg-white rounded-[40px] border border-[var(--border)] shadow-sm overflow-hidden group hover:shadow-md transition-shadow">
               <div className="p-8 border-b border-[var(--border)] bg-[var(--bg-admin)]/50 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center border border-orange-500/20">
-                    <Filter className="w-5 h-5 text-orange-600" />
+                  <div className="w-10 h-10 rounded-xl bg-fgb-yellow-500/10 flex items-center justify-center border border-fgb-yellow-500/20">
+                    <Filter className="w-5 h-5 text-fgb-yellow-600" />
                   </div>
                   <h2 className="fgb-display text-xl text-[var(--black)]">Seleção de Clubes</h2>
                 </div>
@@ -348,7 +348,7 @@ export default function SimulationPage() {
                         )}
                       >
                         <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-[var(--border)] shadow-sm group-hover/card:scale-110 transition-transform">
-                          {team.logoUrl ? <img src={team.logoUrl} className="w-8 h-8 object-contain" /> : <Shield className="w-6 h-6 text-slate-200" />}
+                          {team.logoUrl ? <img src={team.logoUrl} className="w-8 h-8 object-contain" /> : <Shield className="w-6 h-6 text-fgb-ink-200" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className={cn("text-sm font-black truncate tracking-tight uppercase", selectedTeamIds.includes(team.id) ? "text-[var(--black)]" : "text-[var(--gray)]")}>{team.name}</p>
@@ -401,7 +401,7 @@ export default function SimulationPage() {
                    <Button 
                     onClick={runSimulation}
                     disabled={selectedTeamIds.length < 2 || selectedCategories.length === 0}
-                    className="w-full h-20 bg-white text-[var(--verde)] hover:bg-gray-100 font-black uppercase tracking-[0.2em] rounded-[28px] shadow-2xl transition-all hover:scale-[1.03] active:scale-95 disabled:opacity-50 text-[11px]"
+                    className="w-full h-20 bg-white text-[var(--verde)] hover:bg-fgb-ink-100 font-black uppercase tracking-[0.2em] rounded-[28px] shadow-2xl transition-all hover:scale-[1.03] active:scale-95 disabled:opacity-50 text-[11px]"
                   >
                     Instanciar Mundo
                   </Button>

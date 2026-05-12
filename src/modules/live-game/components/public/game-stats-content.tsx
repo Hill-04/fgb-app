@@ -62,7 +62,7 @@ function StatComparisonRow({
 }: StatComparisonRowProps) {
   const { homeBetter, awayBetter } = getWinnerState({ home, away, lowerIsBetter })
   const homeClass = homeBetter ? 'text-[var(--verde)]' : awayBetter ? 'text-[var(--gray)]' : 'text-[var(--black)]'
-  const awayClass = awayBetter ? 'text-[#CC1016]' : homeBetter ? 'text-[var(--gray)]' : 'text-[var(--black)]'
+  const awayClass = awayBetter ? 'text-[var(--fgb-red-500)]' : homeBetter ? 'text-[var(--gray)]' : 'text-[var(--black)]'
   const homeWidth = getComparisonShare(home, away, lowerIsBetter)
 
   return (

@@ -100,12 +100,12 @@ export function getInvoiceStatusLabel(status: string) {
 export function getInvoiceStatusClassName(status: string) {
   const normalized = normalizeInvoiceStatus(status)
   const classes: Record<InvoiceStatus, string> = {
-    DRAFT: 'border-slate-200 bg-slate-100 text-slate-600',
+    DRAFT: 'border-fgb-ink-200 bg-fgb-ink-100 text-fgb-ink-600',
     OPEN: 'border-yellow-200 bg-yellow-50 text-yellow-800',
-    PARTIAL: 'border-orange-200 bg-orange-50 text-orange-700',
+    PARTIAL: 'border-fgb-yellow-200 bg-fgb-yellow-50 text-fgb-yellow-700',
     PAID: 'border-green-200 bg-green-50 text-green-700',
     OVERDUE: 'border-red-200 bg-red-50 text-red-700',
-    VOID: 'border-slate-300 bg-slate-200 text-slate-700',
+    VOID: 'border-fgb-ink-300 bg-fgb-ink-200 text-fgb-ink-700',
   }
   return classes[normalized]
 }
