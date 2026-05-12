@@ -12,12 +12,13 @@ export function WizardPreviewPanel({ form }: Props) {
 
   return (
     <div
-      className="mt-8 rounded-lg overflow-hidden"
+      className="rounded-lg overflow-hidden"
       style={{
         background: "#fff",
         border: "1.5px solid var(--fgb-green-200)",
       }}
     >
+      <div className="fgb-tricolor" style={{ height: 3 }} aria-hidden />
       <div
         className="px-5 py-3 flex items-center justify-between"
         style={{
