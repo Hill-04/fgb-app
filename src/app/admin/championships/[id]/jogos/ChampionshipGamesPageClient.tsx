@@ -423,7 +423,7 @@ export default function MatchesPage() {
         </div>
         <button
           onClick={() => openCreateModal()}
-          className="flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[#E66000]"
+          className="flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[var(--fgb-yellow-700)]"
         >
           <Plus className="h-4 w-4" />
           Novo jogo
@@ -558,7 +558,7 @@ export default function MatchesPage() {
               <textarea value={editForm.reason} onChange={(event) => setEditForm((current) => ({ ...current, reason: event.target.value }))} rows={4} placeholder="Motivo da alteração" className="w-full rounded-2xl border border-[var(--border)] px-4 py-3 text-sm outline-none" />
 
               {blockedWarning && (
-                <div className="space-y-3 rounded-2xl border border-orange-200 bg-orange-50 px-4 py-4 text-sm text-orange-700">
+                <div className="space-y-3 rounded-2xl border border-fgb-yellow-200 bg-fgb-yellow-50 px-4 py-4 text-sm text-fgb-yellow-700">
                   <p>{blockedWarning}</p>
                   <label className="flex items-center gap-3">
                     <input type="checkbox" checked={forceBlockedDate} onChange={(event) => setForceBlockedDate(event.target.checked)} />

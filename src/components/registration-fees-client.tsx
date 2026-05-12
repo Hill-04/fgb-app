@@ -62,7 +62,7 @@ type RegistrationFeesClientProps = {
 const STATUS_BADGES: Record<RegistrationFeeRecord['status'], string> = {
   PENDING: 'border-yellow-200 bg-yellow-50 text-yellow-700',
   PAID: 'border-green-200 bg-green-50 text-green-700',
-  WAIVED: 'border-slate-200 bg-slate-100 text-slate-600',
+  WAIVED: 'border-fgb-ink-200 bg-fgb-ink-100 text-fgb-ink-600',
 }
 
 export function RegistrationFeesClient({
@@ -391,7 +391,7 @@ export function RegistrationFeesClient({
                             variant="outline"
                             disabled={fee.status === 'WAIVED' || pendingAction === fee.id + 'WAIVED'}
                             onClick={() => handleStatusChange(fee.id, 'WAIVED')}
-                            className="h-9 rounded-xl border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200"
+                            className="h-9 rounded-xl border-fgb-ink-200 bg-fgb-ink-100 text-fgb-ink-600 hover:bg-fgb-ink-200"
                           >
                             <Ban className="mr-1 h-3.5 w-3.5" />
                             Dispensar

@@ -170,7 +170,7 @@ export default async function TeamRegistrationsPage() {
                         <span className="fgb-badge fgb-badge-outline">
                           {champStatus[reg.championship.status] ?? reg.championship.status}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-orange-200 bg-orange-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-orange-700">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-fgb-yellow-200 bg-fgb-yellow-50 px-2 py-1 text-[9px] font-black uppercase tracking-widest text-fgb-yellow-700">
                           <Wallet className="h-3 w-3" />
                           Total {formatCurrencyBRL(feeSummary.total)}
                         </span>

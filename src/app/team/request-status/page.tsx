@@ -94,7 +94,7 @@ export default function RequestStatusPage() {
   if (status === 'loading' || !session) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin" />
+        <div className="w-10 h-10 border-4 border-gray-200 border-t-fgb-yellow-500 rounded-full animate-spin" />
       </div>
     )
   }
@@ -106,7 +106,7 @@ export default function RequestStatusPage() {
       {/* Header */}
       <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[var(--border)] bg-white sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center rounded-lg shadow-sm">
+          <div className="w-9 h-9 bg-gradient-to-br from-fgb-yellow-500 to-fgb-yellow-600 flex items-center justify-center rounded-lg shadow-sm">
             <span className="font-display font-black text-white text-xs tracking-wider">FGB</span>
           </div>
           <div className="leading-none">
@@ -134,11 +134,11 @@ export default function RequestStatusPage() {
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${
               isRejected
                 ? 'bg-red-50 border border-red-100'
-                : 'bg-amber-50 border border-amber-100'
+                : 'bg-fgb-yellow-50 border border-fgb-yellow-100'
             }`}>
               {isRejected
                 ? <XCircle className="w-8 h-8 text-red-500" />
-                : <Clock className="w-8 h-8 text-amber-500" />
+                : <Clock className="w-8 h-8 text-fgb-yellow-500" />
               }
             </div>
 
@@ -160,16 +160,16 @@ export default function RequestStatusPage() {
             <div className={`rounded-xl p-4 mb-6 ${
               isRejected
                 ? 'bg-red-50 border border-red-100'
-                : 'bg-amber-50 border border-amber-100'
+                : 'bg-fgb-yellow-50 border border-fgb-yellow-100'
             }`}>
               {isRejected ? (
                 <p className="text-sm text-red-700 text-center">
                   O responsável da equipe não aprovou sua entrada. Você pode tentar entrar em outra equipe ou criar a sua própria.
                 </p>
               ) : (
-                <div className="text-sm text-amber-700 text-center space-y-1">
+                <div className="text-sm text-fgb-yellow-700 text-center space-y-1">
                   <p>O responsável da equipe precisa aprovar sua solicitação.</p>
-                  <p className="text-[11px] text-amber-600 font-medium">Verificação automática a cada 10 segundos.</p>
+                  <p className="text-[11px] text-fgb-yellow-600 font-medium">Verificação automática a cada 10 segundos.</p>
                 </div>
               )}
             </div>
@@ -184,7 +184,7 @@ export default function RequestStatusPage() {
               {isRejected ? (
                 <Button
                   onClick={() => router.push('/team/onboarding')}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold gap-2"
+                  className="w-full bg-fgb-yellow-500 hover:bg-fgb-yellow-600 text-white font-bold gap-2"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   Voltar ao início

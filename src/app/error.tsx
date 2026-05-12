@@ -31,35 +31,35 @@ export default function Error({
         Erro de Aplicativo
       </h1>
       
-      <p className="text-slate-400 max-w-md mb-8 font-medium">
+      <p className="text-fgb-ink-400 max-w-md mb-8 font-medium">
         Ocorreu uma exceção no servidor. Isso geralmente acontece por falta de configuração ou conexões pendentes.
       </p>
 
       {isEnvError && (
-        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-6 mb-8 max-w-lg text-left">
+        <div className="bg-fgb-yellow-500/10 border border-fgb-yellow-500/20 rounded-2xl p-6 mb-8 max-w-lg text-left">
           <div className="flex items-center gap-3 mb-3">
-            <Settings className="w-5 h-5 text-orange-500" />
-            <h3 className="font-bold text-orange-500 uppercase text-sm tracking-widest">Ação Necessária</h3>
+            <Settings className="w-5 h-5 text-fgb-yellow-500" />
+            <h3 className="font-bold text-fgb-yellow-500 uppercase text-sm tracking-widest">Ação Necessária</h3>
           </div>
-          <p className="text-sm text-slate-300 leading-relaxed">
+          <p className="text-sm text-fgb-ink-300 leading-relaxed">
             Parece que algumas <strong>Variáveis de Ambiente</strong> estão faltando na sua conta Vercel. 
-            Verifique se <code className="text-orange-300">DATABASE_URL</code> e <code className="text-orange-300">NEXTAUTH_SECRET</code> foram configuradas.
+            Verifique se <code className="text-fgb-yellow-300">DATABASE_URL</code> e <code className="text-fgb-yellow-300">NEXTAUTH_SECRET</code> foram configuradas.
           </p>
         </div>
       )}
 
       <div className="bg-[#111] border border-white/5 rounded-xl p-4 mb-10 w-full max-w-2xl overflow-hidden">
-        <p className="text-[10px] font-mono text-slate-500 uppercase mb-2 tracking-widest">Mensagem Técnica</p>
+        <p className="text-[10px] font-mono text-fgb-ink-500 uppercase mb-2 tracking-widest">Mensagem Técnica</p>
         <p className="text-xs font-mono text-red-400 break-all">{error.message || 'Erro desconhecido'}</p>
         {error.digest && (
-          <p className="text-[10px] font-mono text-slate-600 mt-2">Digest: {error.digest}</p>
+          <p className="text-[10px] font-mono text-fgb-ink-600 mt-2">Digest: {error.digest}</p>
         )}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
         <Button 
           onClick={() => reset()}
-          className="bg-white text-black hover:bg-slate-200 font-bold h-12 px-8 rounded-full transition-all flex items-center gap-2"
+          className="bg-white text-black hover:bg-fgb-ink-200 font-bold h-12 px-8 rounded-full transition-all flex items-center gap-2"
         >
           <RefreshCcw className="w-4 h-4" />
           Tentar Novamente
@@ -74,7 +74,7 @@ export default function Error({
         </Link>
       </div>
       
-      <p className="mt-12 text-[10px] text-slate-600 font-bold tracking-[0.2em] uppercase">
+      <p className="mt-12 text-[10px] text-fgb-ink-600 font-bold tracking-[0.2em] uppercase">
         FGB Management System • v1.0
       </p>
     </div>

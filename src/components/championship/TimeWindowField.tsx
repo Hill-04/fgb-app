@@ -121,28 +121,28 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
 
       {/* Preview de slots calculados */}
       {validation.valid && (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 shadow-sm space-y-3">
-          <div className="flex items-center gap-2 text-sm font-bold text-emerald-700">
-            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="rounded-xl border border-fgb-green-500/20 bg-fgb-green-500/[0.03] p-5 shadow-sm space-y-3">
+          <div className="flex items-center gap-2 text-sm font-bold text-fgb-green-700">
+            <div className="h-2 w-2 rounded-full bg-fgb-green-500 animate-pulse" />
             Capacidade Hidráulica do Ginásio:
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs leading-relaxed">
             <div className="space-y-2">
-              <div className="font-bold text-emerald-900 flex items-center justify-between">
+              <div className="font-bold text-fgb-green-900 flex items-center justify-between">
                 <span>{value.blockFormat === 'FRI_SAT_SUN' ? 'Sextas e Domingos' : 'Fluxo Regular'}</span>
-                <span className="bg-emerald-100 px-2 py-0.5 rounded text-emerald-800 font-black">{regularSlots.length} slots</span>
+                <span className="bg-fgb-green-100 px-2 py-0.5 rounded text-fgb-green-800 font-black">{regularSlots.length} slots</span>
               </div>
-              <div className="text-emerald-700/80 font-medium">
+              <div className="text-fgb-green-700/80 font-medium">
                 {regularSlots.join(' · ')}
               </div>
             </div>
             {value.blockFormat !== 'SAT_ONLY' && (
-              <div className="space-y-2 border-l border-emerald-500/10 pl-6">
-                <div className="font-bold text-emerald-900 flex items-center justify-between">
+              <div className="space-y-2 border-l border-fgb-green-500/10 pl-6">
+                <div className="font-bold text-fgb-green-900 flex items-center justify-between">
                   <span>Sábados (Janela Estendida)</span>
-                  <span className="bg-emerald-100 px-2 py-0.5 rounded text-emerald-800 font-black">{extendedSlots.length} slots</span>
+                  <span className="bg-fgb-green-100 px-2 py-0.5 rounded text-fgb-green-800 font-black">{extendedSlots.length} slots</span>
                 </div>
-                <div className="text-emerald-700/80 font-medium">
+                <div className="text-fgb-green-700/80 font-medium">
                   {extendedSlots.join(' · ')}
                 </div>
               </div>
@@ -166,12 +166,12 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
       )}
 
       {validation.warnings.length > 0 && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-4">
-          <div className="flex items-center gap-2 text-xs font-black text-amber-700 uppercase tracking-widest mb-1">
+        <div className="rounded-xl border border-fgb-yellow-500/20 bg-fgb-yellow-500/[0.03] p-4">
+          <div className="flex items-center gap-2 text-xs font-black text-fgb-yellow-700 uppercase tracking-widest mb-1">
             💡 Recomendações Logísticas
           </div>
           {validation.warnings.map((w, i) => (
-            <div key={i} className="text-sm text-amber-700 font-medium ml-6 relative before:absolute before:left-[-1.5rem] before:content-['→']">{w}</div>
+            <div key={i} className="text-sm text-fgb-yellow-700 font-medium ml-6 relative before:absolute before:left-[-1.5rem] before:content-['→']">{w}</div>
           ))}
         </div>
       )}

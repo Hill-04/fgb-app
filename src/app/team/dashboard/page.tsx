@@ -131,7 +131,7 @@ export default async function TeamDashboardPage() {
             </div>
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <Badge variant="outline" className="bg-orange-50 text-orange-600 border-orange-200 font-black uppercase tracking-widest text-[10px]">
+                <Badge variant="outline" className="bg-fgb-yellow-50 text-fgb-yellow-600 border-fgb-yellow-200 font-black uppercase tracking-widest text-[10px]">
                   Equipe Oficial FGB
                 </Badge>
                 <div className="h-4 w-px bg-[var(--border)]" />
@@ -177,7 +177,7 @@ export default async function TeamDashboardPage() {
             value={activeRegistrations > 0 ? "Ativa" : "Inativa"}
             sublabel={activeRegistrations > 0 ? `${activeRegistrations} Inscrição(ões)` : "Sem inscrições no momento"}
             accent="orange"
-            icon={<Trophy className="w-5 h-5 text-orange-600" />}
+            icon={<Trophy className="w-5 h-5 text-fgb-yellow-600" />}
           />
 
           <StatCard
@@ -222,7 +222,7 @@ export default async function TeamDashboardPage() {
                       href={isRegistered ? `/campeonatos/${championship.id}` : `/team/championships/${championship.id}/register`}
                       className={cn(
                         "fgb-card bg-white p-6 rounded-[2rem] flex flex-col justify-between hover:shadow-lg transition-all duration-500 group relative overflow-hidden",
-                        isRegistered ? "border-green-200" : "border-[var(--border)] hover:border-orange-300"
+                        isRegistered ? "border-green-200" : "border-[var(--border)] hover:border-fgb-yellow-300"
                       )}
                     >
                       {/* Premium Badge for Registered */}
@@ -240,7 +240,7 @@ export default async function TeamDashboardPage() {
                                variant="outline"
                                className={cn(
                                  "shadow-sm border font-black uppercase text-[9px] tracking-widest h-6 px-3",
-                                 isRegistered ? "bg-green-50 text-green-700 border-green-200" : "bg-orange-50 text-orange-600 border-orange-200"
+                                 isRegistered ? "bg-green-50 text-green-700 border-green-200" : "bg-fgb-yellow-50 text-fgb-yellow-600 border-fgb-yellow-200"
                                )}
                              >
                                {isRegistered ? "Vaga Garantida" : "Fase de Inscrição"}
@@ -250,7 +250,7 @@ export default async function TeamDashboardPage() {
                             </div>
                           </div>
                           <div>
-                            <h3 className="font-display font-black text-2xl text-[var(--black)] tracking-tight group-hover:text-orange-600 transition-colors leading-tight italic uppercase">
+                            <h3 className="font-display font-black text-2xl text-[var(--black)] tracking-tight group-hover:text-fgb-yellow-600 transition-colors leading-tight italic uppercase">
                               {championship.name}
                             </h3>
                             <p className="text-[10px] font-black text-[var(--gray)] uppercase tracking-[0.2em] mt-2">
@@ -262,7 +262,7 @@ export default async function TeamDashboardPage() {
                         <div className="space-y-3 bg-[var(--gray-l)] p-4 rounded-3xl border border-[var(--border)] group-hover:bg-gray-50 transition-all shadow-inner">
                           <div className="flex flex-wrap gap-2">
                             {championship.categories.slice(0, 4).map((cat: { id: string; name: string }) => (
-                              <Badge key={cat.id} variant="outline" size="sm" className="bg-white border-[var(--border)] text-[var(--black)] font-bold group-hover:border-orange-200">
+                              <Badge key={cat.id} variant="outline" size="sm" className="bg-white border-[var(--border)] text-[var(--black)] font-bold group-hover:border-fgb-yellow-200">
                                 {cat.name}
                               </Badge>
                             ))}
@@ -306,14 +306,14 @@ export default async function TeamDashboardPage() {
                   const feeSummary = summarizeRegistrationFees((registration as any).fees || [])
 
                   return (
-                  <div key={registration.id} className="fgb-card bg-white border border-[var(--border)] shadow-sm p-6 rounded-[2.5rem] flex flex-col justify-between hover:border-orange-200 transition-all duration-300 group relative overflow-hidden">
-                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-50 rounded-full blur-2xl group-hover:bg-orange-100 transition-all duration-700" />
+                  <div key={registration.id} className="fgb-card bg-white border border-[var(--border)] shadow-sm p-6 rounded-[2.5rem] flex flex-col justify-between hover:border-fgb-yellow-200 transition-all duration-300 group relative overflow-hidden">
+                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-fgb-yellow-50 rounded-full blur-2xl group-hover:bg-fgb-yellow-100 transition-all duration-700" />
                     
                     <div className="relative z-10">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                           <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center border border-orange-100 shadow-inner">
-                              <Trophy className="w-6 h-6 text-orange-600" />
+                           <div className="w-12 h-12 rounded-2xl bg-fgb-yellow-50 flex items-center justify-center border border-fgb-yellow-100 shadow-inner">
+                              <Trophy className="w-6 h-6 text-fgb-yellow-600" />
                            </div>
                            <div>
                               <h3 className="font-display font-black text-xl text-[var(--black)] tracking-tight leading-tight italic uppercase">
@@ -327,7 +327,7 @@ export default async function TeamDashboardPage() {
                           className={cn(
                             "font-black uppercase italic tracking-widest text-[9px] h-7 px-4 shadow-sm border",
                             registration.status === 'CONFIRMED' ? "bg-green-50 border-green-200 text-green-700" : 
-                            registration.status === 'PENDING' ? "bg-orange-50 text-orange-600 border border-orange-200" : 
+                            registration.status === 'PENDING' ? "bg-fgb-yellow-50 text-fgb-yellow-600 border border-fgb-yellow-200" : 
                             "bg-red-50 text-red-700 border-red-200"
                           )}
                         >
@@ -343,9 +343,9 @@ export default async function TeamDashboardPage() {
                              <span className="text-xs font-bold text-[var(--black)] uppercase italic">{regCat.category.name}</span>
                           </div>
                         ))}
-                        <div className="px-4 py-2 rounded-xl bg-orange-50 border border-orange-200 flex flex-col shadow-inner">
-                           <span className="text-[8px] font-black text-orange-700 uppercase tracking-widest">Taxas</span>
-                           <span className="text-xs font-black text-orange-700 uppercase italic">{formatCurrencyBRL(feeSummary.total)}</span>
+                        <div className="px-4 py-2 rounded-xl bg-fgb-yellow-50 border border-fgb-yellow-200 flex flex-col shadow-inner">
+                           <span className="text-[8px] font-black text-fgb-yellow-700 uppercase tracking-widest">Taxas</span>
+                           <span className="text-xs font-black text-fgb-yellow-700 uppercase italic">{formatCurrencyBRL(feeSummary.total)}</span>
                         </div>
                         <div className="px-4 py-2 rounded-xl bg-red-50 border border-red-200 flex flex-col shadow-inner">
                            <span className="text-[8px] font-black text-red-700 uppercase tracking-widest">Pendente</span>
@@ -366,10 +366,10 @@ export default async function TeamDashboardPage() {
                          </div>
                          <Link
                           href={`/team/registrations/${registration.id}/fees`}
-                          className="px-6 py-2.5 rounded-xl bg-[var(--gray-l)] hover:bg-gray-100 text-[var(--black)] font-bold text-xs transition-all border border-[var(--border)] group-hover:border-orange-200 shadow-sm"
+                          className="px-6 py-2.5 rounded-xl bg-[var(--gray-l)] hover:bg-gray-100 text-[var(--black)] font-bold text-xs transition-all border border-[var(--border)] group-hover:border-fgb-yellow-200 shadow-sm"
                         >
                           <span className="inline-flex items-center gap-1.5">
-                            <Wallet className="h-3.5 w-3.5 text-orange-600" />
+                            <Wallet className="h-3.5 w-3.5 text-fgb-yellow-600" />
                             Ver Taxas
                           </span>
                         </Link>
@@ -392,15 +392,15 @@ export default async function TeamDashboardPage() {
             <div className="fgb-card bg-white border border-[var(--border)] rounded-[3rem] overflow-hidden shadow-sm">
               <div className="bg-[var(--gray-l)] px-8 py-6 border-b border-[var(--border)] flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center border border-orange-100">
-                    <BracketsIcon className="w-5 h-5 text-orange-600" />
+                  <div className="w-10 h-10 rounded-2xl bg-fgb-yellow-50 flex items-center justify-center border border-fgb-yellow-100">
+                    <BracketsIcon className="w-5 h-5 text-fgb-yellow-600" />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-[var(--black)] uppercase tracking-tighter italic">Key Chaveamento FGB</h3>
                     <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-[0.2em] mt-0.5">Atualizado em tempo real</p>
                   </div>
                 </div>
-                <Badge variant="outline" className="font-black text-[10px] italic px-4 h-8 bg-orange-50 text-orange-600 border-orange-200">PLAYOFFS 2026</Badge>
+                <Badge variant="outline" className="font-black text-[10px] italic px-4 h-8 bg-fgb-yellow-50 text-fgb-yellow-600 border-fgb-yellow-200">PLAYOFFS 2026</Badge>
               </div>
               {playoffCategory ? (
                 <Brackets games={playoffCategory.games as any} />

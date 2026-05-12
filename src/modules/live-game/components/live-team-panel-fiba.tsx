@@ -14,8 +14,8 @@ type LiveTeamPanelFibaProps = {
 
 const FGB = {
   verde:    '#1B7340',
-  vermelho: '#CC1016',
-  amarelo:  '#F5C200',
+  vermelho: '#D72020',
+  amarelo:  '#E5AB00',
 }
 
 function ActionBtn({ label, color, onClick, disabled = false }: {

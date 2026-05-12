@@ -12,7 +12,7 @@ const EMPTY_MARK = '\u2014'
 
 function teamAccent(team: PublicKeyMomentValue['team']): string {
   if (team === 'home') return 'text-[var(--verde)]'
-  if (team === 'away') return 'text-[#CC1016]'
+  if (team === 'away') return 'text-[var(--fgb-red-500)]'
   return 'text-[var(--gray)]'
 }
 
@@ -45,7 +45,7 @@ function getWinnerClass(pair: TeamStatPair, side: 'home' | 'away') {
   const awayBetter = pair.lowerIsBetter ? pair.away < pair.home : pair.away > pair.home
 
   if (homeBetter && side === 'home') return 'text-[var(--verde)]'
-  if (awayBetter && side === 'away') return 'text-[#CC1016]'
+  if (awayBetter && side === 'away') return 'text-[var(--fgb-red-500)]'
   if (homeBetter || awayBetter) return 'text-[var(--gray)]'
   return 'text-[var(--black)]'
 }
@@ -160,7 +160,7 @@ function ShootingRow({
 
 function segmentTone(team: PublicLeadTrackerSegment['team']) {
   if (team === 'home') return 'bg-[var(--verde)]'
-  if (team === 'away') return 'bg-[#CC1016]'
+  if (team === 'away') return 'bg-[var(--fgb-red-500)]'
   return 'bg-[var(--gray)]/35'
 }
 
@@ -188,7 +188,7 @@ function LeadTracker({
             {homeLabel}
           </span>
           <span className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#CC1016]" />
+            <span className="h-2.5 w-2.5 rounded-full bg-[var(--fgb-red-500)]" />
             {awayLabel}
           </span>
           <span className="inline-flex items-center gap-2">
@@ -288,7 +288,7 @@ export function GameOverviewContent() {
             title="Viradas"
             value={String(keyMoments.leadChanges)}
             subtitle="Trocas reais de lideranca"
-            accent="text-[#CC1016]"
+            accent="text-[var(--fgb-red-500)]"
             isEmpty={false}
           />
           <KeyMomentCard
@@ -437,7 +437,7 @@ export function GameOverviewContent() {
                 <div
                   key={`${event.occurredAt}-${index}`}
                   className={`rounded-xl border border-[var(--border)] px-4 py-3 ${
-                    event.pointsDelta > 0 ? 'bg-[#F5C200]/10' : 'bg-white'
+                    event.pointsDelta > 0 ? 'bg-[var(--fgb-yellow-500)]/10' : 'bg-white'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">

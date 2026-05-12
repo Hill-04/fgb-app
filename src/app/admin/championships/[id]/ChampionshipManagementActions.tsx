@@ -60,7 +60,7 @@ export function ChampionshipManagementActions({ championshipId, championshipName
       <DialogTrigger 
         render={
           <Button variant="outline" className="bg-white/5 border-white/10 text-white hover:bg-white/10 gap-2">
-            <Bell className="w-4 h-4 text-[#FF6B00]" />
+            <Bell className="w-4 h-4 text-[var(--fgb-yellow-500)]" />
             Notificar Todas as Equipes
           </Button>
         }
@@ -68,28 +68,28 @@ export function ChampionshipManagementActions({ championshipId, championshipName
       <DialogContent className="bg-[#0A0A0A] border-white/10 text-white max-w-md rounded-[32px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-display font-black uppercase tracking-tight">Comunicado Geral</DialogTitle>
-          <DialogDescription className="text-slate-500 text-[10px] uppercase font-black tracking-widest">
+          <DialogDescription className="text-fgb-ink-500 text-[10px] uppercase font-black tracking-widest">
             Enviar para todas as equipes de {championshipName}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSendNotification} className="space-y-6 py-4">
           <div className="space-y-2">
-            <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Assunto / Título</Label>
+            <Label className="text-[10px] uppercase font-bold text-fgb-ink-500 tracking-widest ml-1">Assunto / Título</Label>
             <Input 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Atualização do Cronograma"
-              className="bg-white/5 border-white/10 h-12 rounded-2xl focus:border-[#FF6B00]/50 transition-all"
+              className="bg-white/5 border-white/10 h-12 rounded-2xl focus:border-[var(--fgb-yellow-500)]/50 transition-all"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-[10px] uppercase font-bold text-slate-500 tracking-widest ml-1">Mensagem</Label>
+            <Label className="text-[10px] uppercase font-bold text-fgb-ink-500 tracking-widest ml-1">Mensagem</Label>
             <Textarea 
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Descreva o comunicado..."
-              className="bg-white/5 border-white/10 min-h-[150px] rounded-2xl focus:border-[#FF6B00]/50 transition-all resize-none"
+              className="bg-white/5 border-white/10 min-h-[150px] rounded-2xl focus:border-[var(--fgb-yellow-500)]/50 transition-all resize-none"
               required
             />
           </div>
@@ -97,7 +97,7 @@ export function ChampionshipManagementActions({ championshipId, championshipName
             <Button 
               type="submit" 
               disabled={loading || !title || !message}
-              className="w-full bg-[#FF6B00] hover:bg-[#E66000] text-white font-black uppercase tracking-widest h-12 rounded-2xl transition-all shadow-lg shadow-[#FF6B00]/20 gap-2"
+              className="w-full bg-[var(--fgb-yellow-500)] hover:bg-[var(--fgb-yellow-700)] text-white font-black uppercase tracking-widest h-12 rounded-2xl transition-all shadow-lg shadow-[var(--fgb-yellow-500)]/20 gap-2"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               {loading ? 'Enviando...' : 'Disparar Comunicado'}

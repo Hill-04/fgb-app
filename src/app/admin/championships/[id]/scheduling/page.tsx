@@ -78,8 +78,8 @@ export default function ChampionshipSchedulingPage() {
   if (!championship) {
     return (
       <div className="h-[60vh] flex flex-col items-center justify-center gap-4">
-        <Loader2 className="w-10 h-10 text-[#FF6B00] animate-spin" />
-        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Carregando dados do campeonato...</p>
+        <Loader2 className="w-10 h-10 text-[var(--fgb-yellow-500)] animate-spin" />
+        <p className="text-fgb-ink-500 font-bold uppercase tracking-widest text-xs">Carregando dados do campeonato...</p>
       </div>
     )
   }
@@ -106,7 +106,7 @@ export default function ChampionshipSchedulingPage() {
           <Button 
             disabled={loading} 
             onClick={handleSimulate}
-            className="h-14 px-10 rounded-2xl bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black uppercase tracking-widest shadow-sm transition-all hover:scale-105 active:scale-95"
+            className="h-14 px-10 rounded-2xl bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black uppercase tracking-widest shadow-sm transition-all hover:scale-105 active:scale-95"
           >
             {loading ? (
               <>
@@ -141,7 +141,7 @@ export default function ChampionshipSchedulingPage() {
                    { icon: Trophy, title: "Equilíbrio", desc: "Distribuição justa de mandos." }
                  ].map((item, i) => (
                    <div key={i} className="p-6 bg-white rounded-3xl border border-[var(--border)] shadow-sm">
-                      <item.icon className="w-6 h-6 text-orange-600 mb-4" />
+                      <item.icon className="w-6 h-6 text-fgb-yellow-600 mb-4" />
                       <h4 className="font-bold text-[var(--black)] text-sm uppercase tracking-tighter mb-2">{item.title}</h4>
                       <p className="text-xs text-[var(--gray)] leading-relaxed">{item.desc}</p>
                    </div>
@@ -183,7 +183,7 @@ export default function ChampionshipSchedulingPage() {
                     result.validation.capacityPercent > 100
                       ? 'text-red-600'
                       : result.validation.capacityPercent > 85
-                        ? 'text-amber-700'
+                        ? 'text-fgb-yellow-700'
                         : 'text-green-700'
                   }`}
                 >
@@ -196,7 +196,7 @@ export default function ChampionshipSchedulingPage() {
                     result.validation.capacityPercent > 100
                       ? 'bg-red-500'
                       : result.validation.capacityPercent > 85
-                        ? 'bg-amber-500'
+                        ? 'bg-fgb-yellow-500'
                         : 'bg-green-500'
                   }`}
                   style={{ width: `${Math.min(100, result.validation.capacityPercent)}%` }}
@@ -246,7 +246,7 @@ export default function ChampionshipSchedulingPage() {
                     <Card key={day.date} className="fgb-card bg-white overflow-hidden shadow-sm">
                       <div className="p-8 bg-[var(--gray-l)] border-b border-[var(--border)]">
                         <div className="flex justify-between items-start mb-4">
-                          <h4 className="text-2xl fgb-display text-orange-600 leading-none uppercase tracking-tight">
+                          <h4 className="text-2xl fgb-display text-fgb-yellow-600 leading-none uppercase tracking-tight">
                             {new Date(`${day.date}T12:00:00.000Z`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', timeZone: 'UTC' })}
                           </h4>
                           <span className="bg-white border border-[var(--border)] text-[var(--black)] px-3 py-1 rounded-full text-[9px] font-bold shadow-sm">DIA {di + 1}</span>
@@ -259,8 +259,8 @@ export default function ChampionshipSchedulingPage() {
                       <div className="p-8 hover:bg-[var(--gray-l)] transition-colors">
                         <div className="flex items-center justify-between gap-6 mb-6">
                           <div className="flex items-center gap-4">
-                            <div className="p-3 rounded-2xl bg-orange-50 border border-orange-100">
-                              <Calendar className="w-5 h-5 text-orange-600" />
+                            <div className="p-3 rounded-2xl bg-fgb-yellow-50 border border-fgb-yellow-100">
+                              <Calendar className="w-5 h-5 text-fgb-yellow-600" />
                             </div>
                             <div>
                               <h5 className="fgb-display text-[var(--black)] leading-none text-lg mb-1">Fase {day.phase}</h5>
@@ -355,16 +355,16 @@ export default function ChampionshipSchedulingPage() {
                   <div
                     key={i}
                     className={`p-4 rounded-2xl flex items-start gap-3 border ${
-                      isWarning ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'
+                      isWarning ? 'bg-fgb-yellow-50 border-fgb-yellow-200' : 'bg-blue-50 border-blue-200'
                     }`}
                   >
                     <AlertTriangle
                       size={18}
-                      className={`flex-shrink-0 mt-0.5 ${isWarning ? 'text-amber-700' : 'text-blue-700'}`}
+                      className={`flex-shrink-0 mt-0.5 ${isWarning ? 'text-fgb-yellow-700' : 'text-blue-700'}`}
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${isWarning ? 'text-amber-700' : 'text-blue-700'}`}>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${isWarning ? 'text-fgb-yellow-700' : 'text-blue-700'}`}>
                         {w.type}
                       </p>
                       <p className="text-sm mt-1 text-[var(--black)] leading-relaxed">

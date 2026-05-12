@@ -56,15 +56,15 @@ export default function DiretoriaPage() {
             <div className="fgb-fade-up" style={{ animationDelay: '0.2s' }}>
               <span className="fgb-label text-[var(--verde)]">Governança</span>
               <h2 className="fgb-display fgb-h2 mt-4 mb-6 text-[var(--black)]">Estrutura de <span className="text-[var(--verde)]">Gestão</span></h2>
-              <p className="text-slate-600 leading-relaxed mb-6">
+              <p className="text-fgb-ink-600 leading-relaxed mb-6">
                 A Federação Gaúcha de Basketball é liderada por uma equipe multidisciplinar comprometida com a profissionalização dos clubes e a massificação da modalidade. Nosso foco é elevar o patamar técnico das competições gaúchas no cenário nacional.
               </p>
               <div className="flex gap-4">
-                 <div className="p-4 bg-white border border-slate-200 rounded-xl flex-1">
+                 <div className="p-4 bg-white border border-fgb-ink-200 rounded-xl flex-1">
                     <div className="fgb-display text-2xl text-[var(--verde)]">2024</div>
                     <div className="fgb-label text-[9px] opacity-40">Ano Eleição</div>
                  </div>
-                 <div className="p-4 bg-white border border-slate-200 rounded-xl flex-1">
+                 <div className="p-4 bg-white border border-fgb-ink-200 rounded-xl flex-1">
                     <div className="fgb-display text-2xl text-[var(--verde)]">2028</div>
                     <div className="fgb-label text-[9px] opacity-40">Fim Mandato</div>
                  </div>
@@ -124,7 +124,7 @@ export default function DiretoriaPage() {
            <div className="absolute top-0 left-0 w-full fgb-stripe opacity-50" />
            <div className="container-fgb text-center relative z-10">
               <h2 className="fgb-display fgb-h3 text-white mb-4">Dúvidas Administrativas?</h2>
-              <p className="text-slate-400 mb-10 max-w-lg mx-auto text-sm">
+              <p className="text-fgb-ink-400 mb-10 max-w-lg mx-auto text-sm">
                 Entre em contato com nossa secretaria para informações sobre taxas, 
                 regulamentos ou filiações de novos clubes.
               </p>

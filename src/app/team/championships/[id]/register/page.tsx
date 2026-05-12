@@ -85,9 +85,9 @@ export default async function ChampionshipRegisterPage({
         </div>
         <div className="fgb-card bg-white border border-[var(--border)] p-6 rounded-3xl shadow-sm">
           <p className="text-[var(--gray)] mb-4 font-medium uppercase tracking-widest text-xs">
-            Status: <span className="text-orange-600 font-bold ml-1">{existingRegistration.status}</span>
+            Status: <span className="text-fgb-yellow-600 font-bold ml-1">{existingRegistration.status}</span>
           </p>
-          <a href="/team/dashboard" className="text-orange-600 hover:text-orange-700 font-bold text-sm tracking-tight hover:underline transition-all">
+          <a href="/team/dashboard" className="text-fgb-yellow-600 hover:text-fgb-yellow-700 font-bold text-sm tracking-tight hover:underline transition-all">
             ← Voltar ao Dashboard
           </a>
         </div>
@@ -120,17 +120,17 @@ export default async function ChampionshipRegisterPage({
       </div>
 
       {/* Info Banner */}
-      <div className="fgb-card bg-orange-50 p-6 border border-orange-200 rounded-3xl shadow-inner relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-2 h-full bg-orange-400" />
+      <div className="fgb-card bg-fgb-yellow-50 p-6 border border-fgb-yellow-200 rounded-3xl shadow-inner relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-2 h-full bg-fgb-yellow-400" />
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0 border border-orange-200 shadow-sm text-xl text-orange-600">
+          <div className="w-10 h-10 rounded-full bg-fgb-yellow-100 flex items-center justify-center flex-shrink-0 border border-fgb-yellow-200 shadow-sm text-xl text-fgb-yellow-600">
             ⚠️
           </div>
           <div>
             <h3 className="font-bold text-[var(--black)] mb-1 uppercase tracking-tight">Esta é a tela mais importante para equipes</h3>
-            <p className="text-sm text-orange-800/80 font-medium leading-relaxed">
+            <p className="text-sm text-fgb-yellow-800/80 font-medium leading-relaxed">
               Preencha todos os dados com atenção. Após a confirmação, sua inscrição será validada pela FGB.
-              Mínimo de <span className="text-orange-600 font-bold mx-1">{championship.minTeamsPerCat} equipes por categoria</span> para o campeonato acontecer.
+              Mínimo de <span className="text-fgb-yellow-600 font-bold mx-1">{championship.minTeamsPerCat} equipes por categoria</span> para o campeonato acontecer.
             </p>
           </div>
         </div>

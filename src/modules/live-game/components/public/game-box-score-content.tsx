@@ -29,12 +29,12 @@ function PlayerRow({ player, isHomeTeam }: { player: PublicPlayerLine; isHomeTea
   return (
     <tr
       className={`border-t border-[var(--border)] transition-colors ${
-        isDQ ? 'opacity-50' : isHomeTeam ? 'hover:bg-[var(--verde)]/5' : 'hover:bg-slate-50'
+        isDQ ? 'opacity-50' : isHomeTeam ? 'hover:bg-[var(--verde)]/5' : 'hover:bg-fgb-ink-50'
       }`}
     >
       <td className="px-2 py-2.5 text-center text-[10px]">
         {player.isStarter ? (
-          <span className="text-[#F5C200]" title="Titular">
+          <span className="text-[var(--fgb-yellow-500)]" title="Titular">
             *
           </span>
         ) : (
@@ -109,7 +109,7 @@ function PlayerRow({ player, isHomeTeam }: { player: PublicPlayerLine; isHomeTea
           player.efficiency > 0
             ? 'text-[var(--verde)]'
             : player.efficiency < 0
-              ? 'text-[#CC1016]'
+              ? 'text-[var(--fgb-red-500)]'
               : 'text-[var(--gray)]'
         }`}
       >
@@ -312,7 +312,7 @@ function TeamBoxScore({
                     totals.efficiency > 0
                       ? 'text-[var(--verde)]'
                       : totals.efficiency < 0
-                        ? 'text-[#CC1016]'
+                        ? 'text-[var(--fgb-red-500)]'
                         : 'text-[var(--gray)]'
                   }`}
                 >

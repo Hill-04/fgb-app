@@ -72,7 +72,7 @@ export default function JoinTeamPage() {
       {/* Header */}
       <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[var(--border)] bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-orange-500 flex items-center justify-center rounded-lg shadow-sm">
+          <div className="w-9 h-9 bg-fgb-yellow-500 flex items-center justify-center rounded-lg shadow-sm">
             <span className="font-display font-black text-white text-xs tracking-wider">FGB</span>
           </div>
           <div className="text-sm font-bold text-[var(--black)] uppercase tracking-wide">Entrar em Equipe</div>
@@ -117,7 +117,7 @@ export default function JoinTeamPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome da equipe..."
-            className="bg-white border-[var(--border)] text-[var(--black)] text-lg py-6 focus-visible:ring-orange-500 rounded-xl shadow-sm placeholder:text-gray-400"
+            className="bg-white border-[var(--border)] text-[var(--black)] text-lg py-6 focus-visible:ring-fgb-yellow-500 rounded-xl shadow-sm placeholder:text-gray-400"
           />
         </div>
 
@@ -134,7 +134,7 @@ export default function JoinTeamPage() {
             </div>
           ) : (
             teams.map((team) => (
-              <div key={team.id} className="fgb-card bg-white border border-[var(--border)] rounded-2xl p-6 hover:border-orange-300 transition-colors shadow-sm">
+              <div key={team.id} className="fgb-card bg-white border border-[var(--border)] rounded-2xl p-6 hover:border-fgb-yellow-300 transition-colors shadow-sm">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {team.logoUrl ? (
@@ -169,7 +169,7 @@ export default function JoinTeamPage() {
                   <Button
                     onClick={() => handleJoinRequest(team.id, team.name)}
                     disabled={loading}
-                    className="bg-orange-500 hover:bg-orange-600 text-white font-black uppercase tracking-widest rounded-xl"
+                    className="bg-fgb-yellow-500 hover:bg-fgb-yellow-600 text-white font-black uppercase tracking-widest rounded-xl"
                   >
                     Solicitar Entrada
                   </Button>

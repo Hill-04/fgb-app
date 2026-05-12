@@ -434,7 +434,7 @@ export default async function HomePage() {
 
               <div style={{ background: '#fff', border: '1px solid var(--border)' }}>
                 {recentGames.map((game: any, idx: number) => (
-                  <Link href={`/jogos/${game.id}`} key={game.id} style={{ display: 'flex', textDecoration: 'none', alignItems: 'center', padding: '12px 16px', borderBottom: idx < recentGames.length - 1 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }} className="hover:bg-slate-50 transition-colors">
+                  <Link href={`/jogos/${game.id}`} key={game.id} style={{ display: 'flex', textDecoration: 'none', alignItems: 'center', padding: '12px 16px', borderBottom: idx < recentGames.length - 1 ? '1px solid var(--border)' : 'none', cursor: 'pointer' }} className="hover:bg-fgb-ink-50 transition-colors">
                     <span className="fgb-label hidden sm:block" style={{ width: 140, flexShrink: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--gray)' }}>
                       OFICIAL FGB
                     </span>

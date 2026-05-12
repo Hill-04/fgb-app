@@ -143,7 +143,7 @@ export function RegisterResultButton({ gameId }: { gameId: string }) {
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="bg-white border border-[var(--border)] rounded-2xl w-full max-w-4xl max-h-[90vh] shadow-2xl relative overflow-hidden flex flex-col">
             {/* FGB tricolor accent bar */}
-            <div className="absolute top-0 left-0 w-full h-1" style={{ background: 'linear-gradient(to right,#1B7340 33%,#F5C200 33% 66%,#CC1016 66%)' }} />
+            <div className="absolute top-0 left-0 w-full h-1" style={{ background: 'linear-gradient(to right,#1B7340 33%,#E5AB00 33% 66%,#D72020 66%)' }} />
 
             {/* Header */}
             <div className="p-6 border-b border-[var(--border)] flex justify-between items-center bg-[var(--gray-l)]/30">

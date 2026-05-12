@@ -84,7 +84,7 @@ function getLineByAthlete(lines: LivePlayerStatLine[], athleteId: string) {
 }
 
 function FoulDots({ fouls }: { fouls: number }) {
-  const activeColor = fouls >= 5 ? '#CC1016' : fouls >= 3 ? '#FF6B00' : '#F5C200'
+  const activeColor = fouls >= 5 ? '#D72020' : fouls >= 3 ? '#E5AB00' : '#E5AB00'
   return (
     <div className="flex items-center gap-1">
       {Array.from({ length: 5 }).map((_, index) => (
@@ -264,9 +264,9 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
           </div>
           <div className="flex items-center gap-2">
             <FoulDots fouls={line.fouls} />
-            {trouble && <span className="rounded-full bg-[#F5C200] px-2 py-1 text-[10px] font-black">!</span>}
+            {trouble && <span className="rounded-full bg-[var(--fgb-yellow-500)] px-2 py-1 text-[10px] font-black">!</span>}
             {eliminated && (
-              <span className="rounded-full bg-[#CC1016] px-2 py-1 text-[10px] font-black text-white">ELIM.</span>
+              <span className="rounded-full bg-[var(--fgb-red-500)] px-2 py-1 text-[10px] font-black text-white">ELIM.</span>
             )}
           </div>
         </div>
@@ -316,7 +316,7 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
                   #{player.jerseyNumber ?? '--'} {player.athlete.name}
                 </span>
                 {player.isDisqualified && (
-                  <span className="rounded-full bg-[#CC1016] px-2 py-0.5 text-[10px] font-black text-white">ELIM.</span>
+                  <span className="rounded-full bg-[var(--fgb-red-500)] px-2 py-0.5 text-[10px] font-black text-white">ELIM.</span>
                 )}
               </div>
             ))}
@@ -372,14 +372,14 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
                 </div>
 
                 <div className="text-center">
-                  <div className="text-xs uppercase tracking-[0.2em] text-[#F5C200]">
+                  <div className="text-xs uppercase tracking-[0.2em] text-[var(--fgb-yellow-500)]">
                     {periodLabel(game.currentPeriod, game.liveStatus)}
                   </div>
-                  <div className={`text-[clamp(2.2rem,6vw,4rem)] leading-none font-black ${urgentGameClock ? 'text-[#CC1016]' : 'text-white'}`}>
+                  <div className={`text-[clamp(2.2rem,6vw,4rem)] leading-none font-black ${urgentGameClock ? 'text-[var(--fgb-red-500)]' : 'text-white'}`}>
                     {formatClockMs(clockMs)}
                   </div>
                   <div className={`mx-auto mt-2 inline-flex min-w-24 justify-center rounded-lg border-2 px-4 py-2 text-2xl font-black ${
-                    urgentShotClock ? 'animate-pulse border-[#CC1016] bg-[#CC1016] text-white' : 'border-[#F5C200] bg-[#F5C200] text-black'
+                    urgentShotClock ? 'animate-pulse border-[var(--fgb-red-500)] bg-[var(--fgb-red-500)] text-white' : 'border-[var(--fgb-yellow-500)] bg-[var(--fgb-yellow-500)] text-black'
                   }`}>
                     {Math.ceil(shotClockMs / 1000)}
                   </div>
@@ -461,7 +461,7 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
                   TIMEOUT AWAY ({Math.max(0, 5 - awayTimeoutsUsed)})
                 </Button>
                 {(homeTimeoutBlocked || awayTimeoutBlocked) && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-[#CC1016] px-3 py-1 text-xs font-black uppercase text-white">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--fgb-red-500)] px-3 py-1 text-xs font-black uppercase text-white">
                     <AlertTriangle className="size-3" />
                     Limite de timeout
                   </span>
@@ -606,7 +606,7 @@ export function AdminLiveTablePage({ gameId }: { gameId: string }) {
                 <div
                   key={event.id}
                   className={`flex items-center justify-between gap-3 rounded-lg border border-[var(--border)] p-3 ${
-                    event.isCancelled ? 'bg-slate-100 opacity-60 line-through' : 'bg-white'
+                    event.isCancelled ? 'bg-fgb-ink-100 opacity-60 line-through' : 'bg-white'
                   }`}
                 >
                   <div className="flex items-center gap-3">

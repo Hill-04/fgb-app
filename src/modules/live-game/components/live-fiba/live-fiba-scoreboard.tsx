@@ -35,8 +35,8 @@ function TeamMetaPill({
     <div
       className={[
         'rounded-2xl border px-3 py-2 text-center transition',
-        highlight ? 'border-[#F5C200]/35 bg-[#F5C200]/12 text-[#F5C200]' : 'border-white/10 bg-white/[0.05] text-white',
-        aggressive ? 'ring-2 ring-[#CC1016]/45' : '',
+        highlight ? 'border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/12 text-[var(--fgb-yellow-500)]' : 'border-white/10 bg-white/[0.05] text-white',
+        aggressive ? 'ring-2 ring-[var(--fgb-red-500)]/45' : '',
       ].join(' ')}
     >
       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/45">{label}</p>
@@ -58,7 +58,7 @@ function StatusDots({
 }) {
   const active = Math.max(0, Math.min(value, max))
   const dotClass =
-    tone === 'home' ? 'bg-[#145530]' : tone === 'away' ? 'bg-[#CC1016]' : 'bg-[#F5C200]'
+    tone === 'home' ? 'bg-[#145530]' : tone === 'away' ? 'bg-[var(--fgb-red-500)]' : 'bg-[var(--fgb-yellow-500)]'
 
   return (
     <div className="rounded-2xl border border-white/10 bg-black/25 px-3 py-2">
@@ -100,7 +100,7 @@ function TeamScoreBlock({
   const eventType = recentInteraction?.eventType ?? ''
   const foulBurst = interactionForTeam && eventType.includes('FOUL')
   const timeoutBurst = interactionForTeam && eventType === 'TIMEOUT_CONFIRMED'
-  const scoreFlashClass = flash ? (isHome ? 'ring-4 ring-emerald-300/75 ring-offset-0' : 'ring-4 ring-[#FF7A7F]/85 ring-offset-0') : ''
+  const scoreFlashClass = flash ? (isHome ? 'ring-4 ring-fgb-green-300/75 ring-offset-0' : 'ring-4 ring-[#FF7A7F]/85 ring-offset-0') : ''
 
   return (
     <section
@@ -109,9 +109,9 @@ function TeamScoreBlock({
         compact ? 'p-3' : 'p-4',
         isHome
           ? 'border-[#145530]/55 bg-[linear-gradient(135deg,rgba(8,28,17,0.98),rgba(20,85,48,0.94))]'
-          : 'border-[#CC1016]/55 bg-[linear-gradient(135deg,rgba(37,7,8,0.98),rgba(204,16,22,0.9))]',
+          : 'border-[var(--fgb-red-500)]/55 bg-[linear-gradient(135deg,rgba(37,7,8,0.98),rgba(204,16,22,0.9))]',
         scoreFlashClass,
-        foulBurst ? 'ring-4 ring-[#CC1016]/65 ring-offset-0' : '',
+        foulBurst ? 'ring-4 ring-[var(--fgb-red-500)]/65 ring-offset-0' : '',
         timeoutBurst ? 'ring-4 ring-sky-300/65 ring-offset-0' : '',
         operatorFocused ? 'shadow-[0_0_0_1px_rgba(245,194,0,0.45),0_26px_70px_rgba(0,0,0,0.42)]' : '',
       ].join(' ')}
@@ -124,13 +124,13 @@ function TeamScoreBlock({
               {isHome ? 'Mandante' : 'Visitante'}
             </p>
             {possessionSide === side ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#F5C200]/45 bg-[#F5C200]/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#F5C200]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--fgb-yellow-500)]/45 bg-[var(--fgb-yellow-500)]/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fgb-yellow-500)]">
                 {isHome ? <ArrowBigLeftDash className="h-3.5 w-3.5" /> : <ArrowBigRightDash className="h-3.5 w-3.5" />}
                 Posse
               </span>
             ) : null}
             {team.inBonus ? (
-              <span className="rounded-full border border-[#F5C200]/35 bg-[#F5C200]/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#F5C200]">
+              <span className="rounded-full border border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/14 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[var(--fgb-yellow-500)]">
                 Bonus
               </span>
             ) : null}
@@ -205,7 +205,7 @@ function CompactTeamScoreBlock({
   const isHome = side === 'home'
   const interactionForTeam = recentInteraction?.teamId === team.id
   const eventType = recentInteraction?.eventType ?? ''
-  const scoreFlashClass = flash ? (isHome ? 'ring-2 ring-emerald-300/75' : 'ring-2 ring-[#FF7A7F]/85') : ''
+  const scoreFlashClass = flash ? (isHome ? 'ring-2 ring-fgb-green-300/75' : 'ring-2 ring-[#FF7A7F]/85') : ''
   const foulBurst = interactionForTeam && eventType.includes('FOUL')
 
   return (
@@ -214,9 +214,9 @@ function CompactTeamScoreBlock({
         'relative overflow-hidden rounded-[24px] border px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.3)]',
         isHome
           ? 'border-[#145530]/55 bg-[linear-gradient(135deg,rgba(8,28,17,0.98),rgba(20,85,48,0.94))]'
-          : 'border-[#CC1016]/55 bg-[linear-gradient(135deg,rgba(37,7,8,0.98),rgba(204,16,22,0.9))]',
+          : 'border-[var(--fgb-red-500)]/55 bg-[linear-gradient(135deg,rgba(37,7,8,0.98),rgba(204,16,22,0.9))]',
         scoreFlashClass,
-        foulBurst ? 'ring-2 ring-[#CC1016]/65' : '',
+        foulBurst ? 'ring-2 ring-[var(--fgb-red-500)]/65' : '',
       ].join(' ')}
     >
       <div className="absolute inset-0 opacity-[0.08] [background-image:linear-gradient(90deg,#fff_1px,transparent_1px),linear-gradient(#fff_1px,transparent_1px)] [background-size:22px_22px]" />
@@ -225,13 +225,13 @@ function CompactTeamScoreBlock({
           <div className="flex items-center gap-2">
             <p className="text-[9px] font-black uppercase tracking-[0.22em] text-white/58">{isHome ? 'Mandante' : 'Visitante'}</p>
             {possessionSide === side ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-[#F5C200]/45 bg-[#F5C200]/14 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#F5C200]">
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--fgb-yellow-500)]/45 bg-[var(--fgb-yellow-500)]/14 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--fgb-yellow-500)]">
                 {isHome ? <ArrowBigLeftDash className="h-3 w-3" /> : <ArrowBigRightDash className="h-3 w-3" />}
                 Posse
               </span>
             ) : null}
             {team.inBonus ? (
-              <span className="rounded-full border border-[#F5C200]/35 bg-[#F5C200]/14 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#F5C200]">
+              <span className="rounded-full border border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/14 px-2 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[var(--fgb-yellow-500)]">
                 Bonus
               </span>
             ) : null}
@@ -309,7 +309,7 @@ export function LiveFibaScoreboard({
       <div className="rounded-[26px] border border-white/10 bg-[#070a10]/95 p-2.5 text-white shadow-[0_30px_90px_rgba(0,0,0,0.46)] backdrop-blur-xl">
         <div className="mb-2 flex flex-wrap items-center justify-between gap-3 px-1">
           <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.26em] text-[#F5C200]">FGB live control</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.26em] text-[var(--fgb-yellow-500)]">FGB live control</p>
             <h1 className="mt-1 text-[1.05rem] font-black uppercase tracking-[0.04em] text-white">{tableModel.championshipName}</h1>
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/42">
               {tableModel.categoryName} / {tableModel.venueLabel}
@@ -331,7 +331,7 @@ export function LiveFibaScoreboard({
             <span
               className={[
                 'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.14em]',
-                isSyncing ? 'bg-[#F5C200] text-black' : 'bg-[#145530]/32 text-emerald-100',
+                isSyncing ? 'bg-[var(--fgb-yellow-500)] text-black' : 'bg-[#145530]/32 text-fgb-green-100',
               ].join(' ')}
             >
               <RadioTower className="h-3 w-3" />
@@ -367,8 +367,8 @@ export function LiveFibaScoreboard({
                   className={[
                     'mt-2 rounded-[18px] border px-3 py-2.5 text-[clamp(1.9rem,2.6vw,2.4rem)] font-black leading-none tracking-[-0.06em] transition-colors',
                     shotClockUrgent
-                      ? 'border-[#CC1016]/70 bg-[#CC1016]/14 text-[#FFB4B7]'
-                      : 'border-[#F5C200]/35 bg-[#F5C200]/10 text-[#F5C200]',
+                      ? 'border-[var(--fgb-red-500)]/70 bg-[var(--fgb-red-500)]/14 text-[#FFB4B7]'
+                      : 'border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/10 text-[var(--fgb-yellow-500)]',
                   ].join(' ')}
                 >
                   {Math.max(visualShotClock, 0)}
@@ -404,7 +404,7 @@ export function LiveFibaScoreboard({
     <div className={['rounded-[30px] border border-white/10 bg-[#070a10]/95 text-white shadow-[0_30px_90px_rgba(0,0,0,0.46)] backdrop-blur-xl', compact ? 'p-2.5' : 'p-3'].join(' ')}>
       <div className={['flex flex-wrap items-center justify-between gap-3 px-2', compact ? 'mb-2' : 'mb-3'].join(' ')}>
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[#F5C200]">FGB live control</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--fgb-yellow-500)]">FGB live control</p>
           <h1 className={['mt-1 font-black uppercase tracking-[0.04em] text-white', compact ? 'text-[clamp(1rem,1.4vw,1.35rem)]' : 'text-[clamp(1.2rem,1.8vw,1.8rem)]'].join(' ')}>
             {tableModel.championshipName}
           </h1>
@@ -419,7 +419,7 @@ export function LiveFibaScoreboard({
               href={fullscreenHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-[#F5C200]/30 bg-[#F5C200]/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#F5C200] transition hover:bg-[#F5C200]/18"
+              className="rounded-full border border-[var(--fgb-yellow-500)]/30 bg-[var(--fgb-yellow-500)]/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[var(--fgb-yellow-500)] transition hover:bg-[var(--fgb-yellow-500)]/18"
             >
               Abrir Mesa (Fullscreen)
             </Link>
@@ -438,7 +438,7 @@ export function LiveFibaScoreboard({
           <span
             className={[
               'inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em]',
-              isSyncing ? 'bg-[#F5C200] text-black' : 'bg-[#145530]/32 text-emerald-100',
+              isSyncing ? 'bg-[var(--fgb-yellow-500)] text-black' : 'bg-[#145530]/32 text-fgb-green-100',
             ].join(' ')}
           >
             <RadioTower className="h-3.5 w-3.5" />
@@ -477,8 +477,8 @@ export function LiveFibaScoreboard({
                   'mt-2 rounded-[22px] border font-black leading-none tracking-[-0.06em] transition-colors',
                   compact ? 'px-3 py-3 text-[clamp(2rem,2.8vw,2.7rem)]' : 'px-4 py-4 text-[clamp(2.6rem,4vw,3.6rem)]',
                   shotClockUrgent
-                    ? 'border-[#CC1016]/70 bg-[#CC1016]/14 text-[#FFB4B7]'
-                    : 'border-[#F5C200]/35 bg-[#F5C200]/10 text-[#F5C200]',
+                    ? 'border-[var(--fgb-red-500)]/70 bg-[var(--fgb-red-500)]/14 text-[#FFB4B7]'
+                    : 'border-[var(--fgb-yellow-500)]/35 bg-[var(--fgb-yellow-500)]/10 text-[var(--fgb-yellow-500)]',
                 ].join(' ')}
               >
                 {Math.max(visualShotClock, 0)}

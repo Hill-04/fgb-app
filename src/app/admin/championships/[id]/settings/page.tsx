@@ -243,8 +243,8 @@ export default function ChampionshipSettingsPage({
       <div className="fgb-card bg-white p-8 space-y-6 shadow-sm">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100">
-                <Settings className="w-5 h-5 text-orange-600" />
+             <div className="w-10 h-10 rounded-xl bg-fgb-yellow-50 flex items-center justify-center border border-fgb-yellow-100">
+                <Settings className="w-5 h-5 text-fgb-yellow-600" />
              </div>
              <div>
                 <h3 className="fgb-display text-xl text-[var(--black)] leading-none">
@@ -276,7 +276,7 @@ export default function ChampionshipSettingsPage({
             <button
               onClick={() => handleSave('general')}
               disabled={saving === 'general'}
-              className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+              className="bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
             >
               {saving === 'general' ? 'Salvando...' : 'Salvar'}
             </button>
@@ -332,7 +332,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('dates')}
             disabled={saving === 'dates'}
-            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+            className="bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'dates' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -372,7 +372,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('format')}
             disabled={saving === 'format'}
-            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+            className="bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'format' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -486,7 +486,7 @@ export default function ChampionshipSettingsPage({
       {/* SEÇÃO 4: Playoffs */}
       <div className="fgb-card bg-white p-8 space-y-6 shadow-sm relative overflow-hidden">
         {/* Glow if enabled */}
-        {form.hasPlayoffs && <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 blur-[100px]" />}
+        {form.hasPlayoffs && <div className="absolute top-0 right-0 w-64 h-64 bg-fgb-yellow-100 blur-[100px]" />}
         
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -499,7 +499,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('playoffs')}
             disabled={saving === 'playoffs'}
-            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+            className="bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'playoffs' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -549,7 +549,7 @@ export default function ChampionshipSettingsPage({
           <button
             onClick={() => handleSave('relegation')}
             disabled={saving === 'relegation'}
-            className="bg-[var(--amarelo)] hover:bg-[#E66000] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
+            className="bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black text-[10px] uppercase tracking-widest px-6 h-10 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {saving === 'relegation' ? 'Salvando...' : 'Salvar'}
           </button>
@@ -594,7 +594,7 @@ export default function ChampionshipSettingsPage({
         <div className="flex flex-wrap gap-4 pt-2">
           <button
             onClick={handleArchive}
-            className="px-6 h-11 rounded-2xl border border-orange-200 bg-white text-orange-600 text-[10px] font-black uppercase tracking-widest hover:bg-orange-50 transition-all flex items-center gap-2 shadow-sm"
+            className="px-6 h-11 rounded-2xl border border-fgb-yellow-200 bg-white text-fgb-yellow-600 text-[10px] font-black uppercase tracking-widest hover:bg-fgb-yellow-50 transition-all flex items-center gap-2 shadow-sm"
           >
             Arquivar Campeonato
           </button>

@@ -37,8 +37,8 @@ export default function TeamDocumentsPage() {
     <div className="space-y-10 max-w-6xl mx-auto font-sans">
       <div className="animate-fade-in border-b border-[var(--border)] pb-8">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-orange-600" />
+          <div className="w-8 h-8 rounded-lg bg-fgb-yellow-100 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-fgb-yellow-600" />
           </div>
           <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Documentos Oficiais</span>
         </div>
@@ -59,15 +59,15 @@ export default function TeamDocumentsPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {documents.map((doc) => (
-            <div key={doc.id} className="fgb-card bg-white border border-[var(--border)] rounded-3xl p-6 flex items-start gap-4 hover:border-orange-200 transition-all group shadow-sm hover:shadow-md">
-              <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center shrink-0">
-                <FileText className="w-5 h-5 text-orange-500" />
+            <div key={doc.id} className="fgb-card bg-white border border-[var(--border)] rounded-3xl p-6 flex items-start gap-4 hover:border-fgb-yellow-200 transition-all group shadow-sm hover:shadow-md">
+              <div className="w-12 h-12 rounded-2xl bg-fgb-yellow-50 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-fgb-yellow-500" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-[var(--black)] truncate uppercase tracking-tight">{doc.name}</p>
                 <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest mt-1">{TYPE_LABELS[doc.type] || doc.type}</p>
                 <p className="text-[10px] text-[var(--gray)] mt-1 flex items-center gap-1 font-medium">
-                  <Trophy className="w-3 h-3 text-orange-400" /> {doc.championship.name}
+                  <Trophy className="w-3 h-3 text-fgb-yellow-400" /> {doc.championship.name}
                 </p>
                 <p className="text-[10px] text-[var(--gray)] flex items-center gap-1 font-medium mt-0.5">
                   <Calendar className="w-3 h-3 text-gray-400" /> {new Date(doc.createdAt).toLocaleDateString('pt-BR')}
@@ -75,8 +75,8 @@ export default function TeamDocumentsPage() {
               </div>
               {doc.url ? (
                 <a href={doc.url} target="_blank" rel="noreferrer" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center hover:bg-orange-100 transition-colors">
-                    <Download className="w-4 h-4 text-orange-600" />
+                  <div className="w-9 h-9 rounded-xl bg-fgb-yellow-50 flex items-center justify-center hover:bg-fgb-yellow-100 transition-colors">
+                    <Download className="w-4 h-4 text-fgb-yellow-600" />
                   </div>
                 </a>
               ) : (

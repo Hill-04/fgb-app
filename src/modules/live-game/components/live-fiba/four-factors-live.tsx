@@ -29,11 +29,11 @@ export function FourFactorsLive({ events, homeTeamId, awayTeamId, homeTeamName, 
   ] as const
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4">
-      <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-slate-700">Four Factors</h3>
+    <div className="rounded-xl border border-fgb-ink-200 bg-white p-4">
+      <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-fgb-ink-700">Four Factors</h3>
       <table className="w-full text-xs">
         <thead>
-          <tr className="border-b border-slate-200 text-slate-500">
+          <tr className="border-b border-fgb-ink-200 text-fgb-ink-500">
             <th className="py-1 text-left">Métrica</th>
             <th className="text-right">{homeTeamName.slice(0, 8)}</th>
             <th className="text-right">{awayTeamName.slice(0, 8)}</th>
@@ -46,15 +46,15 @@ export function FourFactorsLive({ events, homeTeamId, awayTeamId, homeTeamName, 
             const homeWins = f.invert ? home < away : home > away
             const awayWins = f.invert ? away < home : away > home
             return (
-              <tr key={f.key} className="border-b border-slate-100">
+              <tr key={f.key} className="border-b border-fgb-ink-100">
                 <td className="py-1.5">
-                  <div className="font-semibold text-slate-800">{f.label}</div>
-                  <div className="text-[10px] text-slate-400">{f.desc} · peso {f.weight}</div>
+                  <div className="font-semibold text-fgb-ink-800">{f.label}</div>
+                  <div className="text-[10px] text-fgb-ink-400">{f.desc} · peso {f.weight}</div>
                 </td>
-                <td className={`text-right font-mono ${homeWins ? 'font-bold text-fgb-green-700' : 'text-slate-600'}`}>
+                <td className={`text-right font-mono ${homeWins ? 'font-bold text-fgb-green-700' : 'text-fgb-ink-600'}`}>
                   {home.toFixed(1)}
                 </td>
-                <td className={`text-right font-mono ${awayWins ? 'font-bold text-fgb-green-700' : 'text-slate-600'}`}>
+                <td className={`text-right font-mono ${awayWins ? 'font-bold text-fgb-green-700' : 'text-fgb-ink-600'}`}>
                   {away.toFixed(1)}
                 </td>
               </tr>

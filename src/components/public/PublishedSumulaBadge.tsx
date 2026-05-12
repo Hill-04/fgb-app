@@ -28,12 +28,12 @@ export function PublishedSumulaBadge({ publishedAt, isHistoricallyLocked, versio
               Súmula Oficial — Publicada
             </span>
             {isHistoricallyLocked && (
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-800">
+              <span className="rounded-full bg-fgb-yellow-100 px-2 py-0.5 text-xs font-medium text-fgb-yellow-800">
                 Travada
               </span>
             )}
           </div>
-          <p className="mt-1 text-xs text-slate-600">
+          <p className="mt-1 text-xs text-fgb-ink-600">
             Publicada em {date.toLocaleDateString('pt-BR')}
             {version && version > 1 ? ` · versão ${version}` : ''}
           </p>

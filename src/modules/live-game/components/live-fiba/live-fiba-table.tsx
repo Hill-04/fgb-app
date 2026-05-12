@@ -437,7 +437,7 @@ export function LiveFibaTable({
             <section className="grid gap-3 rounded-[28px] border border-white/10 bg-[#0a0e14] p-4 text-white shadow-[0_24px_72px_rgba(0,0,0,0.34)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[#F5C200]">Contexto operacional</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.26em] text-[var(--fgb-yellow-500)]">Contexto operacional</p>
                   <h2 className="mt-1 text-lg font-black uppercase tracking-[0.04em] text-white">Mesa unica em modo continuo</h2>
                 </div>
                 <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white/64">
@@ -446,7 +446,7 @@ export function LiveFibaTable({
               </div>
 
               <div className="grid gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/78">
-                <div className="rounded-2xl border border-[#F5C200]/20 bg-[#F5C200]/10 px-3 py-2 text-[#F5C200]">
+                <div className="rounded-2xl border border-[var(--fgb-yellow-500)]/20 bg-[var(--fgb-yellow-500)]/10 px-3 py-2 text-[var(--fgb-yellow-500)]">
                   Proxima acao sugerida: {controlAvailability.startOrResume.label}
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2">

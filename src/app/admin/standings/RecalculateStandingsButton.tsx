@@ -41,7 +41,7 @@ export function RecalculateStandingsButton({ categoryId }: RecalculateStandingsB
       size="sm" 
       onClick={handleRecalculate}
       disabled={loading}
-      className="h-8 px-2 text-[8px] font-black uppercase tracking-widest text-slate-500 hover:text-orange-500"
+      className="h-8 px-2 text-[8px] font-black uppercase tracking-widest text-fgb-ink-500 hover:text-fgb-yellow-500"
     >
       <RefreshCw className={`w-3 h-3 mr-1.5 ${loading ? 'animate-spin' : ''}`} />
       {loading ? 'Recalculando...' : 'Recalcular'}

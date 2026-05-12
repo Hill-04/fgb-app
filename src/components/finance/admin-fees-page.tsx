@@ -261,7 +261,7 @@ export default function AdminFeesPage({ initialFees }: { initialFees?: EditableF
                       {fee.appliesFrom ? new Date(fee.appliesFrom).toLocaleString('pt-BR') : 'Imediata'}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${fee.isActive ? 'border-green-200 bg-green-50 text-green-700' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+                      <span className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-widest ${fee.isActive ? 'border-green-200 bg-green-50 text-green-700' : 'border-fgb-ink-200 bg-fgb-ink-100 text-fgb-ink-600'}`}>
                         {fee.isActive ? 'Ativa' : 'Inativa'}
                       </span>
                     </td>
@@ -270,7 +270,7 @@ export default function AdminFeesPage({ initialFees }: { initialFees?: EditableF
                         <button
                           type="button"
                           onClick={() => openEditModal(fee as EditableFee)}
-                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-white text-[var(--gray)] transition-all hover:border-orange-200 hover:bg-orange-50 hover:text-orange-600"
+                          className="flex h-10 w-10 items-center justify-center rounded-xl border border-[var(--border)] bg-white text-[var(--gray)] transition-all hover:border-fgb-yellow-200 hover:bg-fgb-yellow-50 hover:text-fgb-yellow-600"
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
@@ -296,7 +296,7 @@ export default function AdminFeesPage({ initialFees }: { initialFees?: EditableF
           <div className="w-full max-w-2xl rounded-[28px] border border-[var(--border)] bg-white shadow-2xl">
             <div className="border-b border-[var(--border)] px-6 py-5">
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-50 text-orange-600">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-fgb-yellow-50 text-fgb-yellow-600">
                   <Coins className="h-5 w-5" />
                 </div>
                 <div>

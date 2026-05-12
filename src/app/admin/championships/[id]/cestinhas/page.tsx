@@ -119,14 +119,14 @@ export default async function AdminCestinhasPage({
 
               {topScorers[1] && (
                 <div className="flex flex-col items-center z-10 hidden md:flex">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 border-4 border-white flex items-center justify-center shadow-lg mb-4 z-20 overflow-hidden">
-                    <UserIcon className="w-8 h-8 text-slate-400" />
+                  <div className="w-16 h-16 rounded-full bg-fgb-ink-100 border-4 border-white flex items-center justify-center shadow-lg mb-4 z-20 overflow-hidden">
+                    <UserIcon className="w-8 h-8 text-fgb-ink-400" />
                   </div>
-                  <div className="bg-gradient-to-b from-slate-200 to-slate-100 w-32 h-40 rounded-t-2xl border border-slate-300 flex flex-col items-center pt-4 shadow-sm">
-                    <span className="text-3xl font-black text-slate-500 font-mono tracking-tighter">{topScorers[1].points}</span>
-                    <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest mt-1">Pontos</span>
-                    <div className="mt-auto bg-slate-300 w-full py-2 text-center rounded-t-lg">
-                      <p className="text-[10px] font-black text-slate-700 uppercase leading-tight truncate px-2">{topScorers[1].name}</p>
+                  <div className="bg-gradient-to-b from-fgb-ink-200 to-fgb-ink-100 w-32 h-40 rounded-t-2xl border border-fgb-ink-300 flex flex-col items-center pt-4 shadow-sm">
+                    <span className="text-3xl font-black text-fgb-ink-500 font-mono tracking-tighter">{topScorers[1].points}</span>
+                    <span className="text-[10px] font-black uppercase text-fgb-ink-400 tracking-widest mt-1">Pontos</span>
+                    <div className="mt-auto bg-fgb-ink-300 w-full py-2 text-center rounded-t-lg">
+                      <p className="text-[10px] font-black text-fgb-ink-700 uppercase leading-tight truncate px-2">{topScorers[1].name}</p>
                     </div>
                   </div>
                 </div>
@@ -140,7 +140,7 @@ export default async function AdminCestinhasPage({
                   </div>
                   <div className="bg-gradient-to-b from-[var(--amarelo)]/20 to-[var(--yellow)]/10 w-40 h-52 rounded-t-2xl border border-[var(--amarelo)]/30 border-b-0 flex flex-col items-center pt-6 shadow-2xl">
                     <span className="text-4xl font-black text-[var(--amarelo)] font-mono tracking-tighter">{topScorers[0].points}</span>
-                    <span className="text-[10px] font-black uppercase text-orange-600/70 tracking-widest mt-1">Pontos</span>
+                    <span className="text-[10px] font-black uppercase text-fgb-yellow-600/70 tracking-widest mt-1">Pontos</span>
                     <div className="mt-auto bg-[var(--amarelo)] w-full py-4 text-center rounded-t-xl text-white">
                       <p className="text-xs font-black uppercase leading-tight truncate px-2">{topScorers[0].name}</p>
                     </div>
@@ -150,14 +150,14 @@ export default async function AdminCestinhasPage({
 
               {topScorers[2] && (
                 <div className="flex flex-col items-center z-10 hidden md:flex">
-                  <div className="w-16 h-16 rounded-full bg-orange-50 border-4 border-white flex items-center justify-center shadow-lg mb-4 z-20 overflow-hidden">
-                    <UserIcon className="w-8 h-8 text-orange-400" />
+                  <div className="w-16 h-16 rounded-full bg-fgb-yellow-50 border-4 border-white flex items-center justify-center shadow-lg mb-4 z-20 overflow-hidden">
+                    <UserIcon className="w-8 h-8 text-fgb-yellow-400" />
                   </div>
-                  <div className="bg-gradient-to-b from-orange-100 to-orange-50 w-32 h-36 rounded-t-2xl border border-orange-200 flex flex-col items-center pt-4 shadow-sm">
-                    <span className="text-3xl font-black text-orange-400 font-mono tracking-tighter">{topScorers[2].points}</span>
-                    <span className="text-[10px] font-black uppercase text-orange-300 tracking-widest mt-1">Pontos</span>
-                    <div className="mt-auto bg-orange-200 w-full py-2 text-center rounded-t-lg">
-                      <p className="text-[10px] font-black text-orange-700 uppercase leading-tight truncate px-2">{topScorers[2].name}</p>
+                  <div className="bg-gradient-to-b from-fgb-yellow-100 to-fgb-yellow-50 w-32 h-36 rounded-t-2xl border border-fgb-yellow-200 flex flex-col items-center pt-4 shadow-sm">
+                    <span className="text-3xl font-black text-fgb-yellow-400 font-mono tracking-tighter">{topScorers[2].points}</span>
+                    <span className="text-[10px] font-black uppercase text-fgb-yellow-300 tracking-widest mt-1">Pontos</span>
+                    <div className="mt-auto bg-fgb-yellow-200 w-full py-2 text-center rounded-t-lg">
+                      <p className="text-[10px] font-black text-fgb-yellow-700 uppercase leading-tight truncate px-2">{topScorers[2].name}</p>
                     </div>
                   </div>
                 </div>

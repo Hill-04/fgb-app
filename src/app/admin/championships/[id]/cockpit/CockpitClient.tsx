@@ -74,7 +74,7 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-fgb-ink-50 p-6">
       <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
         <KPICard label="Equipes" value={kpis.totalTeams} icon={<FileText size={20} />} color="emerald" />
         <KPICard label="Confirmadas" value={kpis.confirmed} icon={<CheckCircle2 size={20} />} color="emerald" />
@@ -91,7 +91,7 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
             className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium ${
               activeCategory === cat.id
                 ? 'bg-fgb-green-700 text-white'
-                : 'bg-white text-slate-700 hover:bg-slate-100'
+                : 'bg-white text-fgb-ink-700 hover:bg-fgb-ink-100'
             }`}
           >
             {cat.name} ({cat.registrations.length})
@@ -101,19 +101,19 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
 
       <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-white p-4 shadow-sm">
         <div className="relative min-w-[200px] flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-fgb-ink-400" />
           <input
             type="text"
             placeholder="Buscar equipe..."
             defaultValue={filters.search}
             onChange={(e) => updateFilter('search', e.target.value || null)}
-            className="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-3 text-sm"
+            className="w-full rounded-lg border border-fgb-ink-200 py-2 pl-10 pr-3 text-sm"
           />
         </div>
         <select
           value={filters.status ?? ''}
           onChange={(e) => updateFilter('status', e.target.value || null)}
-          className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+          className="rounded-lg border border-fgb-ink-200 px-3 py-2 text-sm"
         >
           <option value="">Todos status</option>
           <option value="PENDING">Pendente</option>
@@ -123,11 +123,11 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
 
         {selectedRegIds.size > 0 && (
           <div className="ml-auto flex gap-2">
-            <span className="self-center text-sm text-slate-600">{selectedRegIds.size} selecionadas</span>
+            <span className="self-center text-sm text-fgb-ink-600">{selectedRegIds.size} selecionadas</span>
             <button
               onClick={handleBulkApprove}
               disabled={isPending}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+              className="rounded-lg bg-fgb-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-fgb-green-700 disabled:opacity-50"
             >
               Aprovar
             </button>
@@ -144,7 +144,7 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
 
       <div className="rounded-lg bg-white shadow-sm">
         <table className="w-full">
-          <thead className="border-b border-slate-200 text-xs uppercase text-slate-500">
+          <thead className="border-b border-fgb-ink-200 text-xs uppercase text-fgb-ink-500">
             <tr>
               <th className="w-10 p-3"></th>
               <th className="w-8 p-3"></th>
@@ -170,7 +170,7 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
             ))}
             {activeRegistrations.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-8 text-center text-sm text-slate-400">
+                <td colSpan={8} className="p-8 text-center text-sm text-fgb-ink-400">
                   Nenhuma inscrição nessa categoria com esses filtros.
                 </td>
               </tr>
@@ -184,11 +184,11 @@ export default function CockpitClient({ championshipId, championship, kpis, filt
 
 function KPICard({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode; color: string }) {
   const colorClass = {
-    emerald: 'text-emerald-700 bg-emerald-50',
-    amber: 'text-amber-700 bg-amber-50',
-    slate: 'text-slate-700 bg-slate-100',
+    emerald: 'text-fgb-green-700 bg-fgb-green-50',
+    amber: 'text-fgb-yellow-700 bg-fgb-yellow-50',
+    slate: 'text-fgb-ink-700 bg-fgb-ink-100',
     red: 'text-red-700 bg-red-50',
-  }[color] ?? 'text-slate-700 bg-slate-50'
+  }[color] ?? 'text-fgb-ink-700 bg-fgb-ink-50'
 
   return (
     <div className={`rounded-lg p-4 ${colorClass}`}>
@@ -210,41 +210,41 @@ function ExpandableRow({ reg, isExpanded, isSelected, onToggleExpand, onToggleSe
   championshipId: string
 }) {
   const statusColor = {
-    PENDING: 'bg-amber-100 text-amber-700',
-    CONFIRMED: 'bg-emerald-100 text-emerald-700',
+    PENDING: 'bg-fgb-yellow-100 text-fgb-yellow-700',
+    CONFIRMED: 'bg-fgb-green-100 text-fgb-green-700',
     REJECTED: 'bg-red-100 text-red-700',
-  }[reg.status as string] ?? 'bg-slate-100 text-slate-700'
+  }[reg.status as string] ?? 'bg-fgb-ink-100 text-fgb-ink-700'
 
   const lastInvoice = reg.financialInvoices[0]
 
   return (
     <>
-      <tr className="border-b border-slate-100 hover:bg-slate-50">
+      <tr className="border-b border-fgb-ink-100 hover:bg-fgb-ink-50">
         <td className="p-3">
           <input type="checkbox" checked={isSelected} onChange={onToggleSelect} />
         </td>
         <td className="p-3">
-          <button onClick={onToggleExpand} className="text-slate-400 hover:text-slate-700">
+          <button onClick={onToggleExpand} className="text-fgb-ink-400 hover:text-fgb-ink-700">
             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
         </td>
         <td className="p-3">
-          <div className="font-medium text-slate-900">{reg.team.name}</div>
-          <div className="text-xs text-slate-500">Treinador: {reg.coachName || '—'}</div>
+          <div className="font-medium text-fgb-ink-900">{reg.team.name}</div>
+          <div className="text-xs text-fgb-ink-500">Treinador: {reg.coachName || '—'}</div>
         </td>
         <td className="p-3 text-sm">{reg.athletePlayers.length}</td>
         <td className="p-3 text-sm">{reg.blockedDates.length}</td>
         <td className="p-3 text-sm">
           {lastInvoice ? (
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-              lastInvoice.status === 'PAID' ? 'bg-emerald-100 text-emerald-700' :
+              lastInvoice.status === 'PAID' ? 'bg-fgb-green-100 text-fgb-green-700' :
               lastInvoice.status === 'OVERDUE' ? 'bg-red-100 text-red-700' :
-              'bg-amber-100 text-amber-700'
+              'bg-fgb-yellow-100 text-fgb-yellow-700'
             }`}>
               {lastInvoice.status}
             </span>
           ) : (
-            <span className="text-slate-400">—</span>
+            <span className="text-fgb-ink-400">—</span>
           )}
         </td>
         <td className="p-3">
@@ -263,22 +263,22 @@ function ExpandableRow({ reg, isExpanded, isSelected, onToggleExpand, onToggleSe
       </tr>
 
       {isExpanded && (
-        <tr className="border-b border-slate-100 bg-slate-50">
+        <tr className="border-b border-fgb-ink-100 bg-fgb-ink-50">
           <td colSpan={8} className="p-4">
             <div className="grid grid-cols-3 gap-4 text-sm">
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase text-slate-500">Atletas inscritos</h4>
+                <h4 className="mb-2 text-xs font-semibold uppercase text-fgb-ink-500">Atletas inscritos</h4>
                 {reg.athletePlayers.slice(0, 5).map((a: any) => (
-                  <div key={a.id} className="text-slate-700">{a.athleteName}</div>
+                  <div key={a.id} className="text-fgb-ink-700">{a.athleteName}</div>
                 ))}
                 {reg.athletePlayers.length > 5 && (
-                  <div className="text-slate-400">+{reg.athletePlayers.length - 5} outros...</div>
+                  <div className="text-fgb-ink-400">+{reg.athletePlayers.length - 5} outros...</div>
                 )}
               </div>
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase text-slate-500">Datas bloqueadas</h4>
+                <h4 className="mb-2 text-xs font-semibold uppercase text-fgb-ink-500">Datas bloqueadas</h4>
                 {reg.blockedDates.map((b: any) => (
-                  <div key={b.id} className="text-slate-700">
+                  <div key={b.id} className="text-fgb-ink-700">
                     {new Date(b.startDate).toLocaleDateString('pt-BR')}
                     {b.endDate && b.endDate !== b.startDate
                       ? ` — ${new Date(b.endDate).toLocaleDateString('pt-BR')}`
@@ -286,13 +286,13 @@ function ExpandableRow({ reg, isExpanded, isSelected, onToggleExpand, onToggleSe
                     {b.reason ? ` (${b.reason})` : ''}
                   </div>
                 ))}
-                {reg.blockedDates.length === 0 && <span className="text-slate-400">Nenhum</span>}
+                {reg.blockedDates.length === 0 && <span className="text-fgb-ink-400">Nenhum</span>}
               </div>
               <div>
-                <h4 className="mb-2 text-xs font-semibold uppercase text-slate-500">Contato</h4>
-                <div className="text-slate-700">{reg.coachName || '—'}</div>
-                <div className="text-slate-500">{reg.coachPhone || ''}</div>
-                <div className="text-slate-500">{reg.coachEmail || ''}</div>
+                <h4 className="mb-2 text-xs font-semibold uppercase text-fgb-ink-500">Contato</h4>
+                <div className="text-fgb-ink-700">{reg.coachName || '—'}</div>
+                <div className="text-fgb-ink-500">{reg.coachPhone || ''}</div>
+                <div className="text-fgb-ink-500">{reg.coachEmail || ''}</div>
               </div>
             </div>
           </td>

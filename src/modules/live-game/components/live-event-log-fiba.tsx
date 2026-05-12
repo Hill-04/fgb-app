@@ -1,6 +1,6 @@
 import type { LiveTableEvent } from './live-game-table-adapter'
 
-const FGB_AMARELO = '#F5C200'
+const FGB_AMARELO = '#E5AB00'
 
 const ICON_MAP: Record<string, string> = {
   '2PTS': '🏀', '3PTS': '🎯', FT: '⭕', F: '✋', REB: '📌',
@@ -56,7 +56,7 @@ export function LiveEventLogFiba({ events }: { events: LiveTableEvent[] }) {
             </span>
             {event.isOptimistic && (
               <span style={{
-                fontSize: 9, color: '#F5C200', background: 'rgba(245,194,0,.15)',
+                fontSize: 9, color: '#E5AB00', background: 'rgba(245,194,0,.15)',
                 borderRadius: 10, padding: '1px 6px', flexShrink: 0, fontWeight: 700,
               }}>⟳</span>
             )}

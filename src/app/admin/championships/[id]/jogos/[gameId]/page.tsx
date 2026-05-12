@@ -82,7 +82,7 @@ export default async function ChampionshipGameHubPage({
             {STATUS_LABEL[game.status] ?? game.status}
           </span>
           {game.isHistoricallyLocked && (
-            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-fgb-yellow-100 text-fgb-yellow-800">
               Travada
             </span>
           )}

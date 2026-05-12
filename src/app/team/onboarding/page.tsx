@@ -29,24 +29,24 @@ export default function OnboardingPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(234,88,12,0.05)_0,transparent_50%)]" />
-        <div className="w-12 h-12 border-4 border-gray-200 border-t-orange-500 rounded-full animate-spin mb-4" />
+        <div className="w-12 h-12 border-4 border-gray-200 border-t-fgb-yellow-500 rounded-full animate-spin mb-4" />
         <p className="text-[var(--gray)] font-medium tracking-widest uppercase text-xs">Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-[var(--black)] flex flex-col font-sans selection:bg-orange-500/30">
+    <div className="min-h-screen bg-gray-50 text-[var(--black)] flex flex-col font-sans selection:bg-fgb-yellow-500/30">
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
-        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-orange-600/[0.03] blur-[150px] rounded-full" />
+        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-fgb-yellow-600/[0.03] blur-[150px] rounded-full" />
         <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/[0.02] blur-[120px] rounded-full" />
       </div>
 
       {/* Header */}
       <header className="px-6 lg:px-14 h-20 flex items-center border-b border-[var(--border)] bg-white sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-3 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center rounded-lg shadow-sm shrink-0">
+          <div className="w-9 h-9 bg-gradient-to-br from-fgb-yellow-500 to-fgb-yellow-600 flex items-center justify-center rounded-lg shadow-sm shrink-0">
             <span className="font-display font-black text-white text-xs tracking-wider">FGB</span>
           </div>
           <div className="leading-none">
@@ -67,7 +67,7 @@ export default function OnboardingPage() {
           </div>
           
           <h1 className="text-4xl md:text-5xl font-display font-black uppercase text-[var(--black)] mb-6 tracking-tight italic">
-            Bem-vindo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-orange-600">{(session?.user as any)?.name?.split(' ')[0] || 'Atleta'}</span>!
+            Bem-vindo, <span className="text-transparent bg-clip-text bg-gradient-to-r from-fgb-yellow-500 to-fgb-yellow-600">{(session?.user as any)?.name?.split(' ')[0] || 'Atleta'}</span>!
           </h1>
           <p className="text-lg text-[var(--gray)] max-w-2xl mx-auto font-medium">
             Você ainda não faz parte de nenhuma equipe na plataforma. Para prosseguir e ter acesso aos campeonatos da FGB, escolha uma das opções abaixo:
@@ -99,7 +99,7 @@ export default function OnboardingPage() {
           <Link href="/team/create" className="group">
             <div className="fgb-card bg-white border border-[var(--border)] rounded-[2rem] p-8 md:p-10 h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-lg animate-fade-up shadow-sm" style={{ animationDelay: '100ms' }}>
               <div className="relative z-10 mb-8">
-                <div className="w-16 h-16 bg-orange-50 border border-orange-100 rounded-2xl flex items-center justify-center text-orange-500 mb-6 group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-fgb-yellow-50 border border-fgb-yellow-100 rounded-2xl flex items-center justify-center text-fgb-yellow-500 mb-6 group-hover:scale-110 transition-all duration-300">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
@@ -109,7 +109,7 @@ export default function OnboardingPage() {
                   Torne-se o gestor (Head Coach) de uma nova equipe. Cadastre jogadores, comissão técnica e participe de competições oficiais.
                 </p>
               </div>
-              <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-black uppercase tracking-widest h-12 rounded-xl shadow-sm transition-all relative z-10">
+              <Button className="w-full bg-gradient-to-r from-fgb-yellow-500 to-fgb-yellow-600 hover:from-fgb-yellow-600 hover:to-fgb-yellow-700 text-white font-black uppercase tracking-widest h-12 rounded-xl shadow-sm transition-all relative z-10">
                 Criar Equipe
               </Button>
             </div>

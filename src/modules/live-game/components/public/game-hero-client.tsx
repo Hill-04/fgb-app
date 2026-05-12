@@ -36,7 +36,7 @@ function StatusBadge({ isLive, isFinished }: { isLive: boolean; isFinished: bool
   }
   if (isFinished) {
     return (
-      <span className="inline-flex items-center rounded-full bg-emerald-600 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+      <span className="inline-flex items-center rounded-full bg-fgb-green-600 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
         Encerrado
       </span>
     )
@@ -193,7 +193,7 @@ export function GameHeroClient() {
               <span
                 className={`text-5xl font-black tabular-nums sm:text-6xl ${
                   game.isFinished && homeTeam.score > awayTeam.score
-                    ? 'text-[#F5C200]'
+                    ? 'text-[var(--fgb-yellow-500)]'
                     : 'text-white'
                 }`}
               >
@@ -203,7 +203,7 @@ export function GameHeroClient() {
               <span
                 className={`text-5xl font-black tabular-nums sm:text-6xl ${
                   game.isFinished && awayTeam.score > homeTeam.score
-                    ? 'text-[#F5C200]'
+                    ? 'text-[var(--fgb-yellow-500)]'
                     : 'text-white'
                 }`}
               >

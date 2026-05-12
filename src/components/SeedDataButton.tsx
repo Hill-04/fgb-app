@@ -70,7 +70,7 @@ export function SeedDataButton() {
               <li>• {result.stats.athletes} atletas importados</li>
               <li>• {result.stats.coaches} treinadores importados</li>
               {result.stats.errors?.length > 0 && (
-                <li className="text-amber-600">• {result.stats.errors.length} avisos (ver console)</li>
+                <li className="text-fgb-yellow-600">• {result.stats.errors.length} avisos (ver console)</li>
               )}
             </ul>
           )}

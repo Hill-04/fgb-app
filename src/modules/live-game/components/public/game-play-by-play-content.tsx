@@ -46,11 +46,11 @@ function eventTone(eventType: string) {
 function rowToneClasses(tone: ReturnType<typeof eventTone>) {
   switch (tone) {
     case 'scoring':
-      return 'border-[#F5C200]/30 bg-[#F5C200]/10'
+      return 'border-[var(--fgb-yellow-500)]/30 bg-[var(--fgb-yellow-500)]/10'
     case 'foul':
-      return 'border-[#CC1016]/20 bg-[#CC1016]/6'
+      return 'border-[var(--fgb-red-500)]/20 bg-[var(--fgb-red-500)]/6'
     case 'turnover':
-      return 'border-slate-200 bg-slate-50'
+      return 'border-fgb-ink-200 bg-fgb-ink-50'
     case 'control':
       return 'border-[var(--border)] bg-[var(--gray-l)]'
     default:
@@ -73,11 +73,11 @@ function EventRow({ event }: { event: PlayByPlayEvent }) {
       <div className="min-w-0">
         <div className="flex items-start gap-2">
           {tone === 'scoring' ? (
-            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#F5C200]" />
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--fgb-yellow-500)]" />
           ) : tone === 'foul' ? (
-            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#CC1016]" />
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--fgb-red-500)]" />
           ) : tone === 'turnover' ? (
-            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-slate-400" />
+            <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-fgb-ink-400" />
           ) : (
             <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--gray)]/30" />
           )}
@@ -105,7 +105,7 @@ function EventRow({ event }: { event: PlayByPlayEvent }) {
       >
         {hasScore ? (
           tone === 'scoring' ? (
-            <span className="rounded-lg bg-[#F5C200]/20 px-1.5 py-0.5">
+            <span className="rounded-lg bg-[var(--fgb-yellow-500)]/20 px-1.5 py-0.5">
               {event.homeScoreAfter} — {event.awayScoreAfter}
             </span>
           ) : (

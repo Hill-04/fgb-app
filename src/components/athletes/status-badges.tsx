@@ -18,7 +18,7 @@ function StatusBadge({
 }: BadgeProps & { meta: Record<string, { label: string; className: string }> }) {
   const resolved = meta[status] || {
     label: status,
-    className: 'border-slate-200 bg-slate-50 text-slate-700',
+    className: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700',
   }
 
   return (

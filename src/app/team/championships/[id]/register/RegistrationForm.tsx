@@ -150,7 +150,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
         particleCount: 150,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#FF6B00', '#0B0F1E', '#FFFFFF']
+        colors: ['#E5AB00', '#0B0F1E', '#FFFFFF']
       })
 
     } catch (err) {
@@ -187,17 +187,17 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
             <PartyPopper className="w-4 h-4 mr-2" />
             Inscrito com Sucesso
           </Badge>
-          <Badge variant="outline" className="px-4 py-2 text-sm bg-orange-50 text-orange-700 border border-orange-200">
+          <Badge variant="outline" className="px-4 py-2 text-sm bg-fgb-yellow-50 text-fgb-yellow-700 border border-fgb-yellow-200">
             <Wallet className="w-4 h-4 mr-2" />
             Taxas estimadas: {formatCurrencyBRL(estimatedFeeTotal)}
           </Badge>
         </div>
 
         <div className="mt-8 grid w-full max-w-2xl gap-4 md:grid-cols-2">
-          <div className="rounded-3xl border border-orange-200 bg-orange-50 p-5 text-left shadow-sm">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700">Taxas da Inscricao</p>
+          <div className="rounded-3xl border border-fgb-yellow-200 bg-fgb-yellow-50 p-5 text-left shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-fgb-yellow-700">Taxas da Inscricao</p>
             <p className="mt-2 text-2xl font-black text-[var(--black)]">{formatCurrencyBRL(estimatedFeeTotal)}</p>
-            <p className="mt-2 text-xs font-medium text-orange-800/80">
+            <p className="mt-2 text-xs font-medium text-fgb-yellow-800/80">
               Valor estimado com base no Regimento de Taxas FGB 2018. A FGB pode confirmar ou ajustar a cobranca.
             </p>
           </div>
@@ -239,10 +239,10 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                 className={cn(
                   "flex items-center gap-3 px-6 py-4 rounded-2xl border transition-all duration-300 relative group",
                   isActive
-                    ? 'bg-white border-orange-300 shadow-md transform -translate-y-1'
+                    ? 'bg-white border-fgb-yellow-300 shadow-md transform -translate-y-1'
                     : isComplete
                     ? 'bg-green-50/50 border-green-200 text-[var(--gray)] hover:border-green-300'
-                    : 'bg-[var(--gray-l)] border-[var(--border)] text-[var(--gray)] hover:border-orange-200 hover:bg-gray-50'
+                    : 'bg-[var(--gray-l)] border-[var(--border)] text-[var(--gray)] hover:border-fgb-yellow-200 hover:bg-gray-50'
                 )}
               >
                 <div className={cn(
@@ -261,7 +261,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                 </div>
 
                 {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-fgb-yellow-500" />
                 )}
               </button>
               {index < sections.length - 1 && (
@@ -299,27 +299,27 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                     className={cn(
                       "p-6 rounded-3xl border-2 transition-all duration-300 text-left relative overflow-hidden group/cat shadow-sm",
                       isSelected
-                        ? 'bg-orange-50 border-orange-500'
-                        : 'bg-white border-[var(--border)] hover:border-orange-200'
+                        ? 'bg-fgb-yellow-50 border-fgb-yellow-500'
+                        : 'bg-white border-[var(--border)] hover:border-fgb-yellow-200'
                     )}
                   >
                     {isSelected && (
-                      <div className="absolute top-0 left-0 w-1 h-full bg-orange-500" />
+                      <div className="absolute top-0 left-0 w-1 h-full bg-fgb-yellow-500" />
                     )}
                     <div className="flex items-center justify-between mb-4">
-                      <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", isSelected ? 'bg-orange-100' : 'bg-gray-100')}>
-                        <Users className={cn("w-5 h-5", isSelected ? 'text-orange-600' : 'text-gray-400')} />
+                      <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", isSelected ? 'bg-fgb-yellow-100' : 'bg-gray-100')}>
+                        <Users className={cn("w-5 h-5", isSelected ? 'text-fgb-yellow-600' : 'text-gray-400')} />
                       </div>
                       <div className={cn(
                         "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300",
-                        isSelected ? 'bg-orange-500 border-orange-500 scale-110' : 'border-gray-200'
+                        isSelected ? 'bg-fgb-yellow-500 border-fgb-yellow-500 scale-110' : 'border-gray-200'
                       )}>
                         {isSelected && (
                           <CheckCircle2 className="w-3.5 h-3.5 text-white" />
                         )}
                       </div>
                     </div>
-                    <h3 className={cn("font-display font-black text-xl tracking-tight uppercase italic", isSelected ? 'text-orange-700' : 'text-[var(--black)]')}>
+                    <h3 className={cn("font-display font-black text-xl tracking-tight uppercase italic", isSelected ? 'text-fgb-yellow-700' : 'text-[var(--black)]')}>
                       {category.name}
                     </h3>
                     <p className="text-[10px] font-bold text-[var(--gray)] uppercase tracking-widest mt-1">Federação Gaúcha</p>
@@ -395,7 +395,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                     type="date"
                     value={newStartDate}
                     onChange={e => setNewStartDate(e.target.value)}
-                    className="bg-white border-[var(--border)] focus:ring-orange-500 text-gray-800"
+                    className="bg-white border-[var(--border)] focus:ring-fgb-yellow-500 text-gray-800"
                   />
                 </div>
                 {isRange && (
@@ -405,7 +405,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                       type="date"
                       value={newEndDate}
                       onChange={e => setNewEndDate(e.target.value)}
-                      className="bg-white border-[var(--border)] focus:ring-orange-500 text-gray-800"
+                      className="bg-white border-[var(--border)] focus:ring-fgb-yellow-500 text-gray-800"
                     />
                   </div>
                 )}
@@ -417,7 +417,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                       placeholder="Ex: Torneio em outra cidade..."
                       value={newReason}
                       onChange={e => setNewReason(e.target.value)}
-                      className="bg-white border-[var(--border)] focus:ring-orange-500 text-gray-800"
+                      className="bg-white border-[var(--border)] focus:ring-fgb-yellow-500 text-gray-800"
                     />
                     <Button
                       onClick={handleAddBlockedDate}
@@ -437,7 +437,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                     {blockedDates.map((blocked, index) => (
                       <div key={index} className="flex items-center justify-between p-4 bg-gray-50">
                         <div className="flex gap-4 items-center">
-                          <div className="w-2 h-2 rounded-full bg-orange-500 shadow-sm" />
+                          <div className="w-2 h-2 rounded-full bg-fgb-yellow-500 shadow-sm" />
                           <div>
                             <span className="font-bold text-gray-800">
                               {new Date(blocked.startDate).toLocaleDateString('pt-BR')} 
@@ -589,14 +589,14 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                       onChange={e => setObservations(e.target.value)}
                       placeholder="Preferências de horário, restrições específicas de transporte, etc."
                       rows={8}
-                      className="w-full bg-white border-[var(--border)] text-gray-800 focus:ring-orange-500"
+                      className="w-full bg-white border-[var(--border)] text-gray-800 focus:ring-fgb-yellow-500"
                     />
                   </div>
                </div>
 
                <div className="space-y-4">
-                  <div className="fgb-card p-6 bg-orange-50 border border-orange-200 rounded-3xl shadow-sm relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-3xl" />
+                  <div className="fgb-card p-6 bg-fgb-yellow-50 border border-fgb-yellow-200 rounded-3xl shadow-sm relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-fgb-yellow-500/10 rounded-full blur-3xl" />
                     <h3 className="font-display font-black text-xl text-[var(--black)] mb-6 uppercase tracking-tight italic">Resumo FGB</h3>
                     <div className="space-y-4 text-sm relative z-10">
                       <div className="flex justify-between items-center bg-white p-3 rounded-xl border border-[var(--border)] shadow-sm">
@@ -607,7 +607,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                         <span className="text-[var(--gray)] font-black uppercase text-[10px] tracking-widest">Categorias</span>
                         <div className="flex gap-1">
                           {selectedCategories.map((c, i) => (
-                            <Badge key={i} variant="outline" className="text-[10px] py-0 border-orange-200 text-orange-600 bg-orange-50">{c}</Badge>
+                            <Badge key={i} variant="outline" className="text-[10px] py-0 border-fgb-yellow-200 text-fgb-yellow-600 bg-fgb-yellow-50">{c}</Badge>
                           ))}
                         </div>
                       </div>
@@ -623,7 +623,7 @@ export function RegistrationForm({ championship, team, holidays }: Props) {
                       </div>
                     </div>
 
-                    <div className="mt-8 pt-6 border-t border-orange-200/50 relative z-10">
+                    <div className="mt-8 pt-6 border-t border-fgb-yellow-200/50 relative z-10">
                        <Button
                         onClick={handleSubmit}
                         disabled={loading || selectedCategories.length === 0}

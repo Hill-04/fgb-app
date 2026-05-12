@@ -139,17 +139,17 @@ export default async function OrganizationPage({
       </section>
 
       {!hasAnyReady && (
-        <section className="rounded-[28px] border border-orange-200 bg-orange-50 p-6 shadow-sm md:p-7">
+        <section className="rounded-[28px] border border-fgb-yellow-200 bg-fgb-yellow-50 p-6 shadow-sm md:p-7">
           <div className="flex flex-col gap-5 md:flex-row md:items-center">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-orange-200 bg-white">
-              <AlertTriangle className="h-6 w-6 text-orange-600" />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-fgb-yellow-200 bg-white">
+              <AlertTriangle className="h-6 w-6 text-fgb-yellow-600" />
             </div>
             <div className="flex-1">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-700">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-fgb-yellow-700">
                 Acao requerida
               </p>
               <h2 className="mt-2 text-lg font-black text-[var(--black)]">Ainda nao ha categoria viavel</h2>
-              <p className="mt-1 text-sm font-medium leading-6 text-orange-800/75">
+              <p className="mt-1 text-sm font-medium leading-6 text-fgb-yellow-800/75">
                 Confirme mais equipes antes de usar a IA. O sistema precisa de ao menos {minTeams}
                 equipes em uma categoria para montar confrontos com seguranca.
               </p>
@@ -264,7 +264,7 @@ export default async function OrganizationPage({
                     <span className="text-[10px] font-black uppercase tracking-widest text-[var(--gray)]">
                       Equipes confirmadas
                     </span>
-                    <span className={`text-sm font-black ${ready ? 'text-[var(--verde)]' : 'text-orange-600'}`}>
+                    <span className={`text-sm font-black ${ready ? 'text-[var(--verde)]' : 'text-fgb-yellow-600'}`}>
                       {count}/{minTeams}
                     </span>
                   </div>

@@ -27,14 +27,14 @@ const sanctioningBadgeMap: Record<string, { label: string; bg: string; color: st
 }
 
 const statusBadge: Record<string, string> = {
-  DRAFT: 'bg-slate-100 text-slate-700 border-slate-200',
+  DRAFT: 'bg-fgb-ink-100 text-fgb-ink-700 border-fgb-ink-200',
   REGISTRATION_OPEN: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   REGISTRATION_CLOSED: 'bg-[var(--yellow-light)] text-[var(--yellow-dark)] border-yellow-200',
   ORGANIZING: 'bg-blue-100 text-blue-700 border-blue-200',
   ONGOING: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   ACTIVE: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   FINISHED: 'bg-[#edf3ff] text-[#3052a5] border-[#d8e2ff]',
-  ARCHIVED: 'bg-slate-50 text-slate-500 border-slate-200',
+  ARCHIVED: 'bg-fgb-ink-50 text-fgb-ink-500 border-fgb-ink-200',
 }
 
 const actionLabelMap: Record<string, string> = {

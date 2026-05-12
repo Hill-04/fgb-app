@@ -819,7 +819,7 @@ export default function GameStatsPageClient({
 
           <div className="flex flex-wrap items-center gap-3">
             {success && (
-              <div className="flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-emerald-700">
+              <div className="flex items-center gap-2 rounded-full border border-fgb-green-200 bg-fgb-green-50 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-fgb-green-700">
                 <CheckCircle2 className="h-4 w-4" />
                 Salvo
               </div>
@@ -895,10 +895,10 @@ export default function GameStatsPageClient({
       )}
 
       {hasManualDiscrepancy && (
-        <div className="flex items-start gap-3 rounded-[24px] border border-amber-300 bg-amber-50 px-5 py-4 text-amber-900">
+        <div className="flex items-start gap-3 rounded-[24px] border border-fgb-yellow-300 bg-fgb-yellow-50 px-5 py-4 text-fgb-yellow-900">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
-            <p className="fgb-label text-amber-700">Divergencia de placar</p>
+            <p className="fgb-label text-fgb-yellow-700">Divergencia de placar</p>
             <p className="mt-1 text-sm font-medium">
               A soma dos lancamentos esta em <strong>{homeSummary.points} x {awaySummary.points}</strong>, mas o placar do jogo esta em{" "}
               <strong>{manualHomeScore} x {manualAwayScore}</strong>. Isso e util para conferencia antes do fechamento.

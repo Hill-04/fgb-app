@@ -267,7 +267,7 @@ export default function AdminTeamsPage() {
                       {formLogoUrl ? (
                         <img src={formLogoUrl} alt="Logo preview" className="w-full h-full object-cover" />
                       ) : (
-                        <Shield className="w-8 h-8 text-slate-300" />
+                        <Shield className="w-8 h-8 text-fgb-ink-300" />
                       )}
                     </div>
                   </div>

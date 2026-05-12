@@ -25,7 +25,7 @@ export function StatCard({
     orange: "border-t-[var(--orange)]",
     blue:   "border-t-[#3B82F6]",
     green:  "border-t-[var(--verde)]",
-    purple: "border-t-[#8B5CF6]",
+    purple: "border-t-[var(--fgb-navy-500)]",
     pink:   "border-t-[#EC4899]",
   }
 
@@ -37,7 +37,7 @@ export function StatCard({
     orange: "bg-[var(--orange)]/10 text-[var(--orange)]",
     blue:   "bg-[#3B82F6]/10 text-[#3B82F6]",
     green:  "bg-[var(--verde)]/10 text-[var(--verde)]",
-    purple: "bg-[#8B5CF6]/10 text-[#8B5CF6]",
+    purple: "bg-[var(--fgb-navy-500)]/10 text-[var(--fgb-navy-500)]",
     pink:   "bg-[#EC4899]/10 text-[#EC4899]",
   }
 

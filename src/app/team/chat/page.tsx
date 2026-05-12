@@ -49,8 +49,8 @@ export default function TeamChatPage() {
     <div className="flex flex-col h-[calc(100vh-120px)] max-w-4xl mx-auto font-sans">
       <div className="animate-fade-in border-b border-[var(--border)] pb-8 mb-6">
         <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-            <MessageSquare className="w-4 h-4 text-orange-600" />
+          <div className="w-8 h-8 rounded-lg bg-fgb-yellow-100 flex items-center justify-center">
+            <MessageSquare className="w-4 h-4 text-fgb-yellow-600" />
           </div>
           <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Canal Oficial</span>
         </div>
@@ -74,15 +74,15 @@ export default function TeamChatPage() {
         ) : (
           messages.map((msg) => (
             <div key={msg.id} className={`flex ${msg.fromAdmin ? 'justify-start' : 'justify-end'}`}>
-              <div className={`max-w-[75%] ${msg.fromAdmin ? 'bg-white border border-[var(--border)] shadow-sm' : 'bg-orange-50 border border-orange-200'} rounded-2xl px-4 py-3`}>
+              <div className={`max-w-[75%] ${msg.fromAdmin ? 'bg-white border border-[var(--border)] shadow-sm' : 'bg-fgb-yellow-50 border border-fgb-yellow-200'} rounded-2xl px-4 py-3`}>
                 {msg.fromAdmin && (
                   <div className="flex items-center gap-1.5 mb-1.5">
-                    <Shield className="w-3 h-3 text-orange-600" />
-                    <span className="text-[9px] font-black text-orange-600 uppercase tracking-widest">FGB Admin</span>
+                    <Shield className="w-3 h-3 text-fgb-yellow-600" />
+                    <span className="text-[9px] font-black text-fgb-yellow-600 uppercase tracking-widest">FGB Admin</span>
                   </div>
                 )}
-                <p className={`text-sm font-medium ${msg.fromAdmin ? 'text-[var(--black)]' : 'text-orange-900'}`}>{msg.content}</p>
-                <p className={`text-[10px] mt-1 font-bold tracking-wider ${msg.fromAdmin ? 'text-gray-400' : 'text-orange-400'}`}>{new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                <p className={`text-sm font-medium ${msg.fromAdmin ? 'text-[var(--black)]' : 'text-fgb-yellow-900'}`}>{msg.content}</p>
+                <p className={`text-[10px] mt-1 font-bold tracking-wider ${msg.fromAdmin ? 'text-gray-400' : 'text-fgb-yellow-400'}`}>{new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
             </div>
           ))
@@ -96,12 +96,12 @@ export default function TeamChatPage() {
           value={newMsg}
           onChange={e => setNewMsg(e.target.value)}
           placeholder="Digite sua mensagem para a FGB..."
-          className="flex-1 bg-white border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--black)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 shadow-sm transition-all"
+          className="flex-1 bg-white border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--black)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-fgb-yellow-500 shadow-sm transition-all"
         />
         <button
           type="submit"
           disabled={!newMsg.trim() || sending}
-          className="w-12 h-12 bg-orange-500 hover:bg-orange-600 disabled:opacity-40 rounded-xl flex items-center justify-center transition-all shadow-sm"
+          className="w-12 h-12 bg-fgb-yellow-500 hover:bg-fgb-yellow-600 disabled:opacity-40 rounded-xl flex items-center justify-center transition-all shadow-sm"
         >
           <Send className="w-4 h-4 text-white" />
         </button>

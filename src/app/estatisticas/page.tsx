@@ -46,13 +46,13 @@ export default async function EstatisticasPage() {
             
             {/* CESTINHAS */}
             <section>
-               <div className="flex items-center gap-4 mb-8 border-b border-slate-200 pb-4">
+               <div className="flex items-center gap-4 mb-8 border-b border-fgb-ink-200 pb-4">
                   <div className="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-2xl flex items-center justify-center font-bold text-xl fgb-display">
                      PT
                   </div>
                   <div>
                      <h2 className="fgb-display text-3xl">Cestinhas</h2>
-                     <div className="fgb-label text-[10px] text-slate-400">PONTOS POR JOGO (PPG)</div>
+                     <div className="fgb-label text-[10px] text-fgb-ink-400">PONTOS POR JOGO (PPG)</div>
                   </div>
                </div>
 
@@ -67,7 +67,7 @@ export default async function EstatisticasPage() {
                      />
                   ))}
                   {scorers.length === 0 && (
-                     <div className="p-12 text-center text-slate-400 border border-dashed border-slate-300 rounded-2xl">
+                     <div className="p-12 text-center text-fgb-ink-400 border border-dashed border-fgb-ink-300 rounded-2xl">
                         Nenhum jogo contabilizado.
                      </div>
                   )}
@@ -76,13 +76,13 @@ export default async function EstatisticasPage() {
 
             {/* REBOTEIROS */}
             <section>
-               <div className="flex items-center gap-4 mb-8 border-b border-slate-200 pb-4">
+               <div className="flex items-center gap-4 mb-8 border-b border-fgb-ink-200 pb-4">
                   <div className="w-12 h-12 bg-green-100 text-green-700 rounded-2xl flex items-center justify-center font-bold text-xl fgb-display">
                      RB
                   </div>
                   <div>
                      <h2 className="fgb-display text-3xl">Reboteiros</h2>
-                     <div className="fgb-label text-[10px] text-slate-400">REBOTES POR JOGO (RPG)</div>
+                     <div className="fgb-label text-[10px] text-fgb-ink-400">REBOTES POR JOGO (RPG)</div>
                   </div>
                </div>
 
@@ -97,7 +97,7 @@ export default async function EstatisticasPage() {
                      />
                   ))}
                   {rebounders.length === 0 && (
-                     <div className="p-12 text-center text-slate-400 border border-dashed border-slate-300 rounded-2xl">
+                     <div className="p-12 text-center text-fgb-ink-400 border border-dashed border-fgb-ink-300 rounded-2xl">
                         Nenhum jogo contabilizado.
                      </div>
                   )}
@@ -118,37 +118,37 @@ function LeaderCard({ athlete, rank, statValue, statLabel }: { athlete: any, ran
 
    return (
       <Link href={`/atletas/${athlete.athlete_id}`}>
-         <div className={`fgb-card bg-white p-4 border relative overflow-hidden group hover:-translate-y-1 transition-transform ${isFirst ? 'border-[var(--yellow)] shadow-lg' : 'border-slate-200 shadow-sm'}`}>
+         <div className={`fgb-card bg-white p-4 border relative overflow-hidden group hover:-translate-y-1 transition-transform ${isFirst ? 'border-[var(--yellow)] shadow-lg' : 'border-fgb-ink-200 shadow-sm'}`}>
             <div className="flex items-center gap-6 relative z-10">
                
-               <div className={`w-10 text-center font-black fgb-display text-2xl ${isFirst ? 'text-[var(--yellow)]' : 'text-slate-300'}`}>
+               <div className={`w-10 text-center font-black fgb-display text-2xl ${isFirst ? 'text-[var(--yellow)]' : 'text-fgb-ink-300'}`}>
                   {rank}
                </div>
 
-               <div className="w-14 h-14 bg-slate-100 rounded-full overflow-hidden border-2 border-white shadow flex-shrink-0 relative">
+               <div className="w-14 h-14 bg-fgb-ink-100 rounded-full overflow-hidden border-2 border-white shadow flex-shrink-0 relative">
                   {athlete.photo_url ? (
                      <Image src={athlete.photo_url} alt={athlete.athlete_name} fill className="object-cover" unoptimized/>
                   ) : (
-                     <div className="w-full h-full flex items-center justify-center text-slate-300 fgb-display text-xl">
+                     <div className="w-full h-full flex items-center justify-center text-fgb-ink-300 fgb-display text-xl">
                         {athlete.athlete_name?.substring(0,1) || 'A'}
                      </div>
                   )}
                </div>
 
                <div className="flex-1">
-                  <h3 className={`fgb-display text-xl leading-tight ${isFirst ? 'text-black' : 'text-slate-700'}`}>{athlete.athlete_name}</h3>
-                  <div className="text-sm font-medium text-slate-500 mt-1 flex items-center gap-2">
+                  <h3 className={`fgb-display text-xl leading-tight ${isFirst ? 'text-black' : 'text-fgb-ink-700'}`}>{athlete.athlete_name}</h3>
+                  <div className="text-sm font-medium text-fgb-ink-500 mt-1 flex items-center gap-2">
                      <span className="truncate">{athlete.team_name}</span>
-                     <span className="w-1 h-1 bg-slate-300 rounded-full" />
+                     <span className="w-1 h-1 bg-fgb-ink-300 rounded-full" />
                      <span className="fgb-label text-[9px] translate-y-px">{athlete.games_played} Jogos</span>
                   </div>
                </div>
 
-               <div className="text-right pl-4 border-l border-slate-100">
+               <div className="text-right pl-4 border-l border-fgb-ink-100">
                   <div className={`fgb-display text-4xl leading-none ${isFirst ? 'text-[var(--verde)]' : 'text-black'}`}>
                      {statValue}
                   </div>
-                  <div className="fgb-label text-[10px] text-slate-400 mt-1 tracking-widest">{statLabel}</div>
+                  <div className="fgb-label text-[10px] text-fgb-ink-400 mt-1 tracking-widest">{statLabel}</div>
                </div>
 
             </div>

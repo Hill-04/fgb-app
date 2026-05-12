@@ -299,8 +299,8 @@ export function PublicLiveSnapshotView({ gameId }: { gameId: string }) {
                 data.game.isLive
                   ? 'bg-rose-100 text-rose-700'
                   : data.game.isFinished
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : 'bg-slate-100 text-slate-700'
+                    ? 'bg-fgb-green-100 text-fgb-green-700'
+                    : 'bg-fgb-ink-100 text-fgb-ink-700'
               }`}
             >
               {statusLabel(data)}

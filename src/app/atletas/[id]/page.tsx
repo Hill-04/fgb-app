@@ -54,7 +54,7 @@ export default async function AthleteProfilePage({ params }: Props) {
   const isVerified = Boolean(athleteMeta?.verifiedFgb)
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-fgb-ink-50 min-h-screen">
       <PublicHeader />
 
       {/* HERO DO ATLETA */}
@@ -63,7 +63,7 @@ export default async function AthleteProfilePage({ params }: Props) {
         
         <div className="max-w-6xl mx-auto px-4 relative z-10 flex flex-col md:flex-row items-center gap-12">
           
-          <div className="w-48 h-48 md:w-64 md:h-64 bg-slate-800 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl flex-shrink-0 relative">
+          <div className="w-48 h-48 md:w-64 md:h-64 bg-fgb-ink-800 rounded-full overflow-hidden border-4 border-white/10 shadow-2xl flex-shrink-0 relative">
              {athlete.photo_url ? (
                 <Image src={athlete.photo_url} alt={athlete.athlete_name} fill className="object-cover" unoptimized/>
              ) : (
@@ -112,13 +112,13 @@ export default async function AthleteProfilePage({ params }: Props) {
         </div>
 
         {/* DETALHAMENTO TÉCNICO */}
-        <div className="fgb-card bg-white p-8 md:p-12 shadow-sm border border-slate-200">
-           <h3 className="fgb-display text-2xl mb-8 border-b border-slate-100 pb-4">Detalhamento Técnico</h3>
+        <div className="fgb-card bg-white p-8 md:p-12 shadow-sm border border-fgb-ink-200">
+           <h3 className="fgb-display text-2xl mb-8 border-b border-fgb-ink-100 pb-4">Detalhamento Técnico</h3>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
               
               <div>
-                 <h4 className="fgb-label text-slate-400 mb-6">Aproveitamento</h4>
+                 <h4 className="fgb-label text-fgb-ink-400 mb-6">Aproveitamento</h4>
                  <div className="space-y-6">
                     <ProgressBar label="Arremessos de Quadra (FG)" percentage={athlete.fg_pct} />
                     <ProgressBar label="Bolas de 3 Pontos (3PT)" percentage={athlete.three_pct} />
@@ -127,7 +127,7 @@ export default async function AthleteProfilePage({ params }: Props) {
               </div>
 
               <div>
-                 <h4 className="fgb-label text-slate-400 mb-6">Acumulado Total da Época</h4>
+                 <h4 className="fgb-label text-fgb-ink-400 mb-6">Acumulado Total da Época</h4>
                  <div className="space-y-4">
                     <RowStat label="Total de Pontos" value={athlete.total_points} />
                     <RowStat label="Rebotes Totais" value={athlete.total_rebounds} />
@@ -138,7 +138,7 @@ export default async function AthleteProfilePage({ params }: Props) {
               </div>
 
               <div>
-                 <h4 className="fgb-label text-slate-400 mb-6">Recordes Pessoais (Seas.)</h4>
+                 <h4 className="fgb-label text-fgb-ink-400 mb-6">Recordes Pessoais (Seas.)</h4>
                  <div className="space-y-4">
                     <RowStat label="Máx Pontos" value={athlete.record_points} highlight />
                     <RowStat label="Máx Rebotes" value={athlete.record_rebounds} highlight />
@@ -167,9 +167,9 @@ function StatBox({ label, value, highlight = false }: { label: string, value: st
 
 function HighlightCard({ title, value }: { title: string, value: string | number }) {
    return (
-      <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col items-center justify-center text-center">
-         <div className="fgb-display text-4xl mb-2 text-slate-800">{value}</div>
-         <div className="fgb-label text-[9px] text-slate-400 tracking-widest leading-tight">{title}</div>
+      <div className="bg-white rounded-2xl p-6 border border-fgb-ink-200 shadow-sm flex flex-col items-center justify-center text-center">
+         <div className="fgb-display text-4xl mb-2 text-fgb-ink-800">{value}</div>
+         <div className="fgb-label text-[9px] text-fgb-ink-400 tracking-widest leading-tight">{title}</div>
       </div>
    )
 }
@@ -177,11 +177,11 @@ function HighlightCard({ title, value }: { title: string, value: string | number
 function ProgressBar({ label, percentage }: { label: string, percentage: number }) {
    return (
       <div>
-         <div className="flex justify-between text-sm font-bold text-slate-700 mb-2">
+         <div className="flex justify-between text-sm font-bold text-fgb-ink-700 mb-2">
             <span>{label}</span>
             <span>{percentage}%</span>
          </div>
-         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+         <div className="h-2 bg-fgb-ink-100 rounded-full overflow-hidden">
             <div className="h-full bg-[var(--yellow)] rounded-full" style={{ width: `${percentage}%` }} />
          </div>
       </div>
@@ -190,9 +190,9 @@ function ProgressBar({ label, percentage }: { label: string, percentage: number 
 
 function RowStat({ label, value, highlight = false }: { label: string, value: string | number, highlight?: boolean }) {
    return (
-      <div className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0 relative">
-         <span className="text-sm text-slate-500 font-medium">{label}</span>
-         <span className={`fgb-display text-xl ${highlight ? 'text-[var(--verde)]' : 'text-slate-800'}`}>{value}</span>
+      <div className="flex justify-between items-center py-2 border-b border-fgb-ink-50 last:border-0 relative">
+         <span className="text-sm text-fgb-ink-500 font-medium">{label}</span>
+         <span className={`fgb-display text-xl ${highlight ? 'text-[var(--verde)]' : 'text-fgb-ink-800'}`}>{value}</span>
       </div>
    )
 }

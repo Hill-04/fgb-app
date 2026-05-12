@@ -1045,7 +1045,7 @@ Se sugerir uma mudanca, explique exatamente o que deve ser ajustado nas configur
                       if (event.key === 'Enter' && !chatLoading) handleChat()
                     }}
                     placeholder="Ex: combine categorias proximas no mesmo fim de semana"
-                    className="flex-1 rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--black)] outline-none transition-all placeholder:text-slate-400 focus:border-[var(--yellow)]"
+                    className="flex-1 rounded-2xl border border-[var(--border)] bg-white px-4 py-3 text-sm text-[var(--black)] outline-none transition-all placeholder:text-fgb-ink-400 focus:border-[var(--yellow)]"
                   />
                   <button
                     onClick={handleChat}

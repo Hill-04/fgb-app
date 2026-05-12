@@ -336,7 +336,7 @@ export default async function ChampionshipDetailsPage({
                 {currentStep === 2 && !allCategoriesReady && (
                   <div className="flex items-center gap-1.5 mt-1 mb-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[var(--amarelo)] animate-pulse" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-600">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-fgb-yellow-600">
                       Inscrições em andamento
                     </span>
                   </div>
@@ -365,7 +365,7 @@ export default async function ChampionshipDetailsPage({
                         <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center ${championship.regDeadline ? 'bg-green-100' : 'bg-[var(--border)]'}`}>
                           {championship.regDeadline && <CheckCircle2 className="w-2.5 h-2.5 text-green-600" />}
                         </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${championship.regDeadline ? 'line-through text-slate-400' : 'text-slate-600'}`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${championship.regDeadline ? 'line-through text-fgb-ink-400' : 'text-fgb-ink-600'}`}>
                           Prazo de inscrições definido
                         </span>
                       </div>
@@ -373,7 +373,7 @@ export default async function ChampionshipDetailsPage({
                         <div className={`w-3.5 h-3.5 rounded-full flex-shrink-0 flex items-center justify-center ${allCategoriesReady ? 'bg-green-100' : 'bg-[var(--border)]'}`}>
                           {allCategoriesReady && <CheckCircle2 className="w-2.5 h-2.5 text-green-600" />}
                         </div>
-                        <span className={`text-[10px] font-bold uppercase tracking-widest ${allCategoriesReady ? 'line-through text-slate-400' : 'text-slate-600'}`}>
+                        <span className={`text-[10px] font-bold uppercase tracking-widest ${allCategoriesReady ? 'line-through text-fgb-ink-400' : 'text-fgb-ink-600'}`}>
                           Mínimo de {minTeams} times por categoria
                         </span>
                       </div>
@@ -390,7 +390,7 @@ export default async function ChampionshipDetailsPage({
                         <div key={i}>
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[10px] text-[var(--gray)] truncate max-w-[160px]">{cat.name}</span>
-                            <span className={`text-[10px] font-black flex-shrink-0 ml-2 ${cat.missing === 0 ? 'text-[var(--verde)]' : 'text-orange-600'}`}>
+                            <span className={`text-[10px] font-black flex-shrink-0 ml-2 ${cat.missing === 0 ? 'text-[var(--verde)]' : 'text-fgb-yellow-600'}`}>
                               {cat.confirmed}/{minTeams}
                               {cat.missing > 0 && ` (falta ${cat.missing})`}
                             </span>
@@ -410,7 +410,7 @@ export default async function ChampionshipDetailsPage({
                     <div className="flex items-center justify-between">
                       <div>
                         {totalMissing > 0 ? (
-                          <p className="text-[10px] text-orange-600 font-black">Faltam {totalMissing} equipe(s)</p>
+                          <p className="text-[10px] text-fgb-yellow-600 font-black">Faltam {totalMissing} equipe(s)</p>
                         ) : (
                           <p className="text-[10px] text-[var(--verde)] font-black">✓ Todas as categorias completas</p>
                         )}
@@ -427,14 +427,14 @@ export default async function ChampionshipDetailsPage({
                 )}
 
                 {pendingRegistrations > 0 && (
-                  <div className="mt-3 flex items-center justify-between rounded-2xl border border-orange-200 bg-orange-50 px-4 py-3">
+                  <div className="mt-3 flex items-center justify-between rounded-2xl border border-fgb-yellow-200 bg-fgb-yellow-50 px-4 py-3">
                     <div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-orange-700">Inscrições pendentes</p>
-                      <p className="text-[10px] text-orange-700">{pendingRegistrations} equipe(s) aguardando validação</p>
+                      <p className="text-[9px] font-black uppercase tracking-widest text-fgb-yellow-700">Inscrições pendentes</p>
+                      <p className="text-[10px] text-fgb-yellow-700">{pendingRegistrations} equipe(s) aguardando validação</p>
                     </div>
                     <Link
                       href={`/admin/championships/${activeChampionshipId}/registrations`}
-                      className="text-[9px] font-black uppercase tracking-widest text-[var(--black)] bg-white border border-orange-200 px-3 py-1.5 rounded-lg hover:bg-[var(--amarelo)] hover:border-[var(--amarelo)] transition-all flex-shrink-0 shadow-sm"
+                      className="text-[9px] font-black uppercase tracking-widest text-[var(--black)] bg-white border border-fgb-yellow-200 px-3 py-1.5 rounded-lg hover:bg-[var(--amarelo)] hover:border-[var(--amarelo)] transition-all flex-shrink-0 shadow-sm"
                     >
                       Revisar →
                     </Link>
@@ -460,7 +460,7 @@ export default async function ChampionshipDetailsPage({
                     ? <CheckCircle2 className="w-4 h-4 text-green-600" />
                     : <span className={
                         currentStep === 3 ? 'text-[var(--black)]' :
-                        allCategoriesReady ? 'text-orange-600' :
+                        allCategoriesReady ? 'text-fgb-yellow-600' :
                         'text-[var(--gray)]'
                       }>3</span>
                   }
@@ -485,7 +485,7 @@ export default async function ChampionshipDetailsPage({
                 {(currentStep === 3 || allCategoriesReady) && currentStep < 4 && (
                   <div className="flex items-center gap-1.5 mt-1 mb-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[var(--amarelo)] animate-pulse" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-600">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-fgb-yellow-600">
                       Organização disponível
                     </span>
                   </div>
@@ -557,7 +557,7 @@ export default async function ChampionshipDetailsPage({
                 {currentStep === 4 && (
                   <div className="flex items-center gap-1.5 mt-1 mb-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-[var(--amarelo)] animate-pulse" />
-                    <span className="text-[9px] font-black uppercase tracking-widest text-orange-600">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-fgb-yellow-600">
                       Em andamento
                     </span>
                   </div>
@@ -576,7 +576,7 @@ export default async function ChampionshipDetailsPage({
                       </div>
                       <div className="p-2 bg-white rounded-xl shadow-sm border border-[var(--border)]">
                         <p className="text-[8px] font-black uppercase text-[var(--gray)] mb-1">Pendentes</p>
-                        <p className="text-lg font-black text-orange-600">{totalGames - completedGames}</p>
+                        <p className="text-lg font-black text-fgb-yellow-600">{totalGames - completedGames}</p>
                       </div>
                     </div>
                     <div>
@@ -695,19 +695,19 @@ export default async function ChampionshipDetailsPage({
           {/* ── Próximo passo recomendado ── */}
           {(() => {
             const variantStyles: Record<string, string> = {
-              warning: 'border-orange-200 bg-orange-50',
+              warning: 'border-fgb-yellow-200 bg-fgb-yellow-50',
               green: 'border-green-200 bg-green-50',
               blue: 'border-blue-200 bg-blue-50',
               gray: 'border-[var(--border)] bg-[var(--gray-l)]',
             }
             const titleStyles: Record<string, string> = {
-              warning: 'text-orange-700',
+              warning: 'text-fgb-yellow-700',
               green: 'text-green-700',
               blue: 'text-blue-700',
               gray: 'text-[var(--gray)]',
             }
             const ctaStyles: Record<string, string> = {
-              warning: 'bg-orange-600 text-white hover:bg-orange-700',
+              warning: 'bg-fgb-yellow-600 text-white hover:bg-fgb-yellow-700',
               green: 'bg-[var(--verde)] text-white hover:bg-[var(--verde)]/90',
               blue: 'bg-blue-600 text-white hover:bg-blue-700',
               gray: 'bg-white border border-[var(--border)] text-[var(--black)] hover:bg-[var(--gray-l)]',
@@ -802,7 +802,7 @@ export default async function ChampionshipDetailsPage({
                 {topStandings.length > 0 ? topStandings.map((standing, idx) => (
                   <div key={standing.id} className="px-6 py-3.5 flex items-center justify-between hover:bg-[var(--gray-l)] group transition-all">
                     <div className="flex items-center gap-4">
-                      <span className={`text-lg font-black w-6 text-center ${idx === 0 ? 'text-[var(--amarelo)] drop-shadow-sm' : idx === 1 ? 'text-slate-400' : 'text-orange-800 opacity-60'}`}>{idx + 1}°</span>
+                      <span className={`text-lg font-black w-6 text-center ${idx === 0 ? 'text-[var(--amarelo)] drop-shadow-sm' : idx === 1 ? 'text-fgb-ink-400' : 'text-fgb-yellow-800 opacity-60'}`}>{idx + 1}°</span>
                       <span className="text-sm font-bold text-[var(--black)] group-hover:text-[var(--verde)] transition-colors">{standing.team.name}</span>
                     </div>
                     <div className="flex items-center gap-6 pr-2">
@@ -837,7 +837,7 @@ export default async function ChampionshipDetailsPage({
                 </div>
               ) : (
                 <div className="h-36 border border-dashed border-[var(--border)] rounded-2xl flex flex-col items-center justify-center text-center p-6 bg-[var(--gray-l)]">
-                  <BarChart3 className="w-7 h-7 text-slate-300 mb-3" />
+                  <BarChart3 className="w-7 h-7 text-fgb-ink-300 mb-3" />
                   <p className="fgb-label text-[var(--gray)] uppercase tracking-widest text-center mx-auto max-w-[150px] leading-relaxed" style={{ fontSize: 8 }}>Etapa indisponível em fase regular</p>
                 </div>
               )}
