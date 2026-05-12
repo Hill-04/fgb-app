@@ -99,6 +99,7 @@ export default async function TeamAthletesPage() {
     <div className="space-y-8">
       <TeamPageHeader
         eyebrow="BID Federativo"
+        eyebrowTone="green"
         title="Atletas da Equipe"
         description="Consulte atletas ativos e acompanhe novas solicitacoes de registro federativo."
         actions={

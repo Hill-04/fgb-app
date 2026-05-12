@@ -1,11 +1,20 @@
 import type { ReactNode } from 'react'
 
+type EyebrowTone = 'gray' | 'green' | 'yellow'
+
+const EYEBROW_TONE_CLASS: Record<EyebrowTone, string> = {
+  gray: 'text-[var(--gray)]',
+  green: 'text-[var(--verde)]',
+  yellow: 'text-fgb-yellow-600',
+}
+
 type TeamPageHeaderProps = {
   eyebrow: string
   title: string
   description?: string
   badge?: string
   icon?: ReactNode
+  eyebrowTone?: EyebrowTone
   actions?: ReactNode
 }
 
@@ -15,6 +24,7 @@ export function TeamPageHeader({
   description,
   badge,
   icon,
+  eyebrowTone = 'gray',
   actions,
 }: TeamPageHeaderProps) {
   return (
@@ -27,7 +37,7 @@ export function TeamPageHeader({
                 {icon}
               </span>
             ) : null}
-            <span className="fgb-label text-[10px] tracking-widest text-[var(--gray)]">
+            <span className={`fgb-label text-[10px] tracking-widest ${EYEBROW_TONE_CLASS[eyebrowTone]}`}>
               {eyebrow}
             </span>
             {badge ? (
