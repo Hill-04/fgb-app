@@ -66,6 +66,25 @@ export type LiveTableEvent = {
   tone: LiveEventTone
   isOptimistic: boolean
   teamName: string
+  qualifiers?: string[]
+}
+
+// PM-04.E: extrai qualifiers FIBA do payloadJson do evento.
+// Safe parse — tolera null, malformed JSON, formato inesperado.
+function parseEventQualifiers(raw: unknown): string[] | undefined {
+  if (typeof raw !== 'string' || raw.length === 0) return undefined
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (!parsed || typeof parsed !== 'object') return undefined
+    const fiba = (parsed as { fiba?: unknown }).fiba
+    if (!fiba || typeof fiba !== 'object') return undefined
+    const list = (fiba as { qualifiers?: unknown }).qualifiers
+    if (!Array.isArray(list) || list.length === 0) return undefined
+    const cleaned = list.filter((entry): entry is string => typeof entry === 'string' && entry.length > 0)
+    return cleaned.length > 0 ? cleaned : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export type LiveTableBoxRow = {
@@ -376,6 +395,7 @@ export function buildLiveGameTableModel(snapshot: any): LiveGameTableModel {
           tone: presentation.tone,
           isOptimistic: Boolean(event.isOptimistic),
           teamName: event.teamName || 'Mesa',
+          qualifiers: parseEventQualifiers(event.payloadJson),
         }
       }),
     boxRows: [home, away].flatMap((team) =>
