@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { FibaQualifiersModal } from './fiba-qualifiers-modal'
 import { LiveFibaBoxscore } from './live-fiba-boxscore'
 import { LiveFibaControls } from './live-fiba-controls'
 import { LiveFibaEventLog } from './live-fiba-event-log'
@@ -10,6 +11,7 @@ import { LiveFibaTeamPanel } from './live-fiba-team-panel'
 import { PredictivePromptModal } from './predictive-prompt-modal'
 import type { LiveGameTableModel, LiveTableSide } from '../live-game-table-adapter'
 import { getLiveControlAvailability } from '../../live-fiba-config'
+import { mapEventTypeToFiba, type FibaQualifier } from '@/lib/live-game/fiba-protocol'
 import { getPredictivePrompt, type PredictivePrompt } from '@/lib/live-game/predictive-workflow'
 import type { LiveAdminHandlers, LiveAdminSelectionActions, LiveAdminSelectionState } from '../../types/live-admin'
 import type { LiveAdminPresentation } from '../live-game-admin-view'
@@ -18,6 +20,20 @@ type PromptContext = {
   lastEventTeamId: string
   onCourtPlayers: { id: string; name: string; teamId: string; jerseyNumber: number | null }[]
 }
+
+type PendingShot = {
+  teamId: string
+  athleteId: string | null
+  action: { eventType: string; pointsDelta?: number }
+}
+
+const QUALIFIER_ELIGIBLE_EVENTS = new Set([
+  'SHOT_MADE_2',
+  'SHOT_MADE_3',
+  'SHOT_MISSED_2',
+  'SHOT_MISSED_3',
+  'FREE_THROW_MADE',
+])
 
 export type RecentLiveInteraction = {
   id: string
@@ -84,7 +100,9 @@ export function LiveFibaTable({
 }: LiveFibaTableProps) {
   const [recentInteraction, setRecentInteraction] = useState<RecentLiveInteraction | null>(null)
   const [predictivePrompt, setPredictivePrompt] = useState<PredictivePrompt | null>(null)
+  const [pendingShot, setPendingShot] = useState<PendingShot | null>(null)
   const promptContextRef = useRef<PromptContext | null>(null)
+  const pendingShotRef = useRef<PendingShot | null>(null)
   const actionLockRef = useRef<Map<string, number>>(new Map())
   const selectedPlayer = useMemo(() => findSelectedPlayer(tableModel, selection), [selection, tableModel])
   const controlAvailability = useMemo(
@@ -113,17 +131,17 @@ export function LiveFibaTable({
     [selectionActions]
   )
 
-  const dispatchAction = useCallback(
-    (teamId: string, athleteId: string | null, action: { eventType: string; pointsDelta?: number }) => {
-      const lockKey = [teamId || 'neutral', athleteId || 'team', action.eventType, selection.selectedPeriod, selection.clockTime].join(':')
+  // PM-04.D: dispatchEvent fire o evento (com qualifiers opcionais) e roda o predictive prompt.
+  // Sem lock check aqui — quem chama (dispatchAction / qualifier modal handlers) ja travou.
+  const dispatchEvent = useCallback(
+    (
+      teamId: string,
+      athleteId: string | null,
+      action: { eventType: string; pointsDelta?: number },
+      qualifiers?: FibaQualifier[]
+    ) => {
       const now = Date.now()
-      const lastAt = actionLockRef.current.get(lockKey)
-
-      if (lastAt && now - lastAt < ACTION_LOCK_WINDOW_MS) {
-        return
-      }
-
-      actionLockRef.current.set(lockKey, now)
+      const lockKey = [teamId || 'neutral', athleteId || 'team', action.eventType, selection.selectedPeriod, selection.clockTime].join(':')
       setRecentInteraction({
         id: `${lockKey}:${now}`,
         teamId,
@@ -133,6 +151,17 @@ export function LiveFibaTable({
         at: now,
       })
 
+      const fibaMap = qualifiers && qualifiers.length > 0 ? mapEventTypeToFiba(action.eventType) : null
+      const payload = fibaMap
+        ? {
+            fiba: {
+              actionType: fibaMap.actionType,
+              ...(fibaMap.subType ? { subType: fibaMap.subType } : {}),
+              qualifiers,
+            },
+          }
+        : undefined
+
       handlers.enqueueLiveEvent({
         eventType: action.eventType,
         pointsDelta: action.pointsDelta,
@@ -140,10 +169,10 @@ export function LiveFibaTable({
         athleteId,
         period: selection.selectedPeriod,
         clockTime: selection.clockTime,
+        ...(payload ? { payload } : {}),
       })
 
       // PM-04.C: depois do dispatch, computa predictive prompt (foul/missed/made).
-      // Snapshot dos jogadores em quadra fica no ref pra resolver teamId/nome no select.
       const onCourtPlayers: PromptContext['onCourtPlayers'] = []
       for (const player of tableModel.home.players) {
         if (player.isOnCourt) {
@@ -181,6 +210,58 @@ export function LiveFibaTable({
     },
     [handlers, selection.clockTime, selection.selectedPeriod, tableModel]
   )
+
+  // PM-04.D: dispatchAction faz lock check, flush de pending shot (rapid-fire) e decide
+  // entre HOLD (shot qualifier-eligible -> abre FibaQualifiersModal) ou DISPATCH imediato.
+  const dispatchAction = useCallback(
+    (teamId: string, athleteId: string | null, action: { eventType: string; pointsDelta?: number }) => {
+      const lockKey = [teamId || 'neutral', athleteId || 'team', action.eventType, selection.selectedPeriod, selection.clockTime].join(':')
+      const now = Date.now()
+      const lastAt = actionLockRef.current.get(lockKey)
+      if (lastAt && now - lastAt < ACTION_LOCK_WINDOW_MS) return
+      actionLockRef.current.set(lockKey, now)
+
+      // Se ha shot pendente (qualifier modal aberto de um shot anterior), dispara ele
+      // sem qualifiers — operador esta passando para outro evento (rapid-fire).
+      const pending = pendingShotRef.current
+      if (pending) {
+        pendingShotRef.current = null
+        setPendingShot(null)
+        dispatchEvent(pending.teamId, pending.athleteId, pending.action)
+      }
+
+      // Se o novo evento e qualifier-eligible, HOLD ate operador confirmar/skip/timeout
+      if (QUALIFIER_ELIGIBLE_EVENTS.has(action.eventType)) {
+        const next: PendingShot = { teamId, athleteId, action }
+        pendingShotRef.current = next
+        setPendingShot(next)
+        return
+      }
+
+      // Evento normal: dispatch direto
+      dispatchEvent(teamId, athleteId, action)
+    },
+    [dispatchEvent, selection.clockTime, selection.selectedPeriod]
+  )
+
+  const handleQualifiersConfirm = useCallback(
+    (qualifiers: FibaQualifier[]) => {
+      const pending = pendingShotRef.current
+      if (!pending) return
+      pendingShotRef.current = null
+      setPendingShot(null)
+      dispatchEvent(pending.teamId, pending.athleteId, pending.action, qualifiers)
+    },
+    [dispatchEvent]
+  )
+
+  const handleQualifiersSkip = useCallback(() => {
+    const pending = pendingShotRef.current
+    if (!pending) return
+    pendingShotRef.current = null
+    setPendingShot(null)
+    dispatchEvent(pending.teamId, pending.athleteId, pending.action)
+  }, [dispatchEvent])
 
   const handlePlayerEvent = useCallback(
     (teamId: string, athleteId: string, action: { eventType: string; pointsDelta?: number }) => {
@@ -281,11 +362,18 @@ export function LiveFibaTable({
         return
       }
 
-      // PM-04.C: Esc fecha predictive prompt sem disparar evento adicional
-      if (event.key === 'Escape' && predictivePrompt) {
-        event.preventDefault()
-        handlePromptDismiss()
-        return
+      // PM-04.D: Esc primeiro fecha qualifier modal (mais recente), depois predictive prompt
+      if (event.key === 'Escape') {
+        if (pendingShotRef.current) {
+          event.preventDefault()
+          handleQualifiersSkip()
+          return
+        }
+        if (predictivePrompt) {
+          event.preventDefault()
+          handlePromptDismiss()
+          return
+        }
       }
 
       const action = KEYBOARD_ACTIONS[event.key.toLowerCase()]
@@ -298,7 +386,7 @@ export function LiveFibaTable({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [dispatchAction, handlePromptDismiss, predictivePrompt, selectedPlayer, selection.selectedTeamId])
+  }, [dispatchAction, handlePromptDismiss, handleQualifiersSkip, predictivePrompt, selectedPlayer, selection.selectedTeamId])
 
   const selectedPlayerSummary = selectedPlayer
     ? `#${String(selectedPlayer.jerseyNumber ?? '--').padStart(2, '0')} ${selectedPlayer.name}`
@@ -420,6 +508,13 @@ export function LiveFibaTable({
         suggestion={predictivePrompt}
         onSelect={handlePromptSelect}
         onDismiss={handlePromptDismiss}
+      />
+
+      <FibaQualifiersModal
+        isOpen={!!pendingShot}
+        eventType={pendingShot?.action.eventType ?? ''}
+        onConfirm={handleQualifiersConfirm}
+        onSkip={handleQualifiersSkip}
       />
     </div>
   )
