@@ -1,7 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, ClipboardList, FileText, ExternalLink } from 'lucide-react'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { LockGameButton } from '@/components/admin/LockGameButton'
 
 const STATUS_LABEL: Record<string, string> = {
   SCHEDULED: 'Agendado',
@@ -39,6 +42,18 @@ export default async function ChampionshipGameHubPage({
 
   if (!game) notFound()
 
+  const session = await getServerSession(authOptions)
+  const sessionUserId = (session?.user as any)?.id ?? null
+  const currentUser = sessionUserId
+    ? await prisma.user.findUnique({
+        where: { id: sessionUserId },
+        select: { isFederationSuperAdmin: true },
+      })
+    : null
+  const isSuperAdmin = currentUser?.isFederationSuperAdmin === true
+  const canLock = isSuperAdmin && game.lifecycleState === 'PUBLISHED' && !game.isHistoricallyLocked
+  const canUnlock = isSuperAdmin && game.isHistoricallyLocked
+
   const scheduledAt = new Date(game.dateTime)
   const homeRoster  = game.rosters.find(r => r.teamId === game.homeTeamId)
   const awayRoster  = game.rosters.find(r => r.teamId === game.awayTeamId)
@@ -66,6 +81,19 @@ export default async function ChampionshipGameHubPage({
           <span className={`text-[10px] font-black px-2.5 py-1 rounded-full ${STATUS_COLOR[game.status] ?? 'bg-gray-100 text-gray-600'}`}>
             {STATUS_LABEL[game.status] ?? game.status}
           </span>
+          {game.isHistoricallyLocked && (
+            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+              Travada
+            </span>
+          )}
+          <div className="ml-auto">
+            <LockGameButton
+              gameId={game.id}
+              isLocked={game.isHistoricallyLocked}
+              canLock={canLock}
+              canUnlock={canUnlock}
+            />
+          </div>
         </div>
         <h1 className="fgb-display text-4xl text-[var(--black)] leading-none">
           {game.homeTeam.name}{' '}
