@@ -39,7 +39,8 @@ export function TeamCompetitionsClient({
   const [selectedAthletes, setSelectedAthletes] = useState<string[]>([])
   const [submitting, setSubmitting] = useState(false)
 
-  const fmtDate = (s: string) => new Date(s).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  const fmtDate = (s: string) =>
+    new Date(s).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 
   const activeExternal = useMemo(
     () => externals.find((e) => e.id === openModalId) ?? null,
