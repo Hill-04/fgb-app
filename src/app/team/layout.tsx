@@ -41,11 +41,14 @@ export default async function TeamLayout({ children }: { children: React.ReactNo
 
       <MobileHeader role="TEAM" teamName={teamName} />
       <SideNav role="TEAM" teamName={teamName} className="hidden md:flex shrink-0" />
-      <main className="flex-1 p-4 sm:p-8 md:p-12 overflow-y-auto relative z-10 custom-scrollbar">
-        <div className="max-w-[1600px] mx-auto">
-          {children}
-        </div>
-      </main>
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="fgb-tricolor h-1 shrink-0" aria-hidden />
+        <main className="flex-1 p-4 sm:p-8 md:p-12 overflow-y-auto relative z-10 custom-scrollbar">
+          <div className="max-w-[1600px] mx-auto">
+            {children}
+          </div>
+        </main>
+      </div>
       <AIAssistantBubble />
     </div>
   )

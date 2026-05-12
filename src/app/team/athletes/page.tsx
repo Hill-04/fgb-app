@@ -5,6 +5,7 @@ import { FileClock, Plus } from 'lucide-react'
 
 import { AthleteRequestStatusBadge } from '@/components/athletes/status-badges'
 import type { DrawerAthlete } from '@/components/AthleteDrawer'
+import { TeamPageHeader } from '@/components/team/team-page-header'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { isPendingAthleteRequestStatus, sortAthleteRequestsByStatus } from '@/lib/athlete-registration-presentation'
@@ -96,30 +97,29 @@ export default async function TeamAthletesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>BID Federativo</p>
-          <h1 className="fgb-display mt-2 text-3xl leading-none text-[var(--black)]">Atletas da Equipe</h1>
-          <p className="mt-2 text-sm font-medium text-[var(--gray)]">
-            Consulte atletas ativos e acompanhe novas solicitacoes de registro federativo.
-          </p>
-        </div>
-        <div className="flex gap-3">
-          <Link
-            href="/team/athletes/requests"
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--verde)]"
-          >
-            Ver solicitacoes
-          </Link>
-          <Link
-            href="/team/athletes/new"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--verde)] px-5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-[#0f4627]"
-          >
-            <Plus className="h-4 w-4" />
-            Novo cadastro
-          </Link>
-        </div>
-      </div>
+      <TeamPageHeader
+        eyebrow="BID Federativo"
+        eyebrowTone="green"
+        title="Atletas da Equipe"
+        description="Consulte atletas ativos e acompanhe novas solicitacoes de registro federativo."
+        actions={
+          <>
+            <Link
+              href="/team/athletes/requests"
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--border)] bg-white px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] transition-all hover:border-[var(--verde)]"
+            >
+              Ver solicitacoes
+            </Link>
+            <Link
+              href="/team/athletes/new"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--verde)] px-5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-[#0f4627]"
+            >
+              <Plus className="h-4 w-4" />
+              Novo cadastro
+            </Link>
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="rounded-[24px] border border-[var(--border)] bg-white p-5 shadow-sm">

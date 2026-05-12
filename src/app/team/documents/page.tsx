@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { FileText, Download, Trophy, Calendar } from 'lucide-react'
 import { Badge } from '@/components/Badge'
+import { TeamPageHeader } from '@/components/team/team-page-header'
 
 type Document = {
   id: string
@@ -35,16 +36,12 @@ export default function TeamDocumentsPage() {
 
   return (
     <div className="space-y-10 max-w-6xl mx-auto font-sans">
-      <div className="animate-fade-in border-b border-[var(--border)] pb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-fgb-yellow-100 flex items-center justify-center">
-            <FileText className="w-4 h-4 text-fgb-yellow-600" />
-          </div>
-          <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Documentos Oficiais</span>
-        </div>
-        <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight uppercase italic">Documentos</h1>
-        <p className="text-[var(--gray)] mt-2 font-medium">Documentos emitidos pela Federação relacionados às suas inscrições.</p>
-      </div>
+      <TeamPageHeader
+        eyebrow="Documentos Oficiais"
+        title="Documentos"
+        description="Documentos emitidos pela Federação relacionados às suas inscrições."
+        icon={<FileText className="w-4 h-4" />}
+      />
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
