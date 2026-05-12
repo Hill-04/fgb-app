@@ -7,6 +7,7 @@ import { StandingsSelector } from './StandingsSelector'
 import { Trophy, TrendingUp, Users } from "lucide-react"
 import { Table } from "@/components/ui/table"
 import { Brackets } from "@/components/Brackets"
+import { TeamPageHeader } from '@/components/team/team-page-header'
 
 export default async function teamStandingsPage({
   searchParams,
@@ -67,21 +68,15 @@ export default async function teamStandingsPage({
   return (
     <div className="space-y-10 max-w-6xl mx-auto font-sans">
       {/* Header */}
-      <div className="animate-fade-in border-b border-[var(--border)] pb-8">
-        <div className="flex items-center gap-3 mb-3">
-           <div className="w-8 h-8 rounded-lg bg-fgb-yellow-100 flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-fgb-yellow-600" />
-           </div>
-           <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Rankings de Competição</span>
-        </div>
-        <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight uppercase italic">Classificação Geral</h1>
-        <p className="text-[var(--gray)] mt-2 font-medium">Acompanhe o desempenho da sua equipe e adversários em tempo real.</p>
+      <TeamPageHeader
+        eyebrow="Rankings de Competição"
+        title="Classificação Geral"
+        description="Acompanhe o desempenho da sua equipe e adversários em tempo real."
+        icon={<TrendingUp className="w-4 h-4" />}
+      />
 
-        {/* Category Filter — Client Component */}
-        <div className="mt-8">
-          <StandingsSelector allTeamCategories={allTeamCategories} categoryId={categoryId} />
-        </div>
-      </div>
+      {/* Category Filter — Client Component */}
+      <StandingsSelector allTeamCategories={allTeamCategories} categoryId={categoryId} />
 
       {registrations.length === 0 ? (
         <div className="bg-fgb-ink-50 border border-[var(--border)] rounded-3xl p-20 text-center animate-fade-up shadow-inner">

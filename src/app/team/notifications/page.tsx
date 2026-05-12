@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, CheckCircle, Info, AlertTriangle, XCircle } from 'lucide-react'
+import { TeamPageHeader } from '@/components/team/team-page-header'
 
 type Notification = {
   id: string
@@ -37,16 +38,12 @@ export default function TeamNotificationsPage() {
 
   return (
     <div className="space-y-10 max-w-4xl mx-auto font-sans">
-      <div className="animate-fade-in border-b border-[var(--border)] pb-8">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-8 h-8 rounded-lg bg-fgb-yellow-100 flex items-center justify-center">
-            <Bell className="w-4 h-4 text-fgb-yellow-600" />
-          </div>
-          <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Central de Avisos</span>
-        </div>
-        <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight uppercase italic">Notificações</h1>
-        <p className="text-[var(--gray)] mt-2 font-medium">Avisos e comunicados da Federação Gaúcha de Basquete.</p>
-      </div>
+      <TeamPageHeader
+        eyebrow="Central de Avisos"
+        title="Notificações"
+        description="Avisos e comunicados da Federação Gaúcha de Basquete."
+        icon={<Bell className="w-4 h-4" />}
+      />
 
       {loading ? (
         <div className="space-y-4 animate-pulse">
