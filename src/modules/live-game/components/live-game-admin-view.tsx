@@ -43,6 +43,8 @@ export function LiveGameAdminView({
       isInitialLoading={liveAdmin.isInitialLoading}
       isRefreshingInBackground={liveAdmin.isRefreshingInBackground}
       pendingCount={liveAdmin.pendingCount}
+      pendingSubs={liveAdmin.pendingSubs}
+      onCancelPendingSub={liveAdmin.handlers.cancelPendingSub}
       onRetry={liveAdmin.handlers.retry}
       fullscreenHref={fullscreenHref}
     >
