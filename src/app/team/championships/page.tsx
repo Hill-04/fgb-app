@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Trophy, Calendar, Users, CheckCircle2, ChevronRight } from 'lucide-react'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { TeamPageHeader } from '@/components/team/team-page-header'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,16 +31,12 @@ export default async function TeamChampionshipsPage() {
 
     return (
       <div className="space-y-10 max-w-5xl mx-auto font-sans px-4 sm:px-6">
-        <div className="animate-fade-in border-b border-[var(--border)] pb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-lg bg-fgb-yellow-50 flex items-center justify-center border border-fgb-yellow-100">
-              <Trophy className="w-4 h-4 text-fgb-yellow-600" />
-            </div>
-            <span className="text-[var(--gray)] font-bold uppercase tracking-widest text-[10px]">Inscrições Disponíveis</span>
-          </div>
-          <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight italic uppercase">Campeonatos</h1>
-          <p className="text-[var(--gray)] mt-2 font-medium">Campeonatos com inscrições abertas para sua equipe.</p>
-        </div>
+        <TeamPageHeader
+          eyebrow="Inscrições Disponíveis"
+          title="Campeonatos"
+          description="Campeonatos com inscrições abertas para sua equipe."
+          icon={<Trophy className="w-4 h-4" />}
+        />
 
         {championships.length === 0 ? (
           <div className="fgb-card bg-[var(--gray-l)] border border-[var(--border)] rounded-3xl p-20 text-center shadow-sm">
@@ -141,9 +138,10 @@ export default async function TeamChampionshipsPage() {
   } catch (error: any) {
     return (
       <div className="space-y-10 max-w-5xl mx-auto font-sans px-4 sm:px-6">
-        <div className="animate-fade-in border-b border-[var(--border)] pb-8">
-          <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight uppercase italic">Campeonatos</h1>
-        </div>
+        <TeamPageHeader
+          eyebrow="Inscrições Disponíveis"
+          title="Campeonatos"
+        />
         <div className="fgb-card bg-[var(--gray-l)] border border-[var(--border)] rounded-3xl p-20 text-center shadow-sm">
           <Trophy className="w-16 h-16 text-fgb-ink-300 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-[var(--black)] mb-2">Ops! Algo deu errado</h3>
