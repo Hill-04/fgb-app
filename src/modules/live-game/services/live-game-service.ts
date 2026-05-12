@@ -1,6 +1,7 @@
 import { randomUUID } from 'crypto'
 
 import { prisma } from '@/lib/db'
+import { canModifyHistoricalData } from '@/lib/live-game/immutability-guard'
 import { StandingService } from '@/services/standing-service'
 
 type PregameAction =
@@ -1107,6 +1108,22 @@ export class LiveGameService {
     const isWriteAction = action === 'event' || action === 'revert-event'
     if (isWriteAction && isGameFinalized(game.status, game.liveStatus)) {
       throw new Error('Jogo finalizado nao permite novos eventos ou desfazer lancamentos.')
+    }
+
+    // PM-04.B Task 7: gate write actions via canModifyHistoricalData (PM-01).
+    // Bloqueia jogos PUBLISHED/locked sem motivo + auditoria. Camada adicional
+    // sobre isGameFinalized — protege contra brechas e exige reason quando aplicavel.
+    if (isWriteAction) {
+      const auth = await canModifyHistoricalData(gameId, actorUserId ?? null)
+      if (!auth.allowed) {
+        throw new Error(auth.reason ?? 'Modificacao nao permitida neste jogo')
+      }
+      if (auth.requiresLogReason) {
+        const providedReason = payload?.reason ? String(payload.reason).trim() : ''
+        if (!providedReason) {
+          throw new Error('Motivo obrigatorio para modificar jogo publicado/travado')
+        }
+      }
     }
 
     if (isWriteAction || action === 'publish') {

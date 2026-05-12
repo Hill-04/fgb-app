@@ -19,6 +19,12 @@ export type PendingMutation = {
 
 export type PlayerQuickAction = '2pts' | '3pts' | 'ft' | 'foul' | 'reb' | 'ast' | 'sub'
 
+export type PendingSubstitution = {
+  teamId: string
+  outAthleteId: string
+  outAthleteName: string
+}
+
 export type LiveAdminSelectionState = {
   selectedTeamId: string
   selectedAthleteId: string
@@ -50,6 +56,7 @@ export type LiveAdminHandlers = {
   handlePlayerQuickAction: (teamId: string, player: LiveTablePlayer, action: PlayerQuickAction) => void
   handleControlEvent: (eventType: string) => void
   handleTimeoutFromSide: (side: 'home' | 'away') => void
+  cancelPendingSub: (outAthleteId: string) => void
 }
 
 export const MODE_LABELS: Record<AdminViewMode, string> = {

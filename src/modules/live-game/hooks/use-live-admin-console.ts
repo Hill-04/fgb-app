@@ -17,6 +17,7 @@ import type {
   LiveAdminSelectionState,
   LiveEnvelope,
   PendingMutation,
+  PendingSubstitution,
   PlayerQuickAction,
 } from '../types/live-admin'
 
@@ -37,6 +38,7 @@ type UseLiveAdminConsoleResult = {
   submitting: boolean
   error: string
   pendingCount: number
+  pendingSubs: PendingSubstitution[]
   selection: LiveAdminSelectionState
   selectionActions: LiveAdminSelectionActions
   handlers: LiveAdminHandlers
@@ -66,6 +68,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
   const [visualShotClock, setVisualShotClock] = useState(24)
   const [activeTab, setActiveTab] = useState<LiveTableTab>('home')
   const [pendingMutations, setPendingMutations] = useState<PendingMutation[]>([])
+  const [pendingSubs, setPendingSubs] = useState<PendingSubstitution[]>([])
 
   const endpoint = `/api/admin/games/${gameId}/${mode}`
   const confirmedSnapshotRef = useRef<any>(null)
@@ -440,18 +443,53 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
     doc.save(`relatorio-oficial-${data.game.homeTeam.name}-vs-${data.game.awayTeam.name}.pdf`)
   }
 
+  const cancelPendingSub = (outAthleteId: string) => {
+    setPendingSubs(prev => prev.filter(p => p.outAthleteId !== outAthleteId))
+  }
+
   const handlePlayerQuickAction = (teamId: string, player: LiveTablePlayer, action: PlayerQuickAction) => {
     setSelectedTeamId(teamId)
     setSelectedAthleteId(player.athleteId)
 
     if (action === 'sub') {
+      if (player.isOnCourt) {
+        // PM-04.B Task 4: jogador saindo entra no holding bay, nao dispara SUBSTITUTION_OUT ainda
+        setPendingSubs(prev => {
+          if (prev.some(p => p.outAthleteId === player.athleteId)) return prev
+          return [...prev, { teamId, outAthleteId: player.athleteId, outAthleteName: player.name ?? '' }]
+        })
+        return
+      }
+      // Jogador entrando: tenta parear com OUT pendente da mesma equipe
+      const pendingIdx = pendingSubs.findIndex(p => p.teamId === teamId)
+      if (pendingIdx === -1) {
+        // Sem OUT pendente — SUBSTITUTION_IN solo (entrada inicial em quadra)
+        enqueueLiveEvent({
+          eventType: 'SUBSTITUTION_IN',
+          teamId,
+          athleteId: player.athleteId,
+          period: selectedPeriod,
+          clockTime,
+        })
+        return
+      }
+      // Pair: dispara OUT seguido de IN; backend continua persistindo eventos separados
+      const pending = pendingSubs[pendingIdx]
       enqueueLiveEvent({
-        eventType: player.isOnCourt ? 'SUBSTITUTION_OUT' : 'SUBSTITUTION_IN',
+        eventType: 'SUBSTITUTION_OUT',
+        teamId,
+        athleteId: pending.outAthleteId,
+        period: selectedPeriod,
+        clockTime,
+      })
+      enqueueLiveEvent({
+        eventType: 'SUBSTITUTION_IN',
         teamId,
         athleteId: player.athleteId,
         period: selectedPeriod,
         clockTime,
       })
+      setPendingSubs(prev => prev.filter((_, i) => i !== pendingIdx))
       return
     }
 
@@ -530,6 +568,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
     submitting,
     error,
     pendingCount: pendingMutations.length,
+    pendingSubs,
     selection: {
       selectedTeamId,
       selectedAthleteId,
@@ -559,6 +598,7 @@ export function useLiveAdminConsole({ gameId, mode }: UseLiveAdminConsoleParams)
       handlePlayerQuickAction,
       handleControlEvent,
       handleTimeoutFromSide,
+      cancelPendingSub,
     },
   }
 }

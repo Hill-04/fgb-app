@@ -2,9 +2,9 @@
 
 import type { ReactNode } from 'react'
 import Link from 'next/link'
-import { Clock3, Loader2, Maximize2 } from 'lucide-react'
+import { Clock3, Loader2, Maximize2, X } from 'lucide-react'
 import { buildAdminGamePath as buildCanonicalAdminGamePath } from '@/lib/admin-game-routing'
-import { MODE_LABELS, type AdminViewMode } from '../types/live-admin'
+import { MODE_LABELS, type AdminViewMode, type PendingSubstitution } from '../types/live-admin'
 import type { LiveAdminPresentation } from './live-game-admin-view'
 
 type LiveAdminShellProps = {
@@ -17,6 +17,8 @@ type LiveAdminShellProps = {
   isInitialLoading: boolean
   isRefreshingInBackground: boolean
   pendingCount: number
+  pendingSubs?: PendingSubstitution[]
+  onCancelPendingSub?: (outAthleteId: string) => void
   onRetry: () => void
   children: ReactNode
   presentation?: LiveAdminPresentation
@@ -45,6 +47,8 @@ export function LiveAdminShell({
   isInitialLoading,
   isRefreshingInBackground,
   pendingCount,
+  pendingSubs,
+  onCancelPendingSub,
   onRetry,
   children,
   presentation = 'admin',
@@ -143,6 +147,39 @@ export function LiveAdminShell({
       </div>
 
       {error && <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+
+      {mode === 'live' && pendingSubs && pendingSubs.length > 0 && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-amber-800">
+              Substituicoes pendentes ({pendingSubs.length})
+            </span>
+            <span className="text-xs text-amber-700">
+              · selecione o atleta que entra para confirmar
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {pendingSubs.map((sub) => (
+              <div
+                key={`${sub.teamId}-${sub.outAthleteId}`}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-amber-900 shadow-sm"
+              >
+                <span>↓ {sub.outAthleteName || sub.outAthleteId.slice(0, 6)}</span>
+                {onCancelPendingSub && (
+                  <button
+                    type="button"
+                    onClick={() => onCancelPendingSub(sub.outAthleteId)}
+                    aria-label="Cancelar substituicao pendente"
+                    className="rounded-full p-0.5 text-amber-700 hover:bg-amber-100"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {children}
     </div>
