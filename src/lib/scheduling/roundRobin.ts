@@ -1,14 +1,21 @@
 import { prisma } from '@/lib/db'
 import { buildBlockedMap, isDateBlockedForTeam, type TeamBlockedRange } from '@/lib/scheduling/availability'
+import {
+  getSchedulingConfig,
+  isWeekdayAllowed,
+  isDateInBlackout,
+  type WeekdayNumber,
+  type BlackoutDate,
+  type HomePattern,
+} from '@/lib/championship/scheduling-config'
 
-const GAME_DURATION_MIN = 75
-const DAY_START_HOUR = 11
-const DAY_END_HOUR = 21
-const LAST_GAME_START_UTC = 19
-const LUNCH_BREAK_MIN = 120
-const AFTERNOON_START_UTC = 17
-const MAX_CATS_PER_DAY = 2
-const MIN_AGE_GAP = 3
+// PM-02: as 8 constantes hardcoded antigas foram movidas para
+// src/lib/championship/scheduling-config.ts (campos do Championship).
+// As que sobrevivem como fallback final ainda vivem aqui para nao
+// reintroduzir magic numbers em multiplos lugares:
+const DEFAULT_SLOT_DURATION_MIN = 75   // GAME_DURATION_MIN antigo
+const DEFAULT_MAX_CATS_PER_DAY = 2     // MAX_CATS_PER_DAY antigo
+const DEFAULT_MIN_AGE_GAP = 3          // MIN_AGE_GAP antigo
 
 type TeamInfo = {
   id: string
@@ -105,14 +112,30 @@ type ConflictResolved = {
 }
 
 type SchedulingConfig = {
+  // ─── janela do dia (timezone-aware) ───
   dayStartTime: string
   regularDayEndTime: string
   extendedDayEndTime: string
   slotDurationMinutes: number
-  minRestSlotsPerTeam: number
+
+  // ─── limites por equipe ───
+  minRestHoursBetweenGames: number  // 3.C: substitui minRestSlotsPerTeam
   maxGamesPerTeamPerDay: number
-  optimizationMode: string
-  blockFormat: string
+  maxGamesPerTeamPerWeek: number    // 3.C: novo limite respeitado pelo motor
+
+  // ─── modo de operacao ───
+  optimizationMode: string          // 3.B: agora vem de Championship.scheduleOptimizationMode
+
+  // ─── janela do calendario (substituem blockFormat) ───
+  allowedWeekdays: WeekdayNumber[]  // 3.C: substitui blockFormat
+  blackoutDates: BlackoutDate[]     // 3.C: novas datas excluidas
+
+  // ─── PM-02 (3.B) — configs explicitas vindas do Championship ───
+  maxCategoriesPerDay: number
+  minAgeGapBetweenGames: number
+
+  // ─── PM-02 (3.D) — padrao de mando ───
+  homePattern: HomePattern
 }
 
 function parseAgeGroup(name: string) {
@@ -184,15 +207,49 @@ function getLocalHour(time: string) {
   return parseClockTime(time).hour
 }
 
-function createVenueName(fieldControl: string, homeTeamName: string) {
-  if (fieldControl === 'fixo' || fieldControl === 'neutro') {
+// 3.D: createVenueName agora honra homePattern. NEUTRAL sempre joga em sede.
+function createVenueName(homePattern: HomePattern, fieldControl: string, homeTeamName: string) {
+  if (homePattern === 'NEUTRAL' || fieldControl === 'fixo' || fieldControl === 'neutro') {
     return 'Sede central'
   }
 
   return `Ginásio ${homeTeamName}`
 }
 
-function buildCategoryGroups(categories: CategoryInfo[]) {
+// 3.D: aplica o pattern de mando configurado no Championship.
+// Retorna quem manda no jogo a partir do par "ida" (bundle.home/away).
+//
+//   ALTERNATED:   1o turno home original, 2o turno troca (legacy default)
+//   FIXED_HOST:   home original sempre manda (nao troca em isReturn)
+//   NEUTRAL:      home/away mantem para fins de estatistica; venue forcado em sede
+//   SERIES_2_2_1: best-of-5; rounds 1,2 = home original; 3,4 = troca; 5 = home original
+function applyHomePattern(
+  bundle: MatchBundle,
+  isReturn: boolean,
+  homePattern: HomePattern,
+): { homeId: string; awayId: string; homeName: 'first' | 'second' } {
+  switch (homePattern) {
+    case 'FIXED_HOST':
+      return { homeId: bundle.homeTeamId, awayId: bundle.awayTeamId, homeName: 'first' }
+
+    case 'SERIES_2_2_1': {
+      const layout = [0, 0, 1, 1, 0]
+      const pos = layout[bundle.round - 1] ?? 0
+      return pos === 0
+        ? { homeId: bundle.homeTeamId, awayId: bundle.awayTeamId, homeName: 'first' }
+        : { homeId: bundle.awayTeamId, awayId: bundle.homeTeamId, homeName: 'second' }
+    }
+
+    case 'NEUTRAL':
+    case 'ALTERNATED':
+    default:
+      return isReturn
+        ? { homeId: bundle.awayTeamId, awayId: bundle.homeTeamId, homeName: 'second' }
+        : { homeId: bundle.homeTeamId, awayId: bundle.awayTeamId, homeName: 'first' }
+  }
+}
+
+function buildCategoryGroups(categories: CategoryInfo[], minAgeGap: number = DEFAULT_MIN_AGE_GAP) {
   const sorted = [...categories].sort((a, b) => a.ageGroup - b.ageGroup)
   const groups: CategoryInfo[][] = []
   const usedIds = new Set<string>()
@@ -205,7 +262,7 @@ function buildCategoryGroups(categories: CategoryInfo[]) {
     }
 
     const candidate = sorted[index + half]
-    if (candidate && !usedIds.has(candidate.id) && Math.abs(candidate.ageGroup - first.ageGroup) >= MIN_AGE_GAP) {
+    if (candidate && !usedIds.has(candidate.id) && Math.abs(candidate.ageGroup - first.ageGroup) >= minAgeGap) {
       groups.push([first, candidate])
       usedIds.add(first.id)
       usedIds.add(candidate.id)
@@ -441,7 +498,7 @@ function findAvailableWeekend(
   groupTeamIds: string[],
   blockedMap: Map<string, TeamBlockedRange[]>,
   fieldControl: string,
-  blockFormat: string,
+  config: SchedulingConfig,
   maxAttempts = 20
 ) {
   let candidate = nextSaturday(from)
@@ -450,7 +507,7 @@ function findAvailableWeekend(
     let blocked = false
 
     if (fieldControl === 'fixo' || fieldControl === 'neutro') {
-      const candidateDays = getPhaseDays(candidate, blockFormat)
+      const candidateDays = getPhaseDays(candidate, config)
       blocked = groupTeamIds.some((teamId) =>
         candidateDays.some((candidateDay) => isDateBlockedForTeam(candidateDay, teamId, blockedMap))
       )
@@ -466,85 +523,94 @@ function findAvailableWeekend(
   return null
 }
 
-function getPhaseDays(weekendStart: Date, blockFormat: string) {
-  if (blockFormat === 'SAT_ONLY') {
-    return [new Date(weekendStart)]
+// 3.C: getPhaseDays agora respeita allowedWeekdays + blackoutDates da config.
+// Itera 7 dias a partir do weekendStart (sabado) e mantem apenas dias que:
+//   1. estao em config.allowedWeekdays (configurado no wizard)
+//   2. NAO estao em config.blackoutDates
+function getPhaseDays(weekendStart: Date, config: SchedulingConfig): Date[] {
+  const days: Date[] = []
+  for (let offset = 0; offset < 7; offset += 1) {
+    const candidate = addDays(weekendStart, offset)
+    if (
+      isWeekdayAllowed(candidate, { allowedWeekdays: config.allowedWeekdays } as any) &&
+      !isDateInBlackout(candidate, { blackoutDates: config.blackoutDates } as any)
+    ) {
+      days.push(candidate)
+    }
   }
-
-  if (blockFormat === 'SAT_SUN') {
-    return [new Date(weekendStart), addDays(weekendStart, 1)]
-  }
-
-  return [addDays(weekendStart, -1), new Date(weekendStart), addDays(weekendStart, 1)]
+  // Garante que nunca retorna vazio: se a config eliminou tudo nesse weekend,
+  // mantemos pelo menos o sabado (weekendStart) — o caller (findAvailableWeekend)
+  // ja pula pra proximo se houver bloqueio de equipe.
+  if (days.length === 0) days.push(new Date(weekendStart))
+  return days
 }
 
-function orderPhaseDays(phaseDays: Date[], optimizationMode: string, blockFormat: string) {
-  if (optimizationMode === 'compact') {
-    return phaseDays
+// 3.D: orderPhaseDays cobre os 3 modos oficiais de Championship:
+//   - less_idle_time: cronologico puro, preenche slots o mais cedo possivel
+//   - balanced:       distribui dias usando intercalacao first-half/second-half
+//   - less_travel:    cenario sex+sab+dom prioriza sab>dom>sex (default historico)
+// O modo legacy 'compact' (que era usado antigamente) e tratado como
+// 'less_idle_time'.
+function orderPhaseDays(phaseDays: Date[], optimizationMode: string, config: SchedulingConfig) {
+  if (phaseDays.length <= 1) return phaseDays
+
+  if (optimizationMode === 'compact' || optimizationMode === 'less_idle_time') {
+    return [...phaseDays].sort((a, b) => a.getTime() - b.getTime())
   }
 
-  if (blockFormat !== 'FRI_SAT_SUN') {
+  if (optimizationMode === 'balanced') {
+    return distributeEvenly(phaseDays)
+  }
+
+  // less_travel (default)
+  const allows = new Set(config.allowedWeekdays)
+  const isFriSatSun =
+    allows.has(5 as WeekdayNumber) &&
+    allows.has(6 as WeekdayNumber) &&
+    allows.has(0 as WeekdayNumber)
+  if (!isFriSatSun) {
     return phaseDays
   }
 
   const saturday = phaseDays.find((day) => day.getUTCDay() === 6)
   const sunday = phaseDays.find((day) => day.getUTCDay() === 0)
   const friday = phaseDays.find((day) => day.getUTCDay() === 5)
+  return [saturday, sunday, friday].filter(Boolean) as Date[]
+}
 
-  if (optimizationMode === 'less_travel') {
-    return [saturday, sunday, friday].filter(Boolean) as Date[]
+// 3.D: heuristica simples de distribuicao "balanced" — intercala primeira
+// metade dos dias com a segunda metade, gerando espalhamento aproximadamente
+// uniforme dentro da janela disponivel.
+function distributeEvenly(days: Date[]): Date[] {
+  const sorted = [...days].sort((a, b) => a.getTime() - b.getTime())
+  const half = Math.ceil(sorted.length / 2)
+  const front = sorted.slice(0, half)
+  const back = sorted.slice(half)
+  const out: Date[] = []
+  for (let i = 0; i < half; i += 1) {
+    if (front[i]) out.push(front[i])
+    if (back[i]) out.push(back[i])
   }
-
-  return [saturday, friday, sunday].filter(Boolean) as Date[]
+  return out
 }
 
 function getDailyTeamCountKey(teamId: string, categoryId: string, dateKey: string) {
   return `${teamId}:${categoryId}:${dateKey}`
 }
 
-function buildDaySlots(day: Date, gameDuration: number) {
-  const slots: Array<{ start: Date; period: string }> = []
-  const morningEnd = addMinutes(createUtcDate(day, AFTERNOON_START_UTC, 0), -LUNCH_BREAK_MIN)
-  let cursor = createUtcDate(day, DAY_START_HOUR, 0)
-
-  while (addMinutes(cursor, gameDuration) <= morningEnd) {
-    slots.push({ start: cursor, period: 'manhã' })
-    cursor = addMinutes(cursor, gameDuration)
-  }
-
-  const dayEnd = createUtcDate(day, DAY_END_HOUR, 0)
-  cursor = createUtcDate(day, AFTERNOON_START_UTC, 0)
-
-  while (
-    cursor <= createUtcDate(day, LAST_GAME_START_UTC, 0) &&
-    addMinutes(cursor, gameDuration) <= dayEnd
-  ) {
-    slots.push({ start: cursor, period: 'tarde' })
-    cursor = addMinutes(cursor, gameDuration)
-  }
-
-  return slots
+// 3.C: chave por (teamId, semana ISO) — usada para limitar maxGamesPerTeamPerWeek.
+// A semana comeca na segunda (ISO 8601). Date nativo: getUTCDay() retorna 0=dom..6=sab.
+function startOfIsoWeek(date: Date): Date {
+  const d = new Date(date)
+  d.setUTCHours(0, 0, 0, 0)
+  const day = d.getUTCDay()
+  const distanceFromMonday = (day + 6) % 7
+  d.setUTCDate(d.getUTCDate() - distanceFromMonday)
+  return d
 }
 
-function candidateSingleSlots(day: Date, gameDuration: number) {
-  return buildDaySlots(day, gameDuration)
-}
-
-function candidateTurnPairs(day: Date, gameDuration: number) {
-  const slots = buildDaySlots(day, gameDuration)
-  const morning = slots.filter((slot) => slot.period === 'manhã')
-  const afternoon = slots.filter((slot) => slot.period === 'tarde')
-  const count = Math.min(morning.length, afternoon.length)
-
-  return Array.from({ length: count }).map((_, index) => ({
-    ida: morning[index],
-    volta: afternoon[index],
-  }))
-}
-
-function withinAllowedWindow(start: Date) {
-  const hour = start.getUTCHours() + start.getUTCMinutes() / 60
-  return hour >= DAY_START_HOUR && hour <= DAY_END_HOUR && hour <= LAST_GAME_START_UTC + 0.25
+function getWeeklyTeamCountKey(teamId: string, date: Date): string {
+  return `${teamId}:${toDateKey(startOfIsoWeek(date))}`
 }
 
 function getConfiguredDayEndTime(day: Date, config: SchedulingConfig) {
@@ -614,16 +680,21 @@ function createGameOutput(
   homeTeamName: string,
   awayTeamName: string,
   fieldControl: string,
+  homePattern: HomePattern,
   wasRescheduled: boolean,
   rescheduleReason?: string,
   blockedByTeamId?: string,
   court?: string
 ): ScheduledGame {
-  const actualHomeTeamName = isReturn ? awayTeamName : homeTeamName
-  const actualAwayTeamName = isReturn ? homeTeamName : awayTeamName
-  const actualHomeTeamId = isReturn ? bundle.awayTeamId : bundle.homeTeamId
-  const actualAwayTeamId = isReturn ? bundle.homeTeamId : bundle.awayTeamId
-  const venue = createVenueName(fieldControl, actualHomeTeamName)
+  // 3.D: applyHomePattern decide quem manda baseado no padrao configurado.
+  // bundle.homeTeamId = primeiro team do par. homeName='first' significa que
+  // o primeiro time do par manda; 'second' significa que o segundo manda.
+  const assignment = applyHomePattern(bundle, isReturn, homePattern)
+  const actualHomeTeamId = assignment.homeId
+  const actualAwayTeamId = assignment.awayId
+  const actualHomeTeamName = assignment.homeName === 'first' ? homeTeamName : awayTeamName
+  const actualAwayTeamName = assignment.homeName === 'first' ? awayTeamName : homeTeamName
+  const venue = createVenueName(homePattern, fieldControl, actualHomeTeamName)
 
   return {
     categoryId: bundle.categoryId,
@@ -684,18 +755,27 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const playoffTeams = championship.playoffTeams || 4
   const minTeamsPerCat = championship.minTeamsPerCat || 2
   const maxCourts = Math.max(1, championship.numberOfCourts || 1)
-  const gameDuration = championship.slotDurationMinutes || GAME_DURATION_MIN
+  // PM-02 (3.B+3.C): config oficial vinda do Championship.
+  const officialConfig = getSchedulingConfig(championship)
+  const gameDuration = officialConfig.slotDurationMinutes || DEFAULT_SLOT_DURATION_MIN
   const schedulingConfig: SchedulingConfig = {
-    dayStartTime: championship.dayStartTime || '08:00',
-    regularDayEndTime: championship.regularDayEndTime || '19:00',
-    extendedDayEndTime: championship.extendedDayEndTime || championship.regularDayEndTime || '20:30',
+    dayStartTime: officialConfig.dayStartTime,
+    regularDayEndTime: officialConfig.regularDayEndTime,
+    extendedDayEndTime: officialConfig.extendedDayEndTime,
     slotDurationMinutes: gameDuration,
-    minRestSlotsPerTeam: Math.max(0, championship.minRestSlotsPerTeam || 0),
-    maxGamesPerTeamPerDay: Math.max(1, championship.maxGamesPerTeamPerDay || 2),
-    optimizationMode: 'less_travel',
-    blockFormat: championship.blockFormat || 'SAT_SUN',
+    minRestHoursBetweenGames: officialConfig.minRestHoursBetweenGames,
+    maxGamesPerTeamPerDay: officialConfig.maxGamesPerTeamPerDay,
+    maxGamesPerTeamPerWeek: officialConfig.maxGamesPerTeamPerWeek,
+    optimizationMode: officialConfig.scheduleOptimizationMode,
+    allowedWeekdays: officialConfig.allowedWeekdays,
+    blackoutDates: officialConfig.blackoutDates,
+    maxCategoriesPerDay: officialConfig.maxCategoriesPerDay,
+    minAgeGapBetweenGames: officialConfig.minAgeGapBetweenGames,
+    homePattern: officialConfig.homePattern,
   }
-  const minTeamRestMinutes = schedulingConfig.minRestSlotsPerTeam * gameDuration
+  // 3.C: minRestHoursBetweenGames substitui o calculo antigo
+  // (minRestSlotsPerTeam * gameDuration). Conversao h -> min.
+  const minTeamRestMinutes = schedulingConfig.minRestHoursBetweenGames * 60
 
   const startDate = championship.startDate
     ? new Date(championship.startDate)
@@ -752,7 +832,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
     throw new Error('Nenhuma categoria com equipes suficientes para gerar calendário')
   }
 
-  const groups = buildCategoryGroups(categories)
+  const groups = buildCategoryGroups(categories, schedulingConfig.minAgeGapBetweenGames)
   const blockedMap = buildBlockedMap(
     categories.flatMap((category) =>
       category.registrations.map((registration) => ({
@@ -800,6 +880,8 @@ export async function generateChampionshipSchedule(championshipId: string) {
   const conflictsResolved: ConflictResolved[] = []
   const dayGamesMap = new Map<string, ScheduledGame[]>()
   const teamGamesPerDay = new Map<string, number>()
+  // 3.C: contador semanal para respeitar maxGamesPerTeamPerWeek
+  const teamGamesPerWeek = new Map<string, number>()
   const athleteSchedule = new Map<string, ScheduledInterval[]>()
   const coachSchedule = new Map<string, ScheduledInterval[]>()
   const teamSchedule = new Map<string, ScheduledInterval[]>()
@@ -846,7 +928,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
         teamIds,
         blockedMap,
         fieldControl,
-        schedulingConfig.blockFormat
+        schedulingConfig
       )
 
       if (!weekendStart || (regularSeasonEndDate && weekendStart > regularSeasonEndDate)) {
@@ -863,9 +945,9 @@ export async function generateChampionshipSchedule(championshipId: string) {
       groupLastWeekend.set(groupKey, weekendStart)
       globalCursor = addDays(weekendStart, 7)
       const phaseDays = orderPhaseDays(
-        getPhaseDays(weekendStart, schedulingConfig.blockFormat),
+        getPhaseDays(weekendStart, schedulingConfig),
         schedulingConfig.optimizationMode,
-        schedulingConfig.blockFormat
+        schedulingConfig
       )
 
       for (const bundle of bundles) {
@@ -894,13 +976,25 @@ export async function generateChampionshipSchedule(championshipId: string) {
           const awayGamesCount =
             teamGamesPerDay.get(getDailyTeamCountKey(bundle.awayTeamId, bundle.categoryId, dateKey)) || 0
 
-          if (categoriesInDay.size >= MAX_CATS_PER_DAY && !categoriesInDay.has(bundle.categoryId)) {
+          if (categoriesInDay.size >= schedulingConfig.maxCategoriesPerDay && !categoriesInDay.has(bundle.categoryId)) {
             continue
           }
 
           if (
             homeGamesCount >= schedulingConfig.maxGamesPerTeamPerDay ||
             awayGamesCount >= schedulingConfig.maxGamesPerTeamPerDay
+          ) {
+            continue
+          }
+
+          // 3.C: respeita maxGamesPerTeamPerWeek
+          const homeWeekCount =
+            teamGamesPerWeek.get(getWeeklyTeamCountKey(bundle.homeTeamId, day)) || 0
+          const awayWeekCount =
+            teamGamesPerWeek.get(getWeeklyTeamCountKey(bundle.awayTeamId, day)) || 0
+          if (
+            homeWeekCount >= schedulingConfig.maxGamesPerTeamPerWeek ||
+            awayWeekCount >= schedulingConfig.maxGamesPerTeamPerWeek
           ) {
             continue
           }
@@ -992,6 +1086,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     homeTeamName,
                     awayTeamName,
                     fieldControl,
+                    schedulingConfig.homePattern,
                     wasRescheduled,
                     rescheduleReason,
                     encounteredBlockedTeamId,
@@ -1005,6 +1100,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     homeTeamName,
                     awayTeamName,
                     fieldControl,
+                    schedulingConfig.homePattern,
                     wasRescheduled,
                     rescheduleReason,
                     encounteredBlockedTeamId,
@@ -1077,6 +1173,7 @@ export async function generateChampionshipSchedule(championshipId: string) {
                     homeTeamName,
                     awayTeamName,
                     fieldControl,
+                    schedulingConfig.homePattern,
                     wasRescheduled,
                     rescheduleReason,
                     encounteredBlockedTeamId,
@@ -1117,6 +1214,13 @@ export async function generateChampionshipSchedule(championshipId: string) {
             getDailyTeamCountKey(game.awayTeamId, game.categoryId, dateKey),
             (teamGamesPerDay.get(getDailyTeamCountKey(game.awayTeamId, game.categoryId, dateKey)) || 0) + 1
           )
+
+          // 3.C: incrementa contador semanal (maxGamesPerTeamPerWeek)
+          const gameDay = new Date(game.dateTime)
+          const homeWeekKey = getWeeklyTeamCountKey(game.homeTeamId, gameDay)
+          const awayWeekKey = getWeeklyTeamCountKey(game.awayTeamId, gameDay)
+          teamGamesPerWeek.set(homeWeekKey, (teamGamesPerWeek.get(homeWeekKey) || 0) + 1)
+          teamGamesPerWeek.set(awayWeekKey, (teamGamesPerWeek.get(awayWeekKey) || 0) + 1)
 
           const start = new Date(game.dateTime)
           const end = addMinutes(start, gameDuration)

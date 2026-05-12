@@ -161,7 +161,9 @@ type SimulationResult = {
   aiOptimization?: {
     available: boolean
     provider: string
-    suggestion: string | null
+    moves?: { gameId: string; newDate: string; newTime: string; reason: string }[]
+    warnings?: string[]
+    insights?: string[]
     error?: string
   }
 }

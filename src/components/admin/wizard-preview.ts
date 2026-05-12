@@ -179,6 +179,44 @@ export function estimateDurationWeeks(opts: {
   return Math.ceil(opts.totalGames / gamesPerWeek)
 }
 
+// ─────────────── capacidade (heuristica) ───────────────
+
+export type CapacityHeuristic = {
+  capacityPercent: number
+  estimatedWeeks: number
+  availableWeeks: number
+  hasDateRange: boolean
+}
+
+export function estimateCapacity(opts: {
+  totalGames: number
+  estimatedWeeks: number
+  startDate: string
+  endDate: string
+}): CapacityHeuristic {
+  if (!opts.startDate || !opts.endDate) {
+    return {
+      capacityPercent: 0,
+      estimatedWeeks: opts.estimatedWeeks,
+      availableWeeks: 0,
+      hasDateRange: false,
+    }
+  }
+  const start = new Date(opts.startDate)
+  const end = new Date(opts.endDate)
+  const days = Math.max(0, Math.round((end.getTime() - start.getTime()) / 86400000))
+  const availableWeeks = days / 7
+  const capacityPercent = availableWeeks > 0
+    ? Math.round((opts.estimatedWeeks / availableWeeks) * 100)
+    : (opts.totalGames > 0 ? 200 : 0)
+  return {
+    capacityPercent,
+    estimatedWeeks: opts.estimatedWeeks,
+    availableWeeks,
+    hasDateRange: true,
+  }
+}
+
 // ─────────────── conflitos ───────────────
 
 export type ConflictSeverity = "ok" | "warning" | "error"
@@ -278,6 +316,7 @@ export type PreviewSummary = {
   gamesPerCategory: number
   totalGames: number
   estimatedWeeks: number
+  capacity: CapacityHeuristic
   conflicts: Conflict[]
   hasError: boolean
   hasWarning: boolean
@@ -305,6 +344,13 @@ export function computePreview(form: WizardForm): PreviewSummary {
     weekdaysCount: form.allowedWeekdays.length,
   })
 
+  const capacity = estimateCapacity({
+    totalGames,
+    estimatedWeeks,
+    startDate: form.startDate,
+    endDate: form.endDate,
+  })
+
   const conflicts = detectConflicts({ form, totalGames, estimatedWeeks })
 
   return {
@@ -315,6 +361,7 @@ export function computePreview(form: WizardForm): PreviewSummary {
     gamesPerCategory,
     totalGames,
     estimatedWeeks,
+    capacity,
     conflicts,
     hasError: conflicts.some(c => c.severity === "error"),
     hasWarning: conflicts.some(c => c.severity === "warning"),

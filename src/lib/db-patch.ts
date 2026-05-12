@@ -941,6 +941,16 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'column', table: 'Championship', column: 'minRestHoursBetweenGames', sql: `ALTER TABLE "Championship" ADD COLUMN "minRestHoursBetweenGames" REAL NOT NULL DEFAULT 20` },
   { kind: 'column', table: 'Championship', column: 'maxGamesPerTeamPerWeek', sql: `ALTER TABLE "Championship" ADD COLUMN "maxGamesPerTeamPerWeek" INTEGER NOT NULL DEFAULT 3` },
   { kind: 'column', table: 'Championship', column: 'homePattern', sql: `ALTER TABLE "Championship" ADD COLUMN "homePattern" TEXT NOT NULL DEFAULT 'ALTERNATED'` },
+
+  // === PM-02 (2026-05-11) — campos explicitos de scheduling ===
+  // Substituem constantes hardcoded em src/lib/scheduling/roundRobin.ts
+  { kind: 'column', table: 'Championship', column: 'maxCategoriesPerDay', sql: `ALTER TABLE "Championship" ADD COLUMN "maxCategoriesPerDay" INTEGER NOT NULL DEFAULT 2` },
+  { kind: 'column', table: 'Championship', column: 'minAgeGapBetweenGames', sql: `ALTER TABLE "Championship" ADD COLUMN "minAgeGapBetweenGames" INTEGER NOT NULL DEFAULT 3` },
+  { kind: 'column', table: 'Championship', column: 'lunchBreakMinutes', sql: `ALTER TABLE "Championship" ADD COLUMN "lunchBreakMinutes" INTEGER NOT NULL DEFAULT 120` },
+  { kind: 'column', table: 'Championship', column: 'afternoonStartTime', sql: `ALTER TABLE "Championship" ADD COLUMN "afternoonStartTime" TEXT NOT NULL DEFAULT '13:00'` },
+  { kind: 'column', table: 'Championship', column: 'fridayEnabled', sql: `ALTER TABLE "Championship" ADD COLUMN "fridayEnabled" BOOLEAN NOT NULL DEFAULT 0` },
+  { kind: 'column', table: 'Championship', column: 'sharedGymHandlingMode', sql: `ALTER TABLE "Championship" ADD COLUMN "sharedGymHandlingMode" TEXT NOT NULL DEFAULT 'SEQUENTIAL'` },
+
   { kind: 'column', table: 'Championship', column: 'regulationPdfUrl', sql: `ALTER TABLE "Championship" ADD COLUMN "regulationPdfUrl" TEXT` },
   { kind: 'column', table: 'Championship', column: 'regulationVersion', sql: `ALTER TABLE "Championship" ADD COLUMN "regulationVersion" INTEGER NOT NULL DEFAULT 1` },
   { kind: 'column', table: 'Championship', column: 'regulationPublishedAt', sql: `ALTER TABLE "Championship" ADD COLUMN "regulationPublishedAt" DATETIME` },

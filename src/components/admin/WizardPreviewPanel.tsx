@@ -96,6 +96,62 @@ export function WizardPreviewPanel({ form }: Props) {
         />
       </div>
 
+      {preview.capacity.hasDateRange && preview.totalGames > 0 && (
+        <div
+          className="px-5 py-4"
+          style={{ borderTop: "1px solid var(--fgb-ink-100)" }}
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p
+              className="fgb-label"
+              style={{ fontSize: 10, color: "var(--fgb-ink-500)", letterSpacing: "0.18em" }}
+            >
+              Capacidade Estimada (heurística)
+            </p>
+            <span
+              className="tabular-nums"
+              style={{
+                fontFamily: "var(--font-anton)",
+                fontSize: 22,
+                lineHeight: 1,
+                color:
+                  preview.capacity.capacityPercent > 100
+                    ? "var(--fgb-red-600)"
+                    : preview.capacity.capacityPercent > 85
+                      ? "var(--fgb-yellow-700)"
+                      : "var(--fgb-green-700)",
+              }}
+            >
+              {preview.capacity.capacityPercent}%
+            </span>
+          </div>
+          <div
+            className="h-2 rounded-full overflow-hidden"
+            style={{ background: "var(--fgb-ink-50)" }}
+          >
+            <div
+              style={{
+                width: `${Math.min(100, preview.capacity.capacityPercent)}%`,
+                height: "100%",
+                background:
+                  preview.capacity.capacityPercent > 100
+                    ? "var(--fgb-red-500)"
+                    : preview.capacity.capacityPercent > 85
+                      ? "var(--fgb-yellow-500)"
+                      : "var(--fgb-green-500)",
+                transition: "width 200ms ease",
+              }}
+            />
+          </div>
+          <p
+            className="mt-2"
+            style={{ fontSize: 11, color: "var(--fgb-ink-500)", lineHeight: 1.4 }}
+          >
+            ~{preview.estimatedWeeks} semana(s) estimadas · {preview.capacity.availableWeeks.toFixed(1)} semana(s) disponíveis na janela
+          </p>
+        </div>
+      )}
+
       {preview.phaseBreakdown.length > 0 && preview.gamesPerCategory > 0 && (
         <div
           className="px-5 py-4"

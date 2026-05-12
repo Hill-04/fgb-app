@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/Badge'
 import { Section } from '@/components/Section'
-import { ArrowLeft, Sparkles, Calendar, MapPin, Trophy, ShieldAlert, CheckCircle2, Loader2, Download, Mail } from 'lucide-react'
+import { ArrowLeft, Sparkles, Calendar, MapPin, Trophy, ShieldAlert, CheckCircle2, Loader2, Download, Mail, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 // jspdf e xlsx movidos para carregamento dinâmico ou removidos se não utilizados para compatibilidade com Turbopack
@@ -18,6 +18,7 @@ export default function ChampionshipSchedulingPage() {
   const [error, setError] = useState('')
   const [applying, setApplying] = useState(false)
   const [championship, setChampionship] = useState<any>(null)
+  const [showConflictsModal, setShowConflictsModal] = useState(false)
 
   useEffect(() => {
     fetch(`/api/championships/${id}`)
@@ -167,6 +168,58 @@ export default function ChampionshipSchedulingPage() {
             </Button>
           </div>
 
+          {result.validation && typeof result.validation.capacityPercent === 'number' && (
+            <Card className="fgb-card bg-white p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--gray)]">
+                    Capacidade do Calendário
+                  </p>
+                  <p className="text-[var(--gray)] text-sm font-medium mt-1">
+                    {result.validation.totalSlotsNeeded} jogos · {result.validation.totalSlotsAvailable} slots disponíveis
+                  </p>
+                </div>
+                <span
+                  className={`fgb-display text-5xl leading-none ${
+                    result.validation.capacityPercent > 100
+                      ? 'text-red-600'
+                      : result.validation.capacityPercent > 85
+                        ? 'text-amber-700'
+                        : 'text-green-700'
+                  }`}
+                >
+                  {result.validation.capacityPercent}%
+                </span>
+              </div>
+              <div className="h-3 rounded-full bg-[var(--gray-l)] overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-300 ${
+                    result.validation.capacityPercent > 100
+                      ? 'bg-red-500'
+                      : result.validation.capacityPercent > 85
+                        ? 'bg-amber-500'
+                        : 'bg-green-500'
+                  }`}
+                  style={{ width: `${Math.min(100, result.validation.capacityPercent)}%` }}
+                />
+              </div>
+              {result.validation.warnings && result.validation.warnings.length > 0 && (
+                <div className="mt-5 pt-5 border-t border-[var(--border)] flex items-center justify-between">
+                  <p className="text-[var(--gray)] text-sm font-medium">
+                    {result.validation.warnings.length} {result.validation.warnings.length === 1 ? 'alerta detectado' : 'alertas detectados'}
+                  </p>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowConflictsModal(true)}
+                    className="border border-[var(--border)] bg-white text-[var(--black)] font-bold text-[10px] uppercase tracking-widest px-4 py-2 hover:bg-[var(--gray-l)]"
+                  >
+                    Ver Detalhes
+                  </Button>
+                </div>
+              )}
+            </Card>
+          )}
+
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Viability & Summary (Left - 4 cols) */}
             <div className="lg:col-span-4 space-y-8">
@@ -271,6 +324,61 @@ export default function ChampionshipSchedulingPage() {
                     </div>
                  </div>
               </Card>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConflictsModal && result?.validation?.warnings && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
+          onClick={() => setShowConflictsModal(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-8 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl fgb-display text-[var(--black)] leading-none">
+                Alertas do Calendário
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowConflictsModal(false)}
+                aria-label="Fechar"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-[var(--gray)] hover:text-[var(--black)] hover:bg-[var(--gray-l)] transition-colors text-2xl"
+              >
+                ×
+              </button>
+            </div>
+            <div className="space-y-3">
+              {result.validation.warnings.map((w: any, i: number) => {
+                const isWarning = w.severity === 'WARNING'
+                return (
+                  <div
+                    key={i}
+                    className={`p-4 rounded-2xl flex items-start gap-3 border ${
+                      isWarning ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <AlertTriangle
+                      size={18}
+                      className={`flex-shrink-0 mt-0.5 ${isWarning ? 'text-amber-700' : 'text-blue-700'}`}
+                      aria-hidden
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${isWarning ? 'text-amber-700' : 'text-blue-700'}`}>
+                        {w.type}
+                      </p>
+                      <p className="text-sm mt-1 text-[var(--black)] leading-relaxed">
+                        {w.message}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         </div>

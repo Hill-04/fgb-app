@@ -1,182 +1,207 @@
+/**
+ * AI optimizer — Gemini 2.5 Flash com responseMimeType: application/json.
+ *
+ * Substitui o legacy que tinha 5 providers + comentario livre.
+ * Agora retorna moves estruturados que sao aplicados no schedule do /simulate.
+ */
+
+export type OptimizationInput = {
+  championship: {
+    name: string
+    startDate: string  // YYYY-MM-DD
+    endDate: string    // YYYY-MM-DD
+    format: string
+    turns: number
+    hasPlayoffs: boolean
+  }
+  config: {
+    allowedWeekdays: number[]
+    timeSlots: { start: string; end: string }[]
+    blackoutDates: { date: string; reason?: string }[]
+    minRestHoursBetweenGames: number
+    maxGamesPerTeamPerWeek: number
+    homePattern: string
+    optimizationMode: string
+  }
+  generatedSchedule: {
+    gameId: string
+    categoryName: string
+    homeTeamName: string
+    awayTeamName: string
+    date: string   // ISO YYYY-MM-DD
+    time: string   // HH:MM
+    round: number
+  }[]
+  capacityPercent: number
+}
+
+export type OptimizationMove = {
+  gameId: string
+  newDate: string  // YYYY-MM-DD
+  newTime: string  // HH:MM
+  reason: string
+}
+
 export type OptimizationResult = {
   optimized: boolean
-  provider: 'groq' | 'gemini' | 'openai' | 'mistral' | 'claude' | 'none'
-  suggestion: string | null
+  provider: 'gemini' | 'none'
+  moves: OptimizationMove[]
+  warnings: string[]
+  insights: string[]
   error?: string
 }
 
-async function tryGroq(prompt: string): Promise<string | null> {
-  const apiKey = process.env.GROQ_API_KEY
-  if (!apiKey) return null
-  try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'llama-3.1-8b-instant',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 500
-      })
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.choices?.[0]?.message?.content || null
-  } catch (e: any) {
-    console.warn('[AI Fallback] Groq failed:', e.message)
-    return null
-  }
+const SYSTEM_PROMPT = `Voce e um especialista em organizacao de campeonatos de basquete brasileiros (CBB/FGB).
+
+Sua tarefa: analisar um calendario JA GERADO por um motor deterministico e propor pequenos ajustes ESTRUTURADOS que melhorem viabilidade pratica (descanso de equipes, distribuicao equilibrada, evitar conflitos com feriados regionais brasileiros).
+
+REGRAS:
+1. NAO altere mais de 15% dos jogos. O motor ja gerou um calendario valido.
+2. Cada move precisa de justificativa clara em "reason".
+3. Respeite todas as restricoes em "config" — nao mova para weekday/data bloqueada.
+4. Se o calendario esta apertado (capacityPercent > 85), priorize distribuicao uniforme.
+5. NUNCA mova mais de 1 jogo da mesma equipe na mesma semana.
+6. Retorne APENAS JSON valido, sem comentarios ou markdown.
+7. Datas no formato YYYY-MM-DD. Horarios no formato HH:MM.`
+
+function buildUserPrompt(input: OptimizationInput): string {
+  return `CAMPEONATO: ${input.championship.name}
+PERIODO: ${input.championship.startDate} ate ${input.championship.endDate}
+FORMATO: ${input.championship.format} (${input.championship.turns} turno${input.championship.turns > 1 ? 's' : ''})
+PLAYOFFS: ${input.championship.hasPlayoffs ? 'Sim' : 'Nao'}
+CAPACIDADE: ${input.capacityPercent}% dos slots disponiveis serao usados
+
+CONFIG:
+${JSON.stringify(input.config, null, 2)}
+
+CALENDARIO GERADO (${input.generatedSchedule.length} jogos):
+${JSON.stringify(input.generatedSchedule, null, 2)}
+
+Retorne JSON com a estrutura:
+{
+  "moves": [
+    { "gameId": "...", "newDate": "YYYY-MM-DD", "newTime": "HH:MM", "reason": "..." }
+  ],
+  "warnings": ["..."],
+  "insights": ["..."]
+}`
 }
 
-async function tryGemini(prompt: string): Promise<string | null> {
+function isWithinAllowedDay(dateISO: string, allowedWeekdays: number[]): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateISO)) return false
+  const d = new Date(`${dateISO}T12:00:00Z`)
+  if (Number.isNaN(d.getTime())) return false
+  return allowedWeekdays.includes(d.getUTCDay())
+}
+
+function isInBlackout(dateISO: string, blackouts: { date: string }[]): boolean {
+  return blackouts.some(b => b.date === dateISO)
+}
+
+export async function optimizeSchedule(input: OptimizationInput): Promise<OptimizationResult> {
   const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) return null
-  try {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai')
-    const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
-    const result = await model.generateContent(prompt)
-    return result.response.text()
-  } catch (e: any) {
-    console.warn('[AI Fallback] Gemini failed:', e.message)
-    return null
-  }
-}
-
-async function tryOpenAI(prompt: string): Promise<string | null> {
-  const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return null
-  try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 500
-      })
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.choices?.[0]?.message?.content || null
-  } catch (e: any) {
-    console.warn('[AI Fallback] OpenAI failed:', e.message)
-    return null
-  }
-}
-
-async function tryMistral(prompt: string): Promise<string | null> {
-  const apiKey = process.env.MISTRAL_API_KEY
-  if (!apiKey) return null
-  try {
-    const res = await fetch('https://api.mistral.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model: 'mistral-small-latest',
-        messages: [{ role: 'user', content: prompt }],
-        max_tokens: 500
-      })
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.choices?.[0]?.message?.content || null
-  } catch (e: any) {
-    console.warn('[AI Fallback] Mistral failed:', e.message)
-    return null
-  }
-}
-
-async function tryClaude(prompt: string): Promise<string | null> {
-  const apiKey = process.env.ANTHROPIC_API_KEY
-  if (!apiKey) return null
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-20240307',
-        max_tokens: 500,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    })
-    if (!res.ok) return null
-    const data = await res.json()
-    return data.content?.[0]?.text || null
-  } catch (e: any) {
-    console.warn('[AI Fallback] Claude failed:', e.message)
-    return null
-  }
-}
-
-export async function optimizeSchedule(data: {
-  name: string
-  categories: { name: string; teams: number; games: number }[]
-  totalGames: number
-  startDate: string
-  endDate?: string
-  turns?: number
-  format?: string
-  hasPlayoffs?: boolean
-  totalBlockedDates?: number
-}): Promise<OptimizationResult> {
-  const prompt = `Você é especialista em organização de campeonatos de basquete juvenil no Brasil.
-
-Analise este calendário gerado automaticamente e forneça sugestões práticas de otimização:
-
-CAMPEONATO: ${data.name}
-PERÍODO: ${data.startDate}${data.endDate ? ` até ${data.endDate}` : ''}
-FORMATO: ${data.format || 'Liga (todos contra todos)'}${data.turns ? ` — ${data.turns} turno(s)` : ''}
-PLAYOFFS: ${data.hasPlayoffs ? 'Sim' : 'Não'}
-TOTAL DE JOGOS: ${data.totalGames}
-RESTRIÇÕES DE DATAS: ${data.totalBlockedDates || 0} bloqueios registrados pelas equipes
-
-CATEGORIAS:
-${data.categories.map(c => `• ${c.name}: ${c.teams} equipes → ${c.games} jogos`).join('\n')}
-
-Com base nessas informações, forneça em 3-4 frases:
-1. Avaliação da distribuição de jogos por categoria
-2. Sugestão de organização por blocos/rodadas
-3. Alerta sobre possíveis conflitos de agenda
-4. Recomendação de dias da semana para os jogos
-
-Seja direto, prático e específico para basquete juvenil gaúcho.`
-
-  const providers: [string, (p: string) => Promise<string | null>][] = [
-    ['groq', tryGroq],
-    ['gemini', tryGemini],
-    ['openai', tryOpenAI],
-    ['mistral', tryMistral],
-    ['claude', tryClaude],
-  ]
-
-  for (const [name, fn] of providers) {
-    const result = await fn(prompt)
-    if (result) {
-      return {
-        optimized: true,
-        provider: name as OptimizationResult['provider'],
-        suggestion: result
-      }
+  if (!apiKey) {
+    return {
+      optimized: false,
+      provider: 'none',
+      moves: [],
+      warnings: [],
+      insights: [],
+      error: 'GEMINI_API_KEY nao configurada',
     }
   }
 
-  return {
-    optimized: false,
-    provider: 'none',
-    suggestion: null,
-    error: 'Nenhum provedor de IA disponível. Calendário gerado via round-robin padrão.'
+  if (input.generatedSchedule.length === 0) {
+    return {
+      optimized: false,
+      provider: 'none',
+      moves: [],
+      warnings: [],
+      insights: [],
+      error: 'Schedule vazio — nada a otimizar',
+    }
+  }
+
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.2,
+      },
+      systemInstruction: SYSTEM_PROMPT,
+    })
+
+    const result = await model.generateContent(buildUserPrompt(input))
+    const text = result.response.text()
+
+    let parsed: { moves?: OptimizationMove[]; warnings?: string[]; insights?: string[] }
+    try {
+      parsed = JSON.parse(text)
+    } catch (parseErr: unknown) {
+      const msg = parseErr instanceof Error ? parseErr.message : String(parseErr)
+      return {
+        optimized: false,
+        provider: 'none',
+        moves: [],
+        warnings: [],
+        insights: [],
+        error: `JSON invalido da IA: ${msg}`,
+      }
+    }
+
+    // Validacao: filtra moves invalidos (gameId desconhecido, weekday/blackout violado, formato ruim)
+    const validGameIds = new Set(input.generatedSchedule.map(g => g.gameId))
+    const rawMoves = Array.isArray(parsed.moves) ? parsed.moves : []
+    const validMoves: OptimizationMove[] = []
+    const rejected: string[] = []
+
+    for (const m of rawMoves) {
+      if (!m || typeof m !== 'object') { rejected.push('move nao-objeto'); continue }
+      if (!validGameIds.has(m.gameId)) { rejected.push(`gameId ${m.gameId} desconhecido`); continue }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(m.newDate)) { rejected.push(`newDate invalida: ${m.newDate}`); continue }
+      if (!/^\d{2}:\d{2}$/.test(m.newTime)) { rejected.push(`newTime invalido: ${m.newTime}`); continue }
+      if (!isWithinAllowedDay(m.newDate, input.config.allowedWeekdays)) {
+        rejected.push(`${m.newDate} fora de allowedWeekdays`)
+        continue
+      }
+      if (isInBlackout(m.newDate, input.config.blackoutDates)) {
+        rejected.push(`${m.newDate} esta em blackoutDates`)
+        continue
+      }
+      validMoves.push({
+        gameId: m.gameId,
+        newDate: m.newDate,
+        newTime: m.newTime,
+        reason: typeof m.reason === 'string' ? m.reason : 'sem motivo',
+      })
+    }
+
+    const warnings = Array.isArray(parsed.warnings) ? parsed.warnings.filter((w): w is string => typeof w === 'string') : []
+    const insights = Array.isArray(parsed.insights) ? parsed.insights.filter((s): s is string => typeof s === 'string') : []
+
+    if (rejected.length > 0) {
+      warnings.push(`${rejected.length} move(s) rejeitado(s) por validacao: ${rejected.slice(0, 3).join('; ')}`)
+    }
+
+    return {
+      optimized: true,
+      provider: 'gemini',
+      moves: validMoves,
+      warnings,
+      insights,
+    }
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e)
+    return {
+      optimized: false,
+      provider: 'none',
+      moves: [],
+      warnings: [],
+      insights: [],
+      error: msg,
+    }
   }
 }
