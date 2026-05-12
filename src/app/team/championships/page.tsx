@@ -43,7 +43,7 @@ export default async function TeamChampionshipsPage() {
 
         {championships.length === 0 ? (
           <div className="fgb-card bg-[var(--gray-l)] border border-[var(--border)] rounded-3xl p-20 text-center shadow-sm">
-            <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-6" />
+            <Trophy className="w-16 h-16 text-fgb-ink-300 mx-auto mb-6" />
             <h3 className="text-xl font-bold text-[var(--black)] mb-2">Nenhum campeonato com inscrições abertas</h3>
             <p className="text-[var(--gray)] text-sm max-w-md mx-auto">
               No momento não há campeonatos disponíveis. A Federação avisará quando houver novas inscrições.
@@ -70,7 +70,7 @@ export default async function TeamChampionshipsPage() {
                             Inscrições Abertas
                           </span>
                           <span className="text-[var(--gray)] text-xs font-bold uppercase tracking-widest">
-                            {championship.sex === 'masculino' ? '♂ Masculino' : championship.sex === 'feminino' ? '♀ Feminino' : '⚡ Misto'}
+                            {championship.sex === 'masculino' ? 'Masculino' : championship.sex === 'feminino' ? 'Feminino' : 'Misto'}
                           </span>
                         </div>
                         <h2 className="text-2xl font-display font-black text-[var(--black)] mb-2 group-hover:text-fgb-yellow-600 transition-colors uppercase italic">
@@ -122,7 +122,7 @@ export default async function TeamChampionshipsPage() {
                         ) : (
                           <Link
                             href={`/team/championships/${championship.id}/register`}
-                            className="inline-flex items-center justify-center bg-[var(--amarelo)] hover:bg-[var(--orange-dark)] text-[var(--black)] font-black italic uppercase tracking-tighter h-14 px-10 rounded-2xl text-lg transition-all shadow-sm hover:scale-105 active:scale-95"
+                            className="fgb-btn-primary inline-flex items-center justify-center italic tracking-tighter h-14 px-10 text-lg hover:scale-105 active:scale-95"
                           >
                             Inscrever agora
                             <ChevronRight className="ml-2 w-5 h-5" />
@@ -145,7 +145,7 @@ export default async function TeamChampionshipsPage() {
           <h1 className="text-4xl font-display font-black text-[var(--black)] tracking-tight uppercase italic">Campeonatos</h1>
         </div>
         <div className="fgb-card bg-[var(--gray-l)] border border-[var(--border)] rounded-3xl p-20 text-center shadow-sm">
-          <Trophy className="w-16 h-16 text-gray-300 mx-auto mb-6" />
+          <Trophy className="w-16 h-16 text-fgb-ink-300 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-[var(--black)] mb-2">Ops! Algo deu errado</h3>
           <p className="text-[var(--gray)] text-sm max-w-md mx-auto">Não conseguimos carregar os campeonatos no momento.</p>
         </div>

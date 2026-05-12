@@ -27,20 +27,20 @@ export default function OnboardingPage() {
 
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="min-h-screen bg-[var(--fgb-ink-50)] flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(234,88,12,0.05)_0,transparent_50%)]" />
-        <div className="w-12 h-12 border-4 border-gray-200 border-t-fgb-yellow-500 rounded-full animate-spin mb-4" />
+        <div className="w-12 h-12 border-4 border-fgb-ink-200 border-t-fgb-yellow-500 rounded-full animate-spin mb-4" />
         <p className="text-[var(--gray)] font-medium tracking-widest uppercase text-xs">Carregando...</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 text-[var(--black)] flex flex-col font-sans selection:bg-fgb-yellow-500/30">
+    <div className="min-h-screen bg-[var(--fgb-ink-50)] text-[var(--black)] flex flex-col font-sans selection:bg-fgb-yellow-500/30">
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden="true">
         <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-fgb-yellow-600/[0.03] blur-[150px] rounded-full" />
-        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/[0.02] blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-[var(--fgb-navy-600)]/[0.02] blur-[120px] rounded-full" />
       </div>
 
       {/* Header */}
@@ -60,7 +60,7 @@ export default function OnboardingPage() {
       <main className="flex-1 max-w-5xl mx-auto w-full px-6 py-16 md:py-24 relative z-10">
         <div className="text-center mb-16 md:mb-24 animate-fade-up">
           <div className="inline-flex items-center gap-2 border border-[var(--border)] bg-white px-4 py-2 rounded-full mb-8 shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-sm" />
+            <span className="w-2 h-2 rounded-full bg-[var(--fgb-navy-500)] animate-pulse shadow-sm" />
             <span className="text-[11px] font-bold text-[var(--gray)] tracking-[0.2em] uppercase">
               Etapa de Integração
             </span>
@@ -79,15 +79,15 @@ export default function OnboardingPage() {
             Fluxo da conta
           </p>
           <div className="grid md:grid-cols-3 gap-4 text-sm text-[var(--gray)]">
-            <div className="rounded-2xl bg-gray-50 border border-[var(--border)] p-4">
+            <div className="rounded-2xl bg-[var(--fgb-ink-50)] border border-[var(--border)] p-4">
               <p className="font-black text-[var(--black)] mb-1">1. Escolha o caminho</p>
               <p>Crie uma equipe nova ou solicite entrada em uma equipe existente.</p>
             </div>
-            <div className="rounded-2xl bg-gray-50 border border-[var(--border)] p-4">
+            <div className="rounded-2xl bg-[var(--fgb-ink-50)] border border-[var(--border)] p-4">
               <p className="font-black text-[var(--black)] mb-1">2. Validacao</p>
               <p>Somente equipes completas e aprovadas liberam acesso total ao portal da equipe.</p>
             </div>
-            <div className="rounded-2xl bg-gray-50 border border-[var(--border)] p-4">
+            <div className="rounded-2xl bg-[var(--fgb-ink-50)] border border-[var(--border)] p-4">
               <p className="font-black text-[var(--black)] mb-1">3. Operacao</p>
               <p>Depois disso voce acompanha campeonatos, jogos, documentos e inscricoes.</p>
             </div>
@@ -119,7 +119,7 @@ export default function OnboardingPage() {
           <Link href="/team/join" className="group">
             <div className="fgb-card bg-white border border-[var(--border)] rounded-[2rem] p-8 md:p-10 h-full relative overflow-hidden transition-all duration-300 hover:-translate-y-2 hover:shadow-lg animate-fade-up shadow-sm" style={{ animationDelay: '200ms' }}>
               <div className="relative z-10 mb-8">
-                <div className="w-16 h-16 bg-blue-50 border border-blue-100 rounded-2xl flex items-center justify-center text-blue-500 mb-6 group-hover:scale-110 transition-all duration-300">
+                <div className="w-16 h-16 bg-[var(--fgb-navy-50)] border border-[var(--fgb-navy-100)] rounded-2xl flex items-center justify-center text-[var(--fgb-navy-500)] mb-6 group-hover:scale-110 transition-all duration-300">
                   <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
@@ -129,7 +129,7 @@ export default function OnboardingPage() {
                   Solicite acesso a uma equipe já existente no sistema. O Head Coach da equipe receberá sua notificação para aprovação.
                 </p>
               </div>
-              <Button variant="outline" className="w-full border-[var(--border)] text-[var(--gray)] hover:bg-gray-50 font-black uppercase tracking-widest h-12 rounded-xl transition-all relative z-10">
+              <Button variant="outline" className="w-full border-[var(--border)] text-[var(--gray)] hover:bg-[var(--fgb-ink-50)] font-black uppercase tracking-widest h-12 rounded-xl transition-all relative z-10">
                 Procurar Equipes
               </Button>
             </div>
@@ -138,8 +138,8 @@ export default function OnboardingPage() {
 
         {/* Info adicional */}
         <div className="mt-16 max-w-3xl mx-auto p-6 bg-white border border-[var(--border)] rounded-[1.5rem] shadow-sm flex items-start gap-4 animate-fade-in" style={{ animationDelay: '400ms' }}>
-          <div className="w-10 h-10 rounded-full bg-gray-50 border border-[var(--border)] flex items-center justify-center shrink-0">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-10 h-10 rounded-full bg-[var(--fgb-ink-50)] border border-[var(--border)] flex items-center justify-center shrink-0">
+            <svg className="w-5 h-5 text-fgb-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
