@@ -15,6 +15,7 @@ model User {
   password    String
   defaultRole String           @default("AUXILIAR")
   isAdmin     Boolean          @default(false)
+  isFederationSuperAdmin Boolean @default(false)
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
   memberships TeamMembership[]
@@ -443,6 +444,10 @@ model Game {
   blockedByTeamId            String?
   fibaFixtureId              String?
   lastFibaSyncAt             DateTime?
+  isHistoricallyLocked       Boolean              @default(false)
+  lockedAt                   DateTime?
+  lockedByUserId             String?
+  lockReason                 String?
   createdAt                  DateTime             @default(now())
   awayTeam                   Team                 @relation("AwayTeam", fields: [awayTeamId], references: [id])
   homeTeam                   Team                 @relation("HomeTeam", fields: [homeTeamId], references: [id])
@@ -1413,4 +1418,20 @@ model ChampionshipStatusTransition {
   createdAt      DateTime     @default(now())
 
   @@index([championshipId, createdAt])
+}
+
+model HistoricalDataAuditLog {
+  id                String   @id @default(uuid())
+  entityType        String
+  entityId          String
+  fieldChanged      String?
+  oldValue          String?
+  newValue          String?
+  reason            String
+  performedByUserId String
+  performedAt       DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([performedByUserId])
+  @@index([performedAt])
 }
