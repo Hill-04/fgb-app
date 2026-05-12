@@ -7,10 +7,17 @@ import { LiveFibaControls } from './live-fiba-controls'
 import { LiveFibaEventLog } from './live-fiba-event-log'
 import { LiveFibaScoreboard } from './live-fiba-scoreboard'
 import { LiveFibaTeamPanel } from './live-fiba-team-panel'
+import { PredictivePromptModal } from './predictive-prompt-modal'
 import type { LiveGameTableModel, LiveTableSide } from '../live-game-table-adapter'
 import { getLiveControlAvailability } from '../../live-fiba-config'
+import { getPredictivePrompt, type PredictivePrompt } from '@/lib/live-game/predictive-workflow'
 import type { LiveAdminHandlers, LiveAdminSelectionActions, LiveAdminSelectionState } from '../../types/live-admin'
 import type { LiveAdminPresentation } from '../live-game-admin-view'
+
+type PromptContext = {
+  lastEventTeamId: string
+  onCourtPlayers: { id: string; name: string; teamId: string; jerseyNumber: number | null }[]
+}
 
 export type RecentLiveInteraction = {
   id: string
@@ -76,6 +83,8 @@ export function LiveFibaTable({
   exitHref = '',
 }: LiveFibaTableProps) {
   const [recentInteraction, setRecentInteraction] = useState<RecentLiveInteraction | null>(null)
+  const [predictivePrompt, setPredictivePrompt] = useState<PredictivePrompt | null>(null)
+  const promptContextRef = useRef<PromptContext | null>(null)
   const actionLockRef = useRef<Map<string, number>>(new Map())
   const selectedPlayer = useMemo(() => findSelectedPlayer(tableModel, selection), [selection, tableModel])
   const controlAvailability = useMemo(
@@ -132,6 +141,43 @@ export function LiveFibaTable({
         period: selection.selectedPeriod,
         clockTime: selection.clockTime,
       })
+
+      // PM-04.C: depois do dispatch, computa predictive prompt (foul/missed/made).
+      // Snapshot dos jogadores em quadra fica no ref pra resolver teamId/nome no select.
+      const onCourtPlayers: PromptContext['onCourtPlayers'] = []
+      for (const player of tableModel.home.players) {
+        if (player.isOnCourt) {
+          onCourtPlayers.push({
+            id: player.athleteId,
+            name: player.name,
+            teamId: tableModel.home.id,
+            jerseyNumber: player.jerseyNumber ?? null,
+          })
+        }
+      }
+      for (const player of tableModel.away.players) {
+        if (player.isOnCourt) {
+          onCourtPlayers.push({
+            id: player.athleteId,
+            name: player.name,
+            teamId: tableModel.away.id,
+            jerseyNumber: player.jerseyNumber ?? null,
+          })
+        }
+      }
+      const prompt = getPredictivePrompt(action.eventType, {
+        lastEventTeamId: teamId,
+        lastEventAthleteId: athleteId,
+        onCourtPlayers,
+      })
+      if (prompt) {
+        promptContextRef.current = { lastEventTeamId: teamId, onCourtPlayers }
+        setPredictivePrompt(prompt)
+      } else {
+        // Evento não-trigger fecha qualquer prompt aberto (rapid-fire override).
+        setPredictivePrompt(null)
+        promptContextRef.current = null
+      }
     },
     [handlers, selection.clockTime, selection.selectedPeriod, tableModel]
   )
@@ -142,6 +188,54 @@ export function LiveFibaTable({
       dispatchAction(teamId, athleteId, action)
     },
     [dispatchAction, handleSelectAthlete]
+  )
+
+  const handlePromptDismiss = useCallback(() => {
+    setPredictivePrompt(null)
+    promptContextRef.current = null
+  }, [])
+
+  const handlePromptSelect = useCallback(
+    (optionId: string) => {
+      const prompt = predictivePrompt
+      const ctx = promptContextRef.current
+      if (!prompt || !ctx) {
+        setPredictivePrompt(null)
+        return
+      }
+
+      // OFFER_FTS / "no_fts" / "no_assist" / "no_rebound": no-op visual.
+      // O operador entra os FTs manualmente; o prompt é um lembrete.
+      if (prompt.type === 'OFFER_FTS' || optionId === 'no_fts' || optionId === 'no_assist') {
+        setPredictivePrompt(null)
+        promptContextRef.current = null
+        return
+      }
+
+      const selected = ctx.onCourtPlayers.find((p) => p.id === optionId)
+      if (!selected) {
+        setPredictivePrompt(null)
+        promptContextRef.current = null
+        return
+      }
+
+      if (prompt.type === 'WHO_REBOUNDED') {
+        const isOffensive = selected.teamId === ctx.lastEventTeamId
+        dispatchAction(selected.teamId, selected.id, {
+          eventType: isOffensive ? 'REBOUND_OFFENSIVE' : 'REBOUND_DEFENSIVE',
+        })
+        return
+      }
+
+      if (prompt.type === 'WHO_ASSISTED') {
+        dispatchAction(selected.teamId, selected.id, { eventType: 'ASSIST' })
+        return
+      }
+
+      setPredictivePrompt(null)
+      promptContextRef.current = null
+    },
+    [dispatchAction, predictivePrompt]
   )
 
   const handleControlEvent = useCallback(
@@ -187,6 +281,13 @@ export function LiveFibaTable({
         return
       }
 
+      // PM-04.C: Esc fecha predictive prompt sem disparar evento adicional
+      if (event.key === 'Escape' && predictivePrompt) {
+        event.preventDefault()
+        handlePromptDismiss()
+        return
+      }
+
       const action = KEYBOARD_ACTIONS[event.key.toLowerCase()]
       if (!action || !selectedPlayer || !selection.selectedTeamId) return
       if (!selectedPlayer.isAvailable || !selectedPlayer.isOnCourt || selectedPlayer.disqualified || selectedPlayer.fouls >= 5) return
@@ -197,7 +298,7 @@ export function LiveFibaTable({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [dispatchAction, selectedPlayer, selection.selectedTeamId])
+  }, [dispatchAction, handlePromptDismiss, predictivePrompt, selectedPlayer, selection.selectedTeamId])
 
   const selectedPlayerSummary = selectedPlayer
     ? `#${String(selectedPlayer.jerseyNumber ?? '--').padStart(2, '0')} ${selectedPlayer.name}`
@@ -314,6 +415,12 @@ export function LiveFibaTable({
           />
         </div>
       </div>
+
+      <PredictivePromptModal
+        suggestion={predictivePrompt}
+        onSelect={handlePromptSelect}
+        onDismiss={handlePromptDismiss}
+      />
     </div>
   )
 }
