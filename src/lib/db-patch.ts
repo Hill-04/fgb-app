@@ -694,6 +694,45 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'column', table: 'Athlete', column: 'notes',                 sql: 'ALTER TABLE "Athlete" ADD COLUMN "notes" TEXT' },
   { kind: 'column', table: 'Athlete', column: 'saveWithoutValidation', sql: 'ALTER TABLE "Athlete" ADD COLUMN "saveWithoutValidation" INTEGER NOT NULL DEFAULT 0' },
 
+  // ── PM-06.N: Athlete CPF frente+verso + contato filiação ─────────────────
+  { kind: 'column', table: 'Athlete', column: 'docCPFFrontUrl',     sql: 'ALTER TABLE "Athlete" ADD COLUMN "docCPFFrontUrl" TEXT' },
+  { kind: 'column', table: 'Athlete', column: 'docCPFBackUrl',      sql: 'ALTER TABLE "Athlete" ADD COLUMN "docCPFBackUrl" TEXT' },
+  { kind: 'column', table: 'Athlete', column: 'parentContactPhone', sql: 'ALTER TABLE "Athlete" ADD COLUMN "parentContactPhone" TEXT' },
+  { kind: 'column', table: 'Athlete', column: 'parentContactRole',  sql: 'ALTER TABLE "Athlete" ADD COLUMN "parentContactRole" TEXT' },
+
+  // ── PM-06.N: Migração de dados: docCPFUrl → docCPFFrontUrl (idempotente) ─
+  { kind: 'sql', name: 'PM06N_migrate_athlete_docCPFUrl', sql: 'UPDATE "Athlete" SET "docCPFFrontUrl" = "docCPFUrl" WHERE "docCPFFrontUrl" IS NULL AND "docCPFUrl" IS NOT NULL' },
+
+  // ── PM-06.N: AthleteRegistrationRequest novos campos ─────────────────────
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'sex',                sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "sex" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'nationality',        sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "nationality" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'maritalStatus',      sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "maritalStatus" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'education',          sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "education" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'rg',                 sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "rg" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'rgOrgan',            sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "rgOrgan" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'rgDate',             sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "rgDate" DATETIME' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'cpf',                sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "cpf" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'cep',                sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "cep" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'state',              sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "state" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'city',               sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "city" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'address',            sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "address" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'addressNum',         sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "addressNum" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'addressComp',        sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "addressComp" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'fatherName',         sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "fatherName" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'parentContactPhone', sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "parentContactPhone" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'parentContactRole',  sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "parentContactRole" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'height',             sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "height" REAL' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'weight',             sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "weight" REAL' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'position',           sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "position" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'jerseyNumber',       sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "jerseyNumber" INTEGER' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'photoUrl',           sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "photoUrl" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'docCPFFrontUrl',     sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "docCPFFrontUrl" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'docCPFBackUrl',      sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "docCPFBackUrl" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'docRGFrontUrl',      sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "docRGFrontUrl" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'docRGBackUrl',       sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "docRGBackUrl" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'docBirthCertUrl',    sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "docBirthCertUrl" TEXT' },
+  { kind: 'column', table: 'AthleteRegistrationRequest', column: 'docOtherUrl',        sql: 'ALTER TABLE "AthleteRegistrationRequest" ADD COLUMN "docOtherUrl" TEXT' },
+
   // ── Fase 1: Referee new fields ───────────────────────────────────────────
   { kind: 'column', table: 'Referee', column: 'registrationNumber', sql: 'ALTER TABLE "Referee" ADD COLUMN "registrationNumber" INTEGER' },
   { kind: 'column', table: 'Referee', column: 'sex',                sql: 'ALTER TABLE "Referee" ADD COLUMN "sex" TEXT' },

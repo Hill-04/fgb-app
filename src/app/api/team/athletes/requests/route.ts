@@ -57,6 +57,40 @@ export async function POST(request: Request) {
         email: body.email,
         requestedCategoryLabel: body.requestedCategoryLabel,
         cbbRegistrationNumber: body.cbbRegistrationNumber,
+        // PM-06.N: dados pessoais
+        sex: body.sex,
+        nationality: body.nationality,
+        maritalStatus: body.maritalStatus,
+        education: body.education,
+        // PM-06.N: documentos
+        rg: body.rg,
+        rgOrgan: body.rgOrgan,
+        rgDate: body.rgDate,
+        cpf: body.cpf,
+        // PM-06.N: endereço
+        cep: body.cep,
+        state: body.state,
+        city: body.city,
+        address: body.address,
+        addressNum: body.addressNum,
+        addressComp: body.addressComp,
+        // PM-06.N: filiação
+        fatherName: body.fatherName,
+        parentContactPhone: body.parentContactPhone,
+        parentContactRole: body.parentContactRole,
+        // PM-06.N: esportivo
+        height: body.height,
+        weight: body.weight,
+        position: body.position,
+        jerseyNumber: body.jerseyNumber,
+        // PM-06.N: uploads
+        photoUrl: body.photoUrl,
+        docCPFFrontUrl: body.docCPFFrontUrl,
+        docCPFBackUrl: body.docCPFBackUrl,
+        docRGFrontUrl: body.docRGFrontUrl,
+        docRGBackUrl: body.docRGBackUrl,
+        docBirthCertUrl: body.docBirthCertUrl,
+        docOtherUrl: body.docOtherUrl,
         initialStatus,
       },
       (sessionData.session.user as any)?.id || null

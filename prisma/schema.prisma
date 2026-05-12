@@ -807,6 +807,11 @@ model Athlete {
   docRGBackUrl        String?
   docBirthCertUrl     String?
   docOtherUrl         String?
+  // PM-06.N: CPF dividido + filiação extra
+  docCPFFrontUrl      String?
+  docCPFBackUrl       String?
+  parentContactPhone  String?
+  parentContactRole   String?
   notes               String?
   saveWithoutValidation Boolean          @default(false)
   bidPublishedAt   DateTime?
@@ -875,6 +880,40 @@ model AthleteRegistrationRequest {
   email                    String?
   requestedCategoryLabel   String?
   cbbRegistrationNumber    String?
+  // PM-06.N: dados pessoais
+  sex                      String?
+  nationality              String?
+  maritalStatus            String?
+  education                String?
+  // PM-06.N: documentos
+  rg                       String?
+  rgOrgan                  String?
+  rgDate                   DateTime?
+  cpf                      String?
+  // PM-06.N: endereço
+  cep                      String?
+  state                    String?
+  city                     String?
+  address                  String?
+  addressNum               String?
+  addressComp              String?
+  // PM-06.N: filiação
+  fatherName               String?
+  parentContactPhone       String?
+  parentContactRole        String?
+  // PM-06.N: esportivo
+  height                   Float?
+  weight                   Float?
+  position                 String?
+  jerseyNumber             Int?
+  // PM-06.N: uploads
+  photoUrl                 String?
+  docCPFFrontUrl           String?
+  docCPFBackUrl            String?
+  docRGFrontUrl            String?
+  docRGBackUrl             String?
+  docBirthCertUrl          String?
+  docOtherUrl              String?
   cbbCheckStatus           String       @default("PENDING")
   cbbCheckedAt             DateTime?
   cbbCheckedByUserId       String?
