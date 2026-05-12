@@ -9,6 +9,21 @@ type LiveFibaEventLogProps = {
   recentInteractionId?: string
 }
 
+// PM-04.E: codigo curto pra badges no event log. PT-BR full labels ficam no modal de captura.
+const QUALIFIER_BADGE_LABEL: Record<string, string> = {
+  pointsinthepaint: 'PAINT',
+  fastbreak: 'FB',
+  secondchance: '2ND',
+  fromturnover: 'FROM TOV',
+  andone: 'AND1',
+  blocked: 'BLK',
+  contested: 'CT',
+  open: 'OPEN',
+  clutch: 'CLUTCH',
+  gametying: 'TIE',
+  gamewinning: 'GW',
+}
+
 function toneClasses(tone: LiveTableEvent['tone']) {
   switch (tone) {
     case 'score':
@@ -94,7 +109,7 @@ export function LiveFibaEventLog({ events, recentInteractionId = '' }: LiveFibaE
                   </div>
 
                   <div className="min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className={['rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em]', tone.chip].join(' ')}>
                         {event.actionLabel}
                       </span>
@@ -103,6 +118,15 @@ export function LiveFibaEventLog({ events, recentInteractionId = '' }: LiveFibaE
                           Pending
                         </span>
                       ) : null}
+                      {event.qualifiers?.map((qualifier) => (
+                        <span
+                          key={qualifier}
+                          className="rounded-full bg-white/[0.08] px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-white/72"
+                          title={qualifier}
+                        >
+                          {QUALIFIER_BADGE_LABEL[qualifier] ?? qualifier.toUpperCase()}
+                        </span>
+                      ))}
                     </div>
                     <p className="mt-2 truncate text-[13px] font-black uppercase tracking-[0.06em] text-white">{event.compactLabel}</p>
                     <p className="mt-1 truncate text-[10px] font-black uppercase tracking-[0.14em] text-white/40">{event.teamName}</p>
