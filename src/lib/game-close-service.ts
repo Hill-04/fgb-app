@@ -23,6 +23,7 @@
 
 import { prisma } from '@/lib/db'
 import { recalculateStandings } from '@/lib/standings'
+import { recalculateRankingForGame } from '@/lib/season-ranking'
 import { generateAndUploadSumulaPdf } from '@/lib/game-pdf'
 import {
   assertCanTransition,
@@ -367,6 +368,13 @@ export async function publishGame(input: {
       },
     })
   })
+
+  // PM-05: atualiza SeasonRanking (best-effort, nao bloqueia publicacao)
+  try {
+    await recalculateRankingForGame(gameId)
+  } catch (err) {
+    console.error(`[publishGame] Falha ao recalcular SeasonRanking de ${gameId}:`, err)
+  }
 
   return { ok: true, fromState, newState: 'PUBLISHED' }
 }
