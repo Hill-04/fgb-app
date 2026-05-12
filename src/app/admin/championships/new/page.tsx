@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
-import { ChevronLeft, Check, Plus, X, ArrowUp, ArrowDown, MapPin, Users } from 'lucide-react'
+import { ChevronLeft, Check, Plus, X, ArrowUp, ArrowDown, MapPin, Users, ChevronDown, ChevronUp } from 'lucide-react'
 import { WizardPreviewPanel } from '@/components/admin/WizardPreviewPanel'
 
 // ─── Phase types ──────────────────────────────────────────────────────────────
@@ -516,6 +516,7 @@ export default function NewChampionshipPage() {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [formError, setFormError] = useState('')
   const [form, setForm] = useState<FormState>(defaultForm())
+  const [previewExpanded, setPreviewExpanded] = useState(true)
 
   const setField = (key: keyof FormState, value: any) => setForm(f => ({ ...f, [key]: value }))
 
@@ -1280,9 +1281,9 @@ export default function NewChampionshipPage() {
   const stepContent = [renderStep0, renderStepType, renderStep1, renderStep2, renderStepCalendar, renderStepRules, renderStep3, renderStep4]
 
   return (
-    <div className="space-y-6 max-w-[920px] mx-auto pb-12 pt-6 px-4">
-      {/* Header */}
-      <header className="flex items-center gap-4">
+    <div className="max-w-[1280px] mx-auto pb-12 pt-6 px-4">
+      {/* Header full-width */}
+      <header className="flex items-center gap-4 mb-6">
         <button
           type="button"
           onClick={() => router.back()}
@@ -1309,124 +1310,159 @@ export default function NewChampionshipPage() {
         </div>
       </header>
 
-      {/* Card principal */}
-      <div
-        className="rounded-lg overflow-hidden"
-        style={{
-          background: '#fff',
-          border: '1px solid var(--fgb-ink-200)',
-          boxShadow: 'var(--shadow-md)',
-        }}
-      >
-        {/* Stepper */}
+      {/* 2-col grid: form left, preview right (sticky on lg+) */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-6 items-start">
+
+        {/* LEFT — Form card */}
         <div
-          className="flex border-b overflow-x-auto"
-          style={{ borderColor: 'var(--fgb-ink-200)' }}
+          className="rounded-lg overflow-hidden order-2 lg:order-1"
+          style={{
+            background: '#fff',
+            border: '1px solid var(--fgb-ink-200)',
+            boxShadow: 'var(--shadow-md)',
+          }}
         >
-          {STEPS.map((s, i) => {
-            const isActive = i === step
-            const isDone = i < step
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => i < step && setStep(i)}
-                disabled={i > step}
-                className="flex-1 min-w-[110px] py-3 px-2 transition-colors text-center"
-                style={{
-                  borderBottom: `3px solid ${
-                    isActive ? 'var(--fgb-green-700)' : isDone ? 'var(--fgb-yellow-500)' : 'transparent'
-                  }`,
-                  background: isActive ? 'var(--fgb-green-50)' : 'transparent',
-                  cursor: i > step ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <p
-                  className="fgb-label"
+          {/* Stepper */}
+          <div
+            className="flex border-b overflow-x-auto"
+            style={{ borderColor: 'var(--fgb-ink-200)' }}
+          >
+            {STEPS.map((s, i) => {
+              const isActive = i === step
+              const isDone = i < step
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => i < step && setStep(i)}
+                  disabled={i > step}
+                  className="flex-1 min-w-[110px] py-3 px-2 transition-colors text-center"
                   style={{
-                    fontSize: 9,
-                    color: isActive
-                      ? 'var(--fgb-green-700)'
-                      : isDone
-                      ? 'var(--fgb-ink-700)'
-                      : 'var(--fgb-ink-400)',
-                    letterSpacing: '0.16em',
+                    borderBottom: `3px solid ${
+                      isActive ? 'var(--fgb-green-700)' : isDone ? 'var(--fgb-yellow-500)' : 'transparent'
+                    }`,
+                    background: isActive ? 'var(--fgb-green-50)' : 'transparent',
+                    cursor: i > step ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {s.title}
+                  <p
+                    className="fgb-label"
+                    style={{
+                      fontSize: 9,
+                      color: isActive
+                        ? 'var(--fgb-green-700)'
+                        : isDone
+                        ? 'var(--fgb-ink-700)'
+                        : 'var(--fgb-ink-400)',
+                      letterSpacing: '0.16em',
+                    }}
+                  >
+                    {s.title}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Tricolor stripe */}
+          <div className="fgb-tricolor" style={{ height: 3 }} />
+
+          {/* Content header */}
+          <div className="px-6 sm:px-10 pt-8 pb-4">
+            <h2 className="fgb-heading" style={{ fontSize: 22, color: 'var(--fgb-ink-900)' }}>
+              {STEPS[step].title}
+            </h2>
+            <p
+              className="fgb-label mt-1"
+              style={{ fontSize: 10, color: 'var(--fgb-ink-500)', letterSpacing: '0.16em' }}
+            >
+              {STEPS[step].desc}
+            </p>
+          </div>
+
+          {/* Step body */}
+          <div className="px-6 sm:px-10 pb-8">
+            {stepContent[step]()}
+            {formError && (
+              <div
+                className="mt-6 p-4 rounded-md"
+                style={{
+                  background: 'var(--fgb-red-50)',
+                  border: '1px solid var(--fgb-red-200)',
+                  color: 'var(--fgb-red-700)',
+                }}
+              >
+                <p className="fgb-label" style={{ fontSize: 11, letterSpacing: '0.1em' }}>
+                  {formError}
                 </p>
-              </button>
-            )
-          })}
-        </div>
+              </div>
+            )}
+          </div>
 
-        {/* Tricolor stripe */}
-        <div className="fgb-tricolor" style={{ height: 3 }} />
-
-        {/* Content */}
-        <div className="px-6 sm:px-10 pt-8 pb-4">
-          <h2 className="fgb-heading" style={{ fontSize: 22, color: 'var(--fgb-ink-900)' }}>
-            {STEPS[step].title}
-          </h2>
-          <p
-            className="fgb-label mt-1"
-            style={{ fontSize: 10, color: 'var(--fgb-ink-500)', letterSpacing: '0.16em' }}
+          {/* Footer */}
+          <footer
+            className="px-6 sm:px-10 py-5 flex items-center justify-between gap-4"
+            style={{ background: 'var(--fgb-ink-50)', borderTop: '1px solid var(--fgb-ink-200)' }}
           >
-            {STEPS[step].desc}
-          </p>
-        </div>
-
-        <div className="px-6 sm:px-10 pb-8">
-          {stepContent[step]()}
-          <WizardPreviewPanel form={form} />
-          {formError && (
-            <div
-              className="mt-6 p-4 rounded-md"
+            <button
+              type="button"
+              disabled={step === 0}
+              onClick={prevStep}
+              className="fgb-label disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               style={{
-                background: 'var(--fgb-red-50)',
-                border: '1px solid var(--fgb-red-200)',
-                color: 'var(--fgb-red-700)',
+                fontSize: 11,
+                color: 'var(--fgb-ink-600)',
+                padding: '10px 16px',
               }}
             >
-              <p className="fgb-label" style={{ fontSize: 11, letterSpacing: '0.1em' }}>
-                {formError}
-              </p>
-            </div>
-          )}
+              ← Voltar
+            </button>
+            <button
+              type="button"
+              onClick={step < STEPS.length - 1 ? nextStep : handleSubmit}
+              disabled={submitLoading}
+              className="fgb-btn-primary"
+              style={{ minWidth: 200 }}
+            >
+              {submitLoading
+                ? 'Salvando…'
+                : step < STEPS.length - 1
+                ? 'Próximo →'
+                : 'Criar Campeonato'}
+            </button>
+          </footer>
         </div>
 
-        {/* Footer */}
-        <footer
-          className="px-6 sm:px-10 py-5 flex items-center justify-between gap-4"
-          style={{ background: 'var(--fgb-ink-50)', borderTop: '1px solid var(--fgb-ink-200)' }}
-        >
+        {/* RIGHT — Preview side panel */}
+        <aside className="order-1 lg:order-2 lg:sticky lg:top-6">
+          {/* Mobile-only toggle */}
           <button
             type="button"
-            disabled={step === 0}
-            onClick={prevStep}
-            className="fgb-label disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            onClick={() => setPreviewExpanded(o => !o)}
+            className="lg:hidden w-full flex items-center justify-between px-4 py-3 rounded-lg mb-2 transition-colors"
             style={{
-              fontSize: 11,
-              color: 'var(--fgb-ink-600)',
-              padding: '10px 16px',
+              background: 'var(--fgb-green-50)',
+              border: '1px solid var(--fgb-green-200)',
             }}
+            aria-expanded={previewExpanded}
           >
-            ← Voltar
+            <span
+              className="fgb-label"
+              style={{ fontSize: 11, color: 'var(--fgb-green-800)', letterSpacing: '0.18em' }}
+            >
+              Preview do Campeonato
+            </span>
+            {previewExpanded
+              ? <ChevronUp size={16} style={{ color: 'var(--fgb-green-700)' }} />
+              : <ChevronDown size={16} style={{ color: 'var(--fgb-green-700)' }} />
+            }
           </button>
-          <button
-            type="button"
-            onClick={step < STEPS.length - 1 ? nextStep : handleSubmit}
-            disabled={submitLoading}
-            className="fgb-btn-primary"
-            style={{ minWidth: 200 }}
-          >
-            {submitLoading
-              ? 'Salvando…'
-              : step < STEPS.length - 1
-              ? 'Próximo →'
-              : 'Criar Campeonato'}
-          </button>
-        </footer>
+          {/* Panel — hidden on mobile when collapsed, always shown on lg+ */}
+          <div className={previewExpanded ? 'block' : 'hidden lg:block'}>
+            <WizardPreviewPanel form={form} />
+          </div>
+        </aside>
+
       </div>
     </div>
   )
