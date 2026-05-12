@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { ClipboardList, Trophy, CheckCircle2, Clock, XCircle, ChevronRight, Tag, Wallet, Send, RotateCcw, ShieldCheck, AlertTriangle } from 'lucide-react'
+import { TeamPageHeader } from '@/components/team/team-page-header'
 import { formatCurrencyBRL, summarizeRegistrationFees } from '@/lib/fees'
 import {
   deriveLifecycleFromLegacy,
@@ -83,22 +84,19 @@ export default async function TeamRegistrationsPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="fgb-label text-[var(--verde)]" style={{ fontSize: 10 }}>Minha Equipe</span>
-            <span className="fgb-badge fgb-badge-verde">INSCRIÇÕES</span>
-          </div>
-          <h1 className="fgb-display text-3xl text-[var(--black)]">Minhas Inscrições</h1>
-          <p className="fgb-label text-[var(--gray)] mt-1" style={{ textTransform: 'none', letterSpacing: 0 }}>
-            Acompanhe o status de todas as inscrições da sua equipe
-          </p>
-        </div>
-        <Link href="/team/championships" className="fgb-btn-primary h-11 px-6 text-sm self-start md:self-auto">
-          + Nova Inscrição
-        </Link>
-      </div>
+      <TeamPageHeader
+        eyebrow="Minha Equipe"
+        eyebrowTone="green"
+        badge="Inscrições"
+        title="Minhas Inscrições"
+        description="Acompanhe o status de todas as inscrições da sua equipe."
+        icon={<ClipboardList className="w-4 h-4" />}
+        actions={
+          <Link href="/team/championships" className="fgb-btn-primary h-11 px-6 text-sm">
+            + Nova Inscrição
+          </Link>
+        }
+      />
 
       {/* Summary strip */}
       <div className="grid grid-cols-3 gap-4">
