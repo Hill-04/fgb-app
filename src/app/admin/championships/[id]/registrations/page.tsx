@@ -349,7 +349,7 @@ export default function RegistrationsPage() {
           </span>
           <button
             onClick={openNew}
-            className="flex h-11 items-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[var(--fgb-yellow-700)]"
+            className="fgb-btn-primary flex h-11 items-center gap-2 px-5"
           >
             <Plus className="h-4 w-4" />
             Adicionar Inscricao
@@ -646,7 +646,7 @@ export default function RegistrationsPage() {
                     <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--gray)]">Atletas em Multiplas Categorias</p>
                     <h4 className="mt-1 text-lg font-black text-[var(--black)]">Adicionar atleta multi-categoria</h4>
                   </div>
-                  <button type="button" onClick={handleAddAthlete} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-[var(--amarelo)] px-4 text-[10px] font-black uppercase tracking-widest text-[var(--black)]">
+                  <button type="button" onClick={handleAddAthlete} className="fgb-btn-primary flex h-11 items-center justify-center gap-2 px-4">
                     <Plus className="h-4 w-4" />
                     Adicionar Atleta
                   </button>

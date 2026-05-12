@@ -48,11 +48,11 @@ export default function TeamDocumentsPage() {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
-          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-gray-50 border border-[var(--border)] rounded-3xl" />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-fgb-ink-50 border border-[var(--border)] rounded-3xl" />)}
         </div>
       ) : documents.length === 0 ? (
-        <div className="bg-gray-50 border border-[var(--border)] rounded-3xl p-20 text-center shadow-inner">
-          <FileText className="w-16 h-16 text-gray-400 mx-auto mb-6" />
+        <div className="bg-fgb-ink-50 border border-[var(--border)] rounded-3xl p-20 text-center shadow-inner">
+          <FileText className="w-16 h-16 text-fgb-ink-400 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-[var(--black)] mb-2 uppercase tracking-tight italic">Nenhum documento disponível</h3>
           <p className="text-[var(--gray)] max-w-xs mx-auto font-medium">Os documentos gerados pela Federação para sua equipe aparecerão aqui.</p>
         </div>
@@ -70,7 +70,7 @@ export default function TeamDocumentsPage() {
                   <Trophy className="w-3 h-3 text-fgb-yellow-400" /> {doc.championship.name}
                 </p>
                 <p className="text-[10px] text-[var(--gray)] flex items-center gap-1 font-medium mt-0.5">
-                  <Calendar className="w-3 h-3 text-gray-400" /> {new Date(doc.createdAt).toLocaleDateString('pt-BR')}
+                  <Calendar className="w-3 h-3 text-fgb-ink-400" /> {new Date(doc.createdAt).toLocaleDateString('pt-BR')}
                 </p>
               </div>
               {doc.url ? (

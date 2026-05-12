@@ -63,7 +63,7 @@ const STATUS_CONFIG = {
   },
   CANCELLED: {
     label: 'Cancelado',
-    className: 'bg-gray-50 text-gray-500 border-gray-200',
+    className: 'bg-fgb-ink-50 text-fgb-ink-500 border-fgb-ink-200',
     icon: XCircle,
   },
 }
@@ -256,7 +256,7 @@ export default function TeamMembersPage() {
                               [member.id]: e.target.value,
                             }))
                           }
-                          className="w-full px-3 py-2 bg-gray-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-fgb-yellow-500 text-sm"
+                          className="w-full px-3 py-2 bg-fgb-ink-50 border border-[var(--border)] rounded-xl text-[var(--black)] focus:outline-none focus:ring-1 focus:ring-fgb-yellow-500 text-sm"
                         >
                           {APPROVAL_ROLE_OPTIONS.map((option) => (
                             <option key={option.value} value={option.value}>{option.label}</option>
@@ -351,7 +351,7 @@ export default function TeamMembersPage() {
           {others.length > 0 && (
             <section className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-2 h-6 bg-gray-300 rounded-full" />
+                <div className="w-2 h-6 bg-fgb-ink-300 rounded-full" />
                 <h2 className="text-base font-black text-[var(--gray)] uppercase tracking-tight italic">
                   Historico ({others.length})
                 </h2>

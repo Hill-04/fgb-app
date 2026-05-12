@@ -34,7 +34,7 @@ export default async function AdminReportsPage() {
     ])
 
     const kpis = [
-      { label: 'Total de Equipes', value: teamCount, icon: Users, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+      { label: 'Total de Equipes', value: teamCount, icon: Users, color: 'text-fgb-navy-400', bg: 'bg-fgb-navy-500/10' },
       { label: 'Campeonatos', value: championshipCount, icon: Trophy, color: 'text-[var(--amarelo)]', bg: 'bg-fgb-yellow-500/10' },
       { label: 'Jogos Realizados', value: gameCount, icon: MapPin, color: 'text-purple-400', bg: 'bg-purple-500/10' },
       { label: 'Atletas Estimados', value: activePlayers, icon: TrendingUp, color: 'text-green-400', bg: 'bg-green-500/10' },
@@ -170,14 +170,14 @@ export default async function AdminReportsPage() {
 
             <div className="fgb-card p-8 bg-[var(--gray-l)]">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                  <PieChart className="w-5 h-5 text-blue-500" />
+                <div className="w-10 h-10 rounded-2xl bg-fgb-navy-50 border border-fgb-navy-100 flex items-center justify-center">
+                  <PieChart className="w-5 h-5 text-fgb-navy-500" />
                 </div>
                 <h3 className="fgb-display text-lg text-[var(--black)]">Status de Sedes</h3>
               </div>
               <div className="space-y-6">
                 {[
-                  { label: 'Sedes Confirmadas', value: 8, total: 10, color: 'bg-blue-500' },
+                  { label: 'Sedes Confirmadas', value: 8, total: 10, color: 'bg-fgb-navy-500' },
                   { label: 'Relatorios Medicos', value: 4, total: 10, color: 'bg-[var(--red)]' },
                   { label: 'Taxas de Inscricao', value: 10, total: 10, color: 'bg-[var(--verde)]' },
                 ].map((item, i) => (

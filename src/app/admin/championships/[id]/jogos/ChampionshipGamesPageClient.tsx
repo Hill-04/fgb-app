@@ -423,7 +423,7 @@ export default function MatchesPage() {
         </div>
         <button
           onClick={() => openCreateModal()}
-          className="flex h-11 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[var(--amarelo)] px-5 text-[10px] font-black uppercase tracking-widest text-[var(--black)] shadow-sm transition-all hover:bg-[var(--fgb-yellow-700)]"
+          className="fgb-btn-primary flex h-11 w-full sm:w-auto items-center justify-center gap-2 px-5"
         >
           <Plus className="h-4 w-4" />
           Novo jogo

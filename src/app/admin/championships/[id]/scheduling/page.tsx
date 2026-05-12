@@ -95,7 +95,7 @@ export default function ChampionshipSchedulingPage() {
           </Link>
           <h1 className="fgb-display text-4xl text-[var(--black)] leading-none flex items-center gap-4">
             Agendamento IA
-            <span className="bg-blue-50 border border-blue-200 text-blue-600 text-[10px] uppercase font-black tracking-widest px-4 py-1.5 rounded-full shadow-sm">
+            <span className="bg-fgb-navy-50 border border-fgb-navy-200 text-fgb-navy-600 text-[10px] uppercase font-black tracking-widest px-4 py-1.5 rounded-full shadow-sm">
               Beta Otimizador
             </span>
           </h1>
@@ -106,7 +106,7 @@ export default function ChampionshipSchedulingPage() {
           <Button 
             disabled={loading} 
             onClick={handleSimulate}
-            className="h-14 px-10 rounded-2xl bg-[var(--amarelo)] hover:bg-[var(--fgb-yellow-700)] text-[var(--black)] font-black uppercase tracking-widest shadow-sm transition-all hover:scale-105 active:scale-95"
+            className="fgb-btn-primary h-14 px-10 hover:scale-105 active:scale-95"
           >
             {loading ? (
               <>
@@ -355,16 +355,16 @@ export default function ChampionshipSchedulingPage() {
                   <div
                     key={i}
                     className={`p-4 rounded-2xl flex items-start gap-3 border ${
-                      isWarning ? 'bg-fgb-yellow-50 border-fgb-yellow-200' : 'bg-blue-50 border-blue-200'
+                      isWarning ? 'bg-fgb-yellow-50 border-fgb-yellow-200' : 'bg-fgb-navy-50 border-fgb-navy-200'
                     }`}
                   >
                     <AlertTriangle
                       size={18}
-                      className={`flex-shrink-0 mt-0.5 ${isWarning ? 'text-fgb-yellow-700' : 'text-blue-700'}`}
+                      className={`flex-shrink-0 mt-0.5 ${isWarning ? 'text-fgb-yellow-700' : 'text-fgb-navy-700'}`}
                       aria-hidden
                     />
                     <div className="min-w-0 flex-1">
-                      <p className={`text-[10px] font-black uppercase tracking-widest ${isWarning ? 'text-fgb-yellow-700' : 'text-blue-700'}`}>
+                      <p className={`text-[10px] font-black uppercase tracking-widest ${isWarning ? 'text-fgb-yellow-700' : 'text-fgb-navy-700'}`}>
                         {w.type}
                       </p>
                       <p className="text-sm mt-1 text-[var(--black)] leading-relaxed">

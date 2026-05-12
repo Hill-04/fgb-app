@@ -449,7 +449,7 @@ export default async function HomePage() {
                       <span className="fgb-display flex-1" style={{ fontSize: 13, color: 'var(--black)' }}>{game.away_team?.name}</span>
                     </div>
 
-                    <span className="fgb-badge fgb-badge-outline flex-shrink-0 hide-mobile text-blue-600 bg-blue-50 border-blue-200 ml-4">
+                    <span className="fgb-badge fgb-badge-outline flex-shrink-0 hide-mobile text-fgb-navy-600 bg-fgb-navy-50 border-fgb-navy-200 ml-4">
                       SÚMULA →
                     </span>
                   </Link>

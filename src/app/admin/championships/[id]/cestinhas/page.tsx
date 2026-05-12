@@ -206,7 +206,7 @@ export default async function AdminCestinhasPage({
                         <td className="px-3 py-4 text-center">
                           <span className="text-xl font-black text-[var(--black)] tabular-nums">{scorer.points}</span>
                         </td>
-                        <td className="px-3 py-4 text-center text-xs font-bold text-blue-600 tabular-nums">{scorer.ppg.toFixed(1)}</td>
+                        <td className="px-3 py-4 text-center text-xs font-bold text-fgb-navy-600 tabular-nums">{scorer.ppg.toFixed(1)}</td>
                         <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden md:table-cell">{scorer.threePoints}</td>
                         <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden md:table-cell">{scorer.assists}</td>
                         <td className="px-3 py-4 text-center text-xs font-black text-[var(--gray)] tabular-nums hidden md:table-cell">{scorer.rebounds}</td>

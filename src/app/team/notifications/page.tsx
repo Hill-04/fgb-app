@@ -13,7 +13,7 @@ type Notification = {
 }
 
 const TYPE_CONFIG: Record<string, { icon: any; color: string; bg: string }> = {
-  info:    { icon: Info, color: 'text-blue-500', bg: 'bg-blue-50' },
+  info:    { icon: Info, color: 'text-fgb-navy-500', bg: 'bg-fgb-navy-50' },
   success: { icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
   warning: { icon: AlertTriangle, color: 'text-fgb-yellow-500', bg: 'bg-fgb-yellow-50' },
   danger:  { icon: XCircle, color: 'text-red-500', bg: 'bg-red-50' },
@@ -50,11 +50,11 @@ export default function TeamNotificationsPage() {
 
       {loading ? (
         <div className="space-y-4 animate-pulse">
-          {[1,2,3].map(i => <div key={i} className="h-20 bg-gray-50 border border-[var(--border)] rounded-2xl" />)}
+          {[1,2,3].map(i => <div key={i} className="h-20 bg-fgb-ink-50 border border-[var(--border)] rounded-2xl" />)}
         </div>
       ) : notifications.length === 0 ? (
-        <div className="bg-gray-50 border border-[var(--border)] rounded-3xl p-20 text-center shadow-inner">
-          <Bell className="w-16 h-16 text-gray-400 mx-auto mb-6" />
+        <div className="bg-fgb-ink-50 border border-[var(--border)] rounded-3xl p-20 text-center shadow-inner">
+          <Bell className="w-16 h-16 text-fgb-ink-400 mx-auto mb-6" />
           <h3 className="text-xl font-bold text-[var(--black)] mb-2 uppercase tracking-tight italic">Nenhuma notificação</h3>
           <p className="text-[var(--gray)] max-w-xs mx-auto font-medium">Você receberá avisos da Federação aqui quando houver atualizações importantes.</p>
         </div>
@@ -66,7 +66,7 @@ export default function TeamNotificationsPage() {
             return (
               <div
                 key={notif.id}
-                className={`fgb-card bg-white border rounded-2xl p-5 flex items-start gap-4 transition-all cursor-pointer shadow-sm hover:shadow-md ${notif.read ? 'border-[var(--border)] bg-gray-50/50 opacity-80' : 'border-fgb-yellow-200 hover:border-fgb-yellow-300'}`}
+                className={`fgb-card bg-white border rounded-2xl p-5 flex items-start gap-4 transition-all cursor-pointer shadow-sm hover:shadow-md ${notif.read ? 'border-[var(--border)] bg-fgb-ink-50/50 opacity-80' : 'border-fgb-yellow-200 hover:border-fgb-yellow-300'}`}
                 onClick={() => !notif.read && markRead(notif.id)}
               >
                 <div className={`w-10 h-10 rounded-xl ${config.bg} flex items-center justify-center shrink-0 border border-[var(--border)]/50`}>
@@ -78,7 +78,7 @@ export default function TeamNotificationsPage() {
                     {!notif.read && <span className="w-2 h-2 rounded-full bg-[var(--amarelo)] shrink-0 shadow-sm" />}
                   </div>
                   <p className="text-[var(--gray)] text-xs font-medium">{notif.message}</p>
-                  <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px] mt-2">{new Date(notif.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+                  <p className="text-fgb-ink-400 font-bold uppercase tracking-widest text-[10px] mt-2">{new Date(notif.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
                 </div>
               </div>
             )

@@ -40,7 +40,7 @@ export function MaxDelegationLoadField({ value, onChange, disabled = false }: Ma
         </div>
       </div>
 
-      <div className="bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-xl px-4 py-3 text-xs flex items-start gap-3">
+      <div className="bg-fgb-navy-500/10 text-fgb-navy-400 border border-fgb-navy-500/20 rounded-xl px-4 py-3 text-xs flex items-start gap-3">
         <div className="mt-0.5">
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />

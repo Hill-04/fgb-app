@@ -67,7 +67,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
             </Button>
           </Link>
           <ManualRegistrationModal championshipId={championship.id} categories={championship.categories} />
-          <Badge variant="blue" className="px-6 h-12 flex items-center border-blue-500/20 text-[10px] uppercase font-black tracking-widest bg-blue-500/5">
+          <Badge variant="blue" className="px-6 h-12 flex items-center border-fgb-navy-500/20 text-[10px] uppercase font-black tracking-widest bg-fgb-navy-500/5">
             Status: {formatChampionshipStatus(championship.status)}
           </Badge>
         </div>

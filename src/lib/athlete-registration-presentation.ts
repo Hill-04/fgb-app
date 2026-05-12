@@ -3,7 +3,7 @@ export const ATHLETE_REQUEST_STATUS_META: Record<
   { label: string; className: string }
 > = {
   DRAFT: { label: 'Rascunho', className: 'border-fgb-ink-200 bg-fgb-ink-50 text-fgb-ink-700' },
-  SUBMITTED: { label: 'Enviada', className: 'border-blue-200 bg-blue-50 text-blue-700' },
+  SUBMITTED: { label: 'Enviada', className: 'border-fgb-navy-200 bg-fgb-navy-50 text-fgb-navy-700' },
   UNDER_REVIEW: { label: 'Em análise', className: 'border-yellow-200 bg-yellow-50 text-yellow-700' },
   CBB_CHECK_PENDING: {
     label: 'CBB pendente',
@@ -63,11 +63,11 @@ export const ATHLETE_AUDIT_ACTION_META: Record<
   },
   REQUEST_UPDATED: {
     label: 'Rascunho atualizado',
-    tone: 'border-blue-200 bg-blue-50 text-blue-700',
+    tone: 'border-fgb-navy-200 bg-fgb-navy-50 text-fgb-navy-700',
   },
   REQUEST_SUBMITTED: {
     label: 'Solicitação enviada',
-    tone: 'border-blue-200 bg-blue-50 text-blue-700',
+    tone: 'border-fgb-navy-200 bg-fgb-navy-50 text-fgb-navy-700',
   },
   REQUEST_CANCELLED: {
     label: 'Solicitação cancelada',

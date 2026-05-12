@@ -108,7 +108,7 @@ export default function RefereeCategoriesPage() {
                     {editingId === c.id ? (
                       <input type="checkbox" checked={editForm.isActive} onChange={e => setEditForm(p => ({ ...p, isActive: e.target.checked }))} className="h-4 w-4" />
                     ) : (
-                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${c.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-black uppercase ${c.isActive ? 'bg-green-100 text-green-700' : 'bg-fgb-ink-100 text-fgb-ink-500'}`}>
                         {c.isActive ? 'Sim' : 'Não'}
                       </span>
                     )}

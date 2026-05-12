@@ -30,7 +30,7 @@ const statusBadge: Record<string, string> = {
   DRAFT: 'bg-fgb-ink-100 text-fgb-ink-700 border-fgb-ink-200',
   REGISTRATION_OPEN: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   REGISTRATION_CLOSED: 'bg-[var(--yellow-light)] text-[var(--yellow-dark)] border-yellow-200',
-  ORGANIZING: 'bg-blue-100 text-blue-700 border-blue-200',
+  ORGANIZING: 'bg-fgb-navy-100 text-fgb-navy-700 border-fgb-navy-200',
   ONGOING: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   ACTIVE: 'bg-[var(--verde-light)] text-[var(--verde)] border-green-200',
   FINISHED: 'bg-[#edf3ff] text-[#3052a5] border-[#d8e2ff]',

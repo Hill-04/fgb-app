@@ -68,7 +68,7 @@ export default function JoinTeamPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 text-[var(--black)] font-sans">
+    <div className="min-h-screen bg-fgb-ink-50 text-[var(--black)] font-sans">
       {/* Header */}
       <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[var(--border)] bg-white sticky top-0 z-10 shadow-sm">
         <div className="flex items-center gap-3">
@@ -117,15 +117,15 @@ export default function JoinTeamPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar por nome da equipe..."
-            className="bg-white border-[var(--border)] text-[var(--black)] text-lg py-6 focus-visible:ring-fgb-yellow-500 rounded-xl shadow-sm placeholder:text-gray-400"
+            className="bg-white border-[var(--border)] text-[var(--black)] text-lg py-6 focus-visible:ring-fgb-yellow-500 rounded-xl shadow-sm placeholder:text-fgb-ink-400"
           />
         </div>
 
         {/* Lista de Equipes */}
         <div className="space-y-4">
           {teams.length === 0 ? (
-            <div className="fgb-card bg-gray-50 border-[var(--border)] p-12 text-center shadow-inner rounded-3xl">
-              <svg className="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="fgb-card bg-fgb-ink-50 border-[var(--border)] p-12 text-center shadow-inner rounded-3xl">
+              <svg className="w-16 h-16 text-fgb-ink-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <p className="text-[var(--gray)] font-medium">
@@ -144,8 +144,8 @@ export default function JoinTeamPage() {
                         className="w-16 h-16 object-cover rounded-xl shadow-sm border border-[var(--border)]"
                       />
                     ) : (
-                      <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center border border-[var(--border)]">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-16 h-16 bg-fgb-ink-100 rounded-xl flex items-center justify-center border border-[var(--border)]">
+                        <svg className="w-8 h-8 text-fgb-ink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                       </div>
@@ -184,7 +184,7 @@ export default function JoinTeamPage() {
           <Button
             variant="outline"
             onClick={() => router.push('/team/onboarding')}
-            className="w-full border-[var(--border)] text-[var(--gray)] hover:bg-gray-100 font-black uppercase tracking-widest h-12 rounded-xl transition-colors"
+            className="w-full border-[var(--border)] text-[var(--gray)] hover:bg-fgb-ink-100 font-black uppercase tracking-widest h-12 rounded-xl transition-colors"
           >
             Voltar
           </Button>

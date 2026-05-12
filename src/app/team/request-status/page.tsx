@@ -93,8 +93,8 @@ export default function RequestStatusPage() {
 
   if (status === 'loading' || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-10 h-10 border-4 border-gray-200 border-t-fgb-yellow-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-fgb-ink-50 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-fgb-ink-200 border-t-fgb-yellow-500 rounded-full animate-spin" />
       </div>
     )
   }
@@ -102,7 +102,7 @@ export default function RequestStatusPage() {
   const isRejected = membershipStatus === 'REJECTED'
 
   return (
-    <div className="min-h-screen bg-gray-50 text-[var(--black)] flex flex-col font-sans">
+    <div className="min-h-screen bg-fgb-ink-50 text-[var(--black)] flex flex-col font-sans">
       {/* Header */}
       <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-[var(--border)] bg-white sticky top-0 z-50 shadow-sm">
         <div className="flex items-center gap-3">
@@ -195,7 +195,7 @@ export default function RequestStatusPage() {
                     variant="outline"
                     onClick={handleManualCheck}
                     disabled={checking}
-                    className="w-full border-[var(--border)] text-[var(--black)] hover:bg-gray-50 font-bold gap-2"
+                    className="w-full border-[var(--border)] text-[var(--black)] hover:bg-fgb-ink-50 font-bold gap-2"
                   >
                     <RefreshCw className={`w-4 h-4 ${checking ? 'animate-spin' : ''}`} />
                     {checking ? 'Verificando...' : 'Verificar aprovação'}

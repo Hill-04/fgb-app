@@ -602,7 +602,7 @@ export default async function ChampionshipDetailsPage({
                       </Link>
                       <Link
                         href={`/admin/championships/${activeChampionshipId}/standings`}
-                        className="flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-[var(--gray)] bg-white border border-[var(--border)] hover:border-gray-300 h-9 rounded-xl transition-all shadow-sm"
+                        className="flex items-center justify-center text-[9px] font-black uppercase tracking-widest text-[var(--gray)] bg-white border border-[var(--border)] hover:border-fgb-ink-300 h-9 rounded-xl transition-all shadow-sm"
                       >
                         Classificação
                       </Link>
@@ -697,19 +697,19 @@ export default async function ChampionshipDetailsPage({
             const variantStyles: Record<string, string> = {
               warning: 'border-fgb-yellow-200 bg-fgb-yellow-50',
               green: 'border-green-200 bg-green-50',
-              blue: 'border-blue-200 bg-blue-50',
+              blue: 'border-fgb-navy-200 bg-fgb-navy-50',
               gray: 'border-[var(--border)] bg-[var(--gray-l)]',
             }
             const titleStyles: Record<string, string> = {
               warning: 'text-fgb-yellow-700',
               green: 'text-green-700',
-              blue: 'text-blue-700',
+              blue: 'text-fgb-navy-700',
               gray: 'text-[var(--gray)]',
             }
             const ctaStyles: Record<string, string> = {
               warning: 'bg-fgb-yellow-600 text-white hover:bg-fgb-yellow-700',
               green: 'bg-[var(--verde)] text-white hover:bg-[var(--verde)]/90',
-              blue: 'bg-blue-600 text-white hover:bg-blue-700',
+              blue: 'bg-fgb-navy-600 text-white hover:bg-fgb-navy-700',
               gray: 'bg-white border border-[var(--border)] text-[var(--black)] hover:bg-[var(--gray-l)]',
             }
             return (

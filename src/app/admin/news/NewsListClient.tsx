@@ -115,7 +115,7 @@ export default function NewsListClient({
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       post.status === 'PUBLISHED'
                         ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-500'
+                        : 'bg-fgb-ink-100 text-fgb-ink-500'
                     }`}
                   >
                     {post.status === 'PUBLISHED' ? 'Publicado' : 'Rascunho'}

@@ -125,7 +125,7 @@ Como posso ajudar? Posso gerar confrontos, sugerir datas, criar blocos de catego
       {/* Header */}
       <div className="p-4 border-b border-fgb-ink-800/50 bg-fgb-ink-900/20 backdrop-blur-md flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-blue-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-600 to-fgb-navy-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
             <Sparkles className="w-5 h-5 text-white animate-pulse" />
           </div>
           <div>
@@ -190,7 +190,7 @@ Como posso ajudar? Posso gerar confrontos, sugerir datas, criar blocos de catego
                         "flex items-center gap-2 p-2 rounded-lg text-xs font-medium border",
                         action.status === 'success' ? "bg-green-500/10 border-green-500/20 text-green-400" :
                         action.status === 'error' ? "bg-red-500/10 border-red-500/20 text-red-400" :
-                        "bg-blue-500/10 border-blue-500/20 text-blue-400"
+                        "bg-fgb-navy-500/10 border-fgb-navy-500/20 text-fgb-navy-400"
                       )}
                     >
                       {action.status === 'success' ? <CheckCircle2 className="w-4 h-4" /> :

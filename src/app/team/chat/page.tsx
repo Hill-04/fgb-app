@@ -61,14 +61,14 @@ export default function TeamChatPage() {
       <div className="flex-1 overflow-y-auto space-y-4 pr-1 custom-scrollbar">
         {loading ? (
           <div className="space-y-3 animate-pulse">
-            {[1,2,3].map(i => <div key={i} className={`h-16 w-2/3 bg-gray-50 border border-[var(--border)] rounded-2xl ${i % 2 === 0 ? 'ml-auto' : ''}`} />)}
+            {[1,2,3].map(i => <div key={i} className={`h-16 w-2/3 bg-fgb-ink-50 border border-[var(--border)] rounded-2xl ${i % 2 === 0 ? 'ml-auto' : ''}`} />)}
           </div>
         ) : messages.length === 0 ? (
           <div className="flex-1 flex items-center justify-center py-20 text-center">
             <div>
-              <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+              <MessageSquare className="w-12 h-12 text-fgb-ink-300 mx-auto mb-4" />
               <p className="text-[var(--gray)] font-bold text-sm uppercase tracking-widest">Nenhuma mensagem ainda</p>
-              <p className="text-gray-400 text-xs mt-2 font-medium">Inicie uma conversa com a Administração.</p>
+              <p className="text-fgb-ink-400 text-xs mt-2 font-medium">Inicie uma conversa com a Administração.</p>
             </div>
           </div>
         ) : (
@@ -82,7 +82,7 @@ export default function TeamChatPage() {
                   </div>
                 )}
                 <p className={`text-sm font-medium ${msg.fromAdmin ? 'text-[var(--black)]' : 'text-fgb-yellow-900'}`}>{msg.content}</p>
-                <p className={`text-[10px] mt-1 font-bold tracking-wider ${msg.fromAdmin ? 'text-gray-400' : 'text-fgb-yellow-400'}`}>{new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                <p className={`text-[10px] mt-1 font-bold tracking-wider ${msg.fromAdmin ? 'text-fgb-ink-400' : 'text-fgb-yellow-400'}`}>{new Date(msg.createdAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
               </div>
             </div>
           ))
@@ -96,7 +96,7 @@ export default function TeamChatPage() {
           value={newMsg}
           onChange={e => setNewMsg(e.target.value)}
           placeholder="Digite sua mensagem para a FGB..."
-          className="flex-1 bg-white border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--black)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-fgb-yellow-500 shadow-sm transition-all"
+          className="flex-1 bg-white border border-[var(--border)] rounded-xl px-4 py-3 text-sm text-[var(--black)] placeholder:text-fgb-ink-400 focus:outline-none focus:ring-2 focus:ring-fgb-yellow-500 shadow-sm transition-all"
         />
         <button
           type="submit"

@@ -31,10 +31,12 @@ SHADE_ALT = "|".join(SHADES)
 TW_COLOR_MAP = {
     "orange":  "fgb-yellow",
     "slate":   "fgb-ink",
+    "gray":    "fgb-ink",
     "emerald": "fgb-green",
     "amber":   "fgb-yellow",
     "violet":  "fgb-navy",
     "fuchsia": "fgb-navy",
+    "blue":    "fgb-navy",
 }
 
 TW_PATTERNS = {

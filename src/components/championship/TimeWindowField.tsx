@@ -43,11 +43,11 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
               onClick={() => update({ blockFormat: opt.value })}
               className={`group rounded-xl border p-4 text-left transition-all duration-200 ${
                 value.blockFormat === opt.value
-                  ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500'
-                  : 'border-border bg-card/50 hover:border-blue-400 hover:bg-muted/50'
+                  ? 'border-fgb-navy-500 bg-fgb-navy-50/50 ring-1 ring-fgb-navy-500'
+                  : 'border-border bg-card/50 hover:border-fgb-navy-400 hover:bg-muted/50'
               }`}
             >
-              <div className="text-sm font-bold text-foreground group-hover:text-blue-600 transition-colors">{opt.label}</div>
+              <div className="text-sm font-bold text-foreground group-hover:text-fgb-navy-600 transition-colors">{opt.label}</div>
               <div className="text-xs text-muted-foreground mt-1 leading-relaxed">{opt.description}</div>
             </button>
           ))}
@@ -63,7 +63,7 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
             value={value.dayStartTime}
             onChange={e => update({ dayStartTime: e.target.value })}
             className="w-full h-10 rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm ring-offset-background
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow"
+                       focus:outline-none focus:ring-2 focus:ring-fgb-navy-500/50 transition-shadow"
           />
         </div>
 
@@ -74,7 +74,7 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
             value={value.regularDayEndTime}
             onChange={e => update({ regularDayEndTime: e.target.value })}
             className="w-full h-10 rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow"
+                       focus:outline-none focus:ring-2 focus:ring-fgb-navy-500/50 transition-shadow"
           />
         </div>
 
@@ -86,7 +86,7 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
               value={value.extendedDayEndTime}
               onChange={e => update({ extendedDayEndTime: e.target.value })}
               className="w-full h-10 rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm
-                         focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow"
+                         focus:outline-none focus:ring-2 focus:ring-fgb-navy-500/50 transition-shadow"
             />
           </div>
         )}
@@ -101,7 +101,7 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
             value={value.slotDurationMinutes}
             onChange={e => update({ slotDurationMinutes: parseInt(e.target.value) || 75 })}
             className="w-full h-10 rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow"
+                       focus:outline-none focus:ring-2 focus:ring-fgb-navy-500/50 transition-shadow"
           />
         </div>
 
@@ -114,7 +114,7 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
             value={value.minRestSlotsPerTeam}
             onChange={e => update({ minRestSlotsPerTeam: parseInt(e.target.value) || 0 })}
             className="w-full h-10 rounded-lg border border-input bg-background/50 px-3 py-1.5 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-shadow"
+                       focus:outline-none focus:ring-2 focus:ring-fgb-navy-500/50 transition-shadow"
           />
         </div>
       </div>
@@ -176,10 +176,10 @@ export function TimeWindowField({ value, onChange }: TimeWindowFieldProps) {
         </div>
       )}
 
-      <div className="rounded-xl border border-blue-500/10 bg-blue-500/[0.02] p-4 flex items-start gap-3">
-        <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-blue-400 bg-blue-50 flex items-center justify-center text-[10px] font-black text-blue-500">i</div>
-        <div className="text-xs text-blue-800/80 leading-relaxed">
-          <span className="font-bold text-blue-900">Regra de Calendário:</span> O sistema bloqueia automaticamente de Segunda a Quinta. Jogos são agendados exclusivamente em blocos de fim de semana para não impactar a rotina escolar dos atletas.
+      <div className="rounded-xl border border-fgb-navy-500/10 bg-fgb-navy-500/[0.02] p-4 flex items-start gap-3">
+        <div className="mt-0.5 h-4 w-4 shrink-0 rounded-full border border-fgb-navy-400 bg-fgb-navy-50 flex items-center justify-center text-[10px] font-black text-fgb-navy-500">i</div>
+        <div className="text-xs text-fgb-navy-800/80 leading-relaxed">
+          <span className="font-bold text-fgb-navy-900">Regra de Calendário:</span> O sistema bloqueia automaticamente de Segunda a Quinta. Jogos são agendados exclusivamente em blocos de fim de semana para não impactar a rotina escolar dos atletas.
         </div>
       </div>
     </div>

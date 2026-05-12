@@ -181,7 +181,7 @@ export default async function AdminStandingsPage({
                           <th className="px-4 py-5 text-center">PF</th>
                           <th className="px-4 py-5 text-center">PC</th>
                           <th className="px-4 py-5 text-center">SC</th>
-                          <th className="px-10 py-5 text-center bg-gray-50 text-[var(--black)] border-l border-[var(--border)]">PTS</th>
+                          <th className="px-10 py-5 text-center bg-fgb-ink-50 text-[var(--black)] border-l border-[var(--border)]">PTS</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[var(--border)]">
@@ -229,12 +229,12 @@ export default async function AdminStandingsPage({
                               <td className="px-4 py-5 text-center text-[11px] font-bold text-[var(--gray)] tabular-nums">{row.pointsAg}</td>
                               <td className="px-4 py-5 text-center text-[11px] font-black italic tabular-nums">
                                 <span className={cn(
-                                  row.pointsFor - row.pointsAg > 0 ? "text-blue-600" : row.pointsFor - row.pointsAg < 0 ? "text-fgb-yellow-600" : "text-[var(--gray)]"
+                                  row.pointsFor - row.pointsAg > 0 ? "text-fgb-navy-600" : row.pointsFor - row.pointsAg < 0 ? "text-fgb-yellow-600" : "text-[var(--gray)]"
                                 )}>
                                   {(row.pointsFor - row.pointsAg) > 0 ? `+${row.pointsFor - row.pointsAg}` : row.pointsFor - row.pointsAg}
                                 </span>
                               </td>
-                              <td className="px-10 py-5 text-center bg-gray-50 border-l border-[var(--border)]">
+                              <td className="px-10 py-5 text-center bg-fgb-ink-50 border-l border-[var(--border)]">
                                 <span className="text-2xl font-black text-[var(--black)] leading-none tracking-tighter">{row.points}</span>
                               </td>
                             </tr>
