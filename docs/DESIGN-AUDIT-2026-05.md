@@ -294,7 +294,7 @@ Ordenado por **alavancagem (impacto / esforço)**. Cada PM é mergeável indepen
 - Substituir `#FF6B00` → `var(--fgb-yellow-500)` (todas ocorrências)
 - Substituir `#E66000` → `var(--fgb-yellow-700)` (hover)
 - Substituir `bg-orange-{50,100,200,300,400,500,600,700}` → tokens FGB equivalentes (yellow para CTA/progresso, green para sucesso, red para erro)
-- Substituir `bg-slate-*`/`text-slate-*`/`border-slate-*` → `bg-[var(--fgb-ink-*)]` etc.
+- Substituir `bg-slate-N` / `text-slate-N` / `border-slate-N` → `bg-fgb-ink-N` etc. (N = shade 50..950)
 - Substituir `bg-emerald-*`/`bg-amber-*`/`bg-blue-*` em estados semânticos → tokens
 - Substituir `rounded-xl bg-[var(--amarelo)]` / `rounded-2xl bg-[var(--amarelo)]` etc. → `.fgb-btn-primary`
 - Adicionar regra ESLint banindo `slate-*`, `emerald-*`, `amber-*`, hex hardcoded em styles
