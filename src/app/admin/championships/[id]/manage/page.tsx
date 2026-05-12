@@ -80,7 +80,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
             const isViable = teamCount >= minTeams
 
             return (
-              <Card key={cat.id} className={`bg-[#111] border-white/5 rounded-3xl group overflow-hidden transition-all ${isViable ? 'hover:border-green-500/30' : 'hover:border-red-500/30'}`}>
+              <Card key={cat.id} className={`bg-[var(--fgb-ink-900)] border-white/5 rounded-3xl group overflow-hidden transition-all ${isViable ? 'hover:border-green-500/30' : 'hover:border-red-500/30'}`}>
                 <CardHeader className="pb-2">
                   <div className="flex justify-between items-start">
                     <Badge variant="default" className="bg-white/5 border-white/10 text-[9px] font-black uppercase">{cat.name}</Badge>
@@ -115,7 +115,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-12">
           <Section title="Inscricoes e Categorias Selecionadas" subtitle="Visao detalhada de cada equipe na competicao">
-            <div className="bg-[#111] border border-white/5 rounded-3xl overflow-hidden mt-6">
+            <div className="bg-[var(--fgb-ink-900)] border border-white/5 rounded-3xl overflow-hidden mt-6">
               <div className="fgb-table-wrap">
                 <table className="fgb-table w-full text-left">
                   <thead className="bg-white/5 border-b border-white/5">
@@ -177,7 +177,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
         </div>
 
         <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <Card className="bg-gradient-to-br from-[#111] to-[#0a0a0a] border-white/5 rounded-[40px] p-10 overflow-hidden relative">
+          <Card className="bg-gradient-to-br from-[var(--fgb-ink-900)] to-[var(--fgb-ink-900)] border-white/5 rounded-[40px] p-10 overflow-hidden relative">
             <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--fgb-navy-500)]/5 rounded-full blur-[100px] -mr-32 -mt-32" />
             <div className="relative z-10">
               <div className="w-12 h-12 rounded-2xl bg-[var(--fgb-navy-500)]/10 flex items-center justify-center mb-6">
@@ -193,7 +193,7 @@ export default async function ChampionshipManagePage({ params }: ManagePageProps
             </div>
           </Card>
 
-          <Card className="bg-[#111] border-white/5 rounded-[40px] p-10 flex flex-col justify-between">
+          <Card className="bg-[var(--fgb-ink-900)] border-white/5 rounded-[40px] p-10 flex flex-col justify-between">
             <div>
               <div className="w-12 h-12 rounded-2xl bg-[var(--fgb-yellow-500)]/10 flex items-center justify-center mb-6">
                 <Trophy className="w-6 h-6 text-[var(--fgb-yellow-500)]" />

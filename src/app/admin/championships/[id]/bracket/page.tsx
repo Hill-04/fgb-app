@@ -15,7 +15,7 @@ export default async function BracketPage({
 
   if (!championship?.hasPlayoffs) {
     return (
-      <div className="bg-[#141414] border border-white/[0.08] rounded-[40px] p-16 text-center animate-in zoom-in-95 duration-700">
+      <div className="bg-[var(--fgb-ink-900)] border border-white/[0.08] rounded-[40px] p-16 text-center animate-in zoom-in-95 duration-700">
         <div className="w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center mx-auto mb-8 border border-white/10 group">
           <AlertCircle className="w-10 h-10 text-fgb-ink-500 group-hover:text-white transition-colors" />
         </div>
@@ -64,7 +64,7 @@ export default async function BracketPage({
 
       <div className="grid gap-8">
         {categories.map(cat => (
-          <div key={cat.id} className="bg-[#0A0A0A] border border-white/[0.08] rounded-[40px] p-8 overflow-hidden relative shadow-sm">
+          <div key={cat.id} className="bg-[var(--fgb-ink-900)] border border-white/[0.08] rounded-[40px] p-8 overflow-hidden relative shadow-sm">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[var(--fgb-yellow-500)]/40 to-transparent" />
             
             <div className="flex items-center gap-3 mb-10">
@@ -94,7 +94,7 @@ export default async function BracketPage({
                       return pairs
                     }, []).map((pair, i) => (
                       <div key={i} className="flex flex-col gap-1.5 animate-in slide-in-from-left duration-500" style={{ animationDelay: `${i * 100}ms` }}>
-                        <div className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden w-52 shadow-lg shadow-black group">
+                        <div className="bg-[var(--fgb-ink-900)] border border-white/[0.06] rounded-2xl overflow-hidden w-52 shadow-lg shadow-black group">
                           {/* Primeiro Time */}
                           <div className="px-4 py-3 flex items-center justify-between border-b border-white/[0.04] bg-white/[0.02] group-hover:bg-white/[0.04] transition-colors">
                             <div className="flex items-center gap-3 min-w-0">
@@ -129,7 +129,7 @@ export default async function BracketPage({
                       Semifinais
                     </p>
                     {Array.from({ length: 2 }).map((_, i) => (
-                      <div key={i} className="bg-[#141414] border border-white/[0.06] rounded-2xl overflow-hidden w-52 shadow-lg shadow-black group">
+                      <div key={i} className="bg-[var(--fgb-ink-900)] border border-white/[0.06] rounded-2xl overflow-hidden w-52 shadow-lg shadow-black group">
                         <div className="px-4 py-3 border-b border-white/[0.04] bg-white/[0.01]">
                           <span className="text-[10px] font-black text-fgb-ink-600 italic uppercase tracking-widest">Vencedor Q{i*2+1}</span>
                         </div>
