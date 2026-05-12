@@ -58,8 +58,7 @@ export default function ChampionshipSchedulingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           championshipId: id,
-          blocks: result.blocks,
-          viableCategories: result.viableCategories
+          games: result.games,
         })
       })
       
@@ -160,7 +159,7 @@ export default function ChampionshipSchedulingPage() {
               </div>
               <div>
                 <h3 className="text-lg fgb-display text-[var(--black)] leading-none uppercase tracking-tight">Otimização Concluída</h3>
-                <p className="text-[var(--gray)] text-sm font-medium">{result.summary?.totalTravelSaved || 'Redução drástica de custos logísticos identificada.'}</p>
+                <p className="text-[var(--gray)] text-sm font-medium">{typeof result.summary === 'string' ? result.summary : 'Calendário otimizado com sucesso.'}</p>
               </div>
             </div>
             <Button variant="ghost" onClick={() => setResult(null)} className="text-[var(--gray)] hover:text-[var(--black)] border border-[var(--border)] bg-white font-bold uppercase text-[10px] tracking-widest">
@@ -226,11 +225,11 @@ export default function ChampionshipSchedulingPage() {
               <Section title="Viabilidade" subtitle="Categorias confirmadas pela IA">
                 <Card className="fgb-card bg-white p-6">
                   <div className="space-y-4">
-                    {result.viableCategories.map((cat: any) => (
+                    {(result.categories || []).map((cat: any) => (
                       <div key={cat.id} className="flex justify-between items-center p-4 bg-[var(--gray-l)] rounded-2xl border border-[var(--border)] shadow-sm">
-                        <span className="font-bold text-[var(--black)] text-sm uppercase">{cat.title}</span>
+                        <span className="font-bold text-[var(--black)] text-sm uppercase">{cat.name}</span>
                         <Badge variant="success" className="bg-green-50 text-green-600 border-green-200 text-[9px] font-black uppercase tracking-widest px-3">
-                          {cat.teamsCount} EQUIPES
+                          {cat.teams} EQUIPES
                         </Badge>
                       </div>
                     ))}
@@ -241,57 +240,53 @@ export default function ChampionshipSchedulingPage() {
 
             {/* Blocks & Game Matrix (Right - 8 cols) */}
             <div className="lg:col-span-8">
-              <Section title="Matriz de Confrontos e Sedes" subtitle="Agrupamento inteligente por sede e data">
+              <Section title="Matriz de Confrontos" subtitle="Agrupamento por data e fase">
                 <div className="space-y-6">
-                  {result.blocks.map((block: any, bi: number) => (
-                    <Card key={bi} className="fgb-card bg-white overflow-hidden shadow-sm">
+                  {(result.schedulePreview || []).map((day: any, di: number) => (
+                    <Card key={day.date} className="fgb-card bg-white overflow-hidden shadow-sm">
                       <div className="p-8 bg-[var(--gray-l)] border-b border-[var(--border)]">
                         <div className="flex justify-between items-start mb-4">
-                          <h4 className="text-2xl fgb-display text-orange-600 leading-none uppercase tracking-tight">{block.title}</h4>
-                          <span className="bg-white border border-[var(--border)] text-[var(--black)] px-3 py-1 rounded-full text-[9px] font-bold shadow-sm">BLOCO {bi + 1}</span>
+                          <h4 className="text-2xl fgb-display text-orange-600 leading-none uppercase tracking-tight">
+                            {new Date(`${day.date}T12:00:00.000Z`).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', timeZone: 'UTC' })}
+                          </h4>
+                          <span className="bg-white border border-[var(--border)] text-[var(--black)] px-3 py-1 rounded-full text-[9px] font-bold shadow-sm">DIA {di + 1}</span>
                         </div>
-                        <p className="text-[var(--gray)] text-sm font-medium leading-relaxed">{block.reason}</p>
+                        <p className="text-[var(--gray)] text-sm font-medium leading-relaxed">
+                          {day.dayOfWeek} · {day.gamesCount} jogos · {(day.categories || []).join(', ')}
+                        </p>
                       </div>
-                      
-                      <div className="p-0">
-                        {block.phases.map((phase: any, pi: number) => (
-                          <div key={pi} className="p-8 border-b last:border-0 border-[var(--border)] hover:bg-[var(--gray-l)] transition-colors">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-6">
-                              <div className="flex items-center gap-4">
-                                <div className="p-3 rounded-2xl bg-orange-50 border border-orange-100">
-                                  <MapPin className="w-5 h-5 text-orange-600" />
-                                </div>
-                                <div>
-                                  <h5 className="fgb-display text-[var(--black)] leading-none text-lg mb-1">{phase.name}</h5>
-                                  <p className="text-[var(--gray)] text-xs font-bold uppercase tracking-widest">{phase.location} • {phase.city}</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="bg-white text-[var(--black)] font-bold px-4 py-2 rounded-xl border border-[var(--border)] shadow-sm text-xs">
-                                  {new Date(phase.date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}
-                                </span>
-                                <span className="bg-[var(--amarelo)] text-[var(--black)] font-black px-4 py-2 rounded-xl text-[10px] tracking-widest shadow-sm">
-                                  {phase.matches.length} JOGOS
-                                </span>
-                              </div>
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
-                               {phase.matches.slice(0, 4).map((m: any, mi: number) => (
-                                 <div key={mi} className="p-4 bg-white rounded-2xl border border-[var(--border)] flex items-center justify-center gap-4 text-xs shadow-sm">
-                                    <span className="font-black text-[var(--black)] uppercase truncate max-w-[80px]">{m.homeTeamId.slice(0, 5)}...</span>
-                                    <span className="text-[var(--verde)] font-black italic">VS</span>
-                                    <span className="font-black text-[var(--black)] uppercase truncate max-w-[80px]">{m.awayTeamId.slice(0, 5)}...</span>
-                                 </div>
-                               ))}
-                               {phase.matches.length > 4 && (
-                                 <div className="col-span-1 md:col-span-2 text-center pt-2">
-                                    <span className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest">+ {phase.matches.length - 4} Outros Jogos Mapeados</span>
-                                 </div>
-                               )}
+                      <div className="p-8 hover:bg-[var(--gray-l)] transition-colors">
+                        <div className="flex items-center justify-between gap-6 mb-6">
+                          <div className="flex items-center gap-4">
+                            <div className="p-3 rounded-2xl bg-orange-50 border border-orange-100">
+                              <Calendar className="w-5 h-5 text-orange-600" />
+                            </div>
+                            <div>
+                              <h5 className="fgb-display text-[var(--black)] leading-none text-lg mb-1">Fase {day.phase}</h5>
+                              <p className="text-[var(--gray)] text-xs font-bold uppercase tracking-widest">{(day.categories || []).join(' + ')}</p>
                             </div>
                           </div>
-                        ))}
+                          <span className="bg-[var(--amarelo)] text-[var(--black)] font-black px-4 py-2 rounded-xl text-[10px] tracking-widest shadow-sm">
+                            {(day.timeSlots || []).length} JOGOS
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+                          {(day.timeSlots || []).slice(0, 6).map((slot: any, si: number) => (
+                            <div key={si} className="p-4 bg-white rounded-2xl border border-[var(--border)] flex items-center justify-between gap-3 text-xs shadow-sm">
+                              <span className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest min-w-[40px]">{slot.time}</span>
+                              <span className="font-black text-[var(--black)] uppercase truncate max-w-[100px]">{slot.homeTeamName}</span>
+                              <span className="text-[var(--verde)] font-black italic">VS</span>
+                              <span className="font-black text-[var(--black)] uppercase truncate max-w-[100px]">{slot.awayTeamName}</span>
+                            </div>
+                          ))}
+                          {(day.timeSlots || []).length > 6 && (
+                            <div className="col-span-1 md:col-span-2 text-center pt-2">
+                              <span className="text-[10px] font-black text-[var(--gray)] uppercase tracking-widest">+ {day.timeSlots.length - 6} Outros Jogos Mapeados</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </Card>
                   ))}
