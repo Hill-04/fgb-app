@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
-import { runDatabasePatch } from '@/lib/db-patch'
 
 export async function POST() {
-  const results = await runDatabasePatch()
-  const hasErrors = results.some((result) => result.status === 'ERROR')
-
-  return NextResponse.json({ 
-    message: 'Database patch process completed', 
-    results 
-  }, { status: hasErrors ? 500 : 200 })
+  return NextResponse.json(
+    {
+      error: 'Gone',
+      message:
+        'POST /api/admin/db-patch foi descontinuado. Use POST /api/admin/migrate (autorizado por sessão de super-admin ou header x-migrate-token).',
+      replacedBy: '/api/admin/migrate',
+    },
+    {
+      status: 410,
+      headers: {
+        Link: '</api/admin/migrate>; rel="successor-version"',
+      },
+    },
+  )
 }

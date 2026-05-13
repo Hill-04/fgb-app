@@ -1,13 +1,11 @@
 import { prisma } from '@/lib/db'
 import { NextRequest, NextResponse } from 'next/server'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensureDatabaseSchema()
     const { id } = await params
     const body = await req.json().catch(() => ({}))
     const source = body?.source ? String(body.source) : null

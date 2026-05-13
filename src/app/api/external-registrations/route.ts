@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { createExternalRegistrationWithBlocks } from '@/lib/competition-eligibility'
 
 export async function GET(request: Request) {
   try {
-    await ensureDatabaseSchema()
     const url = new URL(request.url)
     const teamId = url.searchParams.get('teamId')
     const competitionId = url.searchParams.get('externalCompetitionId')
@@ -48,7 +46,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })

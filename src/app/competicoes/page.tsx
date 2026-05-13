@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { formatChampionshipStatus } from '@/lib/utils'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
@@ -17,8 +16,6 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function CompeticoesPage() {
-  await ensureDatabaseSchema()
-
   const championships = await prisma.championship.findMany({
     where: { isSimulation: false },
     orderBy: { createdAt: 'desc' },

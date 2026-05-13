@@ -1,13 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await ensureDatabaseSchema()
     const { id } = await params
 
     const athlete = await prisma.athlete.findUnique({

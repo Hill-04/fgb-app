@@ -3,15 +3,12 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/db'
 import { authOptions } from '@/lib/auth'
 import { recalculateStandings } from '@/lib/standings'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensureDatabaseSchema()
-
     const session = await getServerSession(authOptions)
     if (!session || !(session.user as any).isAdmin) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })

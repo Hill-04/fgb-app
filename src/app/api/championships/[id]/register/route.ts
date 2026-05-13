@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { recalculateIsViable } from '@/services/registration-service'
-import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 import { checkTeamEligibility } from '@/lib/competition-eligibility'
 
 export async function POST(
@@ -11,7 +11,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     if (!session) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })

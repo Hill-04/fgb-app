@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -17,7 +17,6 @@ function codeToName(code: string): string {
 
 export async function GET() {
   try {
-    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     const isAdmin = (session?.user as any)?.isAdmin
 
@@ -40,7 +39,6 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await ensureDatabaseSchema()
     const body = await request.json()
     const {
       name, year, sex, minTeamsPerCat, categories: selectedCodes,

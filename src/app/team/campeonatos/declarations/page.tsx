@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
@@ -10,7 +9,6 @@ import { DeclarationsClient } from './DeclarationsClient'
 export const dynamic = 'force-dynamic'
 
 export default async function TeamDeclarationsPage() {
-  await ensureDatabaseSchema()
   const session = await getServerSession(authOptions)
   const teamId = (session?.user as any)?.teamId as string | undefined
   if (!teamId) redirect('/team/dashboard')

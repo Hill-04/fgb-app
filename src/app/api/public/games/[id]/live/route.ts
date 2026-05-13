@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { prisma } from '@/lib/db'
 import { buildPublicLiveSnapshot } from '@/modules/live-game/services/live-public-snapshot'
 import { LiveGameService } from '@/modules/live-game/services/live-game-service'
@@ -10,7 +9,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensureDatabaseSchema()
     const { id } = await params
     const [snapshot, scoreTimeline] = await Promise.all([
       LiveGameService.getSnapshot(id, true),

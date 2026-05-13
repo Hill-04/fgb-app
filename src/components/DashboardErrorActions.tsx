@@ -1,37 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Database, Trash2, Loader2, RefreshCw } from 'lucide-react'
+import { Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export function DashboardErrorActions({ championshipId }: { championshipId: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
   const router = useRouter()
-
-  const handleFixDb = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/admin/db-patch', { method: 'POST' })
-      if (res.ok) {
-        setSuccess(true)
-        setTimeout(() => router.refresh(), 1500)
-      } else {
-        const d = await res.json()
-        setError(d.error || 'Erro ao aplicar correção')
-      }
-    } catch (e) {
-      setError('Erro de conexão')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleDelete = async () => {
     if (!confirm('!!! ALERTA CRÍTICO !!!\nDeseja realmente EXCLUIR este campeonato mesmo estando com erro? Esta ação apagará todos os dados e não pode ser desfeita.')) return
-    
+
     setLoading(true)
     try {
       const res = await fetch(`/api/championships/${championshipId}`, { method: 'DELETE' })
@@ -51,19 +31,6 @@ export function DashboardErrorActions({ championshipId }: { championshipId: stri
     <div className="space-y-6 mt-8">
       <div className="flex flex-wrap justify-center gap-4">
         <button
-          onClick={handleFixDb}
-          disabled={loading || success}
-          className={`flex items-center gap-2 px-6 h-12 rounded-2xl border font-black text-[10px] uppercase tracking-widest transition-all shadow-sm ${
-            success 
-              ? 'bg-[var(--verde-light)] border-green-200 text-[var(--verde)]' 
-              : 'bg-[var(--yellow-light)] border-yellow-200 text-[var(--yellow-dark)] hover:border-[var(--yellow)] hover:bg-[var(--yellow)] hover:text-[var(--black)]'
-          }`}
-        >
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Database className="w-4 h-4" />}
-          {success ? 'Banco Corrigido!' : 'Auto-Corrigir Banco de Dados'}
-        </button>
-
-        <button
           onClick={handleDelete}
           disabled={loading}
           className="flex items-center gap-2 px-6 h-12 rounded-2xl bg-[var(--red-light)] border border-red-200 text-[var(--red)] font-black text-[10px] uppercase tracking-widest hover:bg-[var(--red)] hover:text-white transition-all shadow-sm"
@@ -76,12 +43,6 @@ export function DashboardErrorActions({ championshipId }: { championshipId: stri
       {error && (
         <p className="text-[var(--red)] text-[10px] font-black uppercase tracking-widest bg-[var(--red-light)] p-4 rounded-2xl border border-red-200 max-w-md mx-auto">
           {error}
-        </p>
-      )}
-
-      {success && (
-        <p className="text-[var(--verde)] text-[10px] font-black uppercase tracking-widest animate-pulse">
-          Recarregando dashboard...
         </p>
       )}
     </div>

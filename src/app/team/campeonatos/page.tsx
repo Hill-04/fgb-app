@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
@@ -16,7 +15,6 @@ export default async function TeamCampeonatosPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
-  await ensureDatabaseSchema()
   const session = await getServerSession(authOptions)
   const teamId = (session?.user as any)?.teamId as string | undefined
   if (!teamId) redirect('/team/dashboard')
