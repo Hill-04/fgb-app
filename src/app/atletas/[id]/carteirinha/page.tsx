@@ -4,7 +4,7 @@ import CarteirinhaCard from '@/components/CarteirinhaCard'
 import Link from 'next/link'
 import { ArrowLeft, Printer, CheckCircle, AlertTriangle } from 'lucide-react'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 600
 
 export default async function PublicCarteirinhaPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
