@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Atletas filiados à Federação Gaúcha de Basquete. Conheça quem veste a camisa dos clubes do RS.',
 }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 300
 
 export default async function AtletasPage() {
   const athletes = await prisma.athlete

@@ -9,7 +9,7 @@ import { PublicFooter } from '@/components/PublicFooter'
 import ShareButtons from './ShareButtons'
 import './article.css'
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 function parseTags(json: string | null): string[] {
   if (!json) return []

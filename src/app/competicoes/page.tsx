@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   description: 'Competicoes oficiais e calendarios da Federacao Gaucha de Basketball.',
 }
 
-export const dynamic = 'force-dynamic'
+export const revalidate = 60
 
 export default async function CompeticoesPage() {
   const championships = await prisma.championship.findMany({
