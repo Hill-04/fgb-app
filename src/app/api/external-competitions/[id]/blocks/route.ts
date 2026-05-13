@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
@@ -9,7 +8,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })

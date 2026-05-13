@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import {
   buildLegacyPublicLiveCompatSnapshot,
   buildPublicLiveSnapshot,
@@ -12,7 +11,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensureDatabaseSchema()
     const { id } = await params
     const rawSnapshot = await LiveGameService.getSnapshot(id, true)
     const officialSnapshot = buildPublicLiveSnapshot(rawSnapshot)

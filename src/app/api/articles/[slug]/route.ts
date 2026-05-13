@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +9,6 @@ export async function GET(
   _req: NextRequest,
   context: { params: Promise<{ slug: string }> },
 ) {
-  await ensureDatabaseSchema()
   const { slug } = await context.params
 
   const article = await prisma.article.findUnique({ where: { slug } })
@@ -34,7 +32,6 @@ export async function PATCH(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await ensureDatabaseSchema()
   const { slug } = await context.params
   const body = await req.json().catch(() => ({}))
 
@@ -60,7 +57,6 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await ensureDatabaseSchema()
   const { slug } = await context.params
 
   const article = await prisma.article.update({

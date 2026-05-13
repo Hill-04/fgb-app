@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
 export async function GET(request: Request) {
   try {
-    await ensureDatabaseSchema()
     const url = new URL(request.url)
     const season = url.searchParams.get('season')
     const isPublishedParam = url.searchParams.get('isPublished')
@@ -39,7 +38,6 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     if (!(session?.user as any)?.isAdmin) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })

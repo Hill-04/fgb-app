@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await ensureDatabaseSchema()
   const { id } = await params
   const { athleteName, athleteDoc, categoryIds } = await request.json()
 
@@ -26,7 +25,6 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await ensureDatabaseSchema()
   const { id } = await params
 
   const athletes = await withDatabaseSchemaRetry(() =>

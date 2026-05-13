@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 const LIVE_VISIBLE_STATUSES = new Set([
   'PRE_GAME_READY',
@@ -26,7 +25,6 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    await ensureDatabaseSchema()
     const { id } = await params
 
     const game = await prisma.game.findUnique({

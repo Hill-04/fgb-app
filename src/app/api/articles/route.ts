@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,8 +15,6 @@ function slugify(s: string) {
 }
 
 export async function GET(req: NextRequest) {
-  await ensureDatabaseSchema()
-
   const url = new URL(req.url)
   const category = url.searchParams.get('category')
   const limit = Math.min(Number(url.searchParams.get('limit') ?? 20), 100)
@@ -58,7 +55,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await ensureDatabaseSchema()
   const body = await req.json().catch(() => ({}))
 
   const title = String(body.title ?? '').trim()

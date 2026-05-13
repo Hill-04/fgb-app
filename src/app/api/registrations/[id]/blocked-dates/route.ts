@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema, withDatabaseSchemaRetry } from '@/lib/db-patch'
+import { withDatabaseSchemaRetry } from '@/lib/db-patch'
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await ensureDatabaseSchema()
   const { id } = await params
 
   const dates = await withDatabaseSchemaRetry(() =>
@@ -23,7 +22,6 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await ensureDatabaseSchema()
   const { id } = await params
   const { startDate, endDate, reason, affectsAllCats } = await request.json()
 
@@ -88,7 +86,6 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  await ensureDatabaseSchema()
   const { id } = await params
   const { dateId } = await request.json()
 

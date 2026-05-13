@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { liftRegistrationBlock } from '@/lib/competition-eligibility'
@@ -9,7 +8,6 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await ensureDatabaseSchema()
     const session = await getServerSession(authOptions)
     if (!session?.user || !(session.user as any).isAdmin) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })

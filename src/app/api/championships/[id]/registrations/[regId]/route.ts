@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/db'
 import { NextResponse } from 'next/server'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { syncTeamTotalFeesOwed } from '@/lib/fees-server'
 import {
   assertRegistrationHasBillableFees,
@@ -13,7 +12,6 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string; regId: string }> }
 ) {
   const { regId } = await params
-  await ensureDatabaseSchema()
   const body = await request.json()
   const {
     teamId,
@@ -122,8 +120,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; regId: string }> }
 ) {
   const { regId } = await params
-  await ensureDatabaseSchema()
-  
+
   try {
     const registration = await prisma.registration.findUnique({
       where: { id: regId },

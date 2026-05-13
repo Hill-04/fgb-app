@@ -4,7 +4,6 @@ import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { ChevronRight } from 'lucide-react'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import ShareButtons from './ShareButtons'
@@ -37,7 +36,6 @@ export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
   const { slug } = await params
-  await ensureDatabaseSchema().catch(() => {})
 
   const article = await prisma.article
     .findUnique({ where: { slug } })
@@ -75,7 +73,6 @@ export default async function ArticlePage(
   { params }: { params: Promise<{ slug: string }> },
 ) {
   const { slug } = await params
-  await ensureDatabaseSchema().catch(() => {})
 
   const article = await prisma.article
     .findUnique({ where: { slug } })

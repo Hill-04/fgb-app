@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { prisma } from '@/lib/db'
-import { ensureDatabaseSchema } from '@/lib/db-patch'
 import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import PortalClient from './PortalClient'
@@ -27,8 +26,6 @@ export const metadata: Metadata = {
 }
 
 export default async function PortalPage() {
-  await ensureDatabaseSchema().catch(() => {})
-
   const articles = await prisma.article
     .findMany({
       where: { isPublished: true },
