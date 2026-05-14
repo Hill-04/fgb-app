@@ -32,13 +32,27 @@ async function safeCount<T>(fn: () => Promise<T>, label: string): Promise<T | { 
   }
 }
 
+function normalizeName(s: string): string {
+  return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().replace(/[^a-z0-9]/g, '')
+}
+
 export async function GET(req: Request) {
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
   }
 
   const startedAt = Date.now()
+  const url = new URL(req.url)
+  const mode = url.searchParams.get('mode')
 
+  if (mode === 'deep') {
+    return getDeepAudit(startedAt)
+  }
+
+  return getDefaultAudit(startedAt)
+}
+
+async function getDefaultAudit(startedAt: number) {
   const counts = {
     users: await safeCount(() => prisma.user.count(), 'users'),
     teams: await safeCount(() => prisma.team.count(), 'teams'),
@@ -108,6 +122,181 @@ export async function GET(req: Request) {
     ok: true,
     counts,
     samples,
+    elapsedMs: Date.now() - startedAt,
+    timestamp: new Date().toISOString(),
+  })
+}
+
+async function getDeepAudit(startedAt: number) {
+  const articles = await safeCount(
+    () =>
+      prisma.article.findMany({
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          subtitle: true,
+          author: true,
+          isPublished: true,
+          publishedAt: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'articles'
+  )
+
+  const athletesTotal = await safeCount(() => prisma.athlete.count(), 'athletes.totalCount')
+
+  const athletesByBatch = await safeCount(async () => {
+    const rows = await prisma.$queryRaw<Array<{ batch: string; n: bigint }>>`
+      SELECT strftime('%Y-%m-%d %H:%M', "createdAt") as batch, COUNT(*) as n
+      FROM "Athlete"
+      GROUP BY batch
+      ORDER BY batch DESC
+      LIMIT 20
+    `
+    return rows.map((r) => ({ batch: r.batch, count: Number(r.n) }))
+  }, 'athletes.byBatch')
+
+  const athletesIsolatedRecent = await safeCount(
+    () =>
+      prisma.athlete.findMany({
+        take: 10,
+        select: {
+          id: true,
+          name: true,
+          situation: true,
+          teamId: true,
+          registrationNumber: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'athletes.isolatedRecent'
+  )
+
+  const athletesWithRegistrationNumber = await safeCount(
+    () => prisma.athlete.count({ where: { registrationNumber: { not: null } } }),
+    'athletes.withRegistrationNumber'
+  )
+
+  const athletesWithoutRegistrationNumber = await safeCount(
+    () => prisma.athlete.count({ where: { registrationNumber: null } }),
+    'athletes.withoutRegistrationNumber'
+  )
+
+  const teamsRaw = await safeCount(
+    () =>
+      prisma.team.findMany({
+        select: {
+          id: true,
+          name: true,
+          city: true,
+          createdAt: true,
+          _count: { select: { athletes: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'teams'
+  )
+
+  type TeamItem = { id: string; name: string; city: string | null; createdAt: Date; athleteCount: number }
+  let teams: TeamItem[] | { _error: string } = teamsRaw as any
+  let teamsDuplicateCandidates: Array<{ groupKey: string; teams: TeamItem[] }> = []
+
+  if (Array.isArray(teamsRaw)) {
+    teams = teamsRaw.map((t) => ({
+      id: t.id,
+      name: t.name,
+      city: t.city,
+      createdAt: t.createdAt,
+      athleteCount: (t as any)._count?.athletes ?? 0,
+    }))
+    const grouped = new Map<string, TeamItem[]>()
+    for (const t of teams) {
+      const key = normalizeName(t.name)
+      if (!grouped.has(key)) grouped.set(key, [])
+      grouped.get(key)!.push(t)
+    }
+    for (const [groupKey, groupTeams] of grouped.entries()) {
+      if (groupTeams.length > 1) {
+        teamsDuplicateCandidates.push({ groupKey, teams: groupTeams })
+      }
+    }
+  }
+
+  const users = await safeCount(
+    () =>
+      prisma.user.findMany({
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          isAdmin: true,
+          isFederationSuperAdmin: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'users'
+  )
+
+  const coachStaff = await safeCount(
+    () =>
+      prisma.coachStaff.findMany({
+        select: { id: true, name: true, role: true, teamId: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 50,
+      }),
+    'coachStaff'
+  )
+
+  const championships = await safeCount(
+    () =>
+      prisma.championship.findMany({
+        select: { id: true, name: true, year: true, status: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'championships'
+  )
+
+  const financialInvoices = await safeCount(
+    () =>
+      prisma.financialInvoice.findMany({
+        select: {
+          id: true,
+          number: true,
+          teamId: true,
+          status: true,
+          totalCents: true,
+          paidCents: true,
+          balanceCents: true,
+          issueDate: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'financialInvoices'
+  )
+
+  return NextResponse.json({
+    ok: true,
+    mode: 'deep',
+    articles,
+    athletes: {
+      totalCount: athletesTotal,
+      byBatch: athletesByBatch,
+      isolatedRecent: athletesIsolatedRecent,
+      withRegistrationNumber: athletesWithRegistrationNumber,
+      withoutRegistrationNumber: athletesWithoutRegistrationNumber,
+    },
+    teams,
+    teamsDuplicateCandidates,
+    users,
+    coachStaff,
+    championships,
+    financialInvoices,
     elapsedMs: Date.now() - startedAt,
     timestamp: new Date().toISOString(),
   })
