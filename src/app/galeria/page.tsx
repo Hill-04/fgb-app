@@ -9,14 +9,14 @@ export const metadata: Metadata = {
 }
 
 const photos = [
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436798402_17959816394740627_7133097296869973522_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436953622_17959816355740627_4207539994510205825_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436783444_17959816358740627_458700201676952614_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436770135_17959816367740627_7240870606236286883_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436799064_17959816340740627_3850140963121385520_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436783538_17959816376740627_400857416916956698_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436916325_17959816385740627_2253289532628306366_n.jpg', alt: 'FGB - Basquete Gaucho' },
-  { src: 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Img-022.jpg', alt: 'FGB - Estadual Masculino' },
+  { src: '/images/gallery/01.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/02.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/03.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/04.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/05.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/06.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/07.jpg', alt: 'FGB - Basquete Gaucho' },
+  { src: '/images/gallery/estadual-masculino.jpg', alt: 'FGB - Estadual Masculino' },
 ]
 
 export default function GaleriaPage() {

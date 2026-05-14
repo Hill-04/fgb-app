@@ -58,7 +58,7 @@ export default function LoginPage() {
         <div className="hidden lg:flex flex-col max-w-lg mb-12 lg:mb-0">
           <Link href="/" className="flex items-center gap-4 mb-12 group inline-flex w-fit">
             <div className="w-12 h-12 flex items-center justify-center rounded bg-[var(--verde)] shrink-0 shadow-sm relative overflow-hidden">
-               <img src="https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png" alt="FGB" className="w-8 h-8 object-contain" />
+               <img src="/images/fgb-logo.png" alt="FGB" className="w-8 h-8 object-contain" />
             </div>
             <div className="leading-none">
               <div className="fgb-display text-sm text-[var(--black)]">Federação Gaúcha</div>
@@ -91,7 +91,7 @@ export default function LoginPage() {
                {/* Mobile Logo */}
                <div className="lg:hidden flex justify-center mb-6">
                  <Link href="/" className="w-12 h-12 flex items-center justify-center rounded bg-[var(--verde)] shadow-sm relative overflow-hidden">
-                   <img src="https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png" alt="FGB" className="w-8 h-8 object-contain" />
+                   <img src="/images/fgb-logo.png" alt="FGB" className="w-8 h-8 object-contain" />
                  </Link>
                </div>
               <h1 className="fgb-display text-2xl md:text-3xl text-[var(--black)] mb-2">

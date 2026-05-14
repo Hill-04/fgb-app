@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation'
 export const dynamic = 'force-dynamic'
 
 const LOGO_URL =
-  'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
+  '/images/fgb-logo.png'
 
 function n(v: number | null | undefined) {
   return (v ?? 0).toString()

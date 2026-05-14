@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     siteName: 'FGB - Federacao Gaucha de Basketball',
     images: [
       {
-        url: 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png',
+        url: '/images/fgb-logo.png',
         width: 1200,
         height: 630,
         alt: 'FGB',
@@ -69,7 +69,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'FGB — Federacao Gaucha de Basketball',
     description: 'Gestao oficial de campeonatos de basquete do Rio Grande do Sul.',
-    images: ['https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'],
+    images: ['/images/fgb-logo.png'],
   },
 };
 

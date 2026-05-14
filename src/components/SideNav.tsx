@@ -121,7 +121,7 @@ export function SideNav({ role, teamName, className, onItemClick, width }: SideN
       <div style={{ padding: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', gap: 10 }}>
         <div className="relative flex-shrink-0" style={{ width: 32, height: 32 }}>
           <Image
-            src="https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png"
+            src="/images/fgb-logo.png"
             alt="FGB"
             fill
             className="object-contain"

@@ -7,14 +7,14 @@ import { PublicHeader } from '@/components/PublicHeader'
 import { PublicFooter } from '@/components/PublicFooter'
 import { SponsorsStrip } from '@/components/public/SponsorsStrip'
 
-const FGB_LOGO = 'https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png'
+const FGB_LOGO = '/images/fgb-logo.png'
 const GALLERY_IMAGES = [
-  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436798402_17959816394740627_7133097296869973522_n.jpg',
-  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436953622_17959816355740627_4207539994510205825_n.jpg',
-  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436783444_17959816358740627_458700201676952614_n.jpg',
-  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436770135_17959816367740627_7240870606236286883_n.jpg',
-  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436799064_17959816340740627_3850140963121385520_n.jpg',
-  'https://basquetegaucho.com.br/wp-content/uploads/2024/04/436783538_17959816376740627_400857416916956698_n.jpg',
+  '/images/gallery/01.jpg',
+  '/images/gallery/02.jpg',
+  '/images/gallery/03.jpg',
+  '/images/gallery/04.jpg',
+  '/images/gallery/05.jpg',
+  '/images/gallery/06.jpg',
 ]
 
 export default async function HomePage() {
