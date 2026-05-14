@@ -1282,6 +1282,8 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'Category_order_idx', sql: 'CREATE INDEX IF NOT EXISTS "Category_order_idx" ON "Category"("order");' },
   { kind: 'sql', name: 'Category_isActive_idx', sql: 'CREATE INDEX IF NOT EXISTS "Category_isActive_idx" ON "Category"("isActive");' },
   { kind: 'column', table: 'ChampionshipCategory', column: 'categoryTemplateId', sql: 'ALTER TABLE "ChampionshipCategory" ADD COLUMN "categoryTemplateId" TEXT;', critical: true },
+  // PM-06.3: institutionalEmail no Team
+  { kind: 'column', table: 'Team', column: 'institutionalEmail', sql: 'ALTER TABLE "Team" ADD COLUMN "institutionalEmail" TEXT;', critical: true },
 ]
 
 let schemaEnsured = false

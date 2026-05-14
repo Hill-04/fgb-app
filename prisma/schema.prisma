@@ -40,6 +40,8 @@ model Team {
   totalFeesOwed       Float                @default(0)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  // Email institucional do clube (do Clubes.csv FGB legacy)
+  institutionalEmail  String?
   // Diretoria
   presidentName       String?
   presidentPhone      String?
