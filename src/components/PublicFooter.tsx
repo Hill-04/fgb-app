@@ -15,7 +15,7 @@ export function PublicFooter() {
             <div className="flex items-center gap-3 mb-5">
               <div className="relative w-10 h-10 flex-shrink-0">
                 <Image
-                  src="https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png"
+                  src="/images/fgb-logo.png"
                   alt="FGB" fill className="object-contain" unoptimized
                 />
               </div>

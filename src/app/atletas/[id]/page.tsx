@@ -59,7 +59,7 @@ export default async function AthleteProfilePage({ params }: Props) {
 
       {/* HERO DO ATLETA */}
       <div className="bg-[var(--vercel-dark)] text-white relative overflow-hidden pt-12 pb-24">
-        <div className="absolute inset-0 bg-[url('https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png')] bg-no-repeat bg-center opacity-5 pointer-events-none scale-150" />
+        <div className="absolute inset-0 bg-[url('/images/fgb-logo.png')] bg-no-repeat bg-center opacity-5 pointer-events-none scale-150" />
         
         <div className="max-w-6xl mx-auto px-4 relative z-10 flex flex-col md:flex-row items-center gap-12">
           

@@ -121,7 +121,7 @@ export function PublicHeader() {
           <Link href="/" className="flex items-center gap-3 flex-shrink-0">
             <div className="relative w-9 h-9">
               <Image
-                src="https://basquetegaucho.com.br/wp-content/uploads/2023/09/Federacao-Gaucha-de-Basketball-Logo-01.png"
+                src="/images/fgb-logo.png"
                 alt="FGB" fill className="object-contain" priority unoptimized
               />
             </div>
