@@ -49,6 +49,10 @@ export async function GET(req: Request) {
     return getDeepAudit(startedAt)
   }
 
+  if (mode === 'athletes-review') {
+    return getAthletesReview(startedAt)
+  }
+
   return getDefaultAudit(startedAt)
 }
 
@@ -297,6 +301,171 @@ async function getDeepAudit(startedAt: number) {
     coachStaff,
     championships,
     financialInvoices,
+    elapsedMs: Date.now() - startedAt,
+    timestamp: new Date().toISOString(),
+  })
+}
+
+async function getAthletesReview(startedAt: number) {
+  // Discover test teams dynamically: created on 2026-03-27 (UTC) with athletes attached
+  const testTeamsRaw = await safeCount(
+    () =>
+      prisma.team.findMany({
+        where: {
+          createdAt: {
+            gte: new Date('2026-03-27T00:00:00.000Z'),
+            lt: new Date('2026-03-28T00:00:00.000Z'),
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          city: true,
+          createdAt: true,
+          _count: { select: { athletes: true } },
+        },
+      }),
+    'testTeams'
+  )
+
+  type TestTeamMeta = { id: string; name: string; city: string | null; createdAt: Date; athleteCount: number }
+  let testTeamsIdentified: TestTeamMeta[] = []
+  let testTeamIds: string[] = []
+  if (Array.isArray(testTeamsRaw)) {
+    testTeamsIdentified = testTeamsRaw
+      .filter((t) => ((t as any)._count?.athletes ?? 0) > 0)
+      .map((t) => ({
+        id: t.id,
+        name: t.name,
+        city: t.city,
+        createdAt: t.createdAt,
+        athleteCount: (t as any)._count?.athletes ?? 0,
+      }))
+    testTeamIds = testTeamsIdentified.map((t) => t.id)
+  }
+
+  // Athletes stuck in test teams, grouped by teamId
+  const stuckRaw = await safeCount(
+    async () => {
+      if (testTeamIds.length === 0) return []
+      return prisma.athlete.findMany({
+        where: { teamId: { in: testTeamIds } },
+        select: {
+          id: true,
+          name: true,
+          registrationNumber: true,
+          situation: true,
+          createdAt: true,
+          teamId: true,
+          team: { select: { name: true } },
+        },
+        orderBy: [{ teamId: 'asc' }, { name: 'asc' }],
+      })
+    },
+    'athletesStuckInTestTeams'
+  )
+
+  type StuckGroup = {
+    teamId: string
+    teamName: string | null
+    athleteCount: number
+    athletes: Array<{
+      id: string
+      name: string
+      registrationNumber: number | null
+      situation: string
+      createdAt: Date
+    }>
+  }
+  let athletesStuckInTestTeams: StuckGroup[] | { _error: string } = stuckRaw as any
+  if (Array.isArray(stuckRaw)) {
+    const grouped = new Map<string, StuckGroup>()
+    for (const a of stuckRaw) {
+      const tid = (a as any).teamId ?? 'null'
+      if (!grouped.has(tid)) {
+        grouped.set(tid, {
+          teamId: tid,
+          teamName: (a as any).team?.name ?? null,
+          athleteCount: 0,
+          athletes: [],
+        })
+      }
+      const g = grouped.get(tid)!
+      g.athleteCount += 1
+      g.athletes.push({
+        id: a.id,
+        name: a.name,
+        registrationNumber: (a as any).registrationNumber,
+        situation: (a as any).situation,
+        createdAt: a.createdAt,
+      })
+    }
+    athletesStuckInTestTeams = Array.from(grouped.values())
+  }
+
+  // Athletes with no registrationNumber and not in test teams (manual entries)
+  const manualRaw = await safeCount(
+    () =>
+      prisma.athlete.findMany({
+        where: {
+          registrationNumber: null,
+          ...(testTeamIds.length > 0 ? { NOT: { teamId: { in: testTeamIds } } } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          situation: true,
+          createdAt: true,
+          teamId: true,
+          team: { select: { name: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+    'athletesManualEntries'
+  )
+
+  const MANUAL_TRUNCATE = 200
+  type ManualEntry = {
+    id: string
+    name: string
+    situation: string
+    createdAt: Date
+    teamId: string | null
+    teamName: string | null
+  }
+  let manualEntriesPayload:
+    | {
+        totalCount: number
+        truncated: boolean
+        truncatedAt: number | null
+        athletes: ManualEntry[]
+      }
+    | { _error: string } = manualRaw as any
+  if (Array.isArray(manualRaw)) {
+    const total = manualRaw.length
+    const truncated = total > MANUAL_TRUNCATE
+    const slice = truncated ? manualRaw.slice(0, MANUAL_TRUNCATE) : manualRaw
+    manualEntriesPayload = {
+      totalCount: total,
+      truncated,
+      truncatedAt: truncated ? MANUAL_TRUNCATE : null,
+      athletes: slice.map((a) => ({
+        id: a.id,
+        name: a.name,
+        situation: (a as any).situation,
+        createdAt: a.createdAt,
+        teamId: (a as any).teamId,
+        teamName: (a as any).team?.name ?? null,
+      })),
+    }
+  }
+
+  return NextResponse.json({
+    ok: true,
+    mode: 'athletes-review',
+    testTeamsIdentified,
+    athletesStuckInTestTeams,
+    athletesManualEntries: manualEntriesPayload,
     elapsedMs: Date.now() - startedAt,
     timestamp: new Date().toISOString(),
   })
