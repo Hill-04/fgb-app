@@ -1260,6 +1260,28 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'HistoricalDataAuditLog_entity_idx', sql: 'CREATE INDEX IF NOT EXISTS "HistoricalDataAuditLog_entityType_entityId_idx" ON "HistoricalDataAuditLog"("entityType","entityId")' },
   { kind: 'sql', name: 'HistoricalDataAuditLog_performedBy_idx', sql: 'CREATE INDEX IF NOT EXISTS "HistoricalDataAuditLog_performedByUserId_idx" ON "HistoricalDataAuditLog"("performedByUserId")' },
   { kind: 'sql', name: 'HistoricalDataAuditLog_performedAt_idx', sql: 'CREATE INDEX IF NOT EXISTS "HistoricalDataAuditLog_performedAt_idx" ON "HistoricalDataAuditLog"("performedAt")' },
+
+  // PM-06.0: Category catalog (global category templates)
+  {
+    kind: 'table',
+    table: 'Category',
+    sql: `CREATE TABLE IF NOT EXISTS "Category" (
+      "id" TEXT PRIMARY KEY,
+      "name" TEXT NOT NULL UNIQUE,
+      "order" INTEGER NOT NULL UNIQUE,
+      "maxAge" INTEGER,
+      "minPlayers" INTEGER NOT NULL DEFAULT 8,
+      "isActive" INTEGER NOT NULL DEFAULT 1,
+      "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );`,
+    critical: true,
+  },
+  { kind: 'sql', name: 'Category_name_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "Category_name_key" ON "Category"("name");' },
+  { kind: 'sql', name: 'Category_order_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "Category_order_key" ON "Category"("order");' },
+  { kind: 'sql', name: 'Category_order_idx', sql: 'CREATE INDEX IF NOT EXISTS "Category_order_idx" ON "Category"("order");' },
+  { kind: 'sql', name: 'Category_isActive_idx', sql: 'CREATE INDEX IF NOT EXISTS "Category_isActive_idx" ON "Category"("isActive");' },
+  { kind: 'column', table: 'ChampionshipCategory', column: 'categoryTemplateId', sql: 'ALTER TABLE "ChampionshipCategory" ADD COLUMN "categoryTemplateId" TEXT;', critical: true },
 ]
 
 let schemaEnsured = false
