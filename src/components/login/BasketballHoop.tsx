@@ -21,8 +21,8 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const [showHint, setShowHint] = useState(true)
-  const [isAnimating, setIsAnimating] = useState(false)
-  const [isDragging, setIsDragging] = useState(false)
+  const isAnimatingRef = useRef(false)
+  const isDraggingRef = useRef(false)
 
   const ballPosRef = useRef({ x: BALL_HOME.x, y: BALL_HOME.y })
   const dragHistoryRef = useRef<Array<{ x: number; y: number; time: number }>>([])
@@ -139,7 +139,8 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
   }
 
   function throwBall(vx: number, vy: number) {
-    setIsAnimating(true)
+    console.log('[BasketballHoop] throwBall START', { vx, vy, ballPos: ballPosRef.current })
+    isAnimatingRef.current = true
     setShowHint(false)
     if (ballGroupRef.current) {
       ballGroupRef.current.classList.add('ball-spin')
@@ -148,8 +149,10 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
     let dx = vx
     let dy = vy
     let didScore = false
+    let frameCount = 0
 
     function frame() {
+      frameCount++
       const newX = ballPosRef.current.x + dx
       const newY = ballPosRef.current.y + dy
       setBallTransform(newX, newY)
@@ -160,13 +163,15 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
         const distY = Math.abs(newY - RIM_CENTER.y)
         if (distX < RIM_WIDTH && distY < RIM_HEIGHT) {
           didScore = true
+          console.log('[BasketballHoop] SCORE!', { newX, newY })
           handleScore()
         }
       }
 
       const outOfBounds = newY > 400 || newX < -80 || newX > 580
       if (outOfBounds) {
-        setIsAnimating(false)
+        console.log('[BasketballHoop] throwBall END', { frameCount, didScore, finalPos: { x: newX, y: newY } })
+        isAnimatingRef.current = false
         if (ballGroupRef.current) {
           ballGroupRef.current.classList.remove('ball-spin')
         }
@@ -187,15 +192,15 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
     if (!ballGroup) return
 
     function handleStart(clientX: number, clientY: number, e?: Event) {
-      if (isAnimating) return
-      setIsDragging(true)
+      if (isAnimatingRef.current) return
+      isDraggingRef.current = true
       const svgPt = screenToSvg(clientX, clientY)
       dragHistoryRef.current = [{ x: svgPt.x, y: svgPt.y, time: performance.now() }]
       e?.preventDefault()
     }
 
     function handleMove(clientX: number, clientY: number, e?: Event) {
-      if (!isDragging) return
+      if (!isDraggingRef.current) return
       e?.preventDefault()
       const svgPt = screenToSvg(clientX, clientY)
       const now = performance.now()
@@ -205,11 +210,12 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
     }
 
     function handleEnd(e?: Event) {
-      if (!isDragging) return
-      setIsDragging(false)
+      if (!isDraggingRef.current) return
+      isDraggingRef.current = false
       e?.preventDefault()
       const history = dragHistoryRef.current
       if (history.length < 2) {
+        console.log('[BasketballHoop] handleEnd: history < 2, returning to home')
         animateBallTo(BALL_HOME.x, BALL_HOME.y, 300)
         return
       }
@@ -219,7 +225,9 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
       const dx = last.x - first.x
       const dy = last.y - first.y
       const distance = Math.sqrt(dx * dx + dy * dy)
+      console.log('[BasketballHoop] handleEnd', { dx, dy, dt, distance })
       if (distance < 30 || dt > 0.4) {
+        console.log('[BasketballHoop] handleEnd: drag too small/slow, returning to home')
         animateBallTo(BALL_HOME.x, BALL_HOME.y, 300)
         return
       }
@@ -237,7 +245,7 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
       handleStart(t.clientX, t.clientY, e)
     }
     const onTouchMove = (e: TouchEvent) => {
-      if (!isDragging) return
+      if (!isDraggingRef.current) return
       const t = e.touches[0]
       handleMove(t.clientX, t.clientY, e)
     }
@@ -258,7 +266,7 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
       window.removeEventListener('touchmove', onTouchMove)
       window.removeEventListener('touchend', onTouchEnd)
     }
-  }, [isDragging, isAnimating])
+  }, [])
 
   useEffect(() => {
     setBallTransform(BALL_HOME.x, BALL_HOME.y)

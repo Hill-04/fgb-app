@@ -63,20 +63,20 @@ export default function LoginPage() {
         {/* Left Side Content (Desktop) */}
         <div className="hidden lg:flex flex-col max-w-lg mb-12 lg:mb-0">
           <Link href="/" className="flex items-center gap-4 mb-8 group inline-flex w-fit">
-            <div className="w-12 h-12 flex items-center justify-center rounded bg-[var(--verde)] shrink-0 shadow-sm relative overflow-hidden">
+            <div className={`w-12 h-12 flex items-center justify-center rounded shrink-0 shadow-sm relative overflow-hidden transition-colors duration-600 ${scored ? 'bg-white' : 'bg-[var(--verde)]'}`}>
                <img src="/images/fgb-logo.png" alt="FGB" className="w-8 h-8 object-contain" />
             </div>
             <div className="leading-none">
-              <div className="fgb-display text-sm text-[var(--black)]">Federação Gaúcha</div>
-              <div className="fgb-label text-[var(--verde)] mt-1">de Basketball</div>
+              <div className={`fgb-display text-sm transition-colors duration-600 ${scored ? 'text-white' : 'text-[var(--black)]'}`}>Federação Gaúcha</div>
+              <div className={`fgb-label mt-1 transition-colors duration-600 ${scored ? 'text-[var(--yellow)]' : 'text-[var(--verde)]'}`}>de Basketball</div>
             </div>
           </Link>
 
           <BasketballHoop onScore={toggleScored} className="mb-8" />
 
-          <div className="inline-flex items-center gap-2 border border-[var(--border)] bg-white px-4 py-2 rounded-full w-fit shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-[var(--verde)] animate-pulse" />
-            <span className="fgb-label text-[var(--black)]">
+          <div className={`inline-flex items-center gap-2 border px-4 py-2 rounded-full w-fit shadow-sm transition-colors duration-600 ${scored ? 'border-white/30 bg-white/10 backdrop-blur-sm' : 'border-[var(--border)] bg-white'}`}>
+            <span className={`w-2 h-2 rounded-full animate-pulse ${scored ? 'bg-[var(--yellow)]' : 'bg-[var(--verde)]'}`} />
+            <span className={`fgb-label transition-colors duration-600 ${scored ? 'text-white' : 'text-[var(--black)]'}`}>
               Temporada 2026 ativa
             </span>
           </div>
