@@ -7,10 +7,13 @@ import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import { BasketballHoop } from '@/components/login/BasketballHoop'
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [scored, setScored] = useState(false)
+  const toggleScored = () => setScored(s => !s)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -44,7 +47,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--gray-l)] flex relative overflow-hidden selection:bg-[var(--verde)] selection:text-white">
+    <div
+      data-scored={scored}
+      className={`min-h-screen flex relative overflow-hidden selection:bg-[var(--verde)] selection:text-white transition-colors duration-600 ${scored ? 'bg-[#1B7340]' : 'bg-[var(--gray-l)]'}`}
+    >
       {/* Background decoration */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#1B734008_1px,transparent_1px),linear-gradient(to_bottom,#1B734008_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
@@ -56,7 +62,7 @@ export default function LoginPage() {
         
         {/* Left Side Content (Desktop) */}
         <div className="hidden lg:flex flex-col max-w-lg mb-12 lg:mb-0">
-          <Link href="/" className="flex items-center gap-4 mb-12 group inline-flex w-fit">
+          <Link href="/" className="flex items-center gap-4 mb-8 group inline-flex w-fit">
             <div className="w-12 h-12 flex items-center justify-center rounded bg-[var(--verde)] shrink-0 shadow-sm relative overflow-hidden">
                <img src="/images/fgb-logo.png" alt="FGB" className="w-8 h-8 object-contain" />
             </div>
@@ -66,14 +72,7 @@ export default function LoginPage() {
             </div>
           </Link>
 
-          <h2 className="fgb-display leading-[1.05] text-[var(--black)] mb-6" style={{ fontSize: 'clamp(2.5rem, 5vw, 4rem)' }}>
-            Bem-vindo<br />
-            <span className="verde">de volta.</span>
-          </h2>
-          
-          <p className="fgb-label text-[var(--gray)] max-w-sm mb-10" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 14, lineHeight: 1.6 }}>
-            Acesse sua conta para gerenciar inscrições, calendário e documentos oficiais da sua equipe na plataforma da FGB.
-          </p>
+          <BasketballHoop onScore={toggleScored} className="mb-8" />
 
           <div className="inline-flex items-center gap-2 border border-[var(--border)] bg-white px-4 py-2 rounded-full w-fit shadow-sm">
             <span className="w-2 h-2 rounded-full bg-[var(--verde)] animate-pulse" />
@@ -85,7 +84,7 @@ export default function LoginPage() {
 
         {/* Right Side - Form Card */}
         <div className="w-full max-w-md">
-          <div className="fgb-card p-8 md:p-10 relative overflow-hidden">
+          <div className={`fgb-card p-8 md:p-10 relative overflow-hidden transition-shadow duration-600 ${scored ? 'shadow-[0_20px_50px_rgba(0,0,0,0.3)]' : ''}`}>
             
             <div className="mb-8 text-center lg:text-left relative z-10">
                {/* Mobile Logo */}
