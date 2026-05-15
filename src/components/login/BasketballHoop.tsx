@@ -9,8 +9,8 @@ interface BasketballHoopProps {
 
 const BALL_HOME = { x: 100, y: 340 }
 const RIM_CENTER = { x: 248, y: 142 }
-const RIM_WIDTH = 36
-const RIM_HEIGHT = 18
+const RIM_WIDTH = 42
+const RIM_HEIGHT = 22
 
 export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps) {
   const svgRef = useRef<SVGSVGElement>(null)
@@ -140,6 +140,16 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
 
   function throwBall(vx: number, vy: number) {
     console.log('[BasketballHoop] throwBall START', { vx, vy, ballPos: ballPosRef.current })
+
+    if (!isFinite(vx) || !isFinite(vy)) {
+      console.error('[BasketballHoop] throwBall: vx ou vy inválidos, abortando')
+      if (ballGroupRef.current) {
+        ballGroupRef.current.classList.remove('ball-spin')
+      }
+      animateBallTo(BALL_HOME.x, BALL_HOME.y, 300)
+      return
+    }
+
     isAnimatingRef.current = true
     setShowHint(false)
     if (ballGroupRef.current) {
@@ -209,37 +219,56 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
       dragHistoryRef.current = dragHistoryRef.current.filter(p => now - p.time < 150)
     }
 
-    function handleEnd(e?: Event) {
+    function handleEnd(clientX: number | null, clientY: number | null, e?: Event) {
       if (!isDraggingRef.current) return
       isDraggingRef.current = false
       e?.preventDefault()
+
+      if (clientX !== null && clientY !== null) {
+        const svgPt = screenToSvg(clientX, clientY)
+        dragHistoryRef.current.push({ x: svgPt.x, y: svgPt.y, time: performance.now() })
+      }
+
       const history = dragHistoryRef.current
+      console.log('[BasketballHoop] handleEnd, history.length =', history.length)
+
       if (history.length < 2) {
-        console.log('[BasketballHoop] handleEnd: history < 2, returning to home')
+        console.log('[BasketballHoop] handleEnd: still < 2, returning home')
         animateBallTo(BALL_HOME.x, BALL_HOME.y, 300)
         return
       }
-      const last = history[history.length - 1]
+
       const first = history[0]
-      const dt = (last.time - first.time) / 1000
+      const last = history[history.length - 1]
       const dx = last.x - first.x
       const dy = last.y - first.y
       const distance = Math.sqrt(dx * dx + dy * dy)
-      console.log('[BasketballHoop] handleEnd', { dx, dy, dt, distance })
-      if (distance < 30 || dt > 0.4) {
-        console.log('[BasketballHoop] handleEnd: drag too small/slow, returning to home')
+
+      console.log('[BasketballHoop] handleEnd', { dx, dy, distance, history_len: history.length })
+
+      if (distance < 30) {
+        console.log('[BasketballHoop] handleEnd: distance < 30, returning home')
         animateBallTo(BALL_HOME.x, BALL_HOME.y, 300)
         return
       }
-      const speedScale = 0.012
-      const vx = (dx / dt) * speedScale
-      const vy = (dy / dt) * speedScale - 4
+
+      const angle = Math.atan2(dy, dx)
+      const minPower = 8
+      const maxPower = 15
+      const throwPower = Math.min(maxPower, minPower + (distance / 60))
+
+      const vx = Math.cos(angle) * throwPower
+      const verticalBias = dy < 0 ? -2 : 0
+      const vy = Math.sin(angle) * throwPower + verticalBias
+
+      console.log('[BasketballHoop] computed throw:', { angle: (angle * 180 / Math.PI).toFixed(1) + '°', throwPower: throwPower.toFixed(2), vx: vx.toFixed(2), vy: vy.toFixed(2) })
+
       throwBall(vx, vy)
     }
 
     const onMouseDown = (e: MouseEvent) => handleStart(e.clientX, e.clientY, e)
     const onMouseMove = (e: MouseEvent) => handleMove(e.clientX, e.clientY, e)
-    const onMouseUp = (e: MouseEvent) => handleEnd(e)
+    const onMouseUp = (e: MouseEvent) => handleEnd(e.clientX, e.clientY, e)
     const onTouchStart = (e: TouchEvent) => {
       const t = e.touches[0]
       handleStart(t.clientX, t.clientY, e)
@@ -249,7 +278,14 @@ export function BasketballHoop({ onScore, className = '' }: BasketballHoopProps)
       const t = e.touches[0]
       handleMove(t.clientX, t.clientY, e)
     }
-    const onTouchEnd = (e: TouchEvent) => handleEnd(e)
+    const onTouchEnd = (e: TouchEvent) => {
+      const t = e.changedTouches[0]
+      if (t) {
+        handleEnd(t.clientX, t.clientY, e)
+      } else {
+        handleEnd(null, null, e)
+      }
+    }
 
     ballGroup.addEventListener('mousedown', onMouseDown)
     window.addEventListener('mousemove', onMouseMove)
