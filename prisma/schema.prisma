@@ -40,6 +40,8 @@ model Team {
   totalFeesOwed       Float                @default(0)
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
+  // Email institucional do clube (do Clubes.csv FGB legacy)
+  institutionalEmail  String?
   // Diretoria
   presidentName       String?
   presidentPhone      String?
@@ -186,20 +188,38 @@ model Championship {
 }
 
 model ChampionshipCategory {
-  id             String                 @id @default(uuid())
-  name           String
-  championshipId String
-  isViable       Boolean                @default(false)
-  minBirthYear   Int?
-  maxBirthYear   Int?
-  modality       String                 @default("5x5")
-  championship   Championship           @relation(fields: [championshipId], references: [id], onDelete: Cascade)
-  games          Game[]
-  registrations  RegistrationCategory[]
-  standings      Standing[]
-  phaseEntries   ChampionshipPhaseCategory[]
+  id                 String                     @id @default(uuid())
+  name               String
+  championshipId     String
+  categoryTemplateId String?
+  isViable           Boolean                    @default(false)
+  minBirthYear       Int?
+  maxBirthYear       Int?
+  modality           String                     @default("5x5")
+  championship       Championship               @relation(fields: [championshipId], references: [id], onDelete: Cascade)
+  categoryTemplate   Category?                  @relation(fields: [categoryTemplateId], references: [id])
+  games              Game[]
+  registrations      RegistrationCategory[]
+  standings          Standing[]
+  phaseEntries       ChampionshipPhaseCategory[]
 
   @@unique([championshipId, name])
+}
+
+model Category {
+  id              String                 @id @default(uuid())
+  name            String                 @unique
+  order           Int                    @unique
+  maxAge          Int?
+  minPlayers      Int                    @default(8)
+  isActive        Boolean                @default(true)
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  championshipUses ChampionshipCategory[]
+
+  @@index([order])
+  @@index([isActive])
 }
 
 model Registration {

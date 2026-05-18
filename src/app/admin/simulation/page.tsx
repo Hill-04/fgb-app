@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { FlaskConical, Trash2, Play, Loader2, CheckCircle2, XCircle, Clock, Search, Filter, Shield, ChevronRight } from 'lucide-react'
+import { FlaskConical, Trash2, Play, Loader2, CheckCircle2, XCircle, Clock, Search, Filter, Shield, ChevronRight, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { Input } from '@/components/ui/input'
@@ -183,6 +183,22 @@ export default function SimulationPage() {
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700 max-w-[1440px] mx-auto pb-20">
+      {/* Maintenance banner — PM-06.8 freeze */}
+      <div className="flex items-start gap-4 p-6 rounded-3xl border-2 border-amber-300 bg-amber-50 shadow-sm">
+        <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200">
+          <AlertTriangle className="w-5 h-5 text-amber-700" />
+        </div>
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">⚠️ Simulação Desabilitada</p>
+          <p className="text-sm font-bold text-amber-900 leading-relaxed">
+            Simulação temporariamente desabilitada por segurança. Em manutenção até PM-06.8 (banco isolado) ficar pronto.
+          </p>
+          <p className="text-xs text-amber-800 leading-relaxed">
+            Por enquanto, use <span className="font-black">Limpar Lab</span> se houver dados de simulação anteriores.
+          </p>
+        </div>
+      </div>
+
       {/* Header - High End Glassmorphism */}
       <div className="flex flex-col xl:flex-row items-start xl:items-center justify-between gap-10 bg-white p-10 rounded-[40px] border border-[var(--border)] shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--verde)]/5 blur-[100px] rounded-full -mr-48 -mt-48" />
@@ -225,7 +241,8 @@ export default function SimulationPage() {
           {showConfig && (
             <Button
               onClick={runSimulation}
-              disabled={running || cleaning || selectedTeamIds.length < 2 || selectedCategories.length === 0}
+              disabled={true}
+              title="Em manutenção — aguardando PM-06.8 (banco simulação isolado)"
               className="flex-[2] sm:flex-none h-14 px-10 bg-[var(--yellow)] text-[var(--black)] hover:bg-[var(--yellow-dark)] font-black uppercase tracking-widest rounded-2xl shadow-[0_8px_25px_rgba(245,194,0,0.3)] transition-all hover:-translate-y-1 active:translate-y-0"
             >
               {running ? (
@@ -398,9 +415,10 @@ export default function SimulationPage() {
                      </div>
                    </div>
 
-                   <Button 
+                   <Button
                     onClick={runSimulation}
-                    disabled={selectedTeamIds.length < 2 || selectedCategories.length === 0}
+                    disabled={true}
+                    title="Em manutenção — aguardando PM-06.8 (banco simulação isolado)"
                     className="w-full h-20 bg-white text-[var(--verde)] hover:bg-fgb-ink-100 font-black uppercase tracking-[0.2em] rounded-[28px] shadow-2xl transition-all hover:scale-[1.03] active:scale-95 disabled:opacity-50 text-[11px]"
                   >
                     Instanciar Mundo
