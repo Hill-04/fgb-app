@@ -1,8 +1,8 @@
 # FGB App — Master Task List
 
-**Última atualização:** 16/05/2026
+**Última atualização:** 18/05/2026
 **Branch ativa:** `feature/pm-06-real-data`
-**Top commit:** `3317c12` (PM-06.4)
+**Top commit:** `594d5c8` (PM-06.8 disable run buttons)
 
 **Como usar este arquivo:**
 - Marque `[x]` quando concluir uma tarefa
@@ -45,9 +45,13 @@
 - [x] PM-06.3 — Schema Team.institutionalEmail + validate-team-cnpj + seed (18/18)
 - [x] PM-06.4 — Endpoint audit-athletes + tela admin (deployed em preview)
 - [ ] **PM-06.4 — Merge para main** (5 min)
-- [ ] **PM-06.5 — Audit coachStaff** (48 vs 50 do CSV)
-- [ ] **PM-06.6 — Criar 18 users dos clubes**
-- [ ] **PM-06.7 — Brayan vira isFederationSuperAdmin: true**
+- [x] **PM-06.5 — Audit coachStaff** (48 vs 50 do CSV)
+- [x] **PM-06.6 — Criar 18 users dos clubes**
+- [x] **PM-06.7 — Brayan vira isFederationSuperAdmin: true**
+
+> ⏸️ **ADIADO pós-Sprint Federação por demanda urgente**
+
+- [ ] **PM-06.8 — Banco de simulação isolado** (run buttons em `/admin/simulation` congelados via banner amber até implementar)
 - [ ] **PM-LGPD** — AuditLog + PII masking + Cloudflare R2
 
 ---
@@ -408,6 +412,10 @@
 - **Atleta não-federado**: cadastro completo igual federado, só sem registrationNumber
 - **Comprovantes**: aceita PDF + imagem
 - **Súmula**: refazer mesa eletrônica + permitir upload de súmula pronta como fallback
+- **Asaas**: confirmado gateway primário (Bradesco fica como futuro distante)
+- **Ginásios**: remover (dead code confirmado — não há fluxo ativo nem dependência)
+- **Banco de simulação isolado (PM-06.8)**: ADIADO pós-Sprint Federação — run buttons em `/admin/simulation` congelados (disabled + banner amber) até implementação
+- **BLOCO 8 ordem**: upload de PDF de súmula pronta primeiro (fallback), mesa eletrônica completa em momento posterior
 
 ### Padrões de desenvolvimento
 - Branch nova por feature (não direto na main)
