@@ -1175,6 +1175,9 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'sql', name: 'GameOfficialReportVersion_reportId_version_key', sql: 'CREATE UNIQUE INDEX IF NOT EXISTS "GameOfficialReportVersion_reportId_version_key" ON "GameOfficialReportVersion"("reportId","version")' },
   { kind: 'sql', name: 'GameOfficialReportVersion_reportId_idx', sql: 'CREATE INDEX IF NOT EXISTS "GameOfficialReportVersion_reportId_idx" ON "GameOfficialReportVersion"("reportId")' },
 
+  // === BLOCO 8 Fase Upload (2026-05-18) — sourceType para distinguir GERADO (mesa eletrônica futura) vs UPLOADED (PDF externo) ===
+  { kind: 'column', table: 'GameOfficialReportVersion', column: 'sourceType', sql: `ALTER TABLE "GameOfficialReportVersion" ADD COLUMN "sourceType" TEXT NOT NULL DEFAULT 'GENERATED'` },
+
   // === FASE 6.B (2026-05-11) — Registration lifecycle + audit fields ===
   // Documentado em docs/fase-6-registrations-audit.md
   { kind: 'column', table: 'Registration', column: 'lifecycleState', sql: "ALTER TABLE Registration ADD COLUMN lifecycleState TEXT NOT NULL DEFAULT 'SUBMITTED';", critical: true },
@@ -1284,6 +1287,10 @@ const schemaPatches: SchemaPatch[] = [
   { kind: 'column', table: 'ChampionshipCategory', column: 'categoryTemplateId', sql: 'ALTER TABLE "ChampionshipCategory" ADD COLUMN "categoryTemplateId" TEXT;', critical: true },
   // PM-06.3: institutionalEmail no Team
   { kind: 'column', table: 'Team', column: 'institutionalEmail', sql: 'ALTER TABLE "Team" ADD COLUMN "institutionalEmail" TEXT;', critical: true },
+  // BLOCO 9 Fase 1: Federados + Não-Federados
+  { kind: 'column', table: 'Championship', column: 'acceptsNonFederated', sql: 'ALTER TABLE "Championship" ADD COLUMN "acceptsNonFederated" BOOLEAN NOT NULL DEFAULT 1;', critical: false },
+  { kind: 'column', table: 'Team', column: 'isFederated', sql: 'ALTER TABLE "Team" ADD COLUMN "isFederated" BOOLEAN NOT NULL DEFAULT 1;', critical: false },
+  { kind: 'column', table: 'Team', column: 'verificationStatus', sql: 'ALTER TABLE "Team" ADD COLUMN "verificationStatus" TEXT NOT NULL DEFAULT \'VERIFIED\';', critical: false },
 ]
 
 let schemaEnsured = false

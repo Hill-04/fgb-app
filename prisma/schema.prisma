@@ -62,6 +62,9 @@ model Team {
   whatsapp            String?
   observations        String?
   isActive            Boolean              @default(true)
+  // BLOCO 9 Fase 1: Federados + Não-Federados
+  isFederated         Boolean              @default(true)
+  verificationStatus  String               @default("VERIFIED")
   awayGames           Game[]               @relation("AwayTeam")
   homeGames           Game[]               @relation("HomeTeam")
   gym                 Gym?
@@ -171,6 +174,8 @@ model Championship {
   technicalCongressDate    DateTime?
   drawDate                 DateTime?
   finishedAt               DateTime?
+  // BLOCO 9 Fase 1: Federados + Não-Federados
+  acceptsNonFederated      Boolean                @default(true)
   blocks                   Block[]
   categories               ChampionshipCategory[]
   documents                Document[]
@@ -725,6 +730,7 @@ model GameOfficialReportVersion {
   finalizedAt       DateTime?
   reason            String?
   createdByUserId   String?
+  sourceType        String    @default("GENERATED") // 'GENERATED' (mesa eletrônica futura) | 'UPLOADED' (PDF externo BLOCO 8 Fase Upload)
   createdAt         DateTime  @default(now())
   report            GameOfficialReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
 
