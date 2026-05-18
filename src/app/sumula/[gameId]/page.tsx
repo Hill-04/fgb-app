@@ -54,6 +54,16 @@ export default async function SumulaPage({
 
   if (!game) notFound()
 
+  // BLOCO 8 Fase Upload — última versão da súmula com PDF (se houver)
+  const latestVersion = await prisma.gameOfficialReportVersion.findFirst({
+    where: {
+      report: { gameId },
+      officialPdfUrl: { not: null },
+    },
+    orderBy: { version: 'desc' },
+    select: { officialPdfUrl: true, sourceType: true, version: true },
+  })
+
   const sumulaUrl = `https://fgb.app/sumula/${gameId}`
   const gameDate = new Date(game.dateTime)
 
@@ -162,6 +172,18 @@ export default async function SumulaPage({
       <div className="no-print bg-[#145530] text-white px-6 py-3 flex items-center justify-between">
         <span className="text-sm font-bold">Súmula Oficial FGB</span>
         <div className="flex gap-3">
+          {latestVersion?.officialPdfUrl && (
+            <a
+              href={latestVersion.officialPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-1.5 bg-[#F5C200] text-[#145530] rounded text-xs font-bold hover:bg-yellow-300"
+            >
+              {latestVersion.sourceType === 'UPLOADED'
+                ? `Baixar Súmula PDF (v${latestVersion.version} • enviada)`
+                : `Baixar Súmula PDF (v${latestVersion.version})`}
+            </a>
+          )}
           <button
             onClick={() => window.print()}
             className="px-4 py-1.5 bg-white text-[#145530] rounded text-xs font-bold hover:bg-fgb-ink-100"
